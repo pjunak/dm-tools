@@ -12,7 +12,7 @@ class DMToolsUI:
 
         # Get the current directory of the script
         current_directory = os.path.dirname(os.path.realpath(__file__))
-        icon_path = os.path.join(current_directory, 'icon.png')
+        icon_path = os.path.join(current_directory, 'media'+'\\'+'icon.png')
 
         # Set the window icon
         icon_image = tk.PhotoImage(file=icon_path)
