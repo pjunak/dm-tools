@@ -1,16 +1,16 @@
-import tkinter as tk
+import sys
+from PyQt6.QtWidgets import QApplication
 from ui import DMToolsUI
-import argparse
 
 def main():
-    # Argument parser for optional debug flag
-    parser = argparse.ArgumentParser(description="Dungeon Master Music Player")
-    parser.add_argument('-d', '--debug', action='store_true', help='Enable debug logging')
-    args = parser.parse_args()
+    app = QApplication(sys.argv)
+    
+    # Create the main window for the music player UI
+    window = DMToolsUI(debug=True)
+    window.show()
 
-    root = tk.Tk()
-    app = DMToolsUI(root, debug=args.debug)
-    root.mainloop()
+    # Start the main event loop
+    sys.exit(app.exec())
 
 if __name__ == "__main__":
     main()
