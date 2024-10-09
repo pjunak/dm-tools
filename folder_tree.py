@@ -1,22 +1,38 @@
 import os
-from PyQt6.QtGui import QStandardItemModel, QStandardItem
-
 class FolderTree:
     def __init__(self, root_dir):
         self.root_dir = root_dir
-        self.model = QStandardItemModel()
-        self.model.setHorizontalHeaderLabels(["Folders"])
-        self.tree_structure = self.build_tree(self.root_dir)
+        self.tree = self.build_tree_structure()
 
-    def build_tree(self, path):
-        root_item = QStandardItem(os.path.basename(path))
-        self.add_subfolders(root_item, path)
-        self.model.appendRow(root_item)
+        # Debugging output to verify the structure
+        print("FolderTree initialized with tree structure:", self.tree)
 
-    def add_subfolders(self, parent_item, path):
-        for entry in os.listdir(path):
-            full_path = os.path.join(path, entry)
-            if os.path.isdir(full_path):
-                folder_item = QStandardItem(entry)
-                parent_item.appendRow(folder_item)
-                self.add_subfolders(folder_item, full_path)
+    def build_tree_structure(self):
+        """Recursively builds a tree structure starting from the root folder."""
+        def recurse_directory(path):
+            subfolders = []
+            try:
+                # List all directories in the current path
+                with os.scandir(path) as entries:
+                    for entry in entries:
+                        if entry.is_dir():
+                            subfolders.append({
+                                "path": entry.path,
+                                "is_leaf": False,
+                                "folders": recurse_directory(entry.path)  # Recurse into subdirectory
+                            })
+            except PermissionError:
+                # Handle the case where the directory can't be accessed
+                print(f"Permission denied: {path}")
+            return subfolders
+
+        # Build the root folder structure
+        return {
+            "folders": [
+                {
+                    "path": self.root_dir,
+                    "is_leaf": False,
+                    "folders": recurse_directory(self.root_dir)
+                }
+            ]
+        }
