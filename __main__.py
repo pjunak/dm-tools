@@ -1,16 +1,9 @@
-import tkinter as tk
-from ui import DMToolsUI
-import argparse
-
-def main():
-    # Argument parser for optional debug flag
-    parser = argparse.ArgumentParser(description="Dungeon Master Music Player")
-    parser.add_argument('-d', '--debug', action='store_true', help='Enable debug logging')
-    args = parser.parse_args()
-
-    root = tk.Tk()
-    app = DMToolsUI(root, debug=args.debug)
-    root.mainloop()
+from PyQt6.QtWidgets import QApplication
+from ui.main_ui import DMToolsUI
+import sys
 
 if __name__ == "__main__":
-    main()
+    app = QApplication(sys.argv)
+    window = DMToolsUI(debug=True)  # Assuming you want debug logging enabled
+    window.show()
+    sys.exit(app.exec())
