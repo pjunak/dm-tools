@@ -5,7 +5,7 @@ class FolderTree:
         self.tree = self.build_tree_structure()
 
         # Debugging output to verify the structure
-        print("FolderTree initialized with tree structure:", self.tree)
+        # print("FolderTree initialized with tree structure:", self.tree)
 
     def build_tree_structure(self):
         """Recursively builds a tree structure starting from the root folder."""
