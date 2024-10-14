@@ -1,14 +1,17 @@
+import logging
 import sys
 import os
 import pygame
-import logging
-from PyQt6.QtWidgets import QApplication, QMainWindow, QSplitter, QListWidget, QPushButton, QVBoxLayout, QHBoxLayout, QWidget, QFileDialog, QDockWidget, QTreeWidgetItem, QTreeWidget
-from PyQt6.QtGui import QAction, QIcon, QColor, QFont
-from PyQt6.QtCore import Qt, QTimer, QThread
+from PyQt6.QtWidgets import QApplication, QMainWindow, QSplitter, QListWidget, QPushButton, QVBoxLayout, QHBoxLayout, QWidget, QFileDialog, QDockWidget, QTreeWidgetItem, QTreeWidget, QProgressBar
+from PyQt6.QtGui import QAction, QIcon, QColor
+from PyQt6.QtCore import Qt, QTimer
 from music_player import MusicPlayer
 from folder_tree import FolderTree
 from spectrogram import generate_spectrogram_data
-from datetime import datetime
+import numpy as np
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
+from PyQt6.QtCore import QThread, pyqtSignal
 
 # Suppress PyGame welcome message
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
@@ -25,6 +28,7 @@ def setup_logger(debug: bool) -> logging.Logger:
     formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
     file_handler.setFormatter(formatter)
 
+    # Log to console (optional, comment out if not needed)
     console_handler = logging.StreamHandler()
     console_handler.setLevel(logging.DEBUG if debug else logging.INFO)
     console_handler.setFormatter(formatter)
@@ -51,11 +55,11 @@ class SpectrogramThread(QThread):
 
 class DMToolsUI(QMainWindow):
     def __init__(self, debug=False):
+        self.logger = setup_logger(debug)  # Initialize logger
+        self.logger.debug("DMToolsUI initialized in debug mode" if debug else "DMToolsUI initialized in normal mode")
+
         super().__init__()
         self.debug = debug
-        self.init_logger()
-
-        self.logger.debug("DMToolsUI initialized in debug mode")
         self.music_player = MusicPlayer(debug=self.debug)
         self.is_playing = False  # Track if music is currently playing or paused
         self.is_paused = False   # Track if music is paused
@@ -69,26 +73,8 @@ class DMToolsUI(QMainWindow):
 
         self.init_ui()
 
-    def init_logger(self):
-        """Initialize the logger with a timestamped log file for each session."""
-        log_dir = 'log'
-        if not os.path.exists(log_dir):
-            os.makedirs(log_dir)
-        
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        log_file = os.path.join(log_dir, f"dm_tools_{timestamp}.log")
-
-        logging.basicConfig(
-            level=logging.DEBUG if self.debug else logging.INFO,
-            format='%(asctime)s - %(levelname)s - %(message)s',
-            handlers=[
-                logging.FileHandler(log_file, mode='w', encoding='utf-8'),
-                logging.StreamHandler()
-            ]
-        )
-        self.logger = logging.getLogger()
-
-    def init_ui(self):
+    def init_ui(self) -> None:
+        """Initialize the UI elements."""
         self.logger.debug("Initializing UI...")
         self.setWindowTitle("Dungeon Master Music Player")
         self.setGeometry(100, 100, 800, 600)
@@ -111,9 +97,6 @@ class DMToolsUI(QMainWindow):
         # Add controls to the bottom of the main window (not docked)
         self.init_controls()
 
-        # Add the spectrogram widget
-        self.init_spectrogram_window()
-
         # Add the splitter to the central widget
         layout = QVBoxLayout()
         layout.addWidget(splitter)
@@ -123,54 +106,26 @@ class DMToolsUI(QMainWindow):
         container.setLayout(layout)
         self.setCentralWidget(container)
 
-        # Initialize the toggle buttons for the playlist and spectrogram
+        # Initialize the spectrogram and progress bar window first
+        self.init_spectrogram_window()
+
+        # Initialize the toggle buttons
         self.init_toggle_buttons()
 
         # Hide the playlist and spectrogram subwindows by default
         self.dock_widget.hide()
         self.spectrogram_dock.hide()
 
-        # Connect the dock widget's visibilityChanged signal to control the toggle button visibility
+        # Connect the dock widget's visibilityChanged signals to control the toggle button visibility
         self.dock_widget.visibilityChanged.connect(self.handle_playlist_visibility)
         self.spectrogram_dock.visibilityChanged.connect(self.handle_spectrogram_visibility)
 
-        # Set up timer to constantly check for window resizing and keep buttons on the right edge
+        # Set up timer to constantly check for window resizing and keep buttons positioned correctly
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_toggle_button_positions)
         self.timer.start(100)  # Update every 100ms
 
-    def init_spectrogram_window(self) -> None:
-        """Initialize the spectrogram dockable window and progress bar."""
-        # Dockable widget for spectrogram
-        self.spectrogram_dock = QDockWidget("Spectrogram", self)
-        self.spectrogram_dock.setAllowedAreas(Qt.DockWidgetArea.BottomDockWidgetArea)
-
-        spectrogram_pane = QWidget()
-        spectrogram_layout = QVBoxLayout()
-
-        # Progress bar above the spectrogram
-        self.song_progress_bar = QProgressBar(self)
-        self.song_progress_bar.setTextVisible(False)
-        spectrogram_layout.addWidget(self.song_progress_bar)
-
-        # Create the FigureCanvas (Matplotlib canvas) for the spectrogram plot
-        self.spectrogram_canvas = FigureCanvas(Figure(figsize=(10, 5)))
-        self.spectrogram_canvas.setFixedHeight(150)  # Set static height for the spectrogram subwindow
-
-        # Set initial background to grey (matching the playlist subwindow)
-        self.spectrogram_canvas.figure.patch.set_facecolor('#2b2b2b')
-
-        spectrogram_layout.addWidget(self.spectrogram_canvas)
-
-        spectrogram_pane.setLayout(spectrogram_layout)
-        self.spectrogram_dock.setWidget(spectrogram_pane)
-
-        self.addDockWidget(Qt.DockWidgetArea.BottomDockWidgetArea, self.spectrogram_dock)
-
-        # Handle when spectrogram window is shown/closed
-        self.spectrogram_dock.visibilityChanged.connect(self.handle_spectrogram_visibility)
-
-    def create_menu(self):
+    def create_menu(self) -> None:
         self.logger.debug("Creating menu...")
         menubar = self.menuBar()
 
@@ -231,6 +186,76 @@ class DMToolsUI(QMainWindow):
 
         self.dock_widget.setWidget(right_pane)
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.dock_widget)
+        
+    def start_playback(self):
+        """Start playing the selected song."""
+        selected_item = self.playlist_box.currentItem()
+        if not selected_item:
+            self.playlist_box.setCurrentRow(0)
+            selected_item = self.playlist_box.item(0)
+        song_idx = self.playlist_box.row(selected_item)
+        
+        # Stop any currently playing music
+        self.stop_music()
+        
+        # Play the selected song from the playlist
+        self.music_player.play_from_index(song_idx)
+        self.is_playing = True
+        self.is_paused = False
+        self.current_song_idx = song_idx
+        self.play_pause_button.setText("Pause")
+        
+        # Update the playlist display to highlight the playing song
+        self.update_playlist_display()
+        
+        # Generate and display the spectrogram
+        if self.spectrogram_dock.isVisible():
+            self.show_spectrogram()
+
+        
+    def update_playlist_display(self) -> None:
+        """Update the playlist view with the current playlist and highlight the current song."""
+        self.logger.debug("Updating playlist display...")
+        self.playlist_box.clear()
+
+        for idx, song in enumerate(self.music_player.playlist):
+            item = os.path.basename(song)
+            self.playlist_box.addItem(item)
+
+            # Highlight the currently playing song
+            if idx == self.current_song_idx:
+                self.playlist_box.item(idx).setBackground(QColor(80, 80, 80))  # Use dark grey
+                font = self.playlist_box.item(idx).font()
+                font.setBold(True)
+                self.playlist_box.item(idx).setFont(font)
+
+        
+    def init_spectrogram_window(self) -> None:
+        """Initialize the spectrogram display area and progress bar."""
+        self.logger.debug("Initializing spectrogram window...")
+        
+        # Create the dockable widget for the spectrogram
+        self.spectrogram_dock = QDockWidget("Spectrogram", self)
+        self.spectrogram_dock.setAllowedAreas(Qt.DockWidgetArea.BottomDockWidgetArea)
+
+        # Create a widget for holding the spectrogram and progress bar
+        spectrogram_widget = QWidget()
+        spectrogram_layout = QVBoxLayout()
+
+        # Progress bar for song position
+        self.progress_bar = QProgressBar(self)
+        self.progress_bar.setTextVisible(False)
+        spectrogram_layout.addWidget(self.progress_bar)
+
+        # Spectrogram display area using matplotlib canvas
+        self.spectrogram_canvas = FigureCanvas(Figure(figsize=(10, 3)))
+        spectrogram_layout.addWidget(self.spectrogram_canvas)
+
+        spectrogram_widget.setLayout(spectrogram_layout)
+
+        self.spectrogram_dock.setWidget(spectrogram_widget)
+        self.addDockWidget(Qt.DockWidgetArea.BottomDockWidgetArea, self.spectrogram_dock)
+
 
     def open_folder(self) -> None:
         """Open a folder, stop the current song, and load its contents into the folder tree."""
@@ -242,19 +267,26 @@ class DMToolsUI(QMainWindow):
             self.stop_music()
             self.music_player.clear_playlist()
             self.load_folder_tree(self.root_dir)
+        else:
+            self.logger.debug("No folder selected.")
 
     def load_folder_tree(self, folder_path: str) -> None:
         """Reload the folder tree structure based on the new root folder."""
-        self.logger.debug(f"Loading folder tree for: {folder_path}")
-        self.folder_tree = FolderTree(folder_path)
+        try:
+            self.logger.debug(f"Loading folder tree for path: {folder_path}")
+            folder_path = folder_path.encode('utf-8').decode('utf-8')  # Handle non-ASCII characters
+            self.folder_tree = FolderTree(folder_path)
 
-        if not hasattr(self.folder_tree, 'tree') or not isinstance(self.folder_tree.tree, dict):
-            self.logger.error("Error: FolderTree structure is invalid.")
-            return
+            if not hasattr(self.folder_tree, 'tree') or not isinstance(self.folder_tree.tree, dict):
+                self.logger.error("Error: FolderTree structure is invalid.")
+                return
 
-        self.tree_view.clear()
-        for subtree in self.folder_tree.tree.get('folders', []):
-            self.populate_tree(self.tree_view, subtree)
+            self.tree_view.clear()
+            for subtree in self.folder_tree.tree.get('folders', []):
+                self.populate_tree(self.tree_view, subtree)
+        except Exception as e:
+            self.logger.error(f"Failed to load folder tree: {e}")
+
 
     def populate_tree(self, tree_view: QTreeWidget, tree_data: dict, parent: QTreeWidgetItem = None) -> None:
         """Populate the folder tree with subdirectories."""
@@ -296,51 +328,17 @@ class DMToolsUI(QMainWindow):
         if self.spectrogram_dock.isVisible():
             self.show_spectrogram()
 
-    def update_playlist_display(self) -> None:
-        """Update the playlist view and highlight the current song."""
-        self.playlist_box.clear()
-        for idx, song in enumerate(self.music_player.playlist):
-            item = os.path.basename(song)
-            self.playlist_box.addItem(item)
-
-            if idx == self.current_song_idx:
-                self.playlist_box.item(idx).setBackground(QColor(80, 80, 80))
-                font = self.playlist_box.item(idx).font()
-                font.setBold(True)
-                self.playlist_box.item(idx).setFont(font)
-                
-    def start_playback(self):
-        """Start playing the selected song."""
-        self.logger.debug("Starting playback")
-        selected_item = self.playlist_box.currentItem()
-        if not selected_item:
-            self.playlist_box.setCurrentRow(0)
-            selected_item = self.playlist_box.item(0)
-        song_idx = self.playlist_box.row(selected_item)
-        self.music_player.play_from_index(song_idx)
-        self.is_playing = True
-        self.is_paused = False
-        self.current_song_idx = song_idx
-        self.play_pause_button.setText("Pause")
-        self.update_playlist_display()
-
-        # Generate and display the spectrogram
-        self.show_spectrogram()
-
-    def toggle_play_pause(self) -> None:
+    def toggle_play_pause(self):
         """Toggle between play and pause."""
         if self.is_playing and not self.is_paused:
-            self.logger.debug("Pausing music")
             self.music_player.pause_music()
             self.is_paused = True
             self.play_pause_button.setText("Play")
         elif self.is_paused:
-            self.logger.debug("Resuming music")
             self.music_player.resume_music()
             self.is_paused = False
             self.play_pause_button.setText("Pause")
         else:
-            self.logger.debug("Starting playback")
             self.start_playback()
 
     def stop_music(self) -> None:
@@ -439,13 +437,17 @@ class DMToolsUI(QMainWindow):
         """Handle the visibility of the spectrogram subwindow."""
         self.logger.debug(f"Spectrogram visibility changed: {'Visible' if visible else 'Hidden'}")
         if visible:
+            self.toggle_spectrogram_button.hide()
             self.show_spectrogram()
         else:
+            self.toggle_spectrogram_button.show()
             self.clear_spectrogram()
+
 
     def init_toggle_buttons(self) -> None:
         """Initialize the toggle buttons for playlist and spectrogram subwindows."""
         self.logger.debug("Initializing toggle buttons for playlist and spectrogram...")
+
         # Playlist toggle button
         self.toggle_playlist_button = QPushButton(">>>", self)
         self.toggle_playlist_button.setFixedWidth(30)
@@ -459,16 +461,18 @@ class DMToolsUI(QMainWindow):
         # Initial positions
         self.update_toggle_button_positions()
 
+
     def update_toggle_button_positions(self) -> None:
         """Ensure the toggle buttons stay positioned at the correct edges."""
         playlist_button_height = self.toggle_playlist_button.height()
         spectrogram_button_height = self.toggle_spectrogram_button.height()
 
         # Position the playlist button at the top right edge
-        self.toggle_playlist_button.move(self.width() - 50, self.height() - playlist_button_height - 30)
+        self.toggle_playlist_button.move(self.width() - 50, 30)
 
         # Position the spectrogram button at the bottom right edge
-        self.toggle_spectrogram_button.move(self.width() - 50, self.height() - spectrogram_button_height - 60)
+        self.toggle_spectrogram_button.move(self.width() - 50, self.height() - spectrogram_button_height - 30)
+
 
     def toggle_playlist(self) -> None:
         """Toggle the visibility of the playlist dock."""
@@ -493,4 +497,5 @@ if __name__ == "__main__":
         window.show()
         sys.exit(app.exec())
     except Exception as e:
-        logging.error(f"An error occurred: {str(e)}")
+        logging.exception("Application crashed with an error.")
+        sys.exit(1)

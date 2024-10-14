@@ -1,16 +1,18 @@
+import logging
+
 class TransitionManager:
-    def __init__(self) -> None:
-        self.transitions = {}
+    def __init__(self, logger=None):
+        """Initialize the transition manager."""
+        self.logger = logger or logging.getLogger('DMTools.TransitionManager')
 
-    def add_transition(self, name: str, transition) -> None:
-        """Add a new transition by name."""
-        self.transitions[name] = transition
+    def fade_out(self, duration: int):
+        """Simulate a fade-out effect for the given duration."""
+        self.logger.debug(f"Fading out over {duration} milliseconds.")
 
-    def get_transition(self, name: str):
-        """Retrieve a transition by name."""
-        return self.transitions.get(name)
+    def fade_in(self, duration: int):
+        """Simulate a fade-in effect for the given duration."""
+        self.logger.debug(f"Fading in over {duration} milliseconds.")
 
-    def remove_transition(self, name: str) -> None:
-        """Remove a transition by name."""
-        if name in self.transitions:
-            del self.transitions[name]
+    def crossfade(self, duration: int):
+        """Simulate a crossfade effect for the given duration."""
+        self.logger.debug(f"Crossfading over {duration} milliseconds.")

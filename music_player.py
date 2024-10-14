@@ -7,22 +7,18 @@ from datetime import datetime
 from typing import Optional
 
 class MusicPlayer:
-    def __init__(self, debug: bool = False) -> None:
-        pygame.mixer.pre_init()  # Suppress pygame message
-        pygame.mixer.init()
-        self.playlist: list[str] = []
-        self.current_song: Optional[str] = None
-        self.current_index: int = 0
-        self.is_playing: bool = False
-        self.is_paused: bool = False
-        self.playback_thread: Optional[threading.Thread] = None
-        self.stop_event = threading.Event()
-        self.next_song_event = threading.Event()
-        self.pause_event = threading.Event()
-        self.debug = debug
+    def __init__(self, debug: bool = False):
+        self.playlist = []
+        self.current_song = None
+        self.is_playing = False
+        self.is_paused = False
+        self.debug = debug  # Add this to initialize the debug attribute
+        self.logger = logging.getLogger('DMTools.MusicPlayer')
+        if debug:
+            self.logger.setLevel(logging.DEBUG)
+        else:
+            self.logger.setLevel(logging.INFO)
 
-        if self.debug:
-            self.setup_logging()
 
     def setup_logging(self) -> None:
         if not os.path.exists('log'):
@@ -33,20 +29,27 @@ class MusicPlayer:
                             format='%(asctime)s - %(levelname)s - %(message)s')
 
     def log(self, message: str) -> None:
+        """Log messages based on debug mode."""
         if self.debug:
-            logging.debug(message)
+            self.logger.debug(message)
+        else:
+            self.logger.info(message)
 
     def load_playlist(self, folder_path: str) -> None:
-        """Load all music files from the specified folder into the playlist."""
+        """Load a playlist from the given folder path."""
         try:
-            all_files = [os.path.join(folder_path, f) for f in os.listdir(folder_path) if f.endswith('.mp3')]
-            random.shuffle(all_files)
-
-            self.playlist = [os.path.normpath(song) for song in all_files]
-            self.log(f"Loaded playlist with {len(self.playlist)} songs from {folder_path}")
+            if not os.path.isdir(folder_path):
+                self.logger.error(f"Invalid folder path: {folder_path}")
+                return
+            self.playlist = []
+            for file in os.listdir(folder_path):
+                if file.endswith(".mp3") or file.endswith(".wav"):
+                    full_path = os.path.join(folder_path, file)
+                    self.playlist.append(full_path)
+            self.logger.debug(f"Loaded playlist with {len(self.playlist)} songs from {folder_path}")
         except Exception as e:
-            self.log(f"Error loading playlist: {e}")
-            print(f"Error loading playlist: {e}")
+            self.logger.error(f"Failed to load playlist: {e}")
+
 
     def play(self) -> None:
         """Play the currently selected song."""
