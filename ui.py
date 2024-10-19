@@ -1,4 +1,6 @@
 import logging
+from logging_utils import setup_logger
+logger = setup_logger(debug=True)
 import sys
 import os
 import pygame
@@ -16,27 +18,6 @@ from PyQt6.QtCore import QThread, pyqtSignal
 # Suppress PyGame welcome message
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 pygame.mixer.init()
-
-# Logger configuration
-def setup_logger(debug: bool) -> logging.Logger:
-    logger = logging.getLogger('DMTools')
-    logger.setLevel(logging.DEBUG if debug else logging.INFO)
-
-    # Log to file
-    file_handler = logging.FileHandler('dm_tools_debug.log')
-    file_handler.setLevel(logging.DEBUG if debug else logging.INFO)
-    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-    file_handler.setFormatter(formatter)
-
-    # Log to console (optional, comment out if not needed)
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.DEBUG if debug else logging.INFO)
-    console_handler.setFormatter(formatter)
-
-    logger.addHandler(file_handler)
-    logger.addHandler(console_handler)
-
-    return logger
 
 class SpectrogramThread(QThread):
     finished = pyqtSignal(object, object, float)

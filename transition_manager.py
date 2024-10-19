@@ -1,4 +1,5 @@
-import logging
+from logging_utils import setup_logger
+logger = setup_logger(debug=True)
 
 class TransitionManager:
     def __init__(self, logger=None):
