@@ -1,0 +1,19 @@
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.pyright/
+build/
+dist/
+artifacts/
+.coverage
+coverage.xml
+
+# Local editor and operating-system state
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
