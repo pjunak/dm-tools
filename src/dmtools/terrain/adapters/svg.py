@@ -3,6 +3,8 @@
 # pyright: reportArgumentType=false, reportOptionalMemberAccess=false
 """Read one continuous closed coastline from a simple SVG document."""
 
+from dataclasses import dataclass
+from hashlib import file_digest
 from math import hypot
 from pathlib import Path as FilePath
 
@@ -16,6 +18,34 @@ from dmtools.terrain.domain import Coastline
 
 class CoastlineInputError(ValueError):
     """The imported vector cannot serve as the one supported coastline."""
+
+
+@dataclass(frozen=True, slots=True)
+class CoastlineSource:
+    """A parsed coastline and the fingerprint of its authoritative SVG source."""
+
+    path: FilePath
+    sha256: str
+    coastline: Coastline
+
+    def __post_init__(self) -> None:
+        if not self.path.is_absolute():
+            raise ValueError("Coastline source path must be absolute.")
+        invalid_character = any(
+            character not in "0123456789abcdef" for character in self.sha256
+        )
+        if len(self.sha256) != 64 or invalid_character:
+            raise ValueError("Coastline source SHA-256 is invalid.")
+
+
+def coastline_sha256(source: FilePath) -> str:
+    """Fingerprint a coastline source without loading the whole file into memory."""
+
+    try:
+        with source.open("rb") as stream:
+            return file_digest(stream, "sha256").hexdigest()
+    except OSError as error:
+        raise CoastlineInputError(f"Could not read SVG: {error}") from error
 
 
 def _same_point(first: tuple[float, float], second: tuple[float, float], tolerance: float) -> bool:
@@ -74,3 +104,18 @@ def load_svg_coastline(source: FilePath, *, sample_count: int = 4_096) -> Coastl
         raise CoastlineInputError(f"The coastline is not a valid loop: {explain_validity(polygon)}")
 
     return Coastline(points=tuple(sampled), source_name=source.name)
+
+
+def load_svg_coastline_source(source: FilePath) -> CoastlineSource:
+    """Load a coastline with stable source provenance for project persistence."""
+
+    try:
+        resolved = source.resolve(strict=True)
+    except OSError as error:
+        raise CoastlineInputError(f"Could not read SVG: {error}") from error
+    before = coastline_sha256(resolved)
+    coastline = load_svg_coastline(resolved)
+    after = coastline_sha256(resolved)
+    if before != after:
+        raise CoastlineInputError("The SVG changed while it was being imported; import it again.")
+    return CoastlineSource(path=resolved, sha256=after, coastline=coastline)

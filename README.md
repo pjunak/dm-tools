@@ -15,7 +15,8 @@ import one closed SVG coastline, paint broad soft elevation guidance, draw exact
 or relative height points plus ridge and valley centrelines, generate a
 deterministic constraint-conditioned elevation field, preview it as colour
 relief, and export the preview as a transparent PNG. Every authoring tool keeps
-its own mode, value, and width while the user switches tools.
+its own mode, value, and width while the user switches tools. Authored work can
+be saved and reopened as a versioned `.dmterrain.json` project.
 
 ## Requirements
 
@@ -45,8 +46,12 @@ Then open the terrain workbench and run the tests:
 .\.venv\Scripts\python.exe -m pytest
 ```
 
-Try the public [`coastline.svg`](examples/terrain/coastline.svg) file for a first
-generation. The workbench explains invalid coastline inputs before generation.
+Open the public
+[`example.dmterrain.json`](examples/terrain/example.dmterrain.json) project or
+import its [`coastline.svg`](examples/terrain/coastline.svg) directly for a first
+generation. Use **Save project** after adding terrain guidance, then **Open
+project** to restore the coastline, generator settings, constraints, and
+per-tool controls. The workbench explains invalid inputs before generation.
 
 ## Intended workflow
 
@@ -66,14 +71,15 @@ Authored vector constraints and configuration remain inputs. A floating-point
 raster DEM is the authoritative generated elevation surface. Contours, drainage,
 hillshade, colour relief, and future meshes are derived products.
 
-The future non-interactive command shape is expected to resemble:
+The future non-interactive command will consume the same versioned project used
+by the workbench and is expected to resemble:
 
 ```powershell
-dmtools terrain build examples/terrain/minimal/project.yaml
+dmtools terrain build examples/terrain/minimal/continent.dmterrain.json
 ```
 
-The exact project schema will be designed and versioned before this command is
-implemented.
+The accepted version-1 contract is published in
+[`schemas/terrain/project-v1.schema.json`](schemas/terrain/project-v1.schema.json).
 
 ## Repository layout
 

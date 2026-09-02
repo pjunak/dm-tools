@@ -1,7 +1,9 @@
 # Terrain adapters
 
-This package will contain concrete integration boundaries such as GeoPackage and
-GeoTIFF I/O, projection libraries, preview renderers, and optional external
+This package contains concrete integration boundaries. The current adapters
+load and fingerprint an SVG coastline, strictly read and atomically write the
+versioned JSON terrain project, and render or save a PNG preview. Future adapters
+will add GeoPackage and GeoTIFF I/O, projection libraries, and optional external
 scientific engines.
 
 An adapter must translate external behavior into domain contracts and report its

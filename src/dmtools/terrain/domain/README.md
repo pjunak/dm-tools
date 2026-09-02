@@ -7,6 +7,8 @@ generator settings. Constraint positions use normalized coastline-bounds
 coordinates until the pipeline converts them to the metric working extent.
 Every authored elevation feature explicitly records whether its metre value is
 an absolute elevation or a relative displacement, relief, or incision depth.
+The domain also owns a format-independent terrain project and the authoring-tool
+defaults that must survive between workbench sessions.
 
 Future domain types will add units, coordinate reference systems, structure
 profiles, grids, manifests, stage identifiers, and validation errors.

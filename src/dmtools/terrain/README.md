@@ -16,9 +16,12 @@ height points plus ridge and valley centrelines over the map. A terrain brush
 paints broad soft elevation guidance directly over the continent. Import
 validation and generation run on background workers with progress reporting.
 The result is previewed and can be exported as a transparent colour-relief PNG.
+The same window can save and open authored `.dmterrain.json` projects.
 
-[`examples/terrain/coastline.svg`](../../../examples/terrain/coastline.svg) is a
-small public input for trying the workflow.
+[`examples/terrain/example.dmterrain.json`](../../../examples/terrain/example.dmterrain.json)
+is a small public project for trying the complete workflow; its referenced
+[`coastline.svg`](../../../examples/terrain/coastline.svg) can also be imported
+directly.
 
 ## Current input contract
 
@@ -89,7 +92,30 @@ surface and therefore naturally build on a ridge beneath them.
 Constraints use normalized coastline-bounds coordinates while being authored
 and are converted to explicit metric coordinates during generation. They are
 kept separate from the imported coastline and are recorded in exported PNG
-metadata. The serialized terrain-project contract remains a future decision.
+metadata.
+
+## Saving terrain projects
+
+**Save project** writes the coastline reference, all generator settings, every
+committed constraint, the active tool, and each tool's independent controls to
+a readable JSON document ending in `.dmterrain.json`. **Open project** restores
+that state. An unfinished ridge or valley must be finished or undone before
+saving so no invisible draft is lost.
+
+The SVG remains the authoritative coastline rather than being duplicated into
+the project. Its path is relative to the project file whenever possible, and
+the project records a SHA-256 fingerprint of the exact SVG bytes. Opening fails
+clearly if the SVG is missing or changed. Saving also fails if the SVG changed
+on disk after import; re-importing makes that geographic change deliberate.
+
+Project files contain authored inputs only. Generated arrays and PNG previews
+are not embedded. Saves use a temporary file followed by atomic replacement so
+an interrupted write does not leave a partially written project. Version 1 is
+strict: unknown fields or unsupported versions are rejected rather than
+guessed. The public contract is
+[`schemas/terrain/project-v1.schema.json`](../../../schemas/terrain/project-v1.schema.json)
+and its rationale is recorded in
+[ADR-0006](../../../docs/adr/0006-versioned-terrain-project.md).
 
 ## Generator settings
 
@@ -156,7 +182,10 @@ The intended input project contains:
 - a master seed; and
 - an explicit planetary model, projection, extent, and working resolution.
 
-The exact serialized schema has not yet been accepted.
+The current version-1 project persists the implemented coastline, generator
+settings, authoring defaults, brush strokes, height points, ridges, and valleys.
+The remaining planned input kinds will require compatible schema additions or a
+new schema version as their semantics are accepted.
 
 ## Outputs
 
@@ -183,7 +212,7 @@ them only when an implemented behavior needs them.
 
 The next end-to-end work should deliberately remain staged:
 
-1. Define a versioned project and build-manifest schema.
+1. Define the build-manifest schema for generated artifacts.
 2. Define elevation profiles and asymmetric side slopes along ridge and valley
    structures.
 3. Persist the Float32 DEM as GeoTIFF with explicit coordinate metadata.

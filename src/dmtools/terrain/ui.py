@@ -15,17 +15,27 @@ from PIL import Image, ImageTk
 from shapely.geometry import LineString, Point, Polygon
 
 from dmtools.terrain.adapters import (
+    PROJECT_EXTENSION,
     CoastlineInputError,
-    load_svg_coastline,
+    CoastlineSource,
+    LoadedTerrainProject,
+    TerrainProjectInputError,
+    load_svg_coastline_source,
+    load_terrain_project,
     render_height_map,
     save_height_map,
+    save_terrain_project,
 )
 from dmtools.terrain.domain import (
+    BrushToolSettings,
     Coastline,
     ElevationMode,
     ElevationPoint,
+    FeatureToolSettings,
+    TerrainAuthoringState,
     TerrainBrushStroke,
     TerrainConstraint,
+    TerrainProject,
     TerrainSettings,
     TerrainStructure,
 )
@@ -72,7 +82,17 @@ class _ResultEvent:
 
 @dataclass(frozen=True, slots=True)
 class _CoastlineEvent:
-    coastline: Coastline
+    source: CoastlineSource
+
+
+@dataclass(frozen=True, slots=True)
+class _ProjectEvent:
+    loaded: LoadedTerrainProject
+
+
+@dataclass(frozen=True, slots=True)
+class _ProjectSavedEvent:
+    path: Path
 
 
 @dataclass(frozen=True, slots=True)
@@ -82,7 +102,14 @@ class _ErrorEvent:
     error: Exception
 
 
-type _UiEvent = _ProgressEvent | _ResultEvent | _CoastlineEvent | _ErrorEvent
+type _UiEvent = (
+    _ProgressEvent
+    | _ResultEvent
+    | _CoastlineEvent
+    | _ProjectEvent
+    | _ProjectSavedEvent
+    | _ErrorEvent
+)
 
 
 _CONTROLS = (
@@ -109,6 +136,8 @@ class TerrainApp:
         self.root.configure(background=_PAPER)
 
         self._coastline: Coastline | None = None
+        self._coastline_source: CoastlineSource | None = None
+        self._project_path: Path | None = None
         self._terrain: GeneratedTerrain | None = None
         self._image: Image.Image | None = None
         self._preview_photo: ImageTk.PhotoImage | None = None
@@ -119,26 +148,29 @@ class TerrainApp:
         self._variables: dict[str, tk.DoubleVar] = {}
         self._value_labels: dict[str, ttk.Label] = {}
         self._specs = {spec.key: spec for spec in _CONTROLS}
-        self._authoring_tool = tk.StringVar(value="brush")
+        authoring_defaults = TerrainAuthoringState()
+        self._authoring_tool = tk.StringVar(value=authoring_defaults.active_tool)
         self._tool_modes = {
-            "brush": tk.StringVar(value="Relative"),
-            "height": tk.StringVar(value="Absolute"),
-            "ridge": tk.StringVar(value="Relative"),
-            "valley": tk.StringVar(value="Relative"),
+            "brush": tk.StringVar(value=authoring_defaults.brush.elevation_mode.title()),
+            "height": tk.StringVar(value=authoring_defaults.height.elevation_mode.title()),
+            "ridge": tk.StringVar(value=authoring_defaults.ridge.elevation_mode.title()),
+            "valley": tk.StringVar(value=authoring_defaults.valley.elevation_mode.title()),
         }
         self._tool_elevations = {
-            "brush": tk.DoubleVar(value=500.0),
-            "height": tk.DoubleVar(value=2_500.0),
-            "ridge": tk.DoubleVar(value=1_200.0),
-            "valley": tk.DoubleVar(value=700.0),
+            "brush": tk.DoubleVar(value=authoring_defaults.brush.elevation_m),
+            "height": tk.DoubleVar(value=authoring_defaults.height.elevation_m),
+            "ridge": tk.DoubleVar(value=authoring_defaults.ridge.elevation_m),
+            "valley": tk.DoubleVar(value=authoring_defaults.valley.elevation_m),
         }
         self._tool_sizes = {
-            "brush": tk.DoubleVar(value=280.0),
-            "height": tk.DoubleVar(value=120.0),
-            "ridge": tk.DoubleVar(value=120.0),
-            "valley": tk.DoubleVar(value=90.0),
+            "brush": tk.DoubleVar(value=authoring_defaults.brush.width_km),
+            "height": tk.DoubleVar(value=authoring_defaults.height.radius_km),
+            "ridge": tk.DoubleVar(value=authoring_defaults.ridge.radius_km),
+            "valley": tk.DoubleVar(value=authoring_defaults.valley.radius_km),
         }
-        self._brush_intensity_percent = tk.DoubleVar(value=55.0)
+        self._brush_intensity_percent = tk.DoubleVar(
+            value=authoring_defaults.brush.intensity * 100.0
+        )
         self._brush_cursor: tuple[float, float] | None = None
         self._active_brush_values: tuple[float, float, float, ElevationMode] | None = None
         self._tool_buttons: dict[str, tk.Button] = {}
@@ -230,14 +262,26 @@ class TerrainApp:
         ttk.Label(top, text="COASTLINE SOURCE", style="Value.TLabel").grid(
             row=0, column=0, sticky="w"
         )
-        self.import_button = ttk.Button(
-            top, text="Import SVG…", style="Quiet.TButton", command=self._choose_svg
-        )
-        self.import_button.grid(row=0, column=1, rowspan=2, padx=(12, 0))
         self.source_label = ttk.Label(
             top, text="No coastline loaded", style="Muted.TLabel", width=34
         )
-        self.source_label.grid(row=1, column=0, sticky="w", pady=(3, 0))
+        self.source_label.grid(row=1, column=0, columnspan=3, sticky="w", pady=(3, 7))
+        self.import_button = ttk.Button(
+            top, text="Import SVG…", style="Quiet.TButton", command=self._choose_svg
+        )
+        self.import_button.grid(row=2, column=0, sticky="ew")
+        self.open_project_button = ttk.Button(
+            top, text="Open project…", style="Quiet.TButton", command=self._choose_project
+        )
+        self.open_project_button.grid(row=2, column=1, sticky="ew", padx=(6, 0))
+        self.save_project_button = ttk.Button(
+            top,
+            text="Save project…",
+            style="Quiet.TButton",
+            state="disabled",
+            command=self._save_project,
+        )
+        self.save_project_button.grid(row=2, column=2, sticky="ew", padx=(6, 0))
         ttk.Separator(parent).grid(row=1, column=0, sticky="ew", pady=(0, 9))
 
     def _build_numeric_control(self, parent: ttk.Frame, row: int, spec: _ControlSpec) -> None:
@@ -1014,6 +1058,8 @@ class TerrainApp:
             return
         source = Path(selected)
         self.import_button.configure(state="disabled")
+        self.open_project_button.configure(state="disabled")
+        self.save_project_button.configure(state="disabled")
         self.generate_button.configure(state="disabled")
         self.export_button.configure(state="disabled")
         self._set_authoring_enabled(False)
@@ -1024,7 +1070,7 @@ class TerrainApp:
 
         def worker() -> None:
             try:
-                self._events.put(_CoastlineEvent(load_svg_coastline(source)))
+                self._events.put(_CoastlineEvent(load_svg_coastline_source(source)))
             except CoastlineInputError as error:
                 self._events.put(
                     _ErrorEvent(
@@ -1044,8 +1090,143 @@ class TerrainApp:
 
         threading.Thread(target=worker, name="coastline-importer", daemon=True).start()
 
-    def _accept_coastline(self, coastline: Coastline) -> None:
+    def _choose_project(self) -> None:
+        selected = filedialog.askopenfilename(
+            parent=self.root,
+            title="Open terrain project",
+            filetypes=(
+                ("DM Tools terrain project", f"*{PROJECT_EXTENSION}"),
+                ("JSON document", "*.json"),
+                ("All files", "*.*"),
+            ),
+        )
+        if not selected:
+            return
+        if (self._constraints or self._draft_points) and not messagebox.askyesno(
+            "Replace the current project?",
+            "Opening a project replaces the current coastline, settings, and authored terrain.",
+            parent=self.root,
+        ):
+            return
+
+        source = Path(selected)
+        self.import_button.configure(state="disabled")
+        self.open_project_button.configure(state="disabled")
+        self.save_project_button.configure(state="disabled")
+        self.generate_button.configure(state="disabled")
+        self.export_button.configure(state="disabled")
+        self._set_authoring_enabled(False)
+        self.source_label.configure(text=f"Reading {source.name}…")
+        self.status_label.configure(text="Validating project and coastline…")
+        self.progress.configure(mode="indeterminate", value=0)
+        self.progress.start(12)
+
+        def worker() -> None:
+            try:
+                self._events.put(_ProjectEvent(load_terrain_project(source)))
+            except TerrainProjectInputError as error:
+                self._events.put(
+                    _ErrorEvent(
+                        title="Terrain project could not be opened",
+                        status="Project open failed.",
+                        error=error,
+                    )
+                )
+            except Exception as error:
+                self._events.put(
+                    _ErrorEvent(
+                        title="Unexpected project failure",
+                        status="Project open failed.",
+                        error=error,
+                    )
+                )
+
+        threading.Thread(target=worker, name="terrain-project-loader", daemon=True).start()
+
+    def _save_project(self) -> None:
+        if self._coastline is None or self._coastline_source is None:
+            messagebox.showinfo(
+                "Import a coastline",
+                "Import an SVG coastline before saving a terrain project.",
+                parent=self.root,
+            )
+            return
+        if self._draft_points:
+            messagebox.showinfo(
+                "Finish the current feature",
+                "Finish or undo the current stroke or line before saving.",
+                parent=self.root,
+            )
+            return
+        try:
+            project = TerrainProject(
+                coastline=self._coastline,
+                settings=self._read_settings(),
+                constraints=tuple(self._constraints),
+                authoring=self._read_authoring_state(),
+            )
+        except (ValueError, tk.TclError) as error:
+            messagebox.showerror("Invalid project settings", str(error), parent=self.root)
+            return
+
+        initial_file = (
+            self._project_path.name
+            if self._project_path is not None
+            else f"{Path(self._coastline.source_name).stem}{PROJECT_EXTENSION}"
+        )
+        selected = filedialog.asksaveasfilename(
+            parent=self.root,
+            title="Save terrain project",
+            initialfile=initial_file,
+            defaultextension=PROJECT_EXTENSION,
+            filetypes=(("DM Tools terrain project", f"*{PROJECT_EXTENSION}"),),
+        )
+        if not selected:
+            return
+        destination = Path(selected)
+        coastline_source = self._coastline_source
+
+        self.import_button.configure(state="disabled")
+        self.open_project_button.configure(state="disabled")
+        self.save_project_button.configure(state="disabled")
+        self.generate_button.configure(state="disabled")
+        self.export_button.configure(state="disabled")
+        self._set_authoring_enabled(False)
+        self.status_label.configure(text="Saving authored terrain project…")
+        self.progress.configure(mode="indeterminate", value=0)
+        self.progress.start(12)
+
+        def worker() -> None:
+            try:
+                save_terrain_project(project, coastline_source, destination)
+                self._events.put(_ProjectSavedEvent(destination.resolve()))
+            except (OSError, TerrainProjectInputError) as error:
+                self._events.put(
+                    _ErrorEvent(
+                        title="Terrain project could not be saved",
+                        status="Project save failed.",
+                        error=error,
+                    )
+                )
+            except Exception as error:
+                self._events.put(
+                    _ErrorEvent(
+                        title="Unexpected project save failure",
+                        status="Project save failed.",
+                        error=error,
+                    )
+                )
+
+        threading.Thread(target=worker, name="terrain-project-saver", daemon=True).start()
+
+    def _accept_coastline(
+        self,
+        coastline: Coastline,
+        source: CoastlineSource | None = None,
+    ) -> None:
         self._coastline = coastline
+        self._coastline_source = source
+        self._project_path = None
         self._coast_polygon = Polygon(coastline.points)
         self._constraints.clear()
         self._draft_points.clear()
@@ -1056,6 +1237,8 @@ class TerrainApp:
         self.progress.stop()
         self.progress.configure(mode="determinate", value=0)
         self.import_button.configure(state="normal")
+        self.open_project_button.configure(state="normal")
+        self.save_project_button.configure(state="normal" if source is not None else "disabled")
         self.generate_button.configure(state="normal")
         self.export_button.configure(state="disabled")
         self._set_authoring_enabled(True)
@@ -1079,6 +1262,67 @@ class TerrainApp:
             variability=values["variability"],
         )
 
+    def _apply_settings(self, settings: TerrainSettings) -> None:
+        for key, variable in self._variables.items():
+            variable.set(float(getattr(settings, key)))
+            self._refresh_value(key)
+
+    def _read_authoring_state(self) -> TerrainAuthoringState:
+        active_tool = self._authoring_tool.get()
+        if active_tool not in ("brush", "height", "ridge", "valley"):
+            raise ValueError(f"Unknown authoring tool: {active_tool}")
+
+        def feature(tool: str) -> FeatureToolSettings:
+            return FeatureToolSettings(
+                elevation_mode=self._selected_elevation_mode(tool),
+                elevation_m=float(self._tool_elevations[tool].get()),
+                radius_km=float(self._tool_sizes[tool].get()),
+            )
+
+        return TerrainAuthoringState(
+            active_tool=active_tool,
+            brush=BrushToolSettings(
+                elevation_mode=self._selected_elevation_mode("brush"),
+                elevation_m=float(self._tool_elevations["brush"].get()),
+                width_km=float(self._tool_sizes["brush"].get()),
+                intensity=float(self._brush_intensity_percent.get()) / 100.0,
+            ),
+            height=feature("height"),
+            ridge=feature("ridge"),
+            valley=feature("valley"),
+        )
+
+    def _apply_authoring_state(self, authoring: TerrainAuthoringState) -> None:
+        self._authoring_tool.set(authoring.active_tool)
+        self._tool_modes["brush"].set(authoring.brush.elevation_mode.title())
+        self._tool_elevations["brush"].set(authoring.brush.elevation_m)
+        self._tool_sizes["brush"].set(authoring.brush.width_km)
+        self._brush_intensity_percent.set(authoring.brush.intensity * 100.0)
+        for tool, settings in (
+            ("height", authoring.height),
+            ("ridge", authoring.ridge),
+            ("valley", authoring.valley),
+        ):
+            self._tool_modes[tool].set(settings.elevation_mode.title())
+            self._tool_elevations[tool].set(settings.elevation_m)
+            self._tool_sizes[tool].set(settings.radius_km)
+        self._refresh_authoring_controls()
+
+    def _accept_project(self, loaded: LoadedTerrainProject) -> None:
+        project = loaded.project
+        self._accept_coastline(project.coastline, loaded.coastline_source)
+        self._project_path = loaded.path
+        self._apply_settings(project.settings)
+        self._constraints[:] = project.constraints
+        self._apply_authoring_state(project.authoring)
+        count = len(self._constraints)
+        suffix = "s" if count != 1 else ""
+        self.status_label.configure(
+            text=f"Opened {loaded.path.name} with {count} authored feature{suffix}."
+        )
+        self.preview_meta.configure(text=f"{count} authored feature{suffix}")
+        self._draw_preview()
+
     def _generate(self) -> None:
         if self._coastline is None:
             messagebox.showinfo(
@@ -1093,6 +1337,8 @@ class TerrainApp:
 
         self.generate_button.configure(state="disabled")
         self.import_button.configure(state="disabled")
+        self.open_project_button.configure(state="disabled")
+        self.save_project_button.configure(state="disabled")
         self.export_button.configure(state="disabled")
         self._set_authoring_enabled(False)
         self.progress.stop()
@@ -1131,7 +1377,22 @@ class TerrainApp:
                     self.progress.configure(value=event.fraction * 100.0)
                     self.status_label.configure(text=event.message)
                 elif isinstance(event, _CoastlineEvent):
-                    self._accept_coastline(event.coastline)
+                    self._accept_coastline(event.source.coastline, event.source)
+                elif isinstance(event, _ProjectEvent):
+                    self._accept_project(event.loaded)
+                elif isinstance(event, _ProjectSavedEvent):
+                    self._project_path = event.path
+                    self.progress.stop()
+                    self.progress.configure(mode="determinate", value=100)
+                    self.import_button.configure(state="normal")
+                    self.open_project_button.configure(state="normal")
+                    self.save_project_button.configure(state="normal")
+                    self.generate_button.configure(state="normal")
+                    self.export_button.configure(
+                        state="normal" if self._terrain is not None else "disabled"
+                    )
+                    self._set_authoring_enabled(True)
+                    self.status_label.configure(text=f"Saved project {event.path.name}")
                 elif isinstance(event, _ResultEvent):
                     self._terrain = event.terrain
                     self._image = event.image
@@ -1149,6 +1410,10 @@ class TerrainApp:
                         )
                     )
                     self.import_button.configure(state="normal")
+                    self.open_project_button.configure(state="normal")
+                    self.save_project_button.configure(
+                        state="normal" if self._coastline_source is not None else "disabled"
+                    )
                     self.generate_button.configure(state="normal")
                     self.export_button.configure(state="normal")
                     self._set_authoring_enabled(True)
@@ -1157,6 +1422,10 @@ class TerrainApp:
                     self.progress.stop()
                     self.progress.configure(mode="determinate", value=0)
                     self.import_button.configure(state="normal")
+                    self.open_project_button.configure(state="normal")
+                    self.save_project_button.configure(
+                        state="normal" if self._coastline_source is not None else "disabled"
+                    )
                     self._set_authoring_enabled(self._coastline is not None)
                     self.generate_button.configure(
                         state="normal" if self._coastline is not None else "disabled"

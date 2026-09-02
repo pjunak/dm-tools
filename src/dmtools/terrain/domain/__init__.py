@@ -9,13 +9,25 @@ from dmtools.terrain.domain.models import (
     TerrainSettings,
     TerrainStructure,
 )
+from dmtools.terrain.domain.project import (
+    AuthoringTool,
+    BrushToolSettings,
+    FeatureToolSettings,
+    TerrainAuthoringState,
+    TerrainProject,
+)
 
 __all__ = [
+    "AuthoringTool",
+    "BrushToolSettings",
     "Coastline",
     "ElevationMode",
     "ElevationPoint",
+    "FeatureToolSettings",
+    "TerrainAuthoringState",
     "TerrainBrushStroke",
     "TerrainConstraint",
+    "TerrainProject",
     "TerrainSettings",
     "TerrainStructure",
 ]

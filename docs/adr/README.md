@@ -19,3 +19,4 @@ ADRs preserve significant technical decisions and their trade-offs.
 - [ADR-0003: Author topography on the map and condition the base surface](0003-map-authored-constraints.md)
 - [ADR-0004: Paint soft elevation guidance as vector strokes](0004-soft-elevation-brush.md)
 - [ADR-0005: Separate absolute elevation from relative relief](0005-relative-relief.md)
+- [ADR-0006: Persist authored terrain as versioned JSON with a verified SVG reference](0006-versioned-terrain-project.md)

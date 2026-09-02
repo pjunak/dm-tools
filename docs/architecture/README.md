@@ -54,9 +54,14 @@ pipeline and adapters that a future non-interactive build operation will use.
 A future HTTP service can call those operations while adding job management,
 storage, authentication, and resource limits outside the engine.
 
+The version-1 terrain-project adapter translates the public JSON contract into
+domain models. It resolves the external SVG relative to the project, verifies
+its content hash, then delegates coastline parsing to the SVG adapter. Neither
+the domain nor the generation pipeline reads project files directly.
+
 ## Deferred decisions
 
-- Terrain project and constraint schema details
+- Build-manifest schema details and project migration tooling
 - Elevation profiles and asymmetric side slopes along structural lines
 - Hydrology engine
 - Multiresolution storage and refinement strategy

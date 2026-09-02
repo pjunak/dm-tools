@@ -1,0 +1,408 @@
+"""Read and write the versioned terrain-project JSON contract."""
+
+from __future__ import annotations
+
+import json
+import os
+import tempfile
+from dataclasses import dataclass
+from math import isfinite
+from pathlib import Path
+from typing import cast
+
+from dmtools.terrain.adapters.svg import (
+    CoastlineInputError,
+    CoastlineSource,
+    coastline_sha256,
+    load_svg_coastline_source,
+)
+from dmtools.terrain.domain import (
+    BrushToolSettings,
+    ElevationMode,
+    ElevationPoint,
+    FeatureToolSettings,
+    TerrainAuthoringState,
+    TerrainBrushStroke,
+    TerrainConstraint,
+    TerrainProject,
+    TerrainSettings,
+    TerrainStructure,
+)
+
+PROJECT_SCHEMA = "dmtools.terrain-project"
+PROJECT_SCHEMA_VERSION = 1
+PROJECT_EXTENSION = ".dmterrain.json"
+_MAX_PROJECT_BYTES = 16 * 1024 * 1024
+
+
+class TerrainProjectInputError(ValueError):
+    """A project document or its referenced coastline is not trustworthy."""
+
+
+@dataclass(frozen=True, slots=True)
+class LoadedTerrainProject:
+    """A parsed project together with verified coastline provenance."""
+
+    project: TerrainProject
+    coastline_source: CoastlineSource
+    path: Path
+
+
+def _mapping(value: object, context: str) -> dict[str, object]:
+    if not isinstance(value, dict):
+        raise TerrainProjectInputError(f"{context} must be a JSON object.")
+    untyped = cast("dict[object, object]", value)
+    if any(not isinstance(key, str) for key in untyped):
+        raise TerrainProjectInputError(f"{context} must use string field names.")
+    return cast("dict[str, object]", value)
+
+
+def _sequence(value: object, context: str) -> list[object]:
+    if not isinstance(value, list):
+        raise TerrainProjectInputError(f"{context} must be a JSON array.")
+    return cast("list[object]", value)
+
+
+def _require_keys(value: dict[str, object], expected: set[str], context: str) -> None:
+    missing = expected - value.keys()
+    extra = value.keys() - expected
+    if missing:
+        raise TerrainProjectInputError(f"{context} is missing: {', '.join(sorted(missing))}.")
+    if extra:
+        raise TerrainProjectInputError(f"{context} has unknown fields: {', '.join(sorted(extra))}.")
+
+
+def _string(value: object, context: str) -> str:
+    if not isinstance(value, str) or not value:
+        raise TerrainProjectInputError(f"{context} must be a non-empty string.")
+    return value
+
+
+def _number(value: object, context: str) -> float:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise TerrainProjectInputError(f"{context} must be a number.")
+    result = float(value)
+    if not isfinite(result):
+        raise TerrainProjectInputError(f"{context} must be finite.")
+    return result
+
+
+def _integer(value: object, context: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise TerrainProjectInputError(f"{context} must be an integer.")
+    return value
+
+
+def _elevation_mode(value: object, context: str) -> ElevationMode:
+    mode = _string(value, context)
+    if mode not in ("absolute", "relative"):
+        raise TerrainProjectInputError(f"{context} must be 'absolute' or 'relative'.")
+    return mode
+
+
+def _point(value: object, context: str) -> tuple[float, float]:
+    parts = _sequence(value, context)
+    if len(parts) != 2:
+        raise TerrainProjectInputError(f"{context} must contain exactly two coordinates.")
+    return _number(parts[0], f"{context}[0]"), _number(parts[1], f"{context}[1]")
+
+
+def _points(value: object, context: str) -> tuple[tuple[float, float], ...]:
+    values = _sequence(value, context)
+    return tuple(_point(point, f"{context}[{index}]") for index, point in enumerate(values))
+
+
+def _settings_from_json(value: object) -> TerrainSettings:
+    data = _mapping(value, "settings")
+    expected = {
+        "seed",
+        "object_scale_km",
+        "resolution_px",
+        "maximum_elevation_m",
+        "largest_feature_km",
+        "detail_levels",
+        "roughness",
+        "coastal_rise_km",
+        "variability",
+    }
+    _require_keys(data, expected, "settings")
+    try:
+        return TerrainSettings(
+            seed=_integer(data["seed"], "settings.seed"),
+            object_scale_km=_number(data["object_scale_km"], "settings.object_scale_km"),
+            resolution_px=_integer(data["resolution_px"], "settings.resolution_px"),
+            maximum_elevation_m=_number(
+                data["maximum_elevation_m"], "settings.maximum_elevation_m"
+            ),
+            largest_feature_km=_number(
+                data["largest_feature_km"], "settings.largest_feature_km"
+            ),
+            detail_levels=_integer(data["detail_levels"], "settings.detail_levels"),
+            roughness=_number(data["roughness"], "settings.roughness"),
+            coastal_rise_km=_number(data["coastal_rise_km"], "settings.coastal_rise_km"),
+            variability=_number(data["variability"], "settings.variability"),
+        )
+    except ValueError as error:
+        raise TerrainProjectInputError(f"Invalid generator settings: {error}") from error
+
+
+def _feature_tool_from_json(value: object, name: str) -> FeatureToolSettings:
+    data = _mapping(value, f"authoring.tools.{name}")
+    _require_keys(data, {"elevation_mode", "elevation_m", "radius_km"}, f"authoring.tools.{name}")
+    return FeatureToolSettings(
+        elevation_mode=_elevation_mode(
+            data["elevation_mode"], f"authoring.tools.{name}.elevation_mode"
+        ),
+        elevation_m=_number(data["elevation_m"], f"authoring.tools.{name}.elevation_m"),
+        radius_km=_number(data["radius_km"], f"authoring.tools.{name}.radius_km"),
+    )
+
+
+def _authoring_from_json(value: object) -> TerrainAuthoringState:
+    data = _mapping(value, "authoring")
+    _require_keys(data, {"active_tool", "tools"}, "authoring")
+    active_tool_value = _string(data["active_tool"], "authoring.active_tool")
+    if active_tool_value not in ("brush", "height", "ridge", "valley"):
+        raise TerrainProjectInputError("authoring.active_tool is not supported.")
+    tools = _mapping(data["tools"], "authoring.tools")
+    _require_keys(tools, {"brush", "height", "ridge", "valley"}, "authoring.tools")
+    brush = _mapping(tools["brush"], "authoring.tools.brush")
+    _require_keys(
+        brush,
+        {"elevation_mode", "elevation_m", "width_km", "intensity"},
+        "authoring.tools.brush",
+    )
+    try:
+        return TerrainAuthoringState(
+            active_tool=active_tool_value,
+            brush=BrushToolSettings(
+                elevation_mode=_elevation_mode(
+                    brush["elevation_mode"], "authoring.tools.brush.elevation_mode"
+                ),
+                elevation_m=_number(
+                    brush["elevation_m"], "authoring.tools.brush.elevation_m"
+                ),
+                width_km=_number(brush["width_km"], "authoring.tools.brush.width_km"),
+                intensity=_number(brush["intensity"], "authoring.tools.brush.intensity"),
+            ),
+            height=_feature_tool_from_json(tools["height"], "height"),
+            ridge=_feature_tool_from_json(tools["ridge"], "ridge"),
+            valley=_feature_tool_from_json(tools["valley"], "valley"),
+        )
+    except ValueError as error:
+        raise TerrainProjectInputError(f"Invalid authoring settings: {error}") from error
+
+
+def _constraint_from_json(value: object, index: int) -> TerrainConstraint:
+    context = f"constraints[{index}]"
+    data = _mapping(value, context)
+    kind = _string(data.get("type"), f"{context}.type")
+    common = {"type", "elevation_mode", "elevation_m", "influence_radius_km"}
+    try:
+        elevation_mode = _elevation_mode(data.get("elevation_mode"), f"{context}.elevation_mode")
+        elevation_m = _number(data.get("elevation_m"), f"{context}.elevation_m")
+        radius_km = _number(
+            data.get("influence_radius_km"), f"{context}.influence_radius_km"
+        )
+        if kind == "height_point":
+            _require_keys(data, common | {"position"}, context)
+            return ElevationPoint(
+                position=_point(data["position"], f"{context}.position"),
+                elevation_m=elevation_m,
+                influence_radius_km=radius_km,
+                elevation_mode=elevation_mode,
+            )
+        if kind == "terrain_brush":
+            _require_keys(data, common | {"points", "intensity"}, context)
+            return TerrainBrushStroke(
+                points=_points(data["points"], f"{context}.points"),
+                elevation_m=elevation_m,
+                influence_radius_km=radius_km,
+                intensity=_number(data["intensity"], f"{context}.intensity"),
+                elevation_mode=elevation_mode,
+            )
+        if kind in ("ridge", "valley"):
+            _require_keys(data, common | {"points"}, context)
+            return TerrainStructure(
+                kind=kind,
+                points=_points(data["points"], f"{context}.points"),
+                elevation_m=elevation_m,
+                influence_radius_km=radius_km,
+                elevation_mode=elevation_mode,
+            )
+    except ValueError as error:
+        raise TerrainProjectInputError(f"Invalid {context}: {error}") from error
+    raise TerrainProjectInputError(f"{context}.type is not supported: {kind!r}.")
+
+
+def _settings_to_json(settings: TerrainSettings) -> dict[str, int | float]:
+    return {
+        "seed": settings.seed,
+        "object_scale_km": settings.object_scale_km,
+        "resolution_px": settings.resolution_px,
+        "maximum_elevation_m": settings.maximum_elevation_m,
+        "largest_feature_km": settings.largest_feature_km,
+        "detail_levels": settings.detail_levels,
+        "roughness": settings.roughness,
+        "coastal_rise_km": settings.coastal_rise_km,
+        "variability": settings.variability,
+    }
+
+
+def _authoring_to_json(authoring: TerrainAuthoringState) -> dict[str, object]:
+    def feature(settings: FeatureToolSettings) -> dict[str, str | float]:
+        return {
+            "elevation_mode": settings.elevation_mode,
+            "elevation_m": settings.elevation_m,
+            "radius_km": settings.radius_km,
+        }
+
+    return {
+        "active_tool": authoring.active_tool,
+        "tools": {
+            "brush": {
+                "elevation_mode": authoring.brush.elevation_mode,
+                "elevation_m": authoring.brush.elevation_m,
+                "width_km": authoring.brush.width_km,
+                "intensity": authoring.brush.intensity,
+            },
+            "height": feature(authoring.height),
+            "ridge": feature(authoring.ridge),
+            "valley": feature(authoring.valley),
+        },
+    }
+
+
+def _constraint_to_json(constraint: TerrainConstraint) -> dict[str, object]:
+    data: dict[str, object] = {
+        "elevation_mode": constraint.elevation_mode,
+        "elevation_m": constraint.elevation_m,
+        "influence_radius_km": constraint.influence_radius_km,
+    }
+    if isinstance(constraint, ElevationPoint):
+        data.update(type="height_point", position=list(constraint.position))
+    elif isinstance(constraint, TerrainBrushStroke):
+        data.update(
+            type="terrain_brush",
+            points=[list(point) for point in constraint.points],
+            intensity=constraint.intensity,
+        )
+    else:
+        data.update(type=constraint.kind, points=[list(point) for point in constraint.points])
+    return data
+
+
+def _relative_source_path(source: Path, destination: Path) -> str:
+    try:
+        relative = os.path.relpath(source, destination.parent.resolve())
+    except ValueError:
+        return source.as_posix()
+    return Path(relative).as_posix()
+
+
+def save_terrain_project(
+    project: TerrainProject,
+    coastline_source: CoastlineSource,
+    destination: Path,
+) -> None:
+    """Atomically save authored state while preserving external SVG provenance."""
+
+    if project.coastline != coastline_source.coastline:
+        raise TerrainProjectInputError("The project coastline does not match its source record.")
+    current_sha256 = coastline_sha256(coastline_source.path)
+    if current_sha256 != coastline_source.sha256:
+        raise TerrainProjectInputError(
+            "The coastline SVG changed after it was imported. Import it again before saving."
+        )
+
+    target = destination.resolve()
+    document: dict[str, object] = {
+        "schema": PROJECT_SCHEMA,
+        "schema_version": PROJECT_SCHEMA_VERSION,
+        "coastline": {
+            "path": _relative_source_path(coastline_source.path, target),
+            "sha256": coastline_source.sha256,
+        },
+        "settings": _settings_to_json(project.settings),
+        "constraints": [_constraint_to_json(constraint) for constraint in project.constraints],
+        "authoring": _authoring_to_json(project.authoring),
+    }
+    target.parent.mkdir(parents=True, exist_ok=True)
+    descriptor, temporary_name = tempfile.mkstemp(
+        prefix=f".{target.name}.", suffix=".tmp", dir=target.parent
+    )
+    temporary = Path(temporary_name)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8", newline="\n") as stream:
+            json.dump(document, stream, indent=2, sort_keys=True, allow_nan=False)
+            stream.write("\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, target)
+    except Exception:
+        temporary.unlink(missing_ok=True)
+        raise
+
+
+def load_terrain_project(source: Path) -> LoadedTerrainProject:
+    """Load a strict version-1 project and verify its referenced coastline."""
+
+    try:
+        resolved = source.resolve(strict=True)
+        if resolved.stat().st_size > _MAX_PROJECT_BYTES:
+            raise TerrainProjectInputError("Terrain project is larger than 16 MiB.")
+        raw: object = json.loads(resolved.read_text(encoding="utf-8"))
+    except TerrainProjectInputError:
+        raise
+    except (OSError, UnicodeError, json.JSONDecodeError) as error:
+        raise TerrainProjectInputError(f"Could not read terrain project: {error}") from error
+
+    data = _mapping(raw, "project")
+    _require_keys(
+        data,
+        {"schema", "schema_version", "coastline", "settings", "constraints", "authoring"},
+        "project",
+    )
+    if data["schema"] != PROJECT_SCHEMA:
+        raise TerrainProjectInputError(f"Unsupported project schema: {data['schema']!r}.")
+    version = _integer(data["schema_version"], "schema_version")
+    if version != PROJECT_SCHEMA_VERSION:
+        raise TerrainProjectInputError(
+            f"Unsupported project schema version {version}; expected {PROJECT_SCHEMA_VERSION}."
+        )
+
+    coastline_data = _mapping(data["coastline"], "coastline")
+    _require_keys(coastline_data, {"path", "sha256"}, "coastline")
+    coastline_path_text = _string(coastline_data["path"], "coastline.path")
+    declared_sha256 = _string(coastline_data["sha256"], "coastline.sha256").lower()
+    if len(declared_sha256) != 64 or any(
+        character not in "0123456789abcdef" for character in declared_sha256
+    ):
+        raise TerrainProjectInputError("coastline.sha256 must be 64 hexadecimal characters.")
+
+    settings = _settings_from_json(data["settings"])
+    constraints = tuple(
+        _constraint_from_json(value, index)
+        for index, value in enumerate(_sequence(data["constraints"], "constraints"))
+    )
+    authoring = _authoring_from_json(data["authoring"])
+
+    coastline_path = Path(coastline_path_text)
+    if not coastline_path.is_absolute():
+        coastline_path = resolved.parent / coastline_path
+    try:
+        coastline_source = load_svg_coastline_source(coastline_path)
+    except CoastlineInputError as error:
+        raise TerrainProjectInputError(f"Could not load project coastline: {error}") from error
+    if coastline_source.sha256 != declared_sha256:
+        raise TerrainProjectInputError(
+            "The coastline SVG does not match the SHA-256 recorded by this project."
+        )
+
+    project = TerrainProject(
+        coastline=coastline_source.coastline,
+        settings=settings,
+        constraints=constraints,
+        authoring=authoring,
+    )
+    return LoadedTerrainProject(project=project, coastline_source=coastline_source, path=resolved)
