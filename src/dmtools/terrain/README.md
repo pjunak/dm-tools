@@ -89,6 +89,13 @@ independent circular stamp. This automatic attachment applies to absolute points
 and absolute structures; relative points instead deform the already conditioned
 surface and therefore naturally build on a ridge beneath them.
 
+When several absolute anchors lie on one absolute structure, a
+shape-preserving cubic profile connects them along the line without overshooting
+the adjacent elevations. The authored span can raise or lower the centreline:
+two peaks surrounding a lower point therefore create a geometric saddle, while
+the terrain still falls away across the ridge. Conflicting hard heights at the
+same projected line position are rejected rather than silently averaged.
+
 Constraints use normalized coastline-bounds coordinates while being authored
 and are converted to explicit metric coordinates during generation. They are
 kept separate from the imported coastline and are recorded in exported PNG

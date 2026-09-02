@@ -19,3 +19,7 @@ nested resolutions, and preservation of the underlying relief field.
 Project contract tests cover every current constraint kind and per-tool setting,
 relative coastline paths, strict schema-version handling, and SVG hash mismatch
 detection on both load and save.
+The first quantitative terrain-quality fixture models two ridge peaks and a
+lower pass. It checks exact anchors, interval overshoot, saddle geometry,
+constraint-order independence, conflicting hard anchors, and nested-resolution
+equality.

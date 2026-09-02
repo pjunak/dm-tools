@@ -14,5 +14,13 @@ residual relief. The order is brush, ridge, valley, relative point, then exact
 absolute point. Same-kind overlaps are order-independent. The coastline remains
 a hard zero-elevation boundary.
 
+Absolute height points attached to an absolute ridge or valley define a
+shape-preserving longitudinal profile through their projected arc-length
+positions. Baseline shoulder knots return isolated authored sections to the
+structure target. The controlled centreline can rise or fall through peaks and
+passes, while the existing cross-structure weight turns a lower crest anchor
+into a saddle. Synthetic crest/floor variation is suppressed inside that
+authored span so it cannot overshoot the supplied anchors.
+
 Stages must not depend on implicit process state such as the current directory,
 wall-clock time, ambient random generators, or undeclared environment settings.

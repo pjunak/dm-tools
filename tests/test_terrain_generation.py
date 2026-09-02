@@ -144,8 +144,62 @@ def test_nearby_height_point_bends_structure_profile() -> None:
     ridge_only = generate_terrain(_square(), _settings(), constraints=(ridge,))
     anchored = generate_terrain(_square(), _settings(), constraints=(ridge, peak))
 
-    assert anchored.elevation_m[32, 38] > ridge_only.elevation_m[32, 38]
+    assert anchored.elevation_m[32, 36] > ridge_only.elevation_m[32, 36]
     assert anchored.elevation_m[32, 32] == np.float32(2_800.0)
+
+
+def test_peak_and_pass_anchors_form_a_shape_preserving_ridge_profile() -> None:
+    ridge = TerrainStructure(
+        kind="ridge",
+        points=((0.125, 0.5), (0.875, 0.5)),
+        elevation_m=2_200.0,
+        influence_radius_km=55.0,
+    )
+    west_peak = ElevationPoint((0.25, 0.5), 3_400.0, 35.0)
+    mountain_pass = ElevationPoint((0.5, 0.5), 2_400.0, 35.0)
+    east_peak = ElevationPoint((0.75, 0.5), 3_200.0, 35.0)
+
+    terrain = generate_terrain(
+        _square(),
+        _settings(maximum_elevation_m=5_000.0),
+        constraints=(ridge, west_peak, mountain_pass, east_peak),
+    )
+    centreline = terrain.elevation_m[32]
+
+    assert centreline[16] == np.float32(3_400.0)
+    assert centreline[32] == np.float32(2_400.0)
+    assert centreline[48] == np.float32(3_200.0)
+    assert np.max(centreline[16:33]) <= np.float32(3_400.0)
+    assert np.min(centreline[16:33]) >= np.float32(2_400.0)
+    assert np.max(centreline[32:49]) <= np.float32(3_200.0)
+    assert np.min(centreline[32:49]) >= np.float32(2_400.0)
+
+    assert centreline[28] > centreline[32]
+    assert centreline[36] > centreline[32]
+    assert terrain.elevation_m[28, 32] < centreline[32]
+    assert terrain.elevation_m[36, 32] < centreline[32]
+
+    reordered = generate_terrain(
+        _square(),
+        _settings(maximum_elevation_m=5_000.0),
+        constraints=(east_peak, mountain_pass, ridge, west_peak),
+    )
+    finer = generate_terrain(
+        _square(),
+        _settings(maximum_elevation_m=5_000.0, resolution_px=129),
+        constraints=(ridge, west_peak, mountain_pass, east_peak),
+    )
+    np.testing.assert_array_equal(terrain.elevation_m, reordered.elevation_m)
+    np.testing.assert_array_equal(terrain.elevation_m, finer.elevation_m[::2, ::2])
+
+
+def test_conflicting_height_anchors_on_one_structure_are_rejected() -> None:
+    ridge = TerrainStructure("ridge", ((0.2, 0.5), (0.8, 0.5)), 2_000.0, 50.0)
+    first = ElevationPoint((0.5, 0.5), 2_400.0, 40.0)
+    conflicting = ElevationPoint((0.5, 0.5), 2_800.0, 40.0)
+
+    with pytest.raises(ValueError, match="Conflicting absolute height points"):
+        generate_terrain(_square(), _settings(), constraints=(ridge, first, conflicting))
 
 
 def test_terrain_brush_softly_guides_the_base_surface() -> None:

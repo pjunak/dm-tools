@@ -20,6 +20,7 @@ from dmtools.terrain.domain import (
     TerrainSettings,
 )
 from dmtools.terrain.pipeline.noise import fractal_value_noise
+from dmtools.terrain.pipeline.profile import shape_preserving_profile
 
 type ProgressCallback = Callable[[float, str], None]
 
@@ -257,30 +258,79 @@ def _line_positions_km(
     return cast(NDArray[np.float64], np.asarray(raw_positions, dtype=np.float64))
 
 
-def _structure_target(
+def _structure_profile(
     constraint: _MetricConstraint,
     line_positions_km: NDArray[np.float64],
-) -> NDArray[np.float64]:
+) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
+    """Return a shape-preserving target and its authored longitudinal control."""
+
     target = np.full_like(line_positions_km, constraint.elevation_m)
     if not constraint.profile_anchors:
-        return target
-    anchor_weight = np.zeros_like(line_positions_km)
-    anchor_targets = np.zeros_like(line_positions_km)
-    strongest_anchor = np.zeros_like(line_positions_km)
-    for along_km, elevation_m, radius_km in constraint.profile_anchors:
-        distance_along = np.abs(line_positions_km - along_km)
-        weight = np.exp(-np.log(2.0) * np.square(distance_along / radius_km))
-        anchor_weight += weight
-        anchor_targets += weight * elevation_m
-        strongest_anchor = np.maximum(strongest_anchor, weight)
-    interpolated = np.divide(
-        anchor_targets,
-        anchor_weight,
-        out=target.copy(),
-        where=anchor_weight > 0.0,
+        return target, np.zeros_like(line_positions_km)
+
+    coalesced: list[tuple[float, float, float]] = []
+    for anchor in constraint.profile_anchors:
+        if coalesced and abs(anchor[0] - coalesced[-1][0]) <= 1e-6:
+            previous = coalesced[-1]
+            if abs(anchor[1] - previous[1]) > 1e-6:
+                raise ValueError(
+                    "Conflicting absolute height points project to the same structure position."
+                )
+            coalesced[-1] = (previous[0], previous[1], max(previous[2], anchor[2]))
+        else:
+            coalesced.append(anchor)
+
+    line = cast(LineString, constraint.geometry)
+    line_length = float(line.length)
+    first_position, _first_elevation, first_radius = coalesced[0]
+    last_position, _last_elevation, last_radius = coalesced[-1]
+    first_shoulder = max(0.0, first_position - 2.0 * first_radius)
+    last_shoulder = min(line_length, last_position + 2.0 * last_radius)
+    knot_positions: list[float] = []
+    knot_elevations: list[float] = []
+
+    if first_position > 1e-6:
+        knot_positions.append(0.0)
+        knot_elevations.append(constraint.elevation_m)
+        if first_shoulder > 1e-6:
+            knot_positions.append(first_shoulder)
+            knot_elevations.append(constraint.elevation_m)
+    for along_km, elevation_m, _radius_km in coalesced:
+        knot_positions.append(along_km)
+        knot_elevations.append(elevation_m)
+    if last_position < line_length - 1e-6:
+        if last_shoulder < line_length - 1e-6:
+            knot_positions.append(last_shoulder)
+            knot_elevations.append(constraint.elevation_m)
+        knot_positions.append(line_length)
+        knot_elevations.append(constraint.elevation_m)
+
+    target = shape_preserving_profile(
+        np.asarray(knot_positions, dtype=np.float64),
+        np.asarray(knot_elevations, dtype=np.float64),
+        line_positions_km,
     )
-    blend = np.clip(strongest_anchor, 0.0, 1.0)
-    return target * (1.0 - blend) + interpolated * blend
+    authored_control = np.ones_like(line_positions_km)
+    if first_position > first_shoulder:
+        left_progress = np.clip(
+            (line_positions_km - first_shoulder) / (first_position - first_shoulder),
+            0.0,
+            1.0,
+        )
+        authored_control = left_progress * left_progress * (3.0 - 2.0 * left_progress)
+    if last_position < last_shoulder:
+        right_progress = np.clip(
+            (last_shoulder - line_positions_km) / (last_shoulder - last_position),
+            0.0,
+            1.0,
+        )
+        right_control = right_progress * right_progress * (3.0 - 2.0 * right_progress)
+        authored_control = np.minimum(authored_control, right_control)
+    between_anchors = (line_positions_km >= first_position) & (
+        line_positions_km <= last_position
+    )
+    authored_control = np.where(between_anchors, 1.0, authored_control)
+    return target, np.clip(authored_control, 0.0, 1.0)
 
 
 def _structure_response(
@@ -376,6 +426,8 @@ def _apply_constraints(
     elevation += relative_brush_delta
 
     ridge_raise = np.zeros_like(elevation)
+    ridge_profile_weight = np.zeros_like(elevation)
+    ridge_profile_targets = np.zeros_like(elevation)
     for constraint in constraints:
         if constraint.kind != "ridge" or constraint.elevation_mode != "absolute":
             continue
@@ -387,17 +439,36 @@ def _apply_constraints(
             detail_driver,
         )
         detail_suppression = np.maximum(detail_suppression, weight)
-        target = _structure_target(constraint, line_positions)
+        target, authored_control = _structure_profile(constraint, line_positions)
         generated_relief = np.minimum(
             0.10 * target,
             0.22 * np.maximum(maximum_elevation_m - target, 0.0),
         )
-        target += generated_relief * np.clip(0.5 + 0.5 * detail_driver, 0.0, 1.0)
+        target += (
+            generated_relief
+            * np.clip(0.5 + 0.5 * detail_driver, 0.0, 1.0)
+            * (1.0 - authored_control)
+        )
         ridge_raise = np.maximum(
             ridge_raise,
-            weight * np.maximum(target - elevation, 0.0),
+            weight * (1.0 - authored_control) * np.maximum(target - elevation, 0.0),
         )
+        profile_weight = weight * authored_control
+        ridge_profile_weight += profile_weight
+        ridge_profile_targets += profile_weight * target
     elevation += ridge_raise
+    ridge_profile_affected = ridge_profile_weight > 0.0
+    if np.any(ridge_profile_affected):
+        ridge_profile_target = np.divide(
+            ridge_profile_targets,
+            ridge_profile_weight,
+            out=np.zeros_like(ridge_profile_targets),
+            where=ridge_profile_affected,
+        )
+        ridge_profile_blend = np.clip(ridge_profile_weight, 0.0, 1.0)
+        elevation = elevation * (1.0 - ridge_profile_blend) + (
+            ridge_profile_target * ridge_profile_blend
+        )
 
     relative_ridge_raise = np.zeros_like(elevation)
     for constraint in constraints:
@@ -417,6 +488,8 @@ def _apply_constraints(
     elevation += relative_ridge_raise
 
     valley_cut = np.zeros_like(elevation)
+    valley_profile_weight = np.zeros_like(elevation)
+    valley_profile_targets = np.zeros_like(elevation)
     for constraint in constraints:
         if constraint.kind != "valley" or constraint.elevation_mode != "absolute":
             continue
@@ -428,14 +501,33 @@ def _apply_constraints(
             detail_driver,
         )
         detail_suppression = np.maximum(detail_suppression, weight)
-        target = _structure_target(constraint, line_positions)
+        target, authored_control = _structure_profile(constraint, line_positions)
         generated_incision = np.minimum(0.15 * target, 300.0)
-        target -= generated_incision * np.clip(0.5 + 0.5 * detail_driver, 0.0, 1.0)
+        target -= (
+            generated_incision
+            * np.clip(0.5 + 0.5 * detail_driver, 0.0, 1.0)
+            * (1.0 - authored_control)
+        )
         valley_cut = np.maximum(
             valley_cut,
-            weight * np.maximum(elevation - target, 0.0),
+            weight * (1.0 - authored_control) * np.maximum(elevation - target, 0.0),
         )
+        profile_weight = weight * authored_control
+        valley_profile_weight += profile_weight
+        valley_profile_targets += profile_weight * target
     elevation -= valley_cut
+    valley_profile_affected = valley_profile_weight > 0.0
+    if np.any(valley_profile_affected):
+        valley_profile_target = np.divide(
+            valley_profile_targets,
+            valley_profile_weight,
+            out=np.zeros_like(valley_profile_targets),
+            where=valley_profile_affected,
+        )
+        valley_profile_blend = np.clip(valley_profile_weight, 0.0, 1.0)
+        elevation = elevation * (1.0 - valley_profile_blend) + (
+            valley_profile_target * valley_profile_blend
+        )
 
     relative_valley_cut = np.zeros_like(elevation)
     for constraint in constraints:

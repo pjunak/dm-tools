@@ -97,7 +97,8 @@ export. Those are not repeated below as unfinished work.
   range with two peaks and a pass, a branching mountain system, a high-altitude
   valley, a broad lowland river valley, an escarpment, and a parent/child
   refinement window. Record expected invariants rather than subjective image
-  snapshots alone.
+  snapshots alone. The two-peak/one-pass ridge fixture is complete; the other
+  landform fixtures remain.
 - [ ] **Research — Compare surface solvers for the low-frequency base.** Test
   the current smooth-response model against feature-curve diffusion/Poisson
   solving, radial-basis interpolation, and hydrologically conditioned
@@ -120,12 +121,15 @@ export. Those are not repeated below as unfinished work.
 
 ### Mountain systems, ridges, and passes
 
-- [ ] **P0 — Solve a continuous longitudinal ridge profile.** Interpolate
+- [x] **P0 — Solve a continuous longitudinal ridge profile.** Interpolate
   authored peaks and passes along arc length, enforce minimum crests where
   requested, and avoid circular point stamps or abrupt changes at vertices.
-- [ ] **P0 — Model passes as saddles, not lowered circular spots.** A pass
-  should lower the ridge along its axis while still rising above drainage on
-  both sides; validate the final saddle and crossing direction.
+  Absolute point anchors on absolute structures now use a shape-preserving
+  cubic profile with controlled shoulders.
+- [ ] **P0 — Generalize passes beyond absolute structure anchors.** An attached
+  absolute point now forms a validated geometric saddle, lower along the ridge
+  and higher across it. Explicit crossing direction, relative ridge semantics,
+  and the dedicated pass constraint remain.
 - [ ] **P1 — Vary ridge width and cross-section continuously.** Support broad
   old ranges, narrow alpine crests, rounded ridges, sharp crests, asymmetric
   escarpments, and smooth transitions between authored vertex values.
