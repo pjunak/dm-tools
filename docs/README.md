@@ -9,6 +9,8 @@ The documentation is split by purpose:
   licenses.
 - Tool-specific usage and data contracts live beside each tool; start with the
   [terrain tool guide](../src/dmtools/terrain/README.md).
+- The [terrain tool roadmap](../TODO.md) separates planned features, numerical
+  result improvements, and UI/UX work.
 
 Architecture documentation describes the current design. ADRs preserve why a
 decision was made and are not rewritten merely because the implementation later

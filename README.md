@@ -94,6 +94,8 @@ The accepted version-1 contract is published in
 | `docs/adr/` | Append-only architecture decisions |
 
 See [the documentation index](docs/README.md), [the architecture overview](docs/architecture/README.md), and [the terrain tool guide](src/dmtools/terrain/README.md).
+The categorized implementation backlog is maintained in the
+[terrain tool roadmap](TODO.md).
 
 ## Design principles
 
