@@ -13,3 +13,6 @@ The current terrain suite specifically verifies that nested resolutions retain
 identical masks and Float32 elevations at shared world-coordinate samples. It
 also verifies that soft terrain-brush strength is monotonic, can raise or lower
 the base, preserves sea level, and survives preview metadata export.
+Absolute and relative elevation modes are tested separately, including relative
+peaks on ridges, relative valley incision, per-mode validation, deterministic
+nested resolutions, and preservation of the underlying relief field.

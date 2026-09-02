@@ -22,6 +22,7 @@ from dmtools.terrain.adapters import (
 )
 from dmtools.terrain.domain import (
     Coastline,
+    ElevationMode,
     ElevationPoint,
     TerrainBrushStroke,
     TerrainConstraint,
@@ -119,12 +120,27 @@ class TerrainApp:
         self._value_labels: dict[str, ttk.Label] = {}
         self._specs = {spec.key: spec for spec in _CONTROLS}
         self._authoring_tool = tk.StringVar(value="brush")
-        self._constraint_elevation = tk.DoubleVar(value=2_500.0)
-        self._constraint_radius = tk.DoubleVar(value=120.0)
-        self._brush_width = tk.DoubleVar(value=280.0)
+        self._tool_modes = {
+            "brush": tk.StringVar(value="Relative"),
+            "height": tk.StringVar(value="Absolute"),
+            "ridge": tk.StringVar(value="Relative"),
+            "valley": tk.StringVar(value="Relative"),
+        }
+        self._tool_elevations = {
+            "brush": tk.DoubleVar(value=500.0),
+            "height": tk.DoubleVar(value=2_500.0),
+            "ridge": tk.DoubleVar(value=1_200.0),
+            "valley": tk.DoubleVar(value=700.0),
+        }
+        self._tool_sizes = {
+            "brush": tk.DoubleVar(value=280.0),
+            "height": tk.DoubleVar(value=120.0),
+            "ridge": tk.DoubleVar(value=120.0),
+            "valley": tk.DoubleVar(value=90.0),
+        }
         self._brush_intensity_percent = tk.DoubleVar(value=55.0)
         self._brush_cursor: tuple[float, float] | None = None
-        self._active_brush_values: tuple[float, float, float] | None = None
+        self._active_brush_values: tuple[float, float, float, ElevationMode] | None = None
         self._tool_buttons: dict[str, tk.Button] = {}
         self._authoring_widgets: list[tk.Widget] = []
         self._authoring_enabled = False
@@ -386,23 +402,41 @@ class TerrainApp:
         parameters.grid(row=1, column=0, columnspan=7, sticky="w", pady=(7, 0))
         tk.Label(
             parameters,
-            text="Target height",
+            text="Mode",
             background="#203033",
             foreground="#a9bab7",
             font=("Segoe UI", 8),
         ).pack(side="left", padx=(0, 4))
-        elevation_input = tk.Spinbox(
+        self.mode_input = ttk.Combobox(
             parameters,
-            from_=0,
+            values=("Absolute", "Relative"),
+            textvariable=self._tool_modes["brush"],
+            width=9,
+            state="readonly",
+            font=("Segoe UI", 8),
+        )
+        self.mode_input.pack(side="left")
+        self.mode_input.bind("<<ComboboxSelected>>", self._on_elevation_mode_changed)
+        self.value_label = tk.Label(
+            parameters,
+            text="Height offset",
+            background="#203033",
+            foreground="#a9bab7",
+            font=("Segoe UI", 8),
+        )
+        self.value_label.pack(side="left", padx=(12, 4))
+        self.value_input = tk.Spinbox(
+            parameters,
+            from_=-10_000,
             to=10_000,
             increment=100,
-            textvariable=self._constraint_elevation,
+            textvariable=self._tool_elevations["brush"],
             width=7,
             justify="right",
             font=("Consolas", 8),
         )
-        elevation_input.pack(side="left")
-        self._authoring_widgets.append(elevation_input)
+        self.value_input.pack(side="left")
+        self._authoring_widgets.append(self.value_input)
         tk.Label(
             parameters,
             text="m",
@@ -423,7 +457,7 @@ class TerrainApp:
             from_=1,
             to=4_000,
             increment=10,
-            textvariable=self._constraint_radius,
+            textvariable=self._tool_sizes["brush"],
             width=7,
             justify="right",
             font=("Consolas", 8),
@@ -535,8 +569,20 @@ class TerrainApp:
         self._refresh_authoring_controls()
         self._draw_preview()
 
+    def _selected_elevation_mode(self, tool: str | None = None) -> ElevationMode:
+        selected = tool or self._authoring_tool.get()
+        value = self._tool_modes[selected].get().lower()
+        if value not in ("absolute", "relative"):
+            raise ValueError(f"Unknown elevation mode: {value}")
+        return value
+
+    def _on_elevation_mode_changed(self, _event: tk.Event[tk.Misc]) -> None:
+        self._refresh_authoring_controls()
+        self._draw_brush_cursor()
+
     def _refresh_authoring_controls(self) -> None:
         selected = self._authoring_tool.get()
+        elevation_mode = self._selected_elevation_mode(selected)
         colours = {
             "brush": _BRUSH_COLOUR,
             "height": _HEIGHT_COLOUR,
@@ -564,13 +610,35 @@ class TerrainApp:
         self.clear_constraints_button.configure(
             state="normal" if self._authoring_enabled and has_authored_work else "disabled"
         )
+        self.mode_input.configure(
+            textvariable=self._tool_modes[selected],
+            state="readonly" if self._authoring_enabled else "disabled",
+        )
+        signed_relative = elevation_mode == "relative" and selected in ("brush", "height")
+        self.value_input.configure(
+            from_=-10_000 if signed_relative else 0,
+            to=10_000,
+            increment=100,
+            textvariable=self._tool_elevations[selected],
+        )
+        value_labels = {
+            ("brush", "absolute"): "Target height",
+            ("brush", "relative"): "Height offset",
+            ("height", "absolute"): "Exact height",
+            ("height", "relative"): "Height offset",
+            ("ridge", "absolute"): "Minimum crest",
+            ("ridge", "relative"): "Ridge relief",
+            ("valley", "absolute"): "Maximum floor",
+            ("valley", "relative"): "Valley depth",
+        }
+        self.value_label.configure(text=value_labels[(selected, elevation_mode)])
         if selected == "brush":
             self.width_label.configure(text="Brush width")
             self.width_input.configure(
                 from_=10,
                 to=4_000,
                 increment=20,
-                textvariable=self._brush_width,
+                textvariable=self._tool_sizes[selected],
             )
         else:
             self.width_label.configure(
@@ -580,7 +648,7 @@ class TerrainApp:
                 from_=1,
                 to=2_000,
                 increment=10,
-                textvariable=self._constraint_radius,
+                textvariable=self._tool_sizes[selected],
             )
         self.brush_strength_input.configure(
             state="normal" if self._authoring_enabled and selected == "brush" else "disabled"
@@ -589,19 +657,25 @@ class TerrainApp:
         if not self._authoring_enabled:
             hint = "Import a coastline to start drawing."
         elif selected == "brush":
-            hint = (
-                "Drag to paint a soft target height. Wheel changes width; "
-                "Ctrl+wheel changes strength."
+            action = (
+                "toward an absolute height"
+                if elevation_mode == "absolute"
+                else "a signed height offset onto the existing terrain"
             )
+            hint = f"Drag to paint {action}. Wheel: width; Ctrl+wheel: strength."
         elif selected == "height":
-            hint = (
-                "Click to place a target height; the soft terrain response extends past its core."
-            )
+            action = "an exact height" if elevation_mode == "absolute" else "a local height offset"
+            hint = f"Click to place {action}; its smooth response extends past the core."
         else:
             feature = "ridge" if selected == "ridge" else "valley"
+            behavior = (
+                "uses an absolute crest or floor"
+                if elevation_mode == "absolute"
+                else "adds relief or incision relative to the terrain beneath it"
+            )
             hint = (
                 f"Click along the {feature}; Finish line or right-click at 2+ points. "
-                "The response extends past the core."
+                f"It {behavior}."
             )
         count = len(self._constraints)
         if count:
@@ -653,25 +727,30 @@ class TerrainApp:
             return None
         return (x - left) / (right - left), (y - top) / (bottom - top)
 
-    def _read_constraint_values(self) -> tuple[float, float] | None:
+    def _read_constraint_values(self) -> tuple[float, float, ElevationMode] | None:
+        tool = self._authoring_tool.get()
         try:
-            elevation_m = float(self._constraint_elevation.get())
-            radius_km = float(self._constraint_radius.get())
-            if elevation_m < 0:
-                raise ValueError("Height must be at or above sea level.")
+            elevation_m = float(self._tool_elevations[tool].get())
+            radius_km = float(self._tool_sizes[tool].get())
+            elevation_mode = self._selected_elevation_mode(tool)
+            if elevation_mode == "absolute" and elevation_m < 0:
+                raise ValueError("Absolute height must be at or above sea level.")
+            if elevation_mode == "relative" and tool in ("ridge", "valley") and elevation_m < 0:
+                raise ValueError("Ridge relief and valley depth must not be negative.")
             if radius_km <= 0:
                 raise ValueError("Influence must be greater than zero.")
         except (tk.TclError, ValueError) as error:
             messagebox.showerror("Invalid authored feature", str(error), parent=self.root)
             return None
-        return elevation_m, radius_km
+        return elevation_m, radius_km, elevation_mode
 
-    def _read_brush_values(self) -> tuple[float, float, float] | None:
+    def _read_brush_values(self) -> tuple[float, float, float, ElevationMode] | None:
         try:
-            elevation_m = float(self._constraint_elevation.get())
-            width_km = float(self._brush_width.get())
+            elevation_m = float(self._tool_elevations["brush"].get())
+            width_km = float(self._tool_sizes["brush"].get())
             intensity = float(self._brush_intensity_percent.get()) / 100.0
-            if elevation_m < 0:
+            elevation_mode = self._selected_elevation_mode("brush")
+            if elevation_mode == "absolute" and elevation_m < 0:
                 raise ValueError("Target height must be at or above sea level.")
             if width_km <= 0:
                 raise ValueError("Brush width must be greater than zero.")
@@ -680,7 +759,7 @@ class TerrainApp:
         except (tk.TclError, ValueError) as error:
             messagebox.showerror("Invalid terrain brush", str(error), parent=self.root)
             return None
-        return elevation_m, width_km / 2.0, intensity
+        return elevation_m, width_km / 2.0, intensity, elevation_mode
 
     def _brush_map_position(self, x: float, y: float) -> tuple[float, float] | None:
         if self._coast_polygon is None:
@@ -749,7 +828,7 @@ class TerrainApp:
     def _on_map_release(self, _event: tk.Event[tk.Misc]) -> None:
         if self._authoring_tool.get() != "brush" or self._active_brush_values is None:
             return
-        elevation_m, radius_km, intensity = self._active_brush_values
+        elevation_m, radius_km, intensity, elevation_mode = self._active_brush_values
         points = tuple(self._draft_points)
         self._active_brush_values = None
         self._draft_points.clear()
@@ -762,6 +841,7 @@ class TerrainApp:
                 elevation_m=elevation_m,
                 influence_radius_km=radius_km,
                 intensity=intensity,
+                elevation_mode=elevation_mode,
             )
         )
         self._invalidate_generated_terrain("Terrain brush stroke added. Generate to apply it.")
@@ -787,9 +867,11 @@ class TerrainApp:
             current = float(self._brush_intensity_percent.get())
             self._brush_intensity_percent.set(min(100.0, max(5.0, current + 5.0 * steps)))
         else:
-            current = float(self._brush_width.get())
+            current = float(self._tool_sizes["brush"].get())
             increment = max(10.0, round(current * 0.08 / 10.0) * 10.0)
-            self._brush_width.set(min(4_000.0, max(10.0, current + increment * steps)))
+            self._tool_sizes["brush"].set(
+                min(4_000.0, max(10.0, current + increment * steps))
+            )
         self._brush_cursor = self._brush_map_position(float(event.x), float(event.y))
         self._refresh_authoring_controls()
         self._draw_brush_cursor()
@@ -812,12 +894,13 @@ class TerrainApp:
             values = self._read_constraint_values()
             if values is None:
                 return
-            elevation_m, radius_km = values
+            elevation_m, radius_km, elevation_mode = values
             self._constraints.append(
                 ElevationPoint(
                     position=position,
                     elevation_m=elevation_m,
                     influence_radius_km=radius_km,
+                    elevation_mode=elevation_mode,
                 )
             )
             self._invalidate_generated_terrain("Height point added. Generate to apply it.")
@@ -849,13 +932,14 @@ class TerrainApp:
         values = self._read_constraint_values()
         if values is None:
             return
-        elevation_m, radius_km = values
+        elevation_m, radius_km, elevation_mode = values
         self._constraints.append(
             TerrainStructure(
                 kind=tool,
                 points=tuple(self._draft_points),
                 elevation_m=elevation_m,
                 influence_radius_km=radius_km,
+                elevation_mode=elevation_mode,
             )
         )
         self._draft_points.clear()
@@ -1212,8 +1296,14 @@ class TerrainApp:
                 label_x + 7,
                 label_y - 6,
                 text=(
-                    f"brush  {2.0 * constraint.influence_radius_km:,.0f} km  "
-                    f"{constraint.intensity:.0%}"
+                    "brush  "
+                    + (
+                        f"{constraint.elevation_m:+,.0f} m relative"
+                        if constraint.elevation_mode == "relative"
+                        else f"{constraint.elevation_m:,.0f} m absolute"
+                    )
+                    + f"  {2.0 * constraint.influence_radius_km:,.0f} km  "
+                    + f"{constraint.intensity:.0%}"
                 ),
                 anchor="sw",
                 fill="#d7e7bd",
@@ -1244,7 +1334,11 @@ class TerrainApp:
             self.preview.create_text(
                 x + 8,
                 y - 7,
-                text=f"{constraint.elevation_m:,.0f} m",
+                text=(
+                    f"{constraint.elevation_m:+,.0f} m relative"
+                    if constraint.elevation_mode == "relative"
+                    else f"{constraint.elevation_m:,.0f} m absolute"
+                ),
                 anchor="sw",
                 fill="#fff3bf",
                 font=("Consolas", 8, "bold"),
@@ -1273,7 +1367,15 @@ class TerrainApp:
         self.preview.create_text(
             label_x + 7,
             label_y - 6,
-            text=f"{constraint.kind}  {constraint.elevation_m:,.0f} m",
+            text=(
+                f"{constraint.kind}  "
+                + (
+                    f"{'relief' if constraint.kind == 'ridge' else 'depth'} "
+                    f"{constraint.elevation_m:,.0f} m"
+                    if constraint.elevation_mode == "relative"
+                    else f"{constraint.elevation_m:,.0f} m absolute"
+                )
+            ),
             anchor="sw",
             fill=colour,
             font=("Consolas", 8, "bold"),
@@ -1322,7 +1424,7 @@ class TerrainApp:
         radius_km = (
             self._active_brush_values[1]
             if self._active_brush_values is not None
-            else float(self._brush_width.get()) / 2.0
+            else float(self._tool_sizes["brush"].get()) / 2.0
         )
         radius = max(2.0, self._influence_radius_pixels(radius_km))
         if len(canvas_points) == 1:
@@ -1370,7 +1472,7 @@ class TerrainApp:
         ):
             return
         x, y = self._normalized_to_canvas(self._brush_cursor)
-        width_km = float(self._brush_width.get())
+        width_km = float(self._tool_sizes["brush"].get())
         radius = max(3.0, self._influence_radius_pixels(width_km / 2.0))
         strength = float(self._brush_intensity_percent.get())
         self.preview.create_oval(

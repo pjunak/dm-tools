@@ -39,3 +39,13 @@ def test_terrain_brush_requires_points_and_bounded_intensity() -> None:
         TerrainBrushStroke(((0.5, 0.5), (0.5, 0.5)), 1_000.0, 50.0, 0.5)
     with pytest.raises(ValueError, match="at most 1"):
         TerrainBrushStroke(((0.5, 0.5),), 1_000.0, 50.0, 1.1)
+
+
+def test_relative_constraints_validate_signed_and_directional_values() -> None:
+    point = ElevationPoint((0.5, 0.5), -250.0, 50.0, "relative")
+    brush = TerrainBrushStroke(((0.5, 0.5),), -400.0, 80.0, 0.5, "relative")
+
+    assert point.elevation_mode == "relative"
+    assert brush.elevation_mode == "relative"
+    with pytest.raises(ValueError, match="must not be negative"):
+        TerrainStructure("ridge", ((0.3, 0.5), (0.7, 0.5)), -100.0, 60.0, "relative")

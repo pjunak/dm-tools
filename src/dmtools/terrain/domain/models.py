@@ -6,6 +6,7 @@ from typing import Literal
 
 type Point2D = tuple[float, float]
 type StructureKind = Literal["ridge", "valley"]
+type ElevationMode = Literal["absolute", "relative"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -37,9 +38,21 @@ def _validate_normalized_point(point: Point2D) -> None:
         raise ValueError("Constraint coordinates must be between 0 and 1.")
 
 
-def _validate_constraint_values(elevation_m: float, influence_radius_km: float) -> None:
-    if not isfinite(elevation_m) or elevation_m < 0:
-        raise ValueError("Constraint elevation must be a finite value at or above sea level.")
+def _validate_constraint_values(
+    elevation_m: float,
+    influence_radius_km: float,
+    elevation_mode: ElevationMode,
+    *,
+    allow_signed_relative: bool,
+) -> None:
+    if elevation_mode not in ("absolute", "relative"):
+        raise ValueError("Elevation mode must be 'absolute' or 'relative'.")
+    if not isfinite(elevation_m):
+        raise ValueError("Constraint elevation must be finite.")
+    if elevation_mode == "absolute" and elevation_m < 0:
+        raise ValueError("Absolute elevation must be at or above sea level.")
+    if elevation_mode == "relative" and not allow_signed_relative and elevation_m < 0:
+        raise ValueError("Relative ridge relief and valley depth must not be negative.")
     if not isfinite(influence_radius_km) or influence_radius_km <= 0:
         raise ValueError("Constraint influence radius must be positive and finite.")
 
@@ -51,10 +64,16 @@ class ElevationPoint:
     position: Point2D
     elevation_m: float
     influence_radius_km: float
+    elevation_mode: ElevationMode = "absolute"
 
     def __post_init__(self) -> None:
         _validate_normalized_point(self.position)
-        _validate_constraint_values(self.elevation_m, self.influence_radius_km)
+        _validate_constraint_values(
+            self.elevation_m,
+            self.influence_radius_km,
+            self.elevation_mode,
+            allow_signed_relative=True,
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -65,6 +84,7 @@ class TerrainStructure:
     points: tuple[Point2D, ...]
     elevation_m: float
     influence_radius_km: float
+    elevation_mode: ElevationMode = "absolute"
 
     def __post_init__(self) -> None:
         if self.kind not in ("ridge", "valley"):
@@ -76,7 +96,12 @@ class TerrainStructure:
         adjacent_pairs = zip(self.points, self.points[1:], strict=False)
         if any(first == second for first, second in adjacent_pairs):
             raise ValueError("Adjacent terrain structure points must be different.")
-        _validate_constraint_values(self.elevation_m, self.influence_radius_km)
+        _validate_constraint_values(
+            self.elevation_m,
+            self.influence_radius_km,
+            self.elevation_mode,
+            allow_signed_relative=False,
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -87,6 +112,7 @@ class TerrainBrushStroke:
     elevation_m: float
     influence_radius_km: float
     intensity: float
+    elevation_mode: ElevationMode = "absolute"
 
     def __post_init__(self) -> None:
         if not self.points:
@@ -96,7 +122,12 @@ class TerrainBrushStroke:
         adjacent_pairs = zip(self.points, self.points[1:], strict=False)
         if any(first == second for first, second in adjacent_pairs):
             raise ValueError("Adjacent terrain brush points must be different.")
-        _validate_constraint_values(self.elevation_m, self.influence_radius_km)
+        _validate_constraint_values(
+            self.elevation_m,
+            self.influence_radius_km,
+            self.elevation_mode,
+            allow_signed_relative=True,
+        )
         if not isfinite(self.intensity) or not 0.0 < self.intensity <= 1.0:
             raise ValueError("Terrain brush intensity must be greater than 0 and at most 1.")
 

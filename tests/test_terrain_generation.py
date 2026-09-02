@@ -3,6 +3,7 @@ from dataclasses import replace
 from pathlib import Path
 
 import numpy as np
+import pytest
 from PIL import Image
 
 from dmtools.terrain.adapters import render_height_map, save_height_map
@@ -180,6 +181,83 @@ def test_terrain_brush_can_lower_terrain_without_moving_the_coastline() -> None:
     assert painted.elevation_m[0, 32] == np.float32(0.0)
 
 
+def test_relative_brush_adds_a_soft_offset_to_existing_terrain() -> None:
+    baseline = generate_terrain(_square(), _settings(maximum_elevation_m=5_000.0))
+    brush = TerrainBrushStroke(
+        points=((0.3, 0.5), (0.7, 0.5)),
+        elevation_m=600.0,
+        influence_radius_km=100.0,
+        intensity=0.5,
+        elevation_mode="relative",
+    )
+
+    painted = generate_terrain(
+        _square(),
+        _settings(maximum_elevation_m=5_000.0),
+        constraints=(brush,),
+    )
+    lowered = generate_terrain(
+        _square(),
+        _settings(maximum_elevation_m=5_000.0),
+        constraints=(replace(brush, elevation_m=-600.0),),
+    )
+
+    assert float(painted.elevation_m[32, 32] - baseline.elevation_m[32, 32]) == pytest.approx(
+        300.0,
+        abs=0.001,
+    )
+    assert float(lowered.elevation_m[32, 32] - baseline.elevation_m[32, 32]) == pytest.approx(
+        -300.0,
+        abs=0.001,
+    )
+
+
+def test_relative_peak_builds_on_relative_ridge_and_preserves_background_relief() -> None:
+    settings = _settings(maximum_elevation_m=6_000.0)
+    baseline = generate_terrain(_square(), settings)
+    ridge = TerrainStructure(
+        "ridge",
+        ((0.2, 0.5), (0.8, 0.5)),
+        800.0,
+        80.0,
+        "relative",
+    )
+    peak = ElevationPoint((0.5, 0.5), 600.0, 70.0, "relative")
+
+    ridge_only = generate_terrain(_square(), settings, constraints=(ridge,))
+    combined = generate_terrain(_square(), settings, constraints=(ridge, peak))
+
+    assert float(ridge_only.elevation_m[32, 32] - baseline.elevation_m[32, 32]) == pytest.approx(
+        800.0,
+        abs=0.001,
+    )
+    assert float(combined.elevation_m[32, 32] - ridge_only.elevation_m[32, 32]) == pytest.approx(
+        600.0,
+        abs=0.001,
+    )
+
+
+def test_relative_valley_keeps_the_elevation_difference_of_its_surroundings() -> None:
+    settings = _settings(maximum_elevation_m=6_000.0)
+    baseline = generate_terrain(_square(), settings)
+    valley = TerrainStructure(
+        "valley",
+        ((0.2, 0.5), (0.8, 0.5)),
+        500.0,
+        80.0,
+        "relative",
+    )
+
+    cut = generate_terrain(_square(), settings, constraints=(valley,))
+
+    for column in (26, 32, 38):
+        incision = float(baseline.elevation_m[32, column] - cut.elevation_m[32, column])
+        assert incision == pytest.approx(
+            500.0,
+            abs=0.001,
+        )
+
+
 def test_overlapping_terrain_brushes_are_order_independent() -> None:
     high = TerrainBrushStroke(((0.25, 0.5), (0.6, 0.5)), 2_500.0, 90.0, 0.4)
     low = TerrainBrushStroke(((0.4, 0.5), (0.75, 0.5)), 500.0, 110.0, 0.6)
@@ -192,9 +270,21 @@ def test_overlapping_terrain_brushes_are_order_independent() -> None:
 
 def test_authored_constraints_preserve_nested_resolution_samples() -> None:
     constraints = (
-        TerrainBrushStroke(((0.3, 0.4), (0.7, 0.4)), 1_800.0, 100.0, 0.5),
+        TerrainBrushStroke(
+            ((0.3, 0.4), (0.7, 0.4)),
+            350.0,
+            100.0,
+            0.5,
+            "relative",
+        ),
         ElevationPoint((0.5, 0.5), 1_250.0, 130.0),
-        TerrainStructure("ridge", ((0.2, 0.7), (0.8, 0.7)), 2_600.0, 90.0),
+        TerrainStructure(
+            "ridge",
+            ((0.2, 0.7), (0.8, 0.7)),
+            700.0,
+            90.0,
+            "relative",
+        ),
     )
 
     coarse = generate_terrain(_square(), _settings(resolution_px=65), constraints=constraints)
@@ -251,12 +341,14 @@ def test_render_is_transparent_outside_and_png_records_settings(tmp_path: Path) 
         assert constraints == [
             {
                 "elevation_m": 1_200.0,
+                "elevation_mode": "absolute",
                 "influence_radius_km": 75.0,
                 "position": [0.5, 0.5],
                 "type": "elevation_point",
             },
             {
                 "elevation_m": 900.0,
+                "elevation_mode": "absolute",
                 "influence_radius_km": 60.0,
                 "intensity": 0.4,
                 "points": [[0.3, 0.6], [0.7, 0.6]],

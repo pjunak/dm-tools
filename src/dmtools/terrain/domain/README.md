@@ -5,6 +5,8 @@ implemented authoring types are a closed coastline, exact elevation points,
 soft terrain-brush strokes, ridge and valley centrelines, and effective
 generator settings. Constraint positions use normalized coastline-bounds
 coordinates until the pipeline converts them to the metric working extent.
+Every authored elevation feature explicitly records whether its metre value is
+an absolute elevation or a relative displacement, relief, or incision depth.
 
 Future domain types will add units, coordinate reference systems, structure
 profiles, grids, manifests, stage identifiers, and validation errors.

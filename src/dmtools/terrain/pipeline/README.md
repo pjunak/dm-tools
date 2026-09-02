@@ -6,10 +6,13 @@ derived seed, then return typed outputs and diagnostics.
 
 The implemented generator builds an unconditioned coordinate-addressed relief
 field. When authored constraints exist, it separately builds a low-frequency
-base, applies broad smooth ridge, valley, and height-point responses, and then
-restores the high-frequency residual with attenuation near those features. Soft
-terrain-brush strokes are combined as order-independent weighted targets before
-structural constraints. The coastline remains a hard zero-elevation boundary.
+base, applies broad smooth brush, ridge, valley, and height-point responses, and
+then restores the high-frequency residual. Absolute constraints attenuate that
+residual to satisfy world elevations. Relative constraints are deterministic
+displacement fields over the surface entering their stage and preserve its
+residual relief. The order is brush, ridge, valley, relative point, then exact
+absolute point. Same-kind overlaps are order-independent. The coastline remains
+a hard zero-elevation boundary.
 
 Stages must not depend on implicit process state such as the current directory,
 wall-clock time, ambient random generators, or undeclared environment settings.

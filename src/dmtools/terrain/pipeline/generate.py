@@ -13,6 +13,7 @@ from shapely.geometry import LineString, Point, Polygon
 
 from dmtools.terrain.domain import (
     Coastline,
+    ElevationMode,
     ElevationPoint,
     TerrainBrushStroke,
     TerrainConstraint,
@@ -73,6 +74,7 @@ class _MetricConstraint:
     geometry: Point | LineString
     elevation_m: float
     influence_radius_km: float
+    elevation_mode: ElevationMode
     intensity: float = 1.0
     profile_anchors: tuple[tuple[float, float, float], ...] = ()
     attached_to_structure: bool = False
@@ -115,7 +117,10 @@ def _metric_constraints(
 ) -> tuple[_MetricConstraint, ...]:
     converted: list[_MetricConstraint] = []
     for constraint in constraints:
-        if constraint.elevation_m > maximum_elevation_m:
+        if (
+            constraint.elevation_mode == "absolute"
+            and constraint.elevation_m > maximum_elevation_m
+        ):
             raise ValueError(
                 f"Authored elevation {constraint.elevation_m:,.0f} m exceeds the "
                 f"{maximum_elevation_m:,.0f} m elevation ceiling."
@@ -153,6 +158,7 @@ def _metric_constraints(
                 geometry=geometry,
                 elevation_m=constraint.elevation_m,
                 influence_radius_km=constraint.influence_radius_km,
+                elevation_mode=constraint.elevation_mode,
                 intensity=intensity,
             )
         )
@@ -165,11 +171,13 @@ def _metric_constraints(
         index: [] for index in structure_indices
     }
     for point_index, point_constraint in enumerate(converted):
-        if point_constraint.kind != "point":
+        if point_constraint.kind != "point" or point_constraint.elevation_mode != "absolute":
             continue
         attached = False
         for structure_index in structure_indices:
             structure = converted[structure_index]
+            if structure.elevation_mode != "absolute":
+                continue
             attachment_distance = max(
                 point_constraint.influence_radius_km,
                 structure.influence_radius_km,
@@ -275,6 +283,38 @@ def _structure_target(
     return target * (1.0 - blend) + interpolated * blend
 
 
+def _structure_response(
+    constraint: _MetricConstraint,
+    sample_points: Any,
+    distance_to_coast_km: NDArray[np.float64],
+    largest_feature_km: float,
+    detail_driver: NDArray[np.float64],
+) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
+    """Return a tapered structure weight and distance along its centreline."""
+
+    raw_distance = cast(Any, shapely.distance(sample_points, constraint.geometry))
+    distance = cast(NDArray[np.float64], np.asarray(raw_distance, dtype=np.float64))
+    line = cast(LineString, constraint.geometry)
+    line_positions = _line_positions_km(line, sample_points)
+    distance_to_end = np.minimum(line_positions, line.length - line_positions)
+    taper_length = max(2.0 * constraint.influence_radius_km, 0.12 * line.length)
+    taper_progress = np.clip(distance_to_end / taper_length, 0.0, 1.0)
+    taper = taper_progress * taper_progress * (3.0 - 2.0 * taper_progress)
+    width_variation = 0.82 + 0.36 * (0.5 + 0.5 * detail_driver)
+    effective_radius = constraint.influence_radius_km * (0.35 + 0.65 * taper)
+    effective_radius *= width_variation
+    weight = _constraint_weight(
+        distance,
+        effective_radius,
+        largest_feature_km,
+        is_structure=True,
+    )
+    return (
+        _coast_conditioned_weight(weight, distance, distance_to_coast_km),
+        line_positions,
+    )
+
+
 def _apply_constraints(
     base_elevation: NDArray[np.float64],
     sample_points: Any,
@@ -287,12 +327,12 @@ def _apply_constraints(
     """Condition a broad base surface and report where fine detail should fade."""
 
     elevation = base_elevation.copy()
-    combined_influence = np.zeros_like(elevation)
+    detail_suppression = np.zeros_like(elevation)
 
     brush_weight = np.zeros_like(elevation)
     brush_targets = np.zeros_like(elevation)
     for constraint in constraints:
-        if constraint.kind != "brush":
+        if constraint.kind != "brush" or constraint.elevation_mode != "absolute":
             continue
         raw_distance = cast(Any, shapely.distance(sample_points, constraint.geometry))
         distance = cast(NDArray[np.float64], np.asarray(raw_distance, dtype=np.float64))
@@ -316,31 +356,37 @@ def _apply_constraints(
         )
         brush_blend = np.clip(brush_weight, 0.0, 1.0)
         elevation = elevation * (1.0 - brush_blend) + brush_target * brush_blend
-        combined_influence = np.maximum(combined_influence, brush_blend)
+        detail_suppression = np.maximum(detail_suppression, brush_blend)
 
-    ridge_raise = np.zeros_like(elevation)
+    relative_brush_delta = np.zeros_like(elevation)
     for constraint in constraints:
-        if constraint.kind != "ridge":
+        if constraint.kind != "brush" or constraint.elevation_mode != "relative":
             continue
         raw_distance = cast(Any, shapely.distance(sample_points, constraint.geometry))
         distance = cast(NDArray[np.float64], np.asarray(raw_distance, dtype=np.float64))
-        line = cast(LineString, constraint.geometry)
-        line_positions = _line_positions_km(line, sample_points)
-        distance_to_end = np.minimum(line_positions, line.length - line_positions)
-        taper_length = max(2.0 * constraint.influence_radius_km, 0.12 * line.length)
-        taper_progress = np.clip(distance_to_end / taper_length, 0.0, 1.0)
-        taper = taper_progress * taper_progress * (3.0 - 2.0 * taper_progress)
-        width_variation = 0.82 + 0.36 * (0.5 + 0.5 * detail_driver)
-        effective_radius = constraint.influence_radius_km * (0.35 + 0.65 * taper)
-        effective_radius *= width_variation
-        weight = _constraint_weight(
+        weight = constraint.intensity * _constraint_weight(
             distance,
-            effective_radius,
+            constraint.influence_radius_km,
             largest_feature_km,
-            is_structure=True,
+            is_structure=False,
+            is_brush=True,
         )
         weight = _coast_conditioned_weight(weight, distance, distance_to_coast_km)
-        combined_influence = np.maximum(combined_influence, weight)
+        relative_brush_delta += weight * constraint.elevation_m
+    elevation += relative_brush_delta
+
+    ridge_raise = np.zeros_like(elevation)
+    for constraint in constraints:
+        if constraint.kind != "ridge" or constraint.elevation_mode != "absolute":
+            continue
+        weight, line_positions = _structure_response(
+            constraint,
+            sample_points,
+            distance_to_coast_km,
+            largest_feature_km,
+            detail_driver,
+        )
+        detail_suppression = np.maximum(detail_suppression, weight)
         target = _structure_target(constraint, line_positions)
         generated_relief = np.minimum(
             0.10 * target,
@@ -353,29 +399,35 @@ def _apply_constraints(
         )
     elevation += ridge_raise
 
+    relative_ridge_raise = np.zeros_like(elevation)
+    for constraint in constraints:
+        if constraint.kind != "ridge" or constraint.elevation_mode != "relative":
+            continue
+        weight, _line_positions = _structure_response(
+            constraint,
+            sample_points,
+            distance_to_coast_km,
+            largest_feature_km,
+            detail_driver,
+        )
+        relative_ridge_raise = np.maximum(
+            relative_ridge_raise,
+            weight * constraint.elevation_m,
+        )
+    elevation += relative_ridge_raise
+
     valley_cut = np.zeros_like(elevation)
     for constraint in constraints:
-        if constraint.kind != "valley":
+        if constraint.kind != "valley" or constraint.elevation_mode != "absolute":
             continue
-        raw_distance = cast(Any, shapely.distance(sample_points, constraint.geometry))
-        distance = cast(NDArray[np.float64], np.asarray(raw_distance, dtype=np.float64))
-        line = cast(LineString, constraint.geometry)
-        line_positions = _line_positions_km(line, sample_points)
-        distance_to_end = np.minimum(line_positions, line.length - line_positions)
-        taper_length = max(2.0 * constraint.influence_radius_km, 0.12 * line.length)
-        taper_progress = np.clip(distance_to_end / taper_length, 0.0, 1.0)
-        taper = taper_progress * taper_progress * (3.0 - 2.0 * taper_progress)
-        width_variation = 0.82 + 0.36 * (0.5 + 0.5 * detail_driver)
-        effective_radius = constraint.influence_radius_km * (0.35 + 0.65 * taper)
-        effective_radius *= width_variation
-        weight = _constraint_weight(
-            distance,
-            effective_radius,
+        weight, line_positions = _structure_response(
+            constraint,
+            sample_points,
+            distance_to_coast_km,
             largest_feature_km,
-            is_structure=True,
+            detail_driver,
         )
-        weight = _coast_conditioned_weight(weight, distance, distance_to_coast_km)
-        combined_influence = np.maximum(combined_influence, weight)
+        detail_suppression = np.maximum(detail_suppression, weight)
         target = _structure_target(constraint, line_positions)
         generated_incision = np.minimum(0.15 * target, 300.0)
         target -= generated_incision * np.clip(0.5 + 0.5 * detail_driver, 0.0, 1.0)
@@ -385,10 +437,43 @@ def _apply_constraints(
         )
     elevation -= valley_cut
 
+    relative_valley_cut = np.zeros_like(elevation)
+    for constraint in constraints:
+        if constraint.kind != "valley" or constraint.elevation_mode != "relative":
+            continue
+        weight, _line_positions = _structure_response(
+            constraint,
+            sample_points,
+            distance_to_coast_km,
+            largest_feature_km,
+            detail_driver,
+        )
+        relative_valley_cut = np.maximum(
+            relative_valley_cut,
+            weight * constraint.elevation_m,
+        )
+    elevation -= relative_valley_cut
+
+    relative_point_delta = np.zeros_like(elevation)
+    for constraint in constraints:
+        if constraint.kind != "point" or constraint.elevation_mode != "relative":
+            continue
+        raw_distance = cast(Any, shapely.distance(sample_points, constraint.geometry))
+        distance = cast(NDArray[np.float64], np.asarray(raw_distance, dtype=np.float64))
+        weight = _constraint_weight(
+            distance,
+            constraint.influence_radius_km,
+            largest_feature_km,
+            is_structure=False,
+        )
+        weight = _coast_conditioned_weight(weight, distance, distance_to_coast_km)
+        relative_point_delta += weight * constraint.elevation_m
+    elevation += relative_point_delta
+
     point_weight = np.zeros_like(elevation)
     point_targets = np.zeros_like(elevation)
     for constraint in constraints:
-        if constraint.kind != "point":
+        if constraint.kind != "point" or constraint.elevation_mode != "absolute":
             continue
         raw_distance = cast(Any, shapely.distance(sample_points, constraint.geometry))
         distance = cast(NDArray[np.float64], np.asarray(raw_distance, dtype=np.float64))
@@ -404,7 +489,7 @@ def _apply_constraints(
             attached_point=constraint.attached_to_structure,
         )
         weight = _coast_conditioned_weight(weight, distance, distance_to_coast_km)
-        combined_influence = np.maximum(combined_influence, weight)
+        detail_suppression = np.maximum(detail_suppression, weight)
         point_weight += weight
         point_targets += weight * constraint.elevation_m
     affected = point_weight > 0.0
@@ -418,7 +503,7 @@ def _apply_constraints(
         blend = np.clip(point_weight, 0.0, 1.0)
         elevation = elevation * (1.0 - blend) + target * blend
 
-    return elevation, np.clip(combined_influence, 0.0, 1.0)
+    return elevation, np.clip(detail_suppression, 0.0, 1.0)
 
 
 def generate_terrain(

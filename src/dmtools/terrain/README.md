@@ -38,10 +38,25 @@ coordinate system.
 
 After importing a coastline, select a drawing tool above the map:
 
-- **Terrain brush** softly guides a broad area toward the target elevation.
-- **Height point** records an exact target elevation at one location.
-- **Ridge line** records a minimum crest elevation and raises lower terrain.
-- **Valley line** records a maximum floor elevation and cuts higher terrain.
+- **Terrain brush** paints broad, soft elevation guidance.
+- **Height point** places one local height or height offset.
+- **Ridge line** establishes a crest or adds ridge relief.
+- **Valley line** establishes a floor or adds relative incision.
+
+Each tool keeps its own mode, elevation value, and radius or width while tools
+are switched. Brush strength is also retained independently. The initial modes
+are relative brush, absolute height point, relative ridge, and relative valley.
+
+Every feature can use one of two elevation modes:
+
+| Mode | Meaning |
+|---|---|
+| **Absolute** | Specifies a world elevation in metres above sea level. A point is exact, a ridge is a minimum crest, a valley is a maximum floor, and a brush blends toward its target. |
+| **Relative** | Specifies displacement from the terrain entering that pipeline stage. Positive point or brush values raise terrain, negative values lower it, ridge values add relief, and valley values add incision depth. |
+
+Relative mode is deliberately local relief rather than true topographic
+prominence. Prominence depends on the final summit and its key saddle, while a
+relative constraint is a controlled deformation of the generated surface.
 
 With the terrain brush selected, drag over the land to paint a continuous
 stroke. The ordinary mouse wheel changes its full width. **Ctrl+wheel** changes
@@ -49,15 +64,16 @@ its strength in five-percent steps. The cursor ring and adjacent readout show
 both values before paint is committed. A click without dragging creates one
 circular brush mark.
 
-Brush strength is a blend toward the target height, not an elevation addition.
-Consequently, one brush can raise low terrain or lower high terrain. Overlapping
-strokes combine without depending on their list order. Structural lines are
-applied after brush guidance, and exact points remain the final authority.
+In absolute mode, brush strength blends toward the target height. In relative
+mode it scales the signed height offset. Overlapping absolute strokes combine as
+weighted targets; overlapping relative strokes add their displacements. Both
+behaviours are independent of stroke list order. Structural lines are applied
+after brush guidance, and exact absolute points remain the final authority.
 
-Set **Height** and **Core width** before placing the point or finishing a line.
-The core width is the half-width of the strongest response, not a hard cut-off;
-a lower-amplitude geological shoulder continues beyond it. Ridge and valley
-lines collect vertices until **Finish line** is pressed or the map is
+Set the tool's elevation value and radius before placing a point or finishing a
+line. The core radius is the half-width of the strongest response, not a hard
+cut-off; a lower-amplitude geological shoulder continues beyond it. Ridge and
+valley lines collect vertices until **Finish line** is pressed or the map is
 right-clicked. **Undo** first removes unfinished vertices, then committed
 features. Importing another coastline asks before clearing authored features.
 
@@ -66,7 +82,9 @@ width varies with the deterministic terrain field instead of producing a
 perfect extrusion. Free ends taper. A height point close enough to a ridge or
 valley also becomes an elevation anchor along that structure, so peaks, passes,
 and floor heights bend its longitudinal profile rather than forming an
-independent circular stamp.
+independent circular stamp. This automatic attachment applies to absolute points
+and absolute structures; relative points instead deform the already conditioned
+surface and therefore naturally build on a ridge beneath them.
 
 Constraints use normalized coastline-bounds coordinates while being authored
 and are converted to explicit metric coordinates during generation. They are
@@ -108,14 +126,13 @@ settings automatically continuous with a parent build.
 
 The current surface combines multi-scale value noise, distance from the coast,
 and user-authored elevation guidance. When constraints are present, a broad
-low-frequency surface is conditioned first. Soft brush strokes guide this base
-toward their target heights before structural lines and exact points are
-applied. Fine deterministic relief is then restored as a residual that fades
-near the authored geometry. A smooth outer shoulder prevents structures from
-appearing as hard-edged stamps, while a coast-distance gate keeps the coastline
-fixed at sea level. Seeded width and crest/floor variation avoids perfectly
-uniform tubes while respecting ridges as minimum heights, valleys as maximum
-heights, and spot heights as exact anchors.
+low-frequency surface is conditioned first. Absolute constraints suppress fine
+residual relief as needed to satisfy their world elevations. Relative
+constraints operate as smooth displacement fields and retain the pre-existing
+residual relief, so a peak on a tall ridge becomes taller and a valley through a
+high plateau remains high while being incised. A smooth outer shoulder prevents
+structures from appearing as hard-edged stamps, while a coast-distance gate
+keeps the coastline fixed at sea level.
 
 This is a constraint-aware interpolation model, not yet a landscape-evolution
 model. It does **not** model plate tectonics, rock type, erosion, drainage,

@@ -3,6 +3,7 @@
 **Status:** Accepted
 **Date:** 2026-09-02
 **Deciders:** Repository owner and project maintainer
+**Amended by:** [ADR-0005](0005-relative-relief.md)
 
 ## Context
 
