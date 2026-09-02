@@ -10,4 +10,14 @@ def test_root_help_is_available(capsys: pytest.CaptureFixture[str]) -> None:
 
 def test_terrain_help_is_available(capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["terrain"]) == 0
-    assert "Terrain generation commands" in capsys.readouterr().out
+    output = capsys.readouterr().out
+    assert "Build and inspect deterministic terrain projects" in output
+    assert "gui" in output
+
+
+def test_terrain_gui_help_is_available(capsys: pytest.CaptureFixture[str]) -> None:
+    with pytest.raises(SystemExit) as exit_info:
+        main(["terrain", "gui", "--help"])
+
+    assert exit_info.value.code == 0
+    assert "closed SVG coastline" in capsys.readouterr().out

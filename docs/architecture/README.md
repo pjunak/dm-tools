@@ -1,28 +1,29 @@
 # Architecture overview
 
-DM Tools is a modular Python application with local command-line interfaces.
-Hosting will add an HTTP adapter around the same application operations later.
+DM Tools is a modular Python application with local desktop and command-line
+interfaces. Hosting will add an HTTP adapter around the same application
+operations later.
 
 ## System boundary
 
 ```text
-CLI now / HTTP later
-          |
-          v
- application operations
-          |
-          v
- deterministic tool pipelines
-          |
-   +------+-------+
-   |              |
-   v              v
-domain model   adapter ports
-                  |
-          +-------+--------+
-          |       |        |
-          v       v        v
-       files     GIS    optional engines
+Tk UI / CLI now / HTTP later
+             |
+             v
+    application operations
+             |
+             v
+   deterministic tool pipelines
+             |
+      +------+-------+
+      |              |
+      v              v
+ domain model    adapter ports
+                     |
+             +-------+--------+
+             |       |        |
+             v       v        v
+          files     GIS    optional engines
 ```
 
 The domain and pipeline must remain usable without a web server. Adapters may
@@ -47,15 +48,16 @@ randomness, time, environment settings, or coordinate assumptions implicitly.
 
 ## Interfaces
 
-The first interface is a CLI. Its eventual build operation should delegate to
-an application service that accepts typed configuration and returns an artifact
-manifest. A future HTTP service can call that same operation while adding job
-management, storage, authentication, and resource limits outside the engine.
+The first useful interface is a Tk/ttk desktop workbench launched through the
+CLI. It maps controls to typed domain settings, then delegates to the same
+pipeline and adapters that a future non-interactive build operation will use.
+A future HTTP service can call those operations while adding job management,
+storage, authentication, and resource limits outside the engine.
 
 ## Deferred decisions
 
 - Terrain project and constraint schema details
-- Initial interpolation algorithm
+- Conditioned interpolation for authored elevation points and structural lines
 - Hydrology engine
 - Multiresolution storage and refinement strategy
 - Web framework, queue, storage, and frontend

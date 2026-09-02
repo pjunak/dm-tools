@@ -14,7 +14,12 @@ classifiers = [
   "Programming Language :: Python :: 3 :: Only",
   "Programming Language :: Python :: 3.14",
 ]
-dependencies = []
+dependencies = [
+  "numpy>=2.5.2,<3",
+  "Pillow>=12.3,<13",
+  "shapely>=2.1.2,<3",
+  "svgelements>=1.9.6,<2",
+]
 
 [project.optional-dependencies]
 dev = [

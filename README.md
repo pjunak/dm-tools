@@ -10,16 +10,18 @@ interface should call the same engine rather than replacing it.
 
 ## Status
 
-Early architecture scaffold. The package and command-line entry point exist,
-but terrain generation is not implemented yet.
+The first terrain-generator vertical slice is usable. Its desktop workbench can
+import one closed SVG coastline, generate a deterministic synthetic elevation
+field, preview it as colour relief, and export the preview as a transparent PNG.
 
 ## Requirements
 
 - CPython 3.14
 - Git
+- Tk 9 (included with the official Windows CPython 3.14 distribution)
 
-No GIS or numerical runtime dependencies are included yet. They will be added
-stage by stage after compatibility, licensing, and reproducibility checks.
+Runtime dependencies and their roles and licenses are recorded in
+[the dependency register](docs/DEPENDENCIES.md).
 
 ## Quick start
 
@@ -32,16 +34,16 @@ python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -e ".[dev]"
 ```
 
-Then inspect the available command structure and run the tests:
+Then open the terrain workbench and run the tests:
 
 ```powershell
 .\.venv\Scripts\dmtools.exe --help
-.\.venv\Scripts\dmtools.exe terrain --help
+.\.venv\Scripts\dmtools.exe terrain gui
 .\.venv\Scripts\python.exe -m pytest
 ```
 
-The terrain command currently exposes help only. Its first useful operation will
-be a deterministic build from a versioned project file.
+Try the public [`coastline.svg`](examples/terrain/coastline.svg) file for a first
+generation. The workbench explains invalid coastline inputs before generation.
 
 ## Intended workflow
 
@@ -61,7 +63,7 @@ Authored vector constraints and configuration remain inputs. A floating-point
 raster DEM is the authoritative generated elevation surface. Contours, drainage,
 hillshade, colour relief, and future meshes are derived products.
 
-The future command shape is expected to resemble:
+The future non-interactive command shape is expected to resemble:
 
 ```powershell
 dmtools terrain build examples/terrain/minimal/project.yaml

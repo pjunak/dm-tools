@@ -8,3 +8,6 @@ The test suite will be organized around observable contracts:
 - deterministic regression tests using compact, purpose-built fixtures.
 
 Prefer numeric assertions and invariants over large binary golden files.
+
+The current terrain suite specifically verifies that nested resolutions retain
+identical masks and Float32 elevations at shared world-coordinate samples.
