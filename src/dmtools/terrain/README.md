@@ -12,9 +12,10 @@ refined into consistent regional and local maps.
 
 The current workbench imports one SVG coastline, exposes every implemented
 generator setting as a slider and numeric stepper, and lets the user draw exact
-height points plus ridge and valley centrelines over the map. Import validation
-and generation run on background workers with progress reporting. The result is
-previewed and can be exported as a transparent colour-relief PNG.
+height points plus ridge and valley centrelines over the map. A terrain brush
+paints broad soft elevation guidance directly over the continent. Import
+validation and generation run on background workers with progress reporting.
+The result is previewed and can be exported as a transparent colour-relief PNG.
 
 [`examples/terrain/coastline.svg`](../../../examples/terrain/coastline.svg) is a
 small public input for trying the workflow.
@@ -37,9 +38,21 @@ coordinate system.
 
 After importing a coastline, select a drawing tool above the map:
 
+- **Terrain brush** softly guides a broad area toward the target elevation.
 - **Height point** records an exact target elevation at one location.
 - **Ridge line** records a minimum crest elevation and raises lower terrain.
 - **Valley line** records a maximum floor elevation and cuts higher terrain.
+
+With the terrain brush selected, drag over the land to paint a continuous
+stroke. The ordinary mouse wheel changes its full width. **Ctrl+wheel** changes
+its strength in five-percent steps. The cursor ring and adjacent readout show
+both values before paint is committed. A click without dragging creates one
+circular brush mark.
+
+Brush strength is a blend toward the target height, not an elevation addition.
+Consequently, one brush can raise low terrain or lower high terrain. Overlapping
+strokes combine without depending on their list order. Structural lines are
+applied after brush guidance, and exact points remain the final authority.
 
 Set **Height** and **Core width** before placing the point or finishing a line.
 The core width is the half-width of the strongest response, not a hard cut-off;
@@ -94,13 +107,15 @@ settings automatically continuous with a parent build.
 ## Scientific scope of the first result
 
 The current surface combines multi-scale value noise, distance from the coast,
-and user-authored elevation structures. When constraints are present, a broad
-low-frequency surface is conditioned first. Fine deterministic relief is then
-restored as a residual that fades near the authored geometry. A smooth outer
-shoulder prevents structures from appearing as hard-edged stamps, while a
-coast-distance gate keeps the coastline fixed at sea level. Seeded width and
-crest/floor variation avoids perfectly uniform tubes while respecting ridges as
-minimum heights, valleys as maximum heights, and spot heights as exact anchors.
+and user-authored elevation guidance. When constraints are present, a broad
+low-frequency surface is conditioned first. Soft brush strokes guide this base
+toward their target heights before structural lines and exact points are
+applied. Fine deterministic relief is then restored as a residual that fades
+near the authored geometry. A smooth outer shoulder prevents structures from
+appearing as hard-edged stamps, while a coast-distance gate keeps the coastline
+fixed at sea level. Seeded width and crest/floor variation avoids perfectly
+uniform tubes while respecting ridges as minimum heights, valleys as maximum
+heights, and spot heights as exact anchors.
 
 This is a constraint-aware interpolation model, not yet a landscape-evolution
 model. It does **not** model plate tectonics, rock type, erosion, drainage,

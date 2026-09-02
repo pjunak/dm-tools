@@ -17,3 +17,4 @@ ADRs preserve significant technical decisions and their trade-offs.
 - [ADR-0001: Use Python 3.14 for the application and terrain engine](0001-python-3-14.md)
 - [ADR-0002: Build the first terrain workbench with Tk and SVG input](0002-tk-svg-terrain-workbench.md)
 - [ADR-0003: Author topography on the map and condition the base surface](0003-map-authored-constraints.md)
+- [ADR-0004: Paint soft elevation guidance as vector strokes](0004-soft-elevation-brush.md)

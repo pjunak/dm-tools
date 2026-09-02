@@ -7,7 +7,7 @@ from pathlib import Path
 import numpy as np
 from PIL import Image, PngImagePlugin
 
-from dmtools.terrain.domain import ElevationPoint, TerrainConstraint
+from dmtools.terrain.domain import ElevationPoint, TerrainBrushStroke, TerrainConstraint
 from dmtools.terrain.pipeline import GeneratedTerrain
 
 _COLOUR_STOPS = np.array([0.0, 0.08, 0.30, 0.55, 0.75, 0.90, 1.0])
@@ -68,9 +68,12 @@ def render_height_map(terrain: GeneratedTerrain) -> Image.Image:
 
 def _constraint_payload(constraint: TerrainConstraint) -> dict[str, object]:
     payload = asdict(constraint)
-    payload["type"] = (
-        "elevation_point" if isinstance(constraint, ElevationPoint) else constraint.kind
-    )
+    if isinstance(constraint, ElevationPoint):
+        payload["type"] = "elevation_point"
+    elif isinstance(constraint, TerrainBrushStroke):
+        payload["type"] = "terrain_brush"
+    else:
+        payload["type"] = constraint.kind
     return payload
 
 

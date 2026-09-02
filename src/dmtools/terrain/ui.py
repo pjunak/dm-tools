@@ -7,6 +7,7 @@ import queue
 import threading
 import tkinter as tk
 from dataclasses import dataclass
+from math import hypot
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 
@@ -22,6 +23,7 @@ from dmtools.terrain.adapters import (
 from dmtools.terrain.domain import (
     Coastline,
     ElevationPoint,
+    TerrainBrushStroke,
     TerrainConstraint,
     TerrainSettings,
     TerrainStructure,
@@ -40,6 +42,7 @@ _MAP_BACKGROUND = "#10191b"
 _HEIGHT_COLOUR = "#f2c14e"
 _RIDGE_COLOUR = "#e47b58"
 _VALLEY_COLOUR = "#54a6c2"
+_BRUSH_COLOUR = "#9fbe72"
 
 
 @dataclass(frozen=True, slots=True)
@@ -115,9 +118,13 @@ class TerrainApp:
         self._variables: dict[str, tk.DoubleVar] = {}
         self._value_labels: dict[str, ttk.Label] = {}
         self._specs = {spec.key: spec for spec in _CONTROLS}
-        self._authoring_tool = tk.StringVar(value="height")
+        self._authoring_tool = tk.StringVar(value="brush")
         self._constraint_elevation = tk.DoubleVar(value=2_500.0)
         self._constraint_radius = tk.DoubleVar(value=120.0)
+        self._brush_width = tk.DoubleVar(value=280.0)
+        self._brush_intensity_percent = tk.DoubleVar(value=55.0)
+        self._brush_cursor: tuple[float, float] | None = None
+        self._active_brush_values: tuple[float, float, float] | None = None
         self._tool_buttons: dict[str, tk.Button] = {}
         self._authoring_widgets: list[tk.Widget] = []
         self._authoring_enabled = False
@@ -299,7 +306,7 @@ class TerrainApp:
 
         authoring = tk.Frame(parent, background="#203033", padx=10, pady=8)
         authoring.grid(row=1, column=0, sticky="ew", padx=16, pady=(0, 8))
-        authoring.columnconfigure(8, weight=1)
+        authoring.columnconfigure(5, weight=1)
 
         tk.Label(
             authoring,
@@ -309,7 +316,12 @@ class TerrainApp:
             font=("Consolas", 8, "bold"),
         ).grid(row=0, column=0, padx=(0, 7))
         for column, (tool, label) in enumerate(
-            (("height", "Height point"), ("ridge", "Ridge line"), ("valley", "Valley line")),
+            (
+                ("brush", "Terrain brush"),
+                ("height", "Height point"),
+                ("ridge", "Ridge line"),
+                ("valley", "Valley line"),
+            ),
             start=1,
         ):
             button = tk.Button(
@@ -327,54 +339,8 @@ class TerrainApp:
             self._tool_buttons[tool] = button
             self._authoring_widgets.append(button)
 
-        tk.Label(
-            authoring,
-            text="Height",
-            background="#203033",
-            foreground="#a9bab7",
-            font=("Segoe UI", 8),
-        ).grid(row=0, column=4, padx=(12, 4))
-        elevation_input = tk.Spinbox(
-            authoring,
-            from_=0,
-            to=10_000,
-            increment=100,
-            textvariable=self._constraint_elevation,
-            width=7,
-            justify="right",
-            font=("Consolas", 8),
-        )
-        elevation_input.grid(row=0, column=5)
-        self._authoring_widgets.append(elevation_input)
-        tk.Label(
-            authoring,
-            text="m   Core width",
-            background="#203033",
-            foreground="#a9bab7",
-            font=("Segoe UI", 8),
-        ).grid(row=0, column=6, padx=(3, 4))
-        radius_input = tk.Spinbox(
-            authoring,
-            from_=1,
-            to=2_000,
-            increment=10,
-            textvariable=self._constraint_radius,
-            width=7,
-            justify="right",
-            font=("Consolas", 8),
-        )
-        radius_input.grid(row=0, column=7)
-        self._authoring_widgets.append(radius_input)
-        tk.Label(
-            authoring,
-            text="km",
-            background="#203033",
-            foreground="#a9bab7",
-            font=("Segoe UI", 8),
-        ).grid(row=0, column=8, sticky="w", padx=(3, 0))
-
         actions = tk.Frame(authoring, background="#203033")
-        actions.grid(row=0, column=9, padx=(12, 0))
+        actions.grid(row=0, column=6, padx=(12, 0))
         self.finish_line_button = tk.Button(
             actions,
             text="Finish line",
@@ -416,6 +382,88 @@ class TerrainApp:
             ]
         )
 
+        parameters = tk.Frame(authoring, background="#203033")
+        parameters.grid(row=1, column=0, columnspan=7, sticky="w", pady=(7, 0))
+        tk.Label(
+            parameters,
+            text="Target height",
+            background="#203033",
+            foreground="#a9bab7",
+            font=("Segoe UI", 8),
+        ).pack(side="left", padx=(0, 4))
+        elevation_input = tk.Spinbox(
+            parameters,
+            from_=0,
+            to=10_000,
+            increment=100,
+            textvariable=self._constraint_elevation,
+            width=7,
+            justify="right",
+            font=("Consolas", 8),
+        )
+        elevation_input.pack(side="left")
+        self._authoring_widgets.append(elevation_input)
+        tk.Label(
+            parameters,
+            text="m",
+            background="#203033",
+            foreground="#a9bab7",
+            font=("Segoe UI", 8),
+        ).pack(side="left", padx=(3, 12))
+        self.width_label = tk.Label(
+            parameters,
+            text="Influence radius",
+            background="#203033",
+            foreground="#a9bab7",
+            font=("Segoe UI", 8),
+        )
+        self.width_label.pack(side="left", padx=(0, 4))
+        self.width_input = tk.Spinbox(
+            parameters,
+            from_=1,
+            to=4_000,
+            increment=10,
+            textvariable=self._constraint_radius,
+            width=7,
+            justify="right",
+            font=("Consolas", 8),
+        )
+        self.width_input.pack(side="left")
+        self._authoring_widgets.append(self.width_input)
+        tk.Label(
+            parameters,
+            text="km",
+            background="#203033",
+            foreground="#a9bab7",
+            font=("Segoe UI", 8),
+        ).pack(side="left", padx=(3, 12))
+        tk.Label(
+            parameters,
+            text="Brush strength",
+            background="#203033",
+            foreground="#a9bab7",
+            font=("Segoe UI", 8),
+        ).pack(side="left", padx=(0, 4))
+        self.brush_strength_input = tk.Spinbox(
+            parameters,
+            from_=5,
+            to=100,
+            increment=5,
+            textvariable=self._brush_intensity_percent,
+            width=5,
+            justify="right",
+            font=("Consolas", 8),
+        )
+        self.brush_strength_input.pack(side="left")
+        self._authoring_widgets.append(self.brush_strength_input)
+        tk.Label(
+            parameters,
+            text="%",
+            background="#203033",
+            foreground="#a9bab7",
+            font=("Segoe UI", 8),
+        ).pack(side="left", padx=(3, 0))
+
         self.authoring_hint = tk.Label(
             authoring,
             text="Import a coastline to start drawing.",
@@ -423,7 +471,7 @@ class TerrainApp:
             foreground="#8fa5a1",
             font=("Segoe UI", 8),
         )
-        self.authoring_hint.grid(row=1, column=0, columnspan=10, sticky="w", pady=(6, 0))
+        self.authoring_hint.grid(row=2, column=0, columnspan=7, sticky="w", pady=(6, 0))
 
         content = tk.Frame(parent, background=_PREVIEW)
         content.grid(row=2, column=0, sticky="nsew", padx=(16, 12), pady=(0, 14))
@@ -440,7 +488,12 @@ class TerrainApp:
             font=("Segoe UI", 14),
         )
         self.preview.bind("<Configure>", lambda _event: self._draw_preview())
-        self.preview.bind("<Button-1>", self._on_map_click)
+        self.preview.bind("<ButtonPress-1>", self._on_map_press)
+        self.preview.bind("<B1-Motion>", self._on_map_drag)
+        self.preview.bind("<ButtonRelease-1>", self._on_map_release)
+        self.preview.bind("<Motion>", self._on_map_motion)
+        self.preview.bind("<Leave>", self._on_map_leave)
+        self.preview.bind("<MouseWheel>", self._on_map_wheel)
         self.preview.bind("<Button-3>", lambda _event: self._finish_structure())
 
         legend = tk.Frame(content, background=_PREVIEW, width=64)
@@ -462,7 +515,7 @@ class TerrainApp:
             font=("Segoe UI", 7, "bold"),
         ).pack(pady=(3, 0))
         self._set_authoring_enabled(False)
-        self._set_authoring_tool("height")
+        self._set_authoring_tool("brush")
 
     def _set_authoring_enabled(self, enabled: bool) -> None:
         self._authoring_enabled = enabled
@@ -472,10 +525,11 @@ class TerrainApp:
         self._refresh_authoring_controls()
 
     def _set_authoring_tool(self, tool: str) -> None:
-        if tool not in ("height", "ridge", "valley"):
+        if tool not in ("brush", "height", "ridge", "valley"):
             raise ValueError(f"Unknown authoring tool: {tool}")
         if self._draft_points and self._authoring_tool.get() != tool:
             self._draft_points.clear()
+            self._active_brush_values = None
             self.status_label.configure(text="Unfinished structure discarded.")
         self._authoring_tool.set(tool)
         self._refresh_authoring_controls()
@@ -484,6 +538,7 @@ class TerrainApp:
     def _refresh_authoring_controls(self) -> None:
         selected = self._authoring_tool.get()
         colours = {
+            "brush": _BRUSH_COLOUR,
             "height": _HEIGHT_COLOUR,
             "ridge": _RIDGE_COLOUR,
             "valley": _VALLEY_COLOUR,
@@ -509,9 +564,35 @@ class TerrainApp:
         self.clear_constraints_button.configure(
             state="normal" if self._authoring_enabled and has_authored_work else "disabled"
         )
+        if selected == "brush":
+            self.width_label.configure(text="Brush width")
+            self.width_input.configure(
+                from_=10,
+                to=4_000,
+                increment=20,
+                textvariable=self._brush_width,
+            )
+        else:
+            self.width_label.configure(
+                text="Influence radius" if selected == "height" else "Core radius"
+            )
+            self.width_input.configure(
+                from_=1,
+                to=2_000,
+                increment=10,
+                textvariable=self._constraint_radius,
+            )
+        self.brush_strength_input.configure(
+            state="normal" if self._authoring_enabled and selected == "brush" else "disabled"
+        )
 
         if not self._authoring_enabled:
             hint = "Import a coastline to start drawing."
+        elif selected == "brush":
+            hint = (
+                "Drag to paint a soft target height. Wheel changes width; "
+                "Ctrl+wheel changes strength."
+            )
         elif selected == "height":
             hint = (
                 "Click to place a target height; the soft terrain response extends past its core."
@@ -584,6 +665,135 @@ class TerrainApp:
             messagebox.showerror("Invalid authored feature", str(error), parent=self.root)
             return None
         return elevation_m, radius_km
+
+    def _read_brush_values(self) -> tuple[float, float, float] | None:
+        try:
+            elevation_m = float(self._constraint_elevation.get())
+            width_km = float(self._brush_width.get())
+            intensity = float(self._brush_intensity_percent.get()) / 100.0
+            if elevation_m < 0:
+                raise ValueError("Target height must be at or above sea level.")
+            if width_km <= 0:
+                raise ValueError("Brush width must be greater than zero.")
+            if not 0.0 < intensity <= 1.0:
+                raise ValueError("Brush strength must be greater than 0% and at most 100%.")
+        except (tk.TclError, ValueError) as error:
+            messagebox.showerror("Invalid terrain brush", str(error), parent=self.root)
+            return None
+        return elevation_m, width_km / 2.0, intensity
+
+    def _brush_map_position(self, x: float, y: float) -> tuple[float, float] | None:
+        if self._coast_polygon is None:
+            return None
+        position = self._canvas_to_normalized(x, y)
+        if position is None:
+            return None
+        if not self._coast_polygon.covers(Point(self._normalized_to_source(position))):
+            return None
+        return position
+
+    def _on_map_press(self, event: tk.Event[tk.Misc]) -> None:
+        if self._authoring_tool.get() != "brush":
+            self._on_map_click(event)
+            return
+        if not self._authoring_enabled:
+            return
+        position = self._brush_map_position(float(event.x), float(event.y))
+        if position is None:
+            self.root.bell()
+            self.status_label.configure(text="Paint inside the coastline.")
+            return
+        values = self._read_brush_values()
+        if values is None:
+            return
+        self._active_brush_values = values
+        self._draft_points[:] = [position]
+        self._brush_cursor = position
+        self.status_label.configure(text="Painting terrain guidance…")
+        self._refresh_authoring_controls()
+        self._draw_brush_draft()
+        self._draw_brush_cursor()
+
+    def _on_map_drag(self, event: tk.Event[tk.Misc]) -> None:
+        if self._authoring_tool.get() != "brush" or self._active_brush_values is None:
+            return
+        position = self._brush_map_position(float(event.x), float(event.y))
+        if position is None:
+            self._brush_cursor = None
+            self._draw_brush_cursor()
+            return
+        self._brush_cursor = position
+        if not self._draft_points:
+            self._draft_points.append(position)
+        else:
+            previous = self._draft_points[-1]
+            segment = LineString(
+                [self._normalized_to_source(previous), self._normalized_to_source(position)]
+            )
+            if self._coast_polygon is None or not self._coast_polygon.covers(segment):
+                self.status_label.configure(text="The brush centre cannot cross open water.")
+                self._draw_brush_cursor()
+                return
+            previous_canvas = self._normalized_to_canvas(previous)
+            radius_km = self._active_brush_values[1]
+            spacing = max(2.0, min(16.0, self._influence_radius_pixels(radius_km) * 0.12))
+            moved = hypot(
+                float(event.x) - previous_canvas[0],
+                float(event.y) - previous_canvas[1],
+            )
+            if moved >= spacing:
+                self._draft_points.append(position)
+        self._draw_brush_draft()
+        self._draw_brush_cursor()
+
+    def _on_map_release(self, _event: tk.Event[tk.Misc]) -> None:
+        if self._authoring_tool.get() != "brush" or self._active_brush_values is None:
+            return
+        elevation_m, radius_km, intensity = self._active_brush_values
+        points = tuple(self._draft_points)
+        self._active_brush_values = None
+        self._draft_points.clear()
+        if not points:
+            self._refresh_authoring_controls()
+            return
+        self._constraints.append(
+            TerrainBrushStroke(
+                points=points,
+                elevation_m=elevation_m,
+                influence_radius_km=radius_km,
+                intensity=intensity,
+            )
+        )
+        self._invalidate_generated_terrain("Terrain brush stroke added. Generate to apply it.")
+
+    def _on_map_motion(self, event: tk.Event[tk.Misc]) -> None:
+        if self._authoring_tool.get() != "brush" or not self._authoring_enabled:
+            return
+        self._brush_cursor = self._brush_map_position(float(event.x), float(event.y))
+        self._draw_brush_cursor()
+
+    def _on_map_leave(self, _event: tk.Event[tk.Misc]) -> None:
+        self._brush_cursor = None
+        self._draw_brush_cursor()
+
+    def _on_map_wheel(self, event: tk.Event[tk.Misc]) -> str | None:
+        if self._authoring_tool.get() != "brush" or not self._authoring_enabled:
+            return None
+        delta = int(event.delta)
+        if delta == 0:
+            return "break"
+        steps = int(delta / 120) if abs(delta) >= 120 else (1 if delta > 0 else -1)
+        if int(event.state) & 0x0004:
+            current = float(self._brush_intensity_percent.get())
+            self._brush_intensity_percent.set(min(100.0, max(5.0, current + 5.0 * steps)))
+        else:
+            current = float(self._brush_width.get())
+            increment = max(10.0, round(current * 0.08 / 10.0) * 10.0)
+            self._brush_width.set(min(4_000.0, max(10.0, current + increment * steps)))
+        self._brush_cursor = self._brush_map_position(float(event.x), float(event.y))
+        self._refresh_authoring_controls()
+        self._draw_brush_cursor()
+        return "break"
 
     def _on_map_click(self, event: tk.Event[tk.Misc]) -> None:
         if not self._authoring_enabled or self._coast_polygon is None:
@@ -667,11 +877,13 @@ class TerrainApp:
             return
         if self._constraints and not messagebox.askyesno(
             "Clear authored topography?",
-            "Remove every height point, ridge, and valley from this coastline?",
+            "Remove every terrain brush stroke, height point, ridge, and valley "
+            "from this coastline?",
             parent=self.root,
         ):
             return
         self._draft_points.clear()
+        self._active_brush_values = None
         self._constraints.clear()
         self._invalidate_generated_terrain("All authored topography cleared.")
 
@@ -711,8 +923,8 @@ class TerrainApp:
             return
         if (self._constraints or self._draft_points) and not messagebox.askyesno(
             "Replace the coastline?",
-            "Importing a different coastline clears the authored height points, "
-            "ridges, and valleys.",
+            "Importing a different coastline clears the authored terrain brush strokes, "
+            "height points, ridges, and valleys.",
             parent=self.root,
         ):
             return
@@ -753,6 +965,8 @@ class TerrainApp:
         self._coast_polygon = Polygon(coastline.points)
         self._constraints.clear()
         self._draft_points.clear()
+        self._active_brush_values = None
+        self._brush_cursor = None
         self._terrain = None
         self._image = None
         self.progress.stop()
@@ -922,6 +1136,7 @@ class TerrainApp:
         for constraint in self._constraints:
             self._draw_constraint(constraint)
         self._draw_draft_structure()
+        self._draw_brush_cursor()
 
     def _coastline_canvas_coordinates(self) -> list[float]:
         if self._coastline is None:
@@ -955,6 +1170,57 @@ class TerrainApp:
         return influence_radius_km / object_scale_km * max(right - left, bottom - top)
 
     def _draw_constraint(self, constraint: TerrainConstraint) -> None:
+        if isinstance(constraint, TerrainBrushStroke):
+            canvas_points = [self._normalized_to_canvas(point) for point in constraint.points]
+            radius = max(2.0, self._influence_radius_pixels(constraint.influence_radius_km))
+            if len(canvas_points) == 1:
+                x, y = canvas_points[0]
+                self.preview.create_oval(
+                    x - radius,
+                    y - radius,
+                    x + radius,
+                    y + radius,
+                    fill=_BRUSH_COLOUR,
+                    outline="#d7e7bd",
+                    width=1,
+                    stipple="gray50",
+                )
+                label_x, label_y = x, y
+            else:
+                coordinates = [value for point in canvas_points for value in point]
+                self.preview.create_line(
+                    coordinates,
+                    fill=_BRUSH_COLOUR,
+                    width=max(3.0, 2.0 * radius),
+                    capstyle="round",
+                    joinstyle="round",
+                    smooth=True,
+                    splinesteps=12,
+                    stipple="gray50",
+                )
+                self.preview.create_line(
+                    coordinates,
+                    fill="#d7e7bd",
+                    width=2,
+                    capstyle="round",
+                    joinstyle="round",
+                    smooth=True,
+                    splinesteps=12,
+                )
+                label_x, label_y = canvas_points[len(canvas_points) // 2]
+            self.preview.create_text(
+                label_x + 7,
+                label_y - 6,
+                text=(
+                    f"brush  {2.0 * constraint.influence_radius_km:,.0f} km  "
+                    f"{constraint.intensity:.0%}"
+                ),
+                anchor="sw",
+                fill="#d7e7bd",
+                font=("Consolas", 8, "bold"),
+            )
+            return
+
         if isinstance(constraint, ElevationPoint):
             x, y = self._normalized_to_canvas(constraint.position)
             radius = max(4.0, self._influence_radius_pixels(constraint.influence_radius_km))
@@ -1014,6 +1280,9 @@ class TerrainApp:
         )
 
     def _draw_draft_structure(self) -> None:
+        if self._authoring_tool.get() == "brush":
+            self._draw_brush_draft()
+            return
         if not self._draft_points:
             return
         tool = self._authoring_tool.get()
@@ -1044,6 +1313,94 @@ class TerrainApp:
                 outline=colour,
                 width=2,
             )
+
+    def _draw_brush_draft(self) -> None:
+        self.preview.delete("brush-draft")
+        if self._authoring_tool.get() != "brush" or not self._draft_points:
+            return
+        canvas_points = [self._normalized_to_canvas(point) for point in self._draft_points]
+        radius_km = (
+            self._active_brush_values[1]
+            if self._active_brush_values is not None
+            else float(self._brush_width.get()) / 2.0
+        )
+        radius = max(2.0, self._influence_radius_pixels(radius_km))
+        if len(canvas_points) == 1:
+            x, y = canvas_points[0]
+            self.preview.create_oval(
+                x - radius,
+                y - radius,
+                x + radius,
+                y + radius,
+                fill=_BRUSH_COLOUR,
+                outline="#e2efca",
+                stipple="gray50",
+                tags=("brush-draft",),
+            )
+            return
+        coordinates = [value for point in canvas_points for value in point]
+        self.preview.create_line(
+            coordinates,
+            fill=_BRUSH_COLOUR,
+            width=max(3.0, 2.0 * radius),
+            capstyle="round",
+            joinstyle="round",
+            smooth=True,
+            splinesteps=12,
+            stipple="gray50",
+            tags=("brush-draft",),
+        )
+        self.preview.create_line(
+            coordinates,
+            fill="#e2efca",
+            width=2,
+            capstyle="round",
+            joinstyle="round",
+            smooth=True,
+            splinesteps=12,
+            tags=("brush-draft",),
+        )
+
+    def _draw_brush_cursor(self) -> None:
+        self.preview.delete("brush-cursor")
+        if (
+            self._authoring_tool.get() != "brush"
+            or not self._authoring_enabled
+            or self._brush_cursor is None
+        ):
+            return
+        x, y = self._normalized_to_canvas(self._brush_cursor)
+        width_km = float(self._brush_width.get())
+        radius = max(3.0, self._influence_radius_pixels(width_km / 2.0))
+        strength = float(self._brush_intensity_percent.get())
+        self.preview.create_oval(
+            x - radius,
+            y - radius,
+            x + radius,
+            y + radius,
+            outline="#e2efca",
+            width=2,
+            dash=(4, 3),
+            tags=("brush-cursor",),
+        )
+        self.preview.create_oval(
+            x - 2,
+            y - 2,
+            x + 2,
+            y + 2,
+            fill="#e2efca",
+            outline="",
+            tags=("brush-cursor",),
+        )
+        self.preview.create_text(
+            x + radius + 7,
+            y,
+            text=f"{width_km:,.0f} km  {strength:.0f}%",
+            anchor="w",
+            fill="#e2efca",
+            font=("Consolas", 8, "bold"),
+            tags=("brush-cursor",),
+        )
 
     def _export(self) -> None:
         if self._terrain is None or self._image is None:

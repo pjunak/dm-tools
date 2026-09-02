@@ -9,6 +9,7 @@ from dmtools.terrain.adapters import render_height_map, save_height_map
 from dmtools.terrain.domain import (
     Coastline,
     ElevationPoint,
+    TerrainBrushStroke,
     TerrainSettings,
     TerrainStructure,
 )
@@ -146,8 +147,52 @@ def test_nearby_height_point_bends_structure_profile() -> None:
     assert anchored.elevation_m[32, 32] == np.float32(2_800.0)
 
 
+def test_terrain_brush_softly_guides_the_base_surface() -> None:
+    baseline = generate_terrain(_square(), _settings())
+    weak_brush = TerrainBrushStroke(
+        points=((0.3, 0.5), (0.7, 0.5)),
+        elevation_m=3_000.0,
+        influence_radius_km=100.0,
+        intensity=0.25,
+    )
+    strong_brush = replace(weak_brush, intensity=0.75)
+
+    weak = generate_terrain(_square(), _settings(), constraints=(weak_brush,))
+    strong = generate_terrain(_square(), _settings(), constraints=(strong_brush,))
+
+    assert baseline.elevation_m[32, 32] < weak.elevation_m[32, 32]
+    assert weak.elevation_m[32, 32] < strong.elevation_m[32, 32]
+    assert strong.elevation_m[32, 32] < np.float32(3_000.0)
+
+
+def test_terrain_brush_can_lower_terrain_without_moving_the_coastline() -> None:
+    baseline = generate_terrain(_square(), _settings())
+    brush = TerrainBrushStroke(
+        points=((0.3, 0.5), (0.7, 0.5)),
+        elevation_m=100.0,
+        influence_radius_km=120.0,
+        intensity=0.8,
+    )
+
+    painted = generate_terrain(_square(), _settings(), constraints=(brush,))
+
+    assert painted.elevation_m[32, 32] < baseline.elevation_m[32, 32]
+    assert painted.elevation_m[0, 32] == np.float32(0.0)
+
+
+def test_overlapping_terrain_brushes_are_order_independent() -> None:
+    high = TerrainBrushStroke(((0.25, 0.5), (0.6, 0.5)), 2_500.0, 90.0, 0.4)
+    low = TerrainBrushStroke(((0.4, 0.5), (0.75, 0.5)), 500.0, 110.0, 0.6)
+
+    first = generate_terrain(_square(), _settings(), constraints=(high, low))
+    second = generate_terrain(_square(), _settings(), constraints=(low, high))
+
+    np.testing.assert_array_equal(first.elevation_m, second.elevation_m)
+
+
 def test_authored_constraints_preserve_nested_resolution_samples() -> None:
     constraints = (
+        TerrainBrushStroke(((0.3, 0.4), (0.7, 0.4)), 1_800.0, 100.0, 0.5),
         ElevationPoint((0.5, 0.5), 1_250.0, 130.0),
         TerrainStructure("ridge", ((0.2, 0.7), (0.8, 0.7)), 2_600.0, 90.0),
     )
@@ -189,7 +234,8 @@ def test_noise_is_independent_of_query_shape_and_order() -> None:
 
 def test_render_is_transparent_outside_and_png_records_settings(tmp_path: Path) -> None:
     point = ElevationPoint((0.5, 0.5), 1_200.0, 75.0)
-    terrain = generate_terrain(_square(), _settings(), constraints=(point,))
+    brush = TerrainBrushStroke(((0.3, 0.6), (0.7, 0.6)), 900.0, 60.0, 0.4)
+    terrain = generate_terrain(_square(), _settings(), constraints=(point, brush))
     image = render_height_map(terrain)
     alpha = np.asarray(image)[..., 3]
 
@@ -208,5 +254,12 @@ def test_render_is_transparent_outside_and_png_records_settings(tmp_path: Path) 
                 "influence_radius_km": 75.0,
                 "position": [0.5, 0.5],
                 "type": "elevation_point",
-            }
+            },
+            {
+                "elevation_m": 900.0,
+                "influence_radius_km": 60.0,
+                "intensity": 0.4,
+                "points": [[0.3, 0.6], [0.7, 0.6]],
+                "type": "terrain_brush",
+            },
         ]

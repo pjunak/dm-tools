@@ -14,6 +14,7 @@ from shapely.geometry import LineString, Point, Polygon
 from dmtools.terrain.domain import (
     Coastline,
     ElevationPoint,
+    TerrainBrushStroke,
     TerrainConstraint,
     TerrainSettings,
 )
@@ -72,6 +73,7 @@ class _MetricConstraint:
     geometry: Point | LineString
     elevation_m: float
     influence_radius_km: float
+    intensity: float = 1.0
     profile_anchors: tuple[tuple[float, float, float], ...] = ()
     attached_to_structure: bool = False
 
@@ -122,12 +124,28 @@ def _metric_constraints(
             x, y = constraint.position
             geometry: Point | LineString = Point(x * width_km, y * height_km)
             kind = "point"
+            intensity = 1.0
+        elif isinstance(constraint, TerrainBrushStroke):
+            metric_points = [(x * width_km, y * height_km) for x, y in constraint.points]
+            geometry = (
+                Point(metric_points[0])
+                if len(metric_points) == 1
+                else LineString(metric_points)
+            )
+            kind = "brush"
+            intensity = constraint.intensity
         else:
             metric_points = [(x * width_km, y * height_km) for x, y in constraint.points]
             geometry = LineString(_smooth_structure_points(metric_points))
             kind = constraint.kind
+            intensity = 1.0
         if not polygon.covers(geometry):
-            label = "Elevation point" if kind == "point" else kind.capitalize()
+            if kind == "point":
+                label = "Elevation point"
+            elif kind == "brush":
+                label = "Terrain brush stroke"
+            else:
+                label = kind.capitalize()
             raise ValueError(f"{label} constraint extends outside the coastline.")
         converted.append(
             _MetricConstraint(
@@ -135,10 +153,13 @@ def _metric_constraints(
                 geometry=geometry,
                 elevation_m=constraint.elevation_m,
                 influence_radius_km=constraint.influence_radius_km,
+                intensity=intensity,
             )
         )
     structure_indices = [
-        index for index, constraint in enumerate(converted) if constraint.kind != "point"
+        index
+        for index, constraint in enumerate(converted)
+        if constraint.kind in ("ridge", "valley")
     ]
     anchors: dict[int, list[tuple[float, float, float]]] = {
         index: [] for index in structure_indices
@@ -182,6 +203,7 @@ def _constraint_weight(
     largest_feature_km: float,
     *,
     is_structure: bool,
+    is_brush: bool = False,
     attached_point: bool = False,
 ) -> NDArray[np.float64]:
     """Blend a defined landform core into a broader geological context."""
@@ -189,6 +211,9 @@ def _constraint_weight(
     if is_structure:
         context_radius_km = np.maximum(3.0 * radius_km, 0.8 * largest_feature_km)
         context_share = 0.32
+    elif is_brush:
+        context_radius_km = np.maximum(1.75 * radius_km, 0.3 * largest_feature_km)
+        context_share = 0.18
     elif attached_point:
         context_radius_km = max(1.25 * float(radius_km), 0.15 * largest_feature_km)
         context_share = 0.04
@@ -263,6 +288,35 @@ def _apply_constraints(
 
     elevation = base_elevation.copy()
     combined_influence = np.zeros_like(elevation)
+
+    brush_weight = np.zeros_like(elevation)
+    brush_targets = np.zeros_like(elevation)
+    for constraint in constraints:
+        if constraint.kind != "brush":
+            continue
+        raw_distance = cast(Any, shapely.distance(sample_points, constraint.geometry))
+        distance = cast(NDArray[np.float64], np.asarray(raw_distance, dtype=np.float64))
+        weight = constraint.intensity * _constraint_weight(
+            distance,
+            constraint.influence_radius_km,
+            largest_feature_km,
+            is_structure=False,
+            is_brush=True,
+        )
+        weight = _coast_conditioned_weight(weight, distance, distance_to_coast_km)
+        brush_weight += weight
+        brush_targets += weight * constraint.elevation_m
+    brush_affected = brush_weight > 0.0
+    if np.any(brush_affected):
+        brush_target = np.divide(
+            brush_targets,
+            brush_weight,
+            out=np.zeros_like(brush_targets),
+            where=brush_affected,
+        )
+        brush_blend = np.clip(brush_weight, 0.0, 1.0)
+        elevation = elevation * (1.0 - brush_blend) + brush_target * brush_blend
+        combined_influence = np.maximum(combined_influence, brush_blend)
 
     ridge_raise = np.zeros_like(elevation)
     for constraint in constraints:

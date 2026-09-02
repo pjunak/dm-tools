@@ -1,6 +1,6 @@
 import pytest
 
-from dmtools.terrain.domain import ElevationPoint, TerrainStructure
+from dmtools.terrain.domain import ElevationPoint, TerrainBrushStroke, TerrainStructure
 
 
 def test_elevation_point_requires_normalized_coordinates() -> None:
@@ -30,3 +30,12 @@ def test_constraint_values_must_be_physical() -> None:
         ElevationPoint(position=(0.5, 0.5), elevation_m=-1.0, influence_radius_km=50.0)
     with pytest.raises(ValueError, match="positive"):
         ElevationPoint(position=(0.5, 0.5), elevation_m=1_000.0, influence_radius_km=0.0)
+
+
+def test_terrain_brush_requires_points_and_bounded_intensity() -> None:
+    with pytest.raises(ValueError, match="at least one"):
+        TerrainBrushStroke((), 1_000.0, 50.0, 0.5)
+    with pytest.raises(ValueError, match="different"):
+        TerrainBrushStroke(((0.5, 0.5), (0.5, 0.5)), 1_000.0, 50.0, 0.5)
+    with pytest.raises(ValueError, match="at most 1"):
+        TerrainBrushStroke(((0.5, 0.5),), 1_000.0, 50.0, 1.1)

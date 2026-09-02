@@ -3,6 +3,7 @@
 from dmtools.terrain.domain.models import (
     Coastline,
     ElevationPoint,
+    TerrainBrushStroke,
     TerrainConstraint,
     TerrainSettings,
     TerrainStructure,
@@ -11,6 +12,7 @@ from dmtools.terrain.domain.models import (
 __all__ = [
     "Coastline",
     "ElevationPoint",
+    "TerrainBrushStroke",
     "TerrainConstraint",
     "TerrainSettings",
     "TerrainStructure",

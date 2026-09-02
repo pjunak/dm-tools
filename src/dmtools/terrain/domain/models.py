@@ -79,7 +79,29 @@ class TerrainStructure:
         _validate_constraint_values(self.elevation_m, self.influence_radius_km)
 
 
-type TerrainConstraint = ElevationPoint | TerrainStructure
+@dataclass(frozen=True, slots=True)
+class TerrainBrushStroke:
+    """A soft target-elevation stroke painted in normalized map coordinates."""
+
+    points: tuple[Point2D, ...]
+    elevation_m: float
+    influence_radius_km: float
+    intensity: float
+
+    def __post_init__(self) -> None:
+        if not self.points:
+            raise ValueError("A terrain brush stroke needs at least one point.")
+        for point in self.points:
+            _validate_normalized_point(point)
+        adjacent_pairs = zip(self.points, self.points[1:], strict=False)
+        if any(first == second for first, second in adjacent_pairs):
+            raise ValueError("Adjacent terrain brush points must be different.")
+        _validate_constraint_values(self.elevation_m, self.influence_radius_km)
+        if not isfinite(self.intensity) or not 0.0 < self.intensity <= 1.0:
+            raise ValueError("Terrain brush intensity must be greater than 0 and at most 1.")
+
+
+type TerrainConstraint = ElevationPoint | TerrainStructure | TerrainBrushStroke
 
 
 @dataclass(frozen=True, slots=True)
