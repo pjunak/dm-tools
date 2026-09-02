@@ -56,11 +56,18 @@ class _ResultEvent:
 
 
 @dataclass(frozen=True, slots=True)
+class _CoastlineEvent:
+    coastline: Coastline
+
+
+@dataclass(frozen=True, slots=True)
 class _ErrorEvent:
+    title: str
+    status: str
     error: Exception
 
 
-type _UiEvent = _ProgressEvent | _ResultEvent | _ErrorEvent
+type _UiEvent = _ProgressEvent | _ResultEvent | _CoastlineEvent | _ErrorEvent
 
 
 _CONTROLS = (
@@ -180,9 +187,10 @@ class TerrainApp:
         ttk.Label(top, text="COASTLINE SOURCE", style="Value.TLabel").grid(
             row=0, column=0, sticky="w"
         )
-        ttk.Button(top, text="Import SVG…", style="Quiet.TButton", command=self._choose_svg).grid(
-            row=0, column=1, rowspan=2, padx=(12, 0)
+        self.import_button = ttk.Button(
+            top, text="Import SVG…", style="Quiet.TButton", command=self._choose_svg
         )
+        self.import_button.grid(row=0, column=1, rowspan=2, padx=(12, 0))
         self.source_label = ttk.Label(
             top, text="No coastline loaded", style="Muted.TLabel", width=34
         )
@@ -326,14 +334,45 @@ class TerrainApp:
         )
         if not selected:
             return
-        try:
-            coastline = load_svg_coastline(Path(selected))
-        except CoastlineInputError as error:
-            messagebox.showerror("Coastline could not be imported", str(error), parent=self.root)
-            return
+        source = Path(selected)
+        self.import_button.configure(state="disabled")
+        self.generate_button.configure(state="disabled")
+        self.export_button.configure(state="disabled")
+        self.source_label.configure(text=f"Reading {source.name}…")
+        self.status_label.configure(text="Validating coastline in the background…")
+        self.progress.configure(mode="indeterminate", value=0)
+        self.progress.start(12)
+
+        def worker() -> None:
+            try:
+                self._events.put(_CoastlineEvent(load_svg_coastline(source)))
+            except CoastlineInputError as error:
+                self._events.put(
+                    _ErrorEvent(
+                        title="Coastline could not be imported",
+                        status="Coastline import failed.",
+                        error=error,
+                    )
+                )
+            except Exception as error:
+                self._events.put(
+                    _ErrorEvent(
+                        title="Unexpected import failure",
+                        status="Coastline import failed.",
+                        error=error,
+                    )
+                )
+
+        threading.Thread(target=worker, name="coastline-importer", daemon=True).start()
+
+    def _accept_coastline(self, coastline: Coastline) -> None:
         self._coastline = coastline
         self._terrain = None
         self._image = None
+        self.progress.stop()
+        self.progress.configure(mode="determinate", value=0)
+        self.import_button.configure(state="normal")
+        self.generate_button.configure(state="normal")
         self.export_button.configure(state="disabled")
         self.source_label.configure(text=coastline.source_name)
         self.status_label.configure(text="Coastline valid. Adjust settings or generate.")
@@ -375,8 +414,10 @@ class TerrainApp:
             return
 
         self.generate_button.configure(state="disabled")
+        self.import_button.configure(state="disabled")
         self.export_button.configure(state="disabled")
-        self.progress.configure(value=0)
+        self.progress.stop()
+        self.progress.configure(mode="determinate", value=0)
         self.status_label.configure(text="Starting deterministic generation…")
         coastline = self._coastline
 
@@ -391,7 +432,13 @@ class TerrainApp:
                 image = render_height_map(terrain)
                 self._events.put(_ResultEvent(terrain, image))
             except Exception as error:
-                self._events.put(_ErrorEvent(error))
+                self._events.put(
+                    _ErrorEvent(
+                        title="Terrain generation failed",
+                        status="Generation failed.",
+                        error=error,
+                    )
+                )
 
         threading.Thread(target=worker, name="terrain-generator", daemon=True).start()
 
@@ -402,9 +449,13 @@ class TerrainApp:
                 if isinstance(event, _ProgressEvent):
                     self.progress.configure(value=event.fraction * 100.0)
                     self.status_label.configure(text=event.message)
+                elif isinstance(event, _CoastlineEvent):
+                    self._accept_coastline(event.coastline)
                 elif isinstance(event, _ResultEvent):
                     self._terrain = event.terrain
                     self._image = event.image
+                    self.progress.stop()
+                    self.progress.configure(mode="determinate")
                     self.progress.configure(value=100)
                     self.status_label.configure(
                         text="Terrain ready. Preview or export the colour height map."
@@ -416,16 +467,28 @@ class TerrainApp:
                             f"  ·  peak {peak:,.0f} m"
                         )
                     )
+                    self.import_button.configure(state="normal")
                     self.generate_button.configure(state="normal")
                     self.export_button.configure(state="normal")
                     self._draw_preview()
                 else:
-                    self.generate_button.configure(state="normal")
-                    self.progress.configure(value=0)
-                    self.status_label.configure(text="Generation failed.")
-                    messagebox.showerror(
-                        "Terrain generation failed", str(event.error), parent=self.root
+                    self.progress.stop()
+                    self.progress.configure(mode="determinate", value=0)
+                    self.import_button.configure(state="normal")
+                    self.generate_button.configure(
+                        state="normal" if self._coastline is not None else "disabled"
                     )
+                    self.export_button.configure(
+                        state="normal" if self._terrain is not None else "disabled"
+                    )
+                    source_name = (
+                        self._coastline.source_name
+                        if self._coastline is not None
+                        else "No coastline loaded"
+                    )
+                    self.source_label.configure(text=source_name)
+                    self.status_label.configure(text=event.status)
+                    messagebox.showerror(event.title, str(event.error), parent=self.root)
         except queue.Empty:
             pass
         self.root.after(80, self._poll_events)

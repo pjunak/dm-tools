@@ -6,6 +6,7 @@
 from math import hypot
 from pathlib import Path as FilePath
 
+import numpy as np
 from shapely.geometry import Polygon
 from shapely.validation import explain_validity
 from svgelements import SVG, Path, Shape
@@ -58,10 +59,12 @@ def load_svg_coastline(source: FilePath, *, sample_count: int = 4_096) -> Coastl
     if not _same_point(first, last, tolerance):
         raise CoastlineInputError("The coastline is open; join its final node to its first node.")
 
-    sampled: list[tuple[float, float]] = []
-    for index in range(sample_count):
-        point = path.point(index / sample_count)
-        sampled.append((float(point.x), float(point.y)))
+    positions = np.linspace(0.0, 1.0, sample_count, endpoint=False, dtype=np.float64)
+    length_error = max(1e-6, longest_span * 1e-6)
+    sampled_array = np.asarray(path.npoint(positions, error=length_error), dtype=np.float64)
+    if sampled_array.shape != (sample_count, 2) or not np.all(np.isfinite(sampled_array)):
+        raise CoastlineInputError("The coastline could not be sampled into finite coordinates.")
+    sampled = [(float(x), float(y)) for x, y in sampled_array]
     sampled.append(sampled[0])
 
     polygon = Polygon(sampled)

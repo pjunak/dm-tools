@@ -1,6 +1,9 @@
+# pyright: reportMissingTypeStubs=false
+
 from pathlib import Path
 
 import pytest
+from svgelements import Path as SvgPath
 
 from dmtools.terrain.adapters.svg import CoastlineInputError, load_svg_coastline
 
@@ -13,6 +16,19 @@ def test_loads_one_closed_svg_shape() -> None:
     assert coastline.points[0] == coastline.points[-1]
     assert len(coastline.points) == 257
     assert coastline.source_name == "closed-coast.svg"
+
+
+def test_import_uses_bulk_sampling_instead_of_repeated_whole_path_queries(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def fail_if_called(*_args: object, **_kwargs: object) -> None:
+        raise AssertionError("Path.point performs a costly whole-path lookup per sample")
+
+    monkeypatch.setattr(SvgPath, "point", fail_if_called)
+
+    coastline = load_svg_coastline(FIXTURES / "closed-coast.svg", sample_count=256)
+
+    assert len(coastline.points) == 257
 
 
 @pytest.mark.parametrize(

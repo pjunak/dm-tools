@@ -11,9 +11,9 @@ refined into consistent regional and local maps.
 ```
 
 The current workbench imports one SVG coastline, exposes every implemented
-generator setting as a slider and numeric stepper, generates in a background
-thread with progress reporting, previews the result, and exports a transparent
-colour-relief PNG.
+generator setting as a slider and numeric stepper, performs import validation
+and generation on background workers with progress reporting, previews the
+result, and exports a transparent colour-relief PNG.
 
 [`examples/terrain/coastline.svg`](../../../examples/terrain/coastline.svg) is a
 small public input for trying the workflow.
