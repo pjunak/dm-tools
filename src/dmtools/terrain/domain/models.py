@@ -2,8 +2,10 @@
 
 from dataclasses import dataclass
 from math import isfinite
+from typing import Literal
 
 type Point2D = tuple[float, float]
+type StructureKind = Literal["ridge", "valley"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -26,6 +28,58 @@ class Coastline:
         xs = [point[0] for point in self.points]
         ys = [point[1] for point in self.points]
         return min(xs), min(ys), max(xs), max(ys)
+
+
+def _validate_normalized_point(point: Point2D) -> None:
+    if any(not isfinite(value) for value in point):
+        raise ValueError("Constraint coordinates must be finite.")
+    if any(not 0.0 <= value <= 1.0 for value in point):
+        raise ValueError("Constraint coordinates must be between 0 and 1.")
+
+
+def _validate_constraint_values(elevation_m: float, influence_radius_km: float) -> None:
+    if not isfinite(elevation_m) or elevation_m < 0:
+        raise ValueError("Constraint elevation must be a finite value at or above sea level.")
+    if not isfinite(influence_radius_km) or influence_radius_km <= 0:
+        raise ValueError("Constraint influence radius must be positive and finite.")
+
+
+@dataclass(frozen=True, slots=True)
+class ElevationPoint:
+    """An authored target height at a normalized position inside the coastline."""
+
+    position: Point2D
+    elevation_m: float
+    influence_radius_km: float
+
+    def __post_init__(self) -> None:
+        _validate_normalized_point(self.position)
+        _validate_constraint_values(self.elevation_m, self.influence_radius_km)
+
+
+@dataclass(frozen=True, slots=True)
+class TerrainStructure:
+    """An authored ridge or valley centreline in normalized coastline coordinates."""
+
+    kind: StructureKind
+    points: tuple[Point2D, ...]
+    elevation_m: float
+    influence_radius_km: float
+
+    def __post_init__(self) -> None:
+        if self.kind not in ("ridge", "valley"):
+            raise ValueError("Terrain structure kind must be 'ridge' or 'valley'.")
+        if len(self.points) < 2:
+            raise ValueError("A terrain structure needs at least two points.")
+        for point in self.points:
+            _validate_normalized_point(point)
+        adjacent_pairs = zip(self.points, self.points[1:], strict=False)
+        if any(first == second for first, second in adjacent_pairs):
+            raise ValueError("Adjacent terrain structure points must be different.")
+        _validate_constraint_values(self.elevation_m, self.influence_radius_km)
+
+
+type TerrainConstraint = ElevationPoint | TerrainStructure
 
 
 @dataclass(frozen=True, slots=True)

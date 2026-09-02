@@ -11,6 +11,7 @@ from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 
 from PIL import Image, ImageTk
+from shapely.geometry import LineString, Point, Polygon
 
 from dmtools.terrain.adapters import (
     CoastlineInputError,
@@ -18,7 +19,13 @@ from dmtools.terrain.adapters import (
     render_height_map,
     save_height_map,
 )
-from dmtools.terrain.domain import Coastline, TerrainSettings
+from dmtools.terrain.domain import (
+    Coastline,
+    ElevationPoint,
+    TerrainConstraint,
+    TerrainSettings,
+    TerrainStructure,
+)
 from dmtools.terrain.pipeline import GeneratedTerrain, generate_terrain
 
 _INK = "#172225"
@@ -29,6 +36,10 @@ _BORDER = "#d2ccbd"
 _ACCENT = "#1d7772"
 _ACCENT_ACTIVE = "#155e5a"
 _PREVIEW = "#172225"
+_MAP_BACKGROUND = "#10191b"
+_HEIGHT_COLOUR = "#f2c14e"
+_RIDGE_COLOUR = "#e47b58"
+_VALLEY_COLOUR = "#54a6c2"
 
 
 @dataclass(frozen=True, slots=True)
@@ -97,10 +108,19 @@ class TerrainApp:
         self._terrain: GeneratedTerrain | None = None
         self._image: Image.Image | None = None
         self._preview_photo: ImageTk.PhotoImage | None = None
+        self._coast_polygon: Polygon | None = None
+        self._constraints: list[TerrainConstraint] = []
+        self._draft_points: list[tuple[float, float]] = []
         self._events: queue.Queue[_UiEvent] = queue.Queue()
         self._variables: dict[str, tk.DoubleVar] = {}
         self._value_labels: dict[str, ttk.Label] = {}
         self._specs = {spec.key: spec for spec in _CONTROLS}
+        self._authoring_tool = tk.StringVar(value="height")
+        self._constraint_elevation = tk.DoubleVar(value=2_500.0)
+        self._constraint_radius = tk.DoubleVar(value=120.0)
+        self._tool_buttons: dict[str, tk.Button] = {}
+        self._authoring_widgets: list[tk.Widget] = []
+        self._authoring_enabled = False
 
         self._configure_styles()
         self._build_layout()
@@ -160,7 +180,7 @@ class TerrainApp:
         )
         ttk.Label(
             header,
-            text="A deterministic first relief pass from one closed SVG coastline.",
+            text="Sketch elevation controls, ridges, and valleys before deterministic generation.",
             style="Eyebrow.TLabel",
         ).grid(row=2, column=0, sticky="w", pady=(3, 0))
 
@@ -176,7 +196,7 @@ class TerrainApp:
             page, background=_PREVIEW, highlightthickness=1, highlightbackground="#28383a"
         )
         preview_shell.grid(row=1, column=1, sticky="nsew")
-        preview_shell.rowconfigure(1, weight=1)
+        preview_shell.rowconfigure(2, weight=1)
         preview_shell.columnconfigure(0, weight=1)
         self._build_preview(preview_shell)
 
@@ -277,11 +297,139 @@ class TerrainApp:
         )
         self.preview_meta.pack(side="right")
 
+        authoring = tk.Frame(parent, background="#203033", padx=10, pady=8)
+        authoring.grid(row=1, column=0, sticky="ew", padx=16, pady=(0, 8))
+        authoring.columnconfigure(8, weight=1)
+
+        tk.Label(
+            authoring,
+            text="DRAW",
+            background="#203033",
+            foreground="#8fa5a1",
+            font=("Consolas", 8, "bold"),
+        ).grid(row=0, column=0, padx=(0, 7))
+        for column, (tool, label) in enumerate(
+            (("height", "Height point"), ("ridge", "Ridge line"), ("valley", "Valley line")),
+            start=1,
+        ):
+            button = tk.Button(
+                authoring,
+                text=label,
+                command=lambda selected=tool: self._set_authoring_tool(selected),
+                relief="flat",
+                borderwidth=0,
+                padx=9,
+                pady=5,
+                cursor="hand2",
+                font=("Segoe UI", 8, "bold"),
+            )
+            button.grid(row=0, column=column, padx=2)
+            self._tool_buttons[tool] = button
+            self._authoring_widgets.append(button)
+
+        tk.Label(
+            authoring,
+            text="Height",
+            background="#203033",
+            foreground="#a9bab7",
+            font=("Segoe UI", 8),
+        ).grid(row=0, column=4, padx=(12, 4))
+        elevation_input = tk.Spinbox(
+            authoring,
+            from_=0,
+            to=10_000,
+            increment=100,
+            textvariable=self._constraint_elevation,
+            width=7,
+            justify="right",
+            font=("Consolas", 8),
+        )
+        elevation_input.grid(row=0, column=5)
+        self._authoring_widgets.append(elevation_input)
+        tk.Label(
+            authoring,
+            text="m   Core width",
+            background="#203033",
+            foreground="#a9bab7",
+            font=("Segoe UI", 8),
+        ).grid(row=0, column=6, padx=(3, 4))
+        radius_input = tk.Spinbox(
+            authoring,
+            from_=1,
+            to=2_000,
+            increment=10,
+            textvariable=self._constraint_radius,
+            width=7,
+            justify="right",
+            font=("Consolas", 8),
+        )
+        radius_input.grid(row=0, column=7)
+        self._authoring_widgets.append(radius_input)
+        tk.Label(
+            authoring,
+            text="km",
+            background="#203033",
+            foreground="#a9bab7",
+            font=("Segoe UI", 8),
+        ).grid(row=0, column=8, sticky="w", padx=(3, 0))
+
+        actions = tk.Frame(authoring, background="#203033")
+        actions.grid(row=0, column=9, padx=(12, 0))
+        self.finish_line_button = tk.Button(
+            actions,
+            text="Finish line",
+            command=self._finish_structure,
+            relief="flat",
+            borderwidth=0,
+            padx=8,
+            pady=5,
+            font=("Segoe UI", 8),
+        )
+        self.finish_line_button.pack(side="left", padx=2)
+        self.undo_constraint_button = tk.Button(
+            actions,
+            text="Undo",
+            command=self._undo_constraint,
+            relief="flat",
+            borderwidth=0,
+            padx=8,
+            pady=5,
+            font=("Segoe UI", 8),
+        )
+        self.undo_constraint_button.pack(side="left", padx=2)
+        self.clear_constraints_button = tk.Button(
+            actions,
+            text="Clear",
+            command=self._clear_constraints,
+            relief="flat",
+            borderwidth=0,
+            padx=8,
+            pady=5,
+            font=("Segoe UI", 8),
+        )
+        self.clear_constraints_button.pack(side="left", padx=2)
+        self._authoring_widgets.extend(
+            [
+                self.finish_line_button,
+                self.undo_constraint_button,
+                self.clear_constraints_button,
+            ]
+        )
+
+        self.authoring_hint = tk.Label(
+            authoring,
+            text="Import a coastline to start drawing.",
+            background="#203033",
+            foreground="#8fa5a1",
+            font=("Segoe UI", 8),
+        )
+        self.authoring_hint.grid(row=1, column=0, columnspan=10, sticky="w", pady=(6, 0))
+
         content = tk.Frame(parent, background=_PREVIEW)
-        content.grid(row=1, column=0, sticky="nsew", padx=(16, 12), pady=(0, 14))
+        content.grid(row=2, column=0, sticky="nsew", padx=(16, 12), pady=(0, 14))
         content.rowconfigure(0, weight=1)
         content.columnconfigure(0, weight=1)
-        self.preview = tk.Canvas(content, background="#10191b", highlightthickness=0)
+        self.preview = tk.Canvas(content, background=_MAP_BACKGROUND, highlightthickness=0)
         self.preview.grid(row=0, column=0, sticky="nsew")
         self.preview.create_text(
             20,
@@ -292,6 +440,8 @@ class TerrainApp:
             font=("Segoe UI", 14),
         )
         self.preview.bind("<Configure>", lambda _event: self._draw_preview())
+        self.preview.bind("<Button-1>", self._on_map_click)
+        self.preview.bind("<Button-3>", lambda _event: self._finish_structure())
 
         legend = tk.Frame(content, background=_PREVIEW, width=64)
         legend.grid(row=0, column=1, sticky="ns", padx=(12, 0))
@@ -311,6 +461,231 @@ class TerrainApp:
             foreground="#9eaaa8",
             font=("Segoe UI", 7, "bold"),
         ).pack(pady=(3, 0))
+        self._set_authoring_enabled(False)
+        self._set_authoring_tool("height")
+
+    def _set_authoring_enabled(self, enabled: bool) -> None:
+        self._authoring_enabled = enabled
+        state = "normal" if enabled else "disabled"
+        for widget in self._authoring_widgets:
+            widget["state"] = state
+        self._refresh_authoring_controls()
+
+    def _set_authoring_tool(self, tool: str) -> None:
+        if tool not in ("height", "ridge", "valley"):
+            raise ValueError(f"Unknown authoring tool: {tool}")
+        if self._draft_points and self._authoring_tool.get() != tool:
+            self._draft_points.clear()
+            self.status_label.configure(text="Unfinished structure discarded.")
+        self._authoring_tool.set(tool)
+        self._refresh_authoring_controls()
+        self._draw_preview()
+
+    def _refresh_authoring_controls(self) -> None:
+        selected = self._authoring_tool.get()
+        colours = {
+            "height": _HEIGHT_COLOUR,
+            "ridge": _RIDGE_COLOUR,
+            "valley": _VALLEY_COLOUR,
+        }
+        for tool, button in self._tool_buttons.items():
+            active = tool == selected
+            button.configure(
+                background=colours[tool] if active else "#2c3e40",
+                foreground="#142022" if active else "#d6e0dd",
+                activebackground=colours[tool],
+                activeforeground="#142022",
+                disabledforeground="#71817e",
+            )
+
+        line_ready = selected in ("ridge", "valley") and len(self._draft_points) >= 2
+        self.finish_line_button.configure(
+            state="normal" if self._authoring_enabled and line_ready else "disabled"
+        )
+        has_authored_work = bool(self._draft_points or self._constraints)
+        self.undo_constraint_button.configure(
+            state="normal" if self._authoring_enabled and has_authored_work else "disabled"
+        )
+        self.clear_constraints_button.configure(
+            state="normal" if self._authoring_enabled and has_authored_work else "disabled"
+        )
+
+        if not self._authoring_enabled:
+            hint = "Import a coastline to start drawing."
+        elif selected == "height":
+            hint = (
+                "Click to place a target height; the soft terrain response extends past its core."
+            )
+        else:
+            feature = "ridge" if selected == "ridge" else "valley"
+            hint = (
+                f"Click along the {feature}; Finish line or right-click at 2+ points. "
+                "The response extends past the core."
+            )
+        count = len(self._constraints)
+        if count:
+            hint = f"{count} authored feature{'s' if count != 1 else ''}.  {hint}"
+        self.authoring_hint.configure(text=hint)
+
+    def _map_rect(self) -> tuple[float, float, float, float] | None:
+        if self._coastline is None:
+            return None
+        min_x, min_y, max_x, max_y = self._coastline.bounds
+        span_x = max_x - min_x
+        span_y = max_y - min_y
+        if span_x <= 0 or span_y <= 0:
+            return None
+        canvas_width = max(1.0, float(self.preview.winfo_width()))
+        canvas_height = max(1.0, float(self.preview.winfo_height()))
+        scale = min(max(1.0, canvas_width - 36.0) / span_x, max(1.0, canvas_height - 36.0) / span_y)
+        display_width = span_x * scale
+        display_height = span_y * scale
+        left = (canvas_width - display_width) / 2.0
+        top = (canvas_height - display_height) / 2.0
+        return left, top, left + display_width, top + display_height
+
+    def _normalized_to_source(self, position: tuple[float, float]) -> tuple[float, float]:
+        if self._coastline is None:
+            raise RuntimeError("No coastline is loaded.")
+        min_x, min_y, max_x, max_y = self._coastline.bounds
+        return (
+            min_x + position[0] * (max_x - min_x),
+            min_y + position[1] * (max_y - min_y),
+        )
+
+    def _normalized_to_canvas(self, position: tuple[float, float]) -> tuple[float, float]:
+        rect = self._map_rect()
+        if rect is None:
+            raise RuntimeError("No coastline is loaded.")
+        left, top, right, bottom = rect
+        return (
+            left + position[0] * (right - left),
+            top + position[1] * (bottom - top),
+        )
+
+    def _canvas_to_normalized(self, x: float, y: float) -> tuple[float, float] | None:
+        rect = self._map_rect()
+        if rect is None:
+            return None
+        left, top, right, bottom = rect
+        if not left <= x <= right or not top <= y <= bottom:
+            return None
+        return (x - left) / (right - left), (y - top) / (bottom - top)
+
+    def _read_constraint_values(self) -> tuple[float, float] | None:
+        try:
+            elevation_m = float(self._constraint_elevation.get())
+            radius_km = float(self._constraint_radius.get())
+            if elevation_m < 0:
+                raise ValueError("Height must be at or above sea level.")
+            if radius_km <= 0:
+                raise ValueError("Influence must be greater than zero.")
+        except (tk.TclError, ValueError) as error:
+            messagebox.showerror("Invalid authored feature", str(error), parent=self.root)
+            return None
+        return elevation_m, radius_km
+
+    def _on_map_click(self, event: tk.Event[tk.Misc]) -> None:
+        if not self._authoring_enabled or self._coast_polygon is None:
+            return
+        position = self._canvas_to_normalized(float(event.x), float(event.y))
+        if position is None:
+            return
+        source_point = self._normalized_to_source(position)
+        if not self._coast_polygon.covers(Point(source_point)):
+            self.root.bell()
+            self.status_label.configure(text="Place authored features inside the coastline.")
+            return
+
+        tool = self._authoring_tool.get()
+        if tool == "height":
+            values = self._read_constraint_values()
+            if values is None:
+                return
+            elevation_m, radius_km = values
+            self._constraints.append(
+                ElevationPoint(
+                    position=position,
+                    elevation_m=elevation_m,
+                    influence_radius_km=radius_km,
+                )
+            )
+            self._invalidate_generated_terrain("Height point added. Generate to apply it.")
+        else:
+            if self._draft_points:
+                segment = LineString(
+                    [
+                        self._normalized_to_source(self._draft_points[-1]),
+                        source_point,
+                    ]
+                )
+                if not self._coast_polygon.covers(segment):
+                    self.root.bell()
+                    self.status_label.configure(
+                        text="That segment leaves the coastline; choose a different point."
+                    )
+                    return
+            self._draft_points.append(position)
+            self.status_label.configure(
+                text=f"{tool.capitalize()} vertex {len(self._draft_points)} added."
+            )
+            self._refresh_authoring_controls()
+            self._draw_preview()
+
+    def _finish_structure(self) -> None:
+        tool = self._authoring_tool.get()
+        if tool not in ("ridge", "valley") or len(self._draft_points) < 2:
+            return
+        values = self._read_constraint_values()
+        if values is None:
+            return
+        elevation_m, radius_km = values
+        self._constraints.append(
+            TerrainStructure(
+                kind=tool,
+                points=tuple(self._draft_points),
+                elevation_m=elevation_m,
+                influence_radius_km=radius_km,
+            )
+        )
+        self._draft_points.clear()
+        self._invalidate_generated_terrain(f"{tool.capitalize()} added. Generate to apply it.")
+
+    def _undo_constraint(self) -> None:
+        if self._draft_points:
+            self._draft_points.pop()
+            self.status_label.configure(text="Removed the last unfinished line vertex.")
+            self._refresh_authoring_controls()
+            self._draw_preview()
+            return
+        if self._constraints:
+            self._constraints.pop()
+            self._invalidate_generated_terrain("Removed the last authored feature.")
+
+    def _clear_constraints(self) -> None:
+        if not self._draft_points and not self._constraints:
+            return
+        if self._constraints and not messagebox.askyesno(
+            "Clear authored topography?",
+            "Remove every height point, ridge, and valley from this coastline?",
+            parent=self.root,
+        ):
+            return
+        self._draft_points.clear()
+        self._constraints.clear()
+        self._invalidate_generated_terrain("All authored topography cleared.")
+
+    def _invalidate_generated_terrain(self, status: str) -> None:
+        self._terrain = None
+        self._image = None
+        self._preview_photo = None
+        self.export_button.configure(state="disabled")
+        self.progress.configure(value=0)
+        self.status_label.configure(text=status)
+        suffix = "s" if len(self._constraints) != 1 else ""
+        self.preview_meta.configure(text=f"{len(self._constraints)} authored feature{suffix}")
+        self._refresh_authoring_controls()
+        self._draw_preview()
 
     def _refresh_value(self, key: str) -> None:
         spec = self._specs[key]
@@ -334,10 +709,18 @@ class TerrainApp:
         )
         if not selected:
             return
+        if (self._constraints or self._draft_points) and not messagebox.askyesno(
+            "Replace the coastline?",
+            "Importing a different coastline clears the authored height points, "
+            "ridges, and valleys.",
+            parent=self.root,
+        ):
+            return
         source = Path(selected)
         self.import_button.configure(state="disabled")
         self.generate_button.configure(state="disabled")
         self.export_button.configure(state="disabled")
+        self._set_authoring_enabled(False)
         self.source_label.configure(text=f"Reading {source.name}…")
         self.status_label.configure(text="Validating coastline in the background…")
         self.progress.configure(mode="indeterminate", value=0)
@@ -367,6 +750,9 @@ class TerrainApp:
 
     def _accept_coastline(self, coastline: Coastline) -> None:
         self._coastline = coastline
+        self._coast_polygon = Polygon(coastline.points)
+        self._constraints.clear()
+        self._draft_points.clear()
         self._terrain = None
         self._image = None
         self.progress.stop()
@@ -374,18 +760,12 @@ class TerrainApp:
         self.import_button.configure(state="normal")
         self.generate_button.configure(state="normal")
         self.export_button.configure(state="disabled")
+        self._set_authoring_enabled(True)
         self.source_label.configure(text=coastline.source_name)
-        self.status_label.configure(text="Coastline valid. Adjust settings or generate.")
+        self.status_label.configure(text="Coastline valid. Draw controls or generate directly.")
         self.preview_meta.configure(text=f"{len(coastline.points) - 1:,} sampled boundary points")
-        self.preview.delete("all")
-        self.preview.create_text(
-            20,
-            20,
-            text="Coastline accepted.\nReady to generate.",
-            anchor="nw",
-            fill="#87a09b",
-            font=("Segoe UI", 14),
-        )
+        self._refresh_authoring_controls()
+        self._draw_preview()
 
     def _read_settings(self) -> TerrainSettings:
         values = {key: variable.get() for key, variable in self._variables.items()}
@@ -416,10 +796,12 @@ class TerrainApp:
         self.generate_button.configure(state="disabled")
         self.import_button.configure(state="disabled")
         self.export_button.configure(state="disabled")
+        self._set_authoring_enabled(False)
         self.progress.stop()
         self.progress.configure(mode="determinate", value=0)
         self.status_label.configure(text="Starting deterministic generation…")
         coastline = self._coastline
+        constraints = tuple(self._constraints)
 
         def worker() -> None:
             try:
@@ -427,6 +809,7 @@ class TerrainApp:
                     coastline,
                     settings,
                     lambda fraction, message: self._events.put(_ProgressEvent(fraction, message)),
+                    constraints=constraints,
                 )
                 self._events.put(_ProgressEvent(0.97, "Rendering colour relief"))
                 image = render_height_map(terrain)
@@ -470,11 +853,13 @@ class TerrainApp:
                     self.import_button.configure(state="normal")
                     self.generate_button.configure(state="normal")
                     self.export_button.configure(state="normal")
+                    self._set_authoring_enabled(True)
                     self._draw_preview()
                 else:
                     self.progress.stop()
                     self.progress.configure(mode="determinate", value=0)
                     self.import_button.configure(state="normal")
+                    self._set_authoring_enabled(self._coastline is not None)
                     self.generate_button.configure(
                         state="normal" if self._coastline is not None else "disabled"
                     )
@@ -494,20 +879,171 @@ class TerrainApp:
         self.root.after(80, self._poll_events)
 
     def _draw_preview(self) -> None:
-        if self._image is None:
-            return
-        width = max(1, self.preview.winfo_width() - 32)
-        height = max(1, self.preview.winfo_height() - 32)
-        display = self._image.copy()
-        display.thumbnail((width, height), Image.Resampling.LANCZOS)
-        self._preview_photo = ImageTk.PhotoImage(display)
         self.preview.delete("all")
-        self.preview.create_image(
-            self.preview.winfo_width() // 2,
-            self.preview.winfo_height() // 2,
-            image=self._preview_photo,
-            anchor="center",
+        if self._coastline is None:
+            self.preview.create_text(
+                20,
+                20,
+                text="Import a coastline\nto establish the land mask.",
+                anchor="nw",
+                fill="#71817e",
+                font=("Segoe UI", 14),
+            )
+            return
+        rect = self._map_rect()
+        if rect is None:
+            return
+        left, top, right, bottom = rect
+        display_width = max(1, round(right - left))
+        display_height = max(1, round(bottom - top))
+
+        if self._image is not None:
+            display = self._image.resize(
+                (display_width, display_height),
+                Image.Resampling.LANCZOS,
+            )
+            self._preview_photo = ImageTk.PhotoImage(display)
+            self.preview.create_image(left, top, image=self._preview_photo, anchor="nw")
+        else:
+            boundary_coordinates = self._coastline_canvas_coordinates()
+            self.preview.create_polygon(
+                boundary_coordinates,
+                fill="#243638",
+                outline="",
+            )
+
+        boundary_coordinates = self._coastline_canvas_coordinates()
+        self.preview.create_line(
+            boundary_coordinates,
+            fill="#b9cbc6",
+            width=1.5,
+            joinstyle="round",
         )
+        for constraint in self._constraints:
+            self._draw_constraint(constraint)
+        self._draw_draft_structure()
+
+    def _coastline_canvas_coordinates(self) -> list[float]:
+        if self._coastline is None:
+            return []
+        min_x, min_y, max_x, max_y = self._coastline.bounds
+        span_x = max_x - min_x
+        span_y = max_y - min_y
+        points = self._coastline.points
+        step = max(1, (len(points) - 1) // 1_200)
+        sampled = list(points[:-1:step])
+        sampled.append(points[-1])
+        coordinates: list[float] = []
+        for x, y in sampled:
+            canvas_x, canvas_y = self._normalized_to_canvas(
+                ((x - min_x) / span_x, (y - min_y) / span_y)
+            )
+            coordinates.extend((canvas_x, canvas_y))
+        return coordinates
+
+    def _influence_radius_pixels(self, influence_radius_km: float) -> float:
+        rect = self._map_rect()
+        if rect is None:
+            return 0.0
+        try:
+            object_scale_km = float(self._variables["object_scale_km"].get())
+        except (tk.TclError, ValueError):
+            return 0.0
+        if object_scale_km <= 0:
+            return 0.0
+        left, top, right, bottom = rect
+        return influence_radius_km / object_scale_km * max(right - left, bottom - top)
+
+    def _draw_constraint(self, constraint: TerrainConstraint) -> None:
+        if isinstance(constraint, ElevationPoint):
+            x, y = self._normalized_to_canvas(constraint.position)
+            radius = max(4.0, self._influence_radius_pixels(constraint.influence_radius_km))
+            self.preview.create_oval(
+                x - radius,
+                y - radius,
+                x + radius,
+                y + radius,
+                outline=_HEIGHT_COLOUR,
+                dash=(3, 3),
+            )
+            self.preview.create_oval(
+                x - 4,
+                y - 4,
+                x + 4,
+                y + 4,
+                fill=_HEIGHT_COLOUR,
+                outline=_MAP_BACKGROUND,
+                width=1,
+            )
+            self.preview.create_text(
+                x + 8,
+                y - 7,
+                text=f"{constraint.elevation_m:,.0f} m",
+                anchor="sw",
+                fill="#fff3bf",
+                font=("Consolas", 8, "bold"),
+            )
+            return
+
+        colour = _RIDGE_COLOUR if constraint.kind == "ridge" else _VALLEY_COLOUR
+        coordinates: list[float] = []
+        canvas_points: list[tuple[float, float]] = []
+        for point in constraint.points:
+            canvas_point = self._normalized_to_canvas(point)
+            canvas_points.append(canvas_point)
+            coordinates.extend(canvas_point)
+        self.preview.create_line(
+            coordinates,
+            fill=colour,
+            width=3,
+            joinstyle="round",
+            capstyle="round",
+            smooth=True,
+            splinesteps=16,
+        )
+        for x, y in canvas_points:
+            self.preview.create_oval(x - 3, y - 3, x + 3, y + 3, fill=colour, outline="")
+        label_x, label_y = canvas_points[len(canvas_points) // 2]
+        self.preview.create_text(
+            label_x + 7,
+            label_y - 6,
+            text=f"{constraint.kind}  {constraint.elevation_m:,.0f} m",
+            anchor="sw",
+            fill=colour,
+            font=("Consolas", 8, "bold"),
+        )
+
+    def _draw_draft_structure(self) -> None:
+        if not self._draft_points:
+            return
+        tool = self._authoring_tool.get()
+        colour = _RIDGE_COLOUR if tool == "ridge" else _VALLEY_COLOUR
+        coordinates: list[float] = []
+        canvas_points: list[tuple[float, float]] = []
+        for point in self._draft_points:
+            canvas_point = self._normalized_to_canvas(point)
+            canvas_points.append(canvas_point)
+            coordinates.extend(canvas_point)
+        if len(canvas_points) >= 2:
+            self.preview.create_line(
+                coordinates,
+                fill=colour,
+                width=2,
+                dash=(6, 4),
+                joinstyle="round",
+                smooth=True,
+                splinesteps=16,
+            )
+        for x, y in canvas_points:
+            self.preview.create_oval(
+                x - 4,
+                y - 4,
+                x + 4,
+                y + 4,
+                fill=_MAP_BACKGROUND,
+                outline=colour,
+                width=2,
+            )
 
     def _export(self) -> None:
         if self._terrain is None or self._image is None:

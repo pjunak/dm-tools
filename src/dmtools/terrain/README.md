@@ -11,9 +11,10 @@ refined into consistent regional and local maps.
 ```
 
 The current workbench imports one SVG coastline, exposes every implemented
-generator setting as a slider and numeric stepper, performs import validation
-and generation on background workers with progress reporting, previews the
-result, and exports a transparent colour-relief PNG.
+generator setting as a slider and numeric stepper, and lets the user draw exact
+height points plus ridge and valley centrelines over the map. Import validation
+and generation run on background workers with progress reporting. The result is
+previewed and can be exported as a transparent colour-relief PNG.
 
 [`examples/terrain/coastline.svg`](../../../examples/terrain/coastline.svg) is a
 small public input for trying the workflow.
@@ -25,13 +26,39 @@ small public input for trying the workflow.
 - That object must contain exactly one continuous, closed subpath.
 - The loop must enclose positive area and must not self-intersect.
 - SVG transforms are applied before the coastline is sampled.
-- Holes, islands, multiple land objects, and interior elevation constraints are
-  intentionally deferred.
+- Holes, islands, and multiple land objects are intentionally deferred.
 
 The imported object's **longest bounding-box dimension** is the object scale in
 kilometres. The shorter dimension keeps the SVG aspect ratio. This convention is
 explicit so that the same coastline and scale always establish the same metric
 coordinate system.
+
+## Authoring topography
+
+After importing a coastline, select a drawing tool above the map:
+
+- **Height point** records an exact target elevation at one location.
+- **Ridge line** records a minimum crest elevation and raises lower terrain.
+- **Valley line** records a maximum floor elevation and cuts higher terrain.
+
+Set **Height** and **Core width** before placing the point or finishing a line.
+The core width is the half-width of the strongest response, not a hard cut-off;
+a lower-amplitude geological shoulder continues beyond it. Ridge and valley
+lines collect vertices until **Finish line** is pressed or the map is
+right-clicked. **Undo** first removes unfinished vertices, then committed
+features. Importing another coastline asks before clearing authored features.
+
+Polyline corners are gently rounded during generation, and their effective
+width varies with the deterministic terrain field instead of producing a
+perfect extrusion. Free ends taper. A height point close enough to a ridge or
+valley also becomes an elevation anchor along that structure, so peaks, passes,
+and floor heights bend its longitudinal profile rather than forming an
+independent circular stamp.
+
+Constraints use normalized coastline-bounds coordinates while being authored
+and are converted to explicit metric coordinates during generation. They are
+kept separate from the imported coastline and are recorded in exported PNG
+metadata. The serialized terrain-project contract remains a future decision.
 
 ## Generator settings
 
@@ -66,12 +93,19 @@ settings automatically continuous with a parent build.
 
 ## Scientific scope of the first result
 
-The current surface combines multi-scale value noise with distance from the
-coast. It is useful as deterministic synthetic relief and as an architectural
-test of scale and refinement behavior. It does **not** yet model plate
-tectonics, rock type, erosion, drainage, sediment, climate, or user-authored
-spot heights. River networks and geomorphically believable mountain systems
-will require later conditioned stages.
+The current surface combines multi-scale value noise, distance from the coast,
+and user-authored elevation structures. When constraints are present, a broad
+low-frequency surface is conditioned first. Fine deterministic relief is then
+restored as a residual that fades near the authored geometry. A smooth outer
+shoulder prevents structures from appearing as hard-edged stamps, while a
+coast-distance gate keeps the coastline fixed at sea level. Seeded width and
+crest/floor variation avoids perfectly uniform tubes while respecting ridges as
+minimum heights, valleys as maximum heights, and spot heights as exact anchors.
+
+This is a constraint-aware interpolation model, not yet a landscape-evolution
+model. It does **not** model plate tectonics, rock type, erosion, drainage,
+sediment, or climate. River networks and geomorphically believable mountain
+systems still require the planned process-informed stages.
 
 The generated elevation array is Float32 metres in memory. The PNG is a derived
 visual product with transparent ocean, elevation tint, subtle hillshade, source
@@ -118,7 +152,8 @@ them only when an implemented behavior needs them.
 The next end-to-end work should deliberately remain staged:
 
 1. Define a versioned project and build-manifest schema.
-2. Add exact elevation points and structural ridge/valley constraints.
+2. Define elevation profiles and asymmetric side slopes along ridge and valley
+   structures.
 3. Persist the Float32 DEM as GeoTIFF with explicit coordinate metadata.
 4. Add regional refinement requests in the same world-coordinate frame.
 5. Derive contours and validate hydrology.

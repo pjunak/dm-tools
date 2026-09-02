@@ -36,8 +36,8 @@ The planned high-level stages are:
 
 1. Load and validate a versioned terrain project.
 2. Normalize authored constraints into a metric working grid.
-3. Construct a base surface satisfying hard and soft constraints.
-4. Add deterministic, conditioned relief at named spatial scales.
+3. Construct a low-frequency base surface satisfying hard and soft constraints.
+4. Add deterministic residual relief that fades near authored structures.
 5. Apply optional process-informed erosion or diffusion.
 6. Validate hydrology, constraints, finite values, and level-of-detail
    consistency.
@@ -57,7 +57,7 @@ storage, authentication, and resource limits outside the engine.
 ## Deferred decisions
 
 - Terrain project and constraint schema details
-- Conditioned interpolation for authored elevation points and structural lines
+- Elevation profiles and asymmetric side slopes along structural lines
 - Hydrology engine
 - Multiresolution storage and refinement strategy
 - Web framework, queue, storage, and frontend

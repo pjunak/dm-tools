@@ -1,15 +1,22 @@
 # pyright: reportUnknownMemberType=false
 """First deterministic coastline-conditioned terrain pipeline."""
 
-from collections.abc import Callable
-from dataclasses import dataclass
+from collections.abc import Callable, Sequence
+from dataclasses import dataclass, replace
+from itertools import pairwise
+from typing import Any, cast
 
 import numpy as np
 import shapely
 from numpy.typing import NDArray
-from shapely.geometry import Polygon
+from shapely.geometry import LineString, Point, Polygon
 
-from dmtools.terrain.domain import Coastline, TerrainSettings
+from dmtools.terrain.domain import (
+    Coastline,
+    ElevationPoint,
+    TerrainConstraint,
+    TerrainSettings,
+)
 from dmtools.terrain.pipeline.noise import fractal_value_noise
 
 type ProgressCallback = Callable[[float, str], None]
@@ -24,6 +31,7 @@ class GeneratedTerrain:
     x_km: NDArray[np.float64]
     y_km: NDArray[np.float64]
     settings: TerrainSettings
+    constraints: tuple[TerrainConstraint, ...]
     source_name: str
 
     @property
@@ -58,15 +66,326 @@ def _metric_polygon(coastline: Coastline, object_scale_km: float) -> tuple[Polyg
     return polygon, span_x * km_per_source_unit, span_y * km_per_source_unit
 
 
+@dataclass(frozen=True, slots=True)
+class _MetricConstraint:
+    kind: str
+    geometry: Point | LineString
+    elevation_m: float
+    influence_radius_km: float
+    profile_anchors: tuple[tuple[float, float, float], ...] = ()
+    attached_to_structure: bool = False
+
+
+def _smooth_structure_points(
+    points: list[tuple[float, float]], iterations: int = 3
+) -> list[tuple[float, float]]:
+    """Round authored polyline corners while preserving its two endpoints."""
+
+    if len(points) <= 2:
+        return points
+    smoothed = points
+    for _ in range(iterations):
+        refined = [smoothed[0]]
+        for first, second in pairwise(smoothed):
+            refined.append(
+                (
+                    0.75 * first[0] + 0.25 * second[0],
+                    0.75 * first[1] + 0.25 * second[1],
+                )
+            )
+            refined.append(
+                (
+                    0.25 * first[0] + 0.75 * second[0],
+                    0.25 * first[1] + 0.75 * second[1],
+                )
+            )
+        refined.append(smoothed[-1])
+        smoothed = refined
+    return smoothed
+
+
+def _metric_constraints(
+    constraints: Sequence[TerrainConstraint],
+    polygon: Polygon,
+    width_km: float,
+    height_km: float,
+    maximum_elevation_m: float,
+) -> tuple[_MetricConstraint, ...]:
+    converted: list[_MetricConstraint] = []
+    for constraint in constraints:
+        if constraint.elevation_m > maximum_elevation_m:
+            raise ValueError(
+                f"Authored elevation {constraint.elevation_m:,.0f} m exceeds the "
+                f"{maximum_elevation_m:,.0f} m elevation ceiling."
+            )
+        if isinstance(constraint, ElevationPoint):
+            x, y = constraint.position
+            geometry: Point | LineString = Point(x * width_km, y * height_km)
+            kind = "point"
+        else:
+            metric_points = [(x * width_km, y * height_km) for x, y in constraint.points]
+            geometry = LineString(_smooth_structure_points(metric_points))
+            kind = constraint.kind
+        if not polygon.covers(geometry):
+            label = "Elevation point" if kind == "point" else kind.capitalize()
+            raise ValueError(f"{label} constraint extends outside the coastline.")
+        converted.append(
+            _MetricConstraint(
+                kind=kind,
+                geometry=geometry,
+                elevation_m=constraint.elevation_m,
+                influence_radius_km=constraint.influence_radius_km,
+            )
+        )
+    structure_indices = [
+        index for index, constraint in enumerate(converted) if constraint.kind != "point"
+    ]
+    anchors: dict[int, list[tuple[float, float, float]]] = {
+        index: [] for index in structure_indices
+    }
+    for point_index, point_constraint in enumerate(converted):
+        if point_constraint.kind != "point":
+            continue
+        attached = False
+        for structure_index in structure_indices:
+            structure = converted[structure_index]
+            attachment_distance = max(
+                point_constraint.influence_radius_km,
+                structure.influence_radius_km,
+            )
+            if structure.geometry.distance(point_constraint.geometry) > attachment_distance:
+                continue
+            project_line = cast(Any, structure.geometry)
+            along_km = float(project_line.project(point_constraint.geometry))
+            along_radius_km = max(
+                2.0 * point_constraint.influence_radius_km,
+                structure.influence_radius_km,
+            )
+            anchors[structure_index].append(
+                (along_km, point_constraint.elevation_m, along_radius_km)
+            )
+            attached = True
+        if attached:
+            converted[point_index] = replace(point_constraint, attached_to_structure=True)
+    for structure_index, structure_anchors in anchors.items():
+        if structure_anchors:
+            converted[structure_index] = replace(
+                converted[structure_index],
+                profile_anchors=tuple(sorted(structure_anchors)),
+            )
+    return tuple(converted)
+
+
+def _constraint_weight(
+    distance_km: NDArray[np.float64],
+    radius_km: float | NDArray[np.float64],
+    largest_feature_km: float,
+    *,
+    is_structure: bool,
+    attached_point: bool = False,
+) -> NDArray[np.float64]:
+    """Blend a defined landform core into a broader geological context."""
+
+    if is_structure:
+        context_radius_km = np.maximum(3.0 * radius_km, 0.8 * largest_feature_km)
+        context_share = 0.32
+    elif attached_point:
+        context_radius_km = max(1.25 * float(radius_km), 0.15 * largest_feature_km)
+        context_share = 0.04
+    else:
+        context_radius_km = max(2.0 * float(radius_km), 0.35 * largest_feature_km)
+        context_share = 0.12
+    core = np.exp(-np.log(2.0) * np.square(distance_km / radius_km))
+    context = np.exp(-np.log(2.0) * np.square(distance_km / context_radius_km))
+    return (1.0 - context_share) * core + context_share * context
+
+
+def _coast_conditioned_weight(
+    weight: NDArray[np.float64],
+    distance_to_constraint_km: NDArray[np.float64],
+    distance_to_coast_km: NDArray[np.float64],
+) -> NDArray[np.float64]:
+    """Keep sea level hard while allowing an inland feature to reach its target."""
+
+    denominator = distance_to_coast_km + distance_to_constraint_km
+    coast_gate = np.divide(
+        distance_to_coast_km,
+        denominator,
+        out=np.zeros_like(distance_to_coast_km),
+        where=denominator > 0.0,
+    )
+    return weight * coast_gate
+
+
+def _line_positions_km(
+    line: LineString, sample_points: Any
+) -> NDArray[np.float64]:
+    raw_positions = cast(Any, shapely.line_locate_point(line, sample_points))
+    return cast(NDArray[np.float64], np.asarray(raw_positions, dtype=np.float64))
+
+
+def _structure_target(
+    constraint: _MetricConstraint,
+    line_positions_km: NDArray[np.float64],
+) -> NDArray[np.float64]:
+    target = np.full_like(line_positions_km, constraint.elevation_m)
+    if not constraint.profile_anchors:
+        return target
+    anchor_weight = np.zeros_like(line_positions_km)
+    anchor_targets = np.zeros_like(line_positions_km)
+    strongest_anchor = np.zeros_like(line_positions_km)
+    for along_km, elevation_m, radius_km in constraint.profile_anchors:
+        distance_along = np.abs(line_positions_km - along_km)
+        weight = np.exp(-np.log(2.0) * np.square(distance_along / radius_km))
+        anchor_weight += weight
+        anchor_targets += weight * elevation_m
+        strongest_anchor = np.maximum(strongest_anchor, weight)
+    interpolated = np.divide(
+        anchor_targets,
+        anchor_weight,
+        out=target.copy(),
+        where=anchor_weight > 0.0,
+    )
+    blend = np.clip(strongest_anchor, 0.0, 1.0)
+    return target * (1.0 - blend) + interpolated * blend
+
+
+def _apply_constraints(
+    base_elevation: NDArray[np.float64],
+    sample_points: Any,
+    distance_to_coast_km: NDArray[np.float64],
+    constraints: tuple[_MetricConstraint, ...],
+    largest_feature_km: float,
+    maximum_elevation_m: float,
+    detail_driver: NDArray[np.float64],
+) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
+    """Condition a broad base surface and report where fine detail should fade."""
+
+    elevation = base_elevation.copy()
+    combined_influence = np.zeros_like(elevation)
+
+    ridge_raise = np.zeros_like(elevation)
+    for constraint in constraints:
+        if constraint.kind != "ridge":
+            continue
+        raw_distance = cast(Any, shapely.distance(sample_points, constraint.geometry))
+        distance = cast(NDArray[np.float64], np.asarray(raw_distance, dtype=np.float64))
+        line = cast(LineString, constraint.geometry)
+        line_positions = _line_positions_km(line, sample_points)
+        distance_to_end = np.minimum(line_positions, line.length - line_positions)
+        taper_length = max(2.0 * constraint.influence_radius_km, 0.12 * line.length)
+        taper_progress = np.clip(distance_to_end / taper_length, 0.0, 1.0)
+        taper = taper_progress * taper_progress * (3.0 - 2.0 * taper_progress)
+        width_variation = 0.82 + 0.36 * (0.5 + 0.5 * detail_driver)
+        effective_radius = constraint.influence_radius_km * (0.35 + 0.65 * taper)
+        effective_radius *= width_variation
+        weight = _constraint_weight(
+            distance,
+            effective_radius,
+            largest_feature_km,
+            is_structure=True,
+        )
+        weight = _coast_conditioned_weight(weight, distance, distance_to_coast_km)
+        combined_influence = np.maximum(combined_influence, weight)
+        target = _structure_target(constraint, line_positions)
+        generated_relief = np.minimum(
+            0.10 * target,
+            0.22 * np.maximum(maximum_elevation_m - target, 0.0),
+        )
+        target += generated_relief * np.clip(0.5 + 0.5 * detail_driver, 0.0, 1.0)
+        ridge_raise = np.maximum(
+            ridge_raise,
+            weight * np.maximum(target - elevation, 0.0),
+        )
+    elevation += ridge_raise
+
+    valley_cut = np.zeros_like(elevation)
+    for constraint in constraints:
+        if constraint.kind != "valley":
+            continue
+        raw_distance = cast(Any, shapely.distance(sample_points, constraint.geometry))
+        distance = cast(NDArray[np.float64], np.asarray(raw_distance, dtype=np.float64))
+        line = cast(LineString, constraint.geometry)
+        line_positions = _line_positions_km(line, sample_points)
+        distance_to_end = np.minimum(line_positions, line.length - line_positions)
+        taper_length = max(2.0 * constraint.influence_radius_km, 0.12 * line.length)
+        taper_progress = np.clip(distance_to_end / taper_length, 0.0, 1.0)
+        taper = taper_progress * taper_progress * (3.0 - 2.0 * taper_progress)
+        width_variation = 0.82 + 0.36 * (0.5 + 0.5 * detail_driver)
+        effective_radius = constraint.influence_radius_km * (0.35 + 0.65 * taper)
+        effective_radius *= width_variation
+        weight = _constraint_weight(
+            distance,
+            effective_radius,
+            largest_feature_km,
+            is_structure=True,
+        )
+        weight = _coast_conditioned_weight(weight, distance, distance_to_coast_km)
+        combined_influence = np.maximum(combined_influence, weight)
+        target = _structure_target(constraint, line_positions)
+        generated_incision = np.minimum(0.15 * target, 300.0)
+        target -= generated_incision * np.clip(0.5 + 0.5 * detail_driver, 0.0, 1.0)
+        valley_cut = np.maximum(
+            valley_cut,
+            weight * np.maximum(elevation - target, 0.0),
+        )
+    elevation -= valley_cut
+
+    point_weight = np.zeros_like(elevation)
+    point_targets = np.zeros_like(elevation)
+    for constraint in constraints:
+        if constraint.kind != "point":
+            continue
+        raw_distance = cast(Any, shapely.distance(sample_points, constraint.geometry))
+        distance = cast(NDArray[np.float64], np.asarray(raw_distance, dtype=np.float64))
+        weight = _constraint_weight(
+            distance,
+            (
+                0.45 * constraint.influence_radius_km
+                if constraint.attached_to_structure
+                else constraint.influence_radius_km
+            ),
+            largest_feature_km,
+            is_structure=False,
+            attached_point=constraint.attached_to_structure,
+        )
+        weight = _coast_conditioned_weight(weight, distance, distance_to_coast_km)
+        combined_influence = np.maximum(combined_influence, weight)
+        point_weight += weight
+        point_targets += weight * constraint.elevation_m
+    affected = point_weight > 0.0
+    if np.any(affected):
+        target = np.divide(
+            point_targets,
+            point_weight,
+            out=np.zeros_like(point_targets),
+            where=affected,
+        )
+        blend = np.clip(point_weight, 0.0, 1.0)
+        elevation = elevation * (1.0 - blend) + target * blend
+
+    return elevation, np.clip(combined_influence, 0.0, 1.0)
+
+
 def generate_terrain(
     coastline: Coastline,
     settings: TerrainSettings,
     progress: ProgressCallback | None = None,
+    *,
+    constraints: Sequence[TerrainConstraint] = (),
 ) -> GeneratedTerrain:
     """Generate a deterministic Float32 elevation grid inside a coastline."""
 
     _report(progress, 0.02, "Preparing metric grid")
     polygon, width_km, height_km = _metric_polygon(coastline, settings.object_scale_km)
+    authored_constraints = tuple(constraints)
+    metric_constraints = _metric_constraints(
+        authored_constraints,
+        polygon,
+        width_km,
+        height_km,
+        settings.maximum_elevation_m,
+    )
     longest_km = max(width_km, height_km)
     width = max(2, round(settings.resolution_px * width_km / longest_km))
     height = max(2, round(settings.resolution_px * height_km / longest_km))
@@ -81,8 +400,11 @@ def generate_terrain(
         stop = min(start + chunk_rows, height)
         x_grid, y_grid = np.meshgrid(x_km, y_km[start:stop])
         chunk_mask = shapely.intersects_xy(polygon, x_grid, y_grid)
-        points = shapely.points(x_grid, y_grid)
-        distance_to_coast = shapely.distance(points, boundary)
+        points: Any = shapely.points(x_grid, y_grid)
+        raw_distance_to_coast = cast(Any, shapely.distance(points, boundary))
+        distance_to_coast = cast(
+            NDArray[np.float64], np.asarray(raw_distance_to_coast, dtype=np.float64)
+        )
         relief_noise = fractal_value_noise(
             x_grid,
             y_grid,
@@ -95,7 +417,40 @@ def generate_terrain(
         coastal_envelope = 1.0 - np.exp(-distance_to_coast / settings.coastal_rise_km)
         shaped_noise = np.power(np.clip(0.5 + 0.5 * relief_noise, 0.0, 1.0), 1.35)
         relief = (1.0 - settings.variability) * 0.72 + settings.variability * shaped_noise
-        chunk_elevation = settings.maximum_elevation_m * coastal_envelope * relief
+        unconditioned_elevation = settings.maximum_elevation_m * coastal_envelope * relief
+        if metric_constraints:
+            macro_noise = fractal_value_noise(
+                x_grid,
+                y_grid,
+                seed=settings.seed,
+                largest_feature_km=settings.largest_feature_km,
+                detail_levels=min(2, settings.detail_levels),
+                roughness=settings.roughness,
+            )
+            shaped_macro = np.power(np.clip(0.5 + 0.5 * macro_noise, 0.0, 1.0), 1.35)
+            macro_relief = (
+                (1.0 - settings.variability) * 0.72
+                + settings.variability * shaped_macro
+            )
+            macro_elevation = (
+                settings.maximum_elevation_m * coastal_envelope * macro_relief
+            )
+            conditioned_elevation, constraint_influence = _apply_constraints(
+                macro_elevation,
+                points,
+                distance_to_coast,
+                metric_constraints,
+                settings.largest_feature_km,
+                settings.maximum_elevation_m,
+                relief_noise,
+            )
+            residual_detail = unconditioned_elevation - macro_elevation
+            chunk_elevation = conditioned_elevation + residual_detail * (
+                1.0 - constraint_influence
+            )
+            chunk_elevation = np.clip(chunk_elevation, 0.0, settings.maximum_elevation_m)
+        else:
+            chunk_elevation = unconditioned_elevation
         chunk_elevation = np.where(chunk_mask, chunk_elevation, np.nan)
 
         elevation[start:stop] = chunk_elevation.astype(np.float32)
@@ -118,5 +473,6 @@ def generate_terrain(
         x_km=x_km,
         y_km=y_km,
         settings=settings,
+        constraints=authored_constraints,
         source_name=coastline.source_name,
     )

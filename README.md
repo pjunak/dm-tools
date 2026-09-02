@@ -11,8 +11,9 @@ interface should call the same engine rather than replacing it.
 ## Status
 
 The first terrain-generator vertical slice is usable. Its desktop workbench can
-import one closed SVG coastline, generate a deterministic synthetic elevation
-field, preview it as colour relief, and export the preview as a transparent PNG.
+import one closed SVG coastline, draw exact height points plus ridge and valley
+centrelines, generate a deterministic constraint-conditioned elevation field,
+preview it as colour relief, and export the preview as a transparent PNG.
 
 ## Requirements
 

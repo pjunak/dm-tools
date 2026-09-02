@@ -7,6 +7,7 @@ from pathlib import Path
 import numpy as np
 from PIL import Image, PngImagePlugin
 
+from dmtools.terrain.domain import ElevationPoint, TerrainConstraint
 from dmtools.terrain.pipeline import GeneratedTerrain
 
 _COLOUR_STOPS = np.array([0.0, 0.08, 0.30, 0.55, 0.75, 0.90, 1.0])
@@ -65,12 +66,27 @@ def render_height_map(terrain: GeneratedTerrain) -> Image.Image:
     return Image.fromarray(rgba, mode="RGBA")
 
 
+def _constraint_payload(constraint: TerrainConstraint) -> dict[str, object]:
+    payload = asdict(constraint)
+    payload["type"] = (
+        "elevation_point" if isinstance(constraint, ElevationPoint) else constraint.kind
+    )
+    return payload
+
+
 def save_height_map(image: Image.Image, terrain: GeneratedTerrain, destination: Path) -> None:
     """Save the rendered PNG with reproducibility settings in text metadata."""
 
     metadata = PngImagePlugin.PngInfo()
     metadata.add_text("dmtools.source", terrain.source_name)
     metadata.add_text("dmtools.settings", json.dumps(asdict(terrain.settings), sort_keys=True))
+    metadata.add_text(
+        "dmtools.constraints",
+        json.dumps(
+            [_constraint_payload(constraint) for constraint in terrain.constraints],
+            sort_keys=True,
+        ),
+    )
     metadata.add_text(
         "dmtools.note",
         "Colour relief preview; the authoritative in-memory values are Float32 metres.",
