@@ -91,6 +91,11 @@ export. Those are not repeated below as unfinished work.
 
 ## Algorithm and result improvements
 
+The [2026-09-03 terrain algorithm research](docs/research/2026-09-03-terrain-algorithm-options.md)
+recommends building the measurement harness first, then comparing local RBF and
+sparse screened-Poisson correction fields, followed by drainage and optional
+landscape-process spikes. It is working research, not an accepted architecture.
+
 ### Constraint-conditioned base surface
 
 - [ ] **P0 — Create a quantitative terrain-quality fixture suite.** Include a
@@ -103,7 +108,10 @@ export. Those are not repeated below as unfinished work.
   the current smooth-response model against feature-curve diffusion/Poisson
   solving, radial-basis interpolation, and hydrologically conditioned
   interpolation. Compare constraint error, slope continuity, runtime, and
-  nested-resolution behavior before replacing the current model.
+  nested-resolution behavior before replacing the current model. The first
+  spike should compare deterministic local RBF and sparse screened-Poisson
+  correction stages; use ANUDEM as a behavior and diagnostic reference rather
+  than attempting a full clone.
 - [ ] **P0 — Separate hard constraints, soft guidance, and inequalities in the
   solver contract.** Exact spot heights and water levels must remain exact;
   ridge minima, valley maxima, relative displacement, and brush guidance should
@@ -147,7 +155,9 @@ export. Those are not repeated below as unfinished work.
 - [ ] **Research — Evaluate diffusion-based feature-curve terrain fitting.**
   The approach in the feature-based terrain research may provide smoother
   networks and explicit slope control, but must be tested for determinism,
-  coastline boundaries, exact anchors, and regional refinement.
+  coastline boundaries, exact anchors, and regional refinement. Start with a
+  regular-grid sparse solve and postpone multigrid until measurements justify
+  the added implementation complexity.
 
 ### Valleys, rivers, and hydrology
 
@@ -160,7 +170,9 @@ export. Those are not repeated below as unfinished work.
   width/depth changes along a line.
 - [ ] **P0 — Derive drainage direction and flow accumulation.** Define the
   depression fill/breach policy, flat handling, edge outlets, and sea
-  connectivity before promising hydrologically valid rivers.
+  connectivity before promising hydrologically valid rivers. Prototype MFD for
+  continuous accumulation and D8 for unique catchment trees; include rotated
+  fixtures so grid-direction bias is measurable.
 - [ ] **P1 — Reconcile authored rivers with generated drainage.** Rivers should
   descend to a valid outlet and occupy a local valley; report conflicts rather
   than silently moving an authored route.
@@ -171,14 +183,17 @@ export. Those are not repeated below as unfinished work.
   primitives.** Candidates already considered include ANUDEM-style
   hydrological conditioning and established GIS flow/depression tooling. Keep
   optional engines behind adapters and measure Python 3.14/platform support,
-  determinism, license implications, and refinement behavior.
+  determinism, license implications, and refinement behavior. Landlab is the
+  strongest Python 3.14 experiment adapter found; GRASS and Whitebox remain
+  external comparison tools with explicit license/version boundaries.
 
 ### Landscape processes and validation
 
 - [ ] **Research — Prototype deterministic hydraulic or stream-power erosion.**
   Start with a small post-process that respects fixed coastline and elevation
   anchors; reject it if it merely adds noisy gullies or makes results
-  resolution-dependent.
+  resolution-dependent. Prefer stream-power incision plus explicit flow
+  routing over a visual particle or droplet erosion filter.
 - [ ] **Research — Prototype thermal erosion/talus relaxation.** Use it only
   where material and slope assumptions are explicit, and verify that it does
   not erase authored passes, ridges, or valley floors.
@@ -273,6 +288,10 @@ export. Those are not repeated below as unfinished work.
   download UX only at the service boundary.
 
 ## Related decisions and research
+
+- [Terrain algorithm options — 2026-09-03](docs/research/2026-09-03-terrain-algorithm-options.md)
+  records the current solver, hydrology, erosion, multiresolution, validation,
+  tooling, and license findings without accepting an implementation.
 
 - [ADR-0003](docs/adr/0003-map-authored-constraints.md) records the initial
   feature-curve conditioning decision and diffusion/process-informed options.
