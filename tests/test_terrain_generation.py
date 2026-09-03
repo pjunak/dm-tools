@@ -618,7 +618,8 @@ def test_render_is_transparent_outside_and_png_records_settings(tmp_path: Path) 
         assert exported.mode == "RGBA"
         assert exported.info["dmtools.source"] == "square.svg"
         assert exported.info["dmtools.render_style"] == "cartographic"
-        assert exported.info["dmtools.colour_palette"] == "dmtools-cartographic-relief@1"
+        assert exported.info["dmtools.colour_palette"] == "dmtools-cartographic-relief@2"
+        assert exported.info["dmtools.colour_scale_maximum_m"] == "10000"
         assert '"seed": 42' in exported.info["dmtools.settings"]
         constraints = json.loads(exported.info["dmtools.constraints"])
         assert constraints == [
@@ -656,13 +657,29 @@ def test_scientific_elevation_palette_is_ordered_by_lightness() -> None:
     assert np.all(rgb[-1] > 0.89)
 
 
-def test_cartographic_palette_has_green_lowlands_brown_uplands_and_pale_summits() -> None:
-    rgb = elevation_palette_rgb(np.array([0.0, 0.70, 0.82, 1.0]))
+def test_cartographic_palette_reserves_red_and_white_for_extreme_summits() -> None:
+    rgb = elevation_palette_rgb(np.array([0.0, 0.60, 0.70, 0.82, 0.90, 0.96, 1.0]))
 
     np.testing.assert_allclose(rgb[0], np.array([54, 95, 55]) / 255.0)
-    np.testing.assert_allclose(rgb[1], np.array([138, 91, 55]) / 255.0)
-    np.testing.assert_allclose(rgb[2], np.array([92, 61, 43]) / 255.0)
-    np.testing.assert_allclose(rgb[3], np.array([247, 246, 242]) / 255.0)
+    np.testing.assert_allclose(rgb[1], np.array([124, 75, 48]) / 255.0)
+    np.testing.assert_allclose(rgb[2], np.array([101, 43, 43]) / 255.0)
+    np.testing.assert_allclose(rgb[3], np.array([151, 67, 59]) / 255.0)
+    np.testing.assert_allclose(rgb[4], np.array([198, 112, 96]) / 255.0)
+    np.testing.assert_allclose(rgb[5], np.array([231, 182, 168]) / 255.0)
+    np.testing.assert_allclose(rgb[6], np.array([247, 246, 242]) / 255.0)
+
+
+def test_cartographic_colours_use_fixed_world_elevations() -> None:
+    terrain = generate_terrain(_square(), _settings(maximum_elevation_m=4_500.0))
+    differently_ranged = replace(
+        terrain,
+        settings=replace(terrain.settings, maximum_elevation_m=10_000.0),
+    )
+
+    np.testing.assert_array_equal(
+        np.asarray(render_height_map(terrain)),
+        np.asarray(render_height_map(differently_ranged)),
+    )
 
 
 def test_elevation_legends_match_each_palette_from_high_to_low() -> None:
@@ -684,3 +701,4 @@ def test_scientific_render_records_its_display_contract() -> None:
 
     assert image.info["dmtools.render_style"] == "scientific"
     assert image.info["dmtools.colour_palette"] == "oleron-land@scm-8.0"
+    assert image.info["dmtools.colour_scale_maximum_m"] == "3000"

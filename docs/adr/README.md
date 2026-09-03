@@ -25,3 +25,4 @@ ADRs preserve significant technical decisions and their trade-offs.
 - [ADR-0009: Dissolve multipart SVG land geometry before generation](0009-multipart-svg-land-geometry.md)
 - [ADR-0010: Use Oleron's ordered land colours for elevation relief](0010-use-oleron-land-colours-for-elevation.md)
 - [ADR-0011: Separate cartographic and scientific elevation styles](0011-separate-cartographic-and-scientific-relief-styles.md)
+- [ADR-0012: Fix the cartographic colour scale at ten kilometres](0012-fix-cartographic-colour-scale-at-ten-kilometres.md)

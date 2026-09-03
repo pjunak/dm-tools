@@ -124,7 +124,7 @@ _CONTROLS = (
     _ControlSpec("seed", "Seed", 0, 4_294_967_295, 20_260_902, 1, integer=True),
     _ControlSpec("object_scale_km", "Object scale", 100, 12_000, 4_000, 100, "km"),
     _ControlSpec("resolution_px", "Output resolution", 256, 2_048, 768, 128, "px", True),
-    _ControlSpec("maximum_elevation_m", "Elevation ceiling", 250, 10_000, 4_500, 100, "m"),
+    _ControlSpec("maximum_elevation_m", "Elevation ceiling", 250, 12_000, 4_500, 100, "m"),
     _ControlSpec("largest_feature_km", "Largest feature", 25, 2_000, 450, 25, "km"),
     _ControlSpec("detail_levels", "Detail levels", 1, 10, 6, 1, integer=True),
     _ControlSpec("roughness", "Fine-detail strength", 0.25, 0.85, 0.55, 0.01),
@@ -603,13 +603,14 @@ class TerrainApp:
 
         legend = tk.Frame(content, background=_PREVIEW, width=64)
         legend.grid(row=0, column=1, sticky="ns", padx=(12, 0))
-        tk.Label(
+        self._legend_high_label = tk.Label(
             legend,
-            text="HIGH",
+            text="10 km",
             background=_PREVIEW,
             foreground="#9eaaa8",
             font=("Segoe UI", 7, "bold"),
-        ).pack()
+        )
+        self._legend_high_label.pack()
         for colour in elevation_legend_colours():
             swatch = tk.Frame(legend, background=colour, width=22, height=34)
             swatch.pack()
@@ -629,6 +630,7 @@ class TerrainApp:
 
     def _on_render_style_changed(self, _event: tk.Event[tk.Misc] | None = None) -> None:
         style = self._selected_render_style()
+        self._legend_high_label.configure(text="10 km" if style == "cartographic" else "MAX")
         for swatch, colour in zip(
             self._legend_swatches,
             elevation_legend_colours(style=style),

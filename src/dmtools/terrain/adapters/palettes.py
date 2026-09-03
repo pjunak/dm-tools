@@ -143,14 +143,29 @@ OLERON_LAND_RGB = np.array(
 
 SCIENTIFIC_ELEVATION_PALETTE_ID = "oleron-land@scm-8.0"
 
-# Original DM Tools cartographic relief ramp. It follows the conventional visual
-# grammar requested for the everyday map view: green lowlands, a short yellow
-# transition, ochre/brown uplands, dark rock, and pale highest summits. Unlike
-# the scientific table above, hue and relief shading take priority over strict
-# monotonic lightness.
-CARTOGRAPHIC_RELIEF_STOPS = np.array(
-    [0.0, 0.10, 0.22, 0.32, 0.43, 0.56, 0.70, 0.82, 0.92, 1.0],
+# Original DM Tools cartographic relief ramp. Its stops are fixed world
+# elevations rather than fractions of an individual generation ceiling. This
+# keeps the same altitude the same colour on every Aethelara continent.
+CARTOGRAPHIC_RELIEF_MAX_ELEVATION_M = 10_000.0
+CARTOGRAPHIC_RELIEF_ELEVATION_STOPS_M = np.array(
+    [
+        0.0,
+        500.0,
+        1_500.0,
+        2_500.0,
+        3_500.0,
+        4_500.0,
+        6_000.0,
+        7_000.0,
+        8_200.0,
+        9_000.0,
+        9_600.0,
+        10_000.0,
+    ],
     dtype=np.float64,
+)
+CARTOGRAPHIC_RELIEF_STOPS = (
+    CARTOGRAPHIC_RELIEF_ELEVATION_STOPS_M / CARTOGRAPHIC_RELIEF_MAX_ELEVATION_M
 )
 CARTOGRAPHIC_RELIEF_RGB = (
     np.array(
@@ -161,13 +176,15 @@ CARTOGRAPHIC_RELIEF_RGB = (
             (206, 209, 127),
             (212, 190, 115),
             (181, 138, 79),
-            (138, 91, 55),
-            (92, 61, 43),
-            (185, 170, 149),
+            (124, 75, 48),
+            (101, 43, 43),
+            (151, 67, 59),
+            (198, 112, 96),
+            (231, 182, 168),
             (247, 246, 242),
         ],
         dtype=np.float64,
     )
     / 255.0
 )
-CARTOGRAPHIC_RELIEF_PALETTE_ID = "dmtools-cartographic-relief@1"
+CARTOGRAPHIC_RELIEF_PALETTE_ID = "dmtools-cartographic-relief@2"

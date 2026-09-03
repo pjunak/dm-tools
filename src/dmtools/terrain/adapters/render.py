@@ -9,6 +9,7 @@ import numpy as np
 from PIL import Image, PngImagePlugin
 
 from dmtools.terrain.adapters.palettes import (
+    CARTOGRAPHIC_RELIEF_MAX_ELEVATION_M,
     CARTOGRAPHIC_RELIEF_PALETTE_ID,
     CARTOGRAPHIC_RELIEF_RGB,
     CARTOGRAPHIC_RELIEF_STOPS,
@@ -107,8 +108,13 @@ def render_height_map(
 ) -> Image.Image:
     """Create a cartographic or scientific elevation tint with fixed hillshade."""
 
+    colour_scale_maximum_m = (
+        CARTOGRAPHIC_RELIEF_MAX_ELEVATION_M
+        if style == "cartographic"
+        else terrain.settings.maximum_elevation_m
+    )
     normalized = np.clip(
-        np.nan_to_num(terrain.elevation_m, nan=0.0) / terrain.settings.maximum_elevation_m,
+        np.nan_to_num(terrain.elevation_m, nan=0.0) / colour_scale_maximum_m,
         0.0,
         1.0,
     )
@@ -121,6 +127,7 @@ def render_height_map(
     _stops, _colours, palette_id = _palette(style)
     image.info["dmtools.render_style"] = style
     image.info["dmtools.colour_palette"] = palette_id
+    image.info["dmtools.colour_scale_maximum_m"] = f"{colour_scale_maximum_m:g}"
     return image
 
 
@@ -148,6 +155,15 @@ def save_height_map(image: Image.Image, terrain: GeneratedTerrain, destination: 
     metadata.add_text(
         "dmtools.colour_palette",
         str(image.info.get("dmtools.colour_palette", CARTOGRAPHIC_RELIEF_PALETTE_ID)),
+    )
+    metadata.add_text(
+        "dmtools.colour_scale_maximum_m",
+        str(
+            image.info.get(
+                "dmtools.colour_scale_maximum_m",
+                f"{CARTOGRAPHIC_RELIEF_MAX_ELEVATION_M:g}",
+            )
+        ),
     )
     metadata.add_text(
         "dmtools.constraints",

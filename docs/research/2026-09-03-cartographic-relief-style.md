@@ -19,7 +19,7 @@ not bake blue drainage-like marks into the DEM colouring.
 
 ## Implementation interpretation
 
-The cartographic style uses an original ten-stop ramp that follows this visual
+The cartographic style uses an original multi-stop ramp that follows this visual
 ordering without sampling or reproducing the reference artwork. It deliberately
 allows lightness to peak around the yellow transition, darken through mountain
 browns, and rise again for the highest summits. That is effective as a map
@@ -36,6 +36,21 @@ For that reason the previous Oleron implementation remains available as the
 The cartographic hillshade uses stronger vertical exaggeration than the
 scientific view. This changes only the derived image; all Float32 metre values,
 constraints, seeds, and resolution behavior stay identical.
+
+## Aethelara height calibration
+
+Aethelara's working cartographic maximum is 10,000 m: high enough to exceed
+Earth's 8,848.86 m Everest while remaining recognizably terrestrial in scale.
+The cartographic ramp is therefore fixed to absolute metre stops instead of
+being stretched to each terrain generation's configured ceiling. This makes a
+7,000 m summit the same dark red on every continent and prevents an ordinary
+4,500 m regional maximum from being painted white.
+
+Brown covers ordinary mountains through 6,000 m. Dark muted red begins at
+7,000 m, lighter reds appear from 8,200 m through 9,600 m, and white is reserved
+for terrain at 10,000 m or above. The scientific style intentionally remains
+normalized to the active elevation ceiling because its purpose is inspecting
+relative variation within a generated surface.
 
 ## Limits of palette matching
 

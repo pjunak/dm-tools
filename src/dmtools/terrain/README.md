@@ -187,16 +187,25 @@ systems still require the planned process-informed stages.
 
 The generated elevation array is Float32 metres in memory. The PNG is a derived
 visual product with transparent ocean, elevation tint, hillshade, source name,
-settings, render style, and palette metadata. The preview toolbar switches
-between **Cartographic relief**, the default green/yellow/brown/pale map style
-with stronger terrain shading, and **Scientific elevation**, the ordered and
-colour-vision-deficiency-safe Oleron land sequence with subtle shading. Changing
-style re-renders the same DEM and does not regenerate or alter elevation.
+settings, render style, palette, and colour-scale metadata. The preview toolbar
+switches between **Cartographic relief**, the default fixed 0–10,000 m world
+scale with stronger terrain shading, and **Scientific elevation**, the ordered
+and colour-vision-deficiency-safe Oleron land sequence normalized to the active
+generation ceiling. The cartographic scale uses green lowlands, yellow and
+brown ordinary uplands, dark muted red from 7,000 m, progressively lighter red
+above 8,200 m, and near-white only at 10,000 m. Changing style re-renders the
+same DEM and does not regenerate or alter elevation.
+
+The **Elevation ceiling** remains a generation control, not a colour control.
+Its default is 4,500 m and its UI range extends to 12,000 m for exceptional
+terrain. Raising it does not stretch ordinary elevations into summit colours;
+on every continent, a given metre elevation retains the same cartographic hue.
 
 These colours express elevation only; they do not claim vegetation, exposed
 rock, or snow. The PNG is not an authoritative DEM file; GeoTIFF and a versioned
-build manifest remain future work. The current display decision is recorded in
-[ADR-0011](../../../docs/adr/0011-separate-cartographic-and-scientific-relief-styles.md),
+build manifest remain future work. The current display decisions are recorded in
+[ADR-0011](../../../docs/adr/0011-separate-cartographic-and-scientific-relief-styles.md)
+and [ADR-0012](../../../docs/adr/0012-fix-cartographic-colour-scale-at-ten-kilometres.md),
 with supporting [cartographic-style analysis](../../../docs/research/2026-09-03-cartographic-relief-style.md)
 and [scientific colour-ramp research](../../../docs/research/2026-09-03-elevation-colour-ramp.md).
 
