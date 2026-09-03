@@ -23,3 +23,4 @@ ADRs preserve significant technical decisions and their trade-offs.
 - [ADR-0007: Use shape-preserving longitudinal profiles for anchored structures](0007-shape-preserving-structure-profiles.md)
 - [ADR-0008: Interpret relative points as relative structure profile anchors](0008-relative-structure-profile-anchors.md)
 - [ADR-0009: Dissolve multipart SVG land geometry before generation](0009-multipart-svg-land-geometry.md)
+- [ADR-0010: Use Oleron's ordered land colours for elevation relief](0010-use-oleron-land-colours-for-elevation.md)

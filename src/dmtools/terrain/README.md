@@ -186,9 +186,14 @@ sediment, or climate. River networks and geomorphically believable mountain
 systems still require the planned process-informed stages.
 
 The generated elevation array is Float32 metres in memory. The PNG is a derived
-visual product with transparent ocean, elevation tint, subtle hillshade, source
-name, and settings metadata. It is not an authoritative DEM file; GeoTIFF and a
-versioned build manifest remain future work.
+visual product with transparent ocean, an ordered and colour-vision-deficiency-safe
+`oleron` land tint, subtle hillshade, source name, settings, and palette metadata.
+Dark green means low elevation, ochre and light brown mean uplands, and pale buff
+means the configured elevation ceiling. These colours do not claim vegetation,
+rock exposure, or snow. The PNG is not an authoritative DEM file; GeoTIFF and a
+versioned build manifest remain future work. The display decision and research
+are recorded in [ADR-0010](../../../docs/adr/0010-use-oleron-land-colours-for-elevation.md)
+and the [elevation colour-ramp note](../../../docs/research/2026-09-03-elevation-colour-ramp.md).
 
 ## Inputs
 

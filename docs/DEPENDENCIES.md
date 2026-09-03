@@ -20,5 +20,17 @@ Primary references:
 - [Shapely project documentation](https://shapely.readthedocs.io/)
 - [svgelements package page](https://pypi.org/project/svgelements/)
 
+## Vendored data assets
+
+| Asset | Version | Purpose | License |
+|---|---:|---|---|
+| Scientific Colour Maps `oleron` land lookup table | 8.0 | Perceptually ordered, colour-vision-deficiency-safe elevation tint | MIT; Copyright (c) 2023 Fabio Crameri |
+
+The terrain renderer includes entries 128–255 of the `oleron` RGB table rather
+than adding a plotting-library dependency. See the
+[upstream palette](https://github.com/callumrollo/cmcrameri/blob/main/cmcrameri/cmaps/oleron.txt),
+[Scientific Colour Maps](https://www.fabiocrameri.ch/colourmaps/), and the
+[vendored license notice](licenses/SCIENTIFIC_COLOUR_MAPS_LICENSE.txt).
+
 The repository itself still needs a distribution license before a public
 release. Dependency permissions do not license project-owned code.

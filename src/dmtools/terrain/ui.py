@@ -21,6 +21,7 @@ from dmtools.terrain.adapters import (
     CoastlineSource,
     LoadedTerrainProject,
     TerrainProjectInputError,
+    elevation_legend_colours,
     load_svg_coastline_source,
     load_terrain_project,
     render_height_map,
@@ -584,7 +585,7 @@ class TerrainApp:
             foreground="#9eaaa8",
             font=("Segoe UI", 7, "bold"),
         ).pack()
-        for colour in ("#f4f2eb", "#aaa497", "#6f5b45", "#a68752", "#50744e", "#7e9b65", "#d6c491"):
+        for colour in elevation_legend_colours():
             tk.Frame(legend, background=colour, width=22, height=34).pack()
         tk.Label(
             legend,

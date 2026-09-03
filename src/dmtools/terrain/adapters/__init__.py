@@ -7,7 +7,12 @@ from dmtools.terrain.adapters.project import (
     load_terrain_project,
     save_terrain_project,
 )
-from dmtools.terrain.adapters.render import render_height_map, save_height_map
+from dmtools.terrain.adapters.render import (
+    elevation_legend_colours,
+    elevation_palette_rgb,
+    render_height_map,
+    save_height_map,
+)
 from dmtools.terrain.adapters.svg import (
     CoastlineInputError,
     CoastlineSource,
@@ -21,6 +26,8 @@ __all__ = [
     "CoastlineSource",
     "LoadedTerrainProject",
     "TerrainProjectInputError",
+    "elevation_legend_colours",
+    "elevation_palette_rgb",
     "load_svg_coastline",
     "load_svg_coastline_source",
     "load_terrain_project",

@@ -7,22 +7,35 @@ from pathlib import Path
 import numpy as np
 from PIL import Image, PngImagePlugin
 
+from dmtools.terrain.adapters.palettes import ELEVATION_PALETTE_ID, OLERON_LAND_RGB
 from dmtools.terrain.domain import ElevationPoint, TerrainBrushStroke, TerrainConstraint
 from dmtools.terrain.pipeline import GeneratedTerrain
 
-_COLOUR_STOPS = np.array([0.0, 0.08, 0.30, 0.55, 0.75, 0.90, 1.0])
-_COLOURS = np.array(
-    [
-        (214, 196, 145),
-        (126, 155, 101),
-        (80, 116, 78),
-        (166, 135, 82),
-        (111, 91, 69),
-        (169, 164, 151),
-        (244, 242, 235),
-    ],
-    dtype=np.float64,
-)
+_COLOUR_STOPS = np.linspace(0.0, 1.0, len(OLERON_LAND_RGB))
+
+
+def elevation_palette_rgb(normalized: np.ndarray) -> np.ndarray:
+    """Map normalized elevations to the ordered Oleron land sequence in sRGB."""
+
+    values = np.clip(np.asarray(normalized, dtype=np.float64), 0.0, 1.0)
+    rgb = np.empty((*values.shape, 3), dtype=np.float64)
+    for channel in range(3):
+        rgb[..., channel] = np.interp(
+            values,
+            _COLOUR_STOPS,
+            OLERON_LAND_RGB[:, channel],
+        )
+    return rgb
+
+
+def elevation_legend_colours(sample_count: int = 7) -> tuple[str, ...]:
+    """Return high-to-low hex samples matching the rendered elevation palette."""
+
+    if sample_count < 2:
+        raise ValueError("The elevation legend needs at least two colour samples.")
+    normalized = np.linspace(1.0, 0.0, sample_count)
+    rgb = np.rint(elevation_palette_rgb(normalized) * 255.0).astype(np.uint8)
+    return tuple(f"#{red:02x}{green:02x}{blue:02x}" for red, green, blue in rgb)
 
 
 def _hillshade(terrain: GeneratedTerrain) -> np.ndarray:
@@ -49,16 +62,14 @@ def _hillshade(terrain: GeneratedTerrain) -> np.ndarray:
 
 
 def render_height_map(terrain: GeneratedTerrain) -> Image.Image:
-    """Create an RGBA elevation tint with subtle fixed hillshade."""
+    """Create an ordered, colour-vision-deficiency-safe tint with fixed hillshade."""
 
     normalized = np.clip(
         np.nan_to_num(terrain.elevation_m, nan=0.0) / terrain.settings.maximum_elevation_m,
         0.0,
         1.0,
     )
-    rgb = np.empty((*normalized.shape, 3), dtype=np.float64)
-    for channel in range(3):
-        rgb[..., channel] = np.interp(normalized, _COLOUR_STOPS, _COLOURS[:, channel])
+    rgb = elevation_palette_rgb(normalized) * 255.0
     rgb *= _hillshade(terrain)[..., np.newaxis]
     rgb_uint8 = np.clip(rgb, 0, 255).astype(np.uint8)
     alpha = np.where(terrain.land_mask, 255, 0).astype(np.uint8)
@@ -83,6 +94,7 @@ def save_height_map(image: Image.Image, terrain: GeneratedTerrain, destination: 
     metadata = PngImagePlugin.PngInfo()
     metadata.add_text("dmtools.source", terrain.source_name)
     metadata.add_text("dmtools.settings", json.dumps(asdict(terrain.settings), sort_keys=True))
+    metadata.add_text("dmtools.colour_palette", ELEVATION_PALETTE_ID)
     metadata.add_text(
         "dmtools.constraints",
         json.dumps(

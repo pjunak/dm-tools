@@ -7,7 +7,12 @@ import numpy as np
 import pytest
 from PIL import Image
 
-from dmtools.terrain.adapters import render_height_map, save_height_map
+from dmtools.terrain.adapters import (
+    elevation_legend_colours,
+    elevation_palette_rgb,
+    render_height_map,
+    save_height_map,
+)
 from dmtools.terrain.domain import (
     Coastline,
     ElevationPoint,
@@ -612,6 +617,7 @@ def test_render_is_transparent_outside_and_png_records_settings(tmp_path: Path) 
     with Image.open(destination) as exported:
         assert exported.mode == "RGBA"
         assert exported.info["dmtools.source"] == "square.svg"
+        assert exported.info["dmtools.colour_palette"] == "oleron-land@scm-8.0"
         assert '"seed": 42' in exported.info["dmtools.settings"]
         constraints = json.loads(exported.info["dmtools.constraints"])
         assert constraints == [
@@ -631,3 +637,28 @@ def test_render_is_transparent_outside_and_png_records_settings(tmp_path: Path) 
                 "type": "terrain_brush",
             },
         ]
+
+
+def test_elevation_palette_is_ordered_by_lightness_and_uses_distinct_extremes() -> None:
+    normalized = np.linspace(0.0, 1.0, 1_025)
+    rgb = elevation_palette_rgb(normalized)
+    linear_rgb = np.where(
+        rgb <= 0.04045,
+        rgb / 12.92,
+        ((rgb + 0.055) / 1.055) ** 2.4,
+    )
+    relative_luminance = linear_rgb @ np.array([0.2126, 0.7152, 0.0722])
+
+    assert np.all(np.diff(relative_luminance) > 0.0)
+    assert rgb[0, 1] > rgb[0, 0] * 2.0
+    assert rgb[0, 1] > rgb[0, 2] * 2.0
+    assert np.all(rgb[-1] > 0.89)
+
+
+def test_elevation_legend_matches_palette_from_high_to_low() -> None:
+    legend = elevation_legend_colours()
+
+    assert legend[0] == "#fdfde6"
+    assert legend[-1] == "#1a4c00"
+    with pytest.raises(ValueError, match="at least two"):
+        elevation_legend_colours(1)
