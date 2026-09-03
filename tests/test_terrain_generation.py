@@ -617,7 +617,8 @@ def test_render_is_transparent_outside_and_png_records_settings(tmp_path: Path) 
     with Image.open(destination) as exported:
         assert exported.mode == "RGBA"
         assert exported.info["dmtools.source"] == "square.svg"
-        assert exported.info["dmtools.colour_palette"] == "oleron-land@scm-8.0"
+        assert exported.info["dmtools.render_style"] == "cartographic"
+        assert exported.info["dmtools.colour_palette"] == "dmtools-cartographic-relief@1"
         assert '"seed": 42' in exported.info["dmtools.settings"]
         constraints = json.loads(exported.info["dmtools.constraints"])
         assert constraints == [
@@ -639,9 +640,9 @@ def test_render_is_transparent_outside_and_png_records_settings(tmp_path: Path) 
         ]
 
 
-def test_elevation_palette_is_ordered_by_lightness_and_uses_distinct_extremes() -> None:
+def test_scientific_elevation_palette_is_ordered_by_lightness() -> None:
     normalized = np.linspace(0.0, 1.0, 1_025)
-    rgb = elevation_palette_rgb(normalized)
+    rgb = elevation_palette_rgb(normalized, style="scientific")
     linear_rgb = np.where(
         rgb <= 0.04045,
         rgb / 12.92,
@@ -655,10 +656,31 @@ def test_elevation_palette_is_ordered_by_lightness_and_uses_distinct_extremes() 
     assert np.all(rgb[-1] > 0.89)
 
 
-def test_elevation_legend_matches_palette_from_high_to_low() -> None:
-    legend = elevation_legend_colours()
+def test_cartographic_palette_has_green_lowlands_brown_uplands_and_pale_summits() -> None:
+    rgb = elevation_palette_rgb(np.array([0.0, 0.70, 0.82, 1.0]))
 
-    assert legend[0] == "#fdfde6"
-    assert legend[-1] == "#1a4c00"
+    np.testing.assert_allclose(rgb[0], np.array([54, 95, 55]) / 255.0)
+    np.testing.assert_allclose(rgb[1], np.array([138, 91, 55]) / 255.0)
+    np.testing.assert_allclose(rgb[2], np.array([92, 61, 43]) / 255.0)
+    np.testing.assert_allclose(rgb[3], np.array([247, 246, 242]) / 255.0)
+
+
+def test_elevation_legends_match_each_palette_from_high_to_low() -> None:
+    legend = elevation_legend_colours()
+    scientific = elevation_legend_colours(style="scientific")
+
+    assert legend[0] == "#f7f6f2"
+    assert legend[-1] == "#365f37"
+    assert scientific[0] == "#fdfde6"
+    assert scientific[-1] == "#1a4c00"
     with pytest.raises(ValueError, match="at least two"):
         elevation_legend_colours(1)
+
+
+def test_scientific_render_records_its_display_contract() -> None:
+    terrain = generate_terrain(_square(), _settings())
+
+    image = render_height_map(terrain, style="scientific")
+
+    assert image.info["dmtools.render_style"] == "scientific"
+    assert image.info["dmtools.colour_palette"] == "oleron-land@scm-8.0"

@@ -141,4 +141,33 @@ OLERON_LAND_RGB = np.array(
     dtype=np.float64,
 )
 
-ELEVATION_PALETTE_ID = "oleron-land@scm-8.0"
+SCIENTIFIC_ELEVATION_PALETTE_ID = "oleron-land@scm-8.0"
+
+# Original DM Tools cartographic relief ramp. It follows the conventional visual
+# grammar requested for the everyday map view: green lowlands, a short yellow
+# transition, ochre/brown uplands, dark rock, and pale highest summits. Unlike
+# the scientific table above, hue and relief shading take priority over strict
+# monotonic lightness.
+CARTOGRAPHIC_RELIEF_STOPS = np.array(
+    [0.0, 0.10, 0.22, 0.32, 0.43, 0.56, 0.70, 0.82, 0.92, 1.0],
+    dtype=np.float64,
+)
+CARTOGRAPHIC_RELIEF_RGB = (
+    np.array(
+        [
+            (54, 95, 55),
+            (86, 138, 72),
+            (143, 180, 102),
+            (206, 209, 127),
+            (212, 190, 115),
+            (181, 138, 79),
+            (138, 91, 55),
+            (92, 61, 43),
+            (185, 170, 149),
+            (247, 246, 242),
+        ],
+        dtype=np.float64,
+    )
+    / 255.0
+)
+CARTOGRAPHIC_RELIEF_PALETTE_ID = "dmtools-cartographic-relief@1"

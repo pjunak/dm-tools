@@ -8,6 +8,7 @@ from dmtools.terrain.adapters.project import (
     save_terrain_project,
 )
 from dmtools.terrain.adapters.render import (
+    RenderStyle,
     elevation_legend_colours,
     elevation_palette_rgb,
     render_height_map,
@@ -25,6 +26,7 @@ __all__ = [
     "CoastlineInputError",
     "CoastlineSource",
     "LoadedTerrainProject",
+    "RenderStyle",
     "TerrainProjectInputError",
     "elevation_legend_colours",
     "elevation_palette_rgb",

@@ -1,6 +1,6 @@
 # ADR-0010: Use Oleron's ordered land colours for elevation relief
 
-**Status:** Accepted
+**Status:** Superseded in part by ADR-0011
 **Date:** 2026-09-03
 **Deciders:** Repository owner and project maintainer
 

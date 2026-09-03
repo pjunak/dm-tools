@@ -262,12 +262,11 @@ landscape-process spikes. It is working research, not an accepted architecture.
   ridge relief, or valley incision in the correct terms.
 - [ ] **P1 — Add before/after and seed comparison views.** Compare a changed
   constraint, profile, or seed without relying on memory of the previous image.
-- [x] **P2 — Add a colour-vision-deficiency-safe default elevation palette.**
-  Use an ordered topographic ramp whose low and high ends remain distinct in
-  hue and lightness.
-- [ ] **P2 — Add display presets.** Separate neutral scientific inspection,
-  tint-only, hillshade-only, and attractive cartographic rendering without
-  changing the authoritative DEM.
+- [x] **P2 — Add separate cartographic and scientific elevation styles.** Use
+  expressive hypsometric tint and stronger relief for everyday mapping while
+  retaining an ordered, colour-vision-deficiency-safe inspection view.
+- [ ] **P2 — Add tint-only and hillshade-only display modes.** Keep these as
+  derived inspection choices that never change the authoritative DEM.
 
 ### Project safety and everyday workflow
 

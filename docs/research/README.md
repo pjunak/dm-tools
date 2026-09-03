@@ -10,4 +10,7 @@ implemented with tests.
   multiresolution implications, validation fixtures, and candidate libraries.
 - [Elevation colour ramp — 2026-09-03](2026-09-03-elevation-colour-ramp.md)
   evaluates ordered elevation display and selects the accessible `oleron` land
-  sequence for the workbench default.
+  sequence for scientific inspection.
+- [Cartographic relief style — 2026-09-03](2026-09-03-cartographic-relief-style.md)
+  decomposes the preferred illustrated relief look and separates it from the
+  ordered scientific inspection view.

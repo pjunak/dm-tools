@@ -186,14 +186,19 @@ sediment, or climate. River networks and geomorphically believable mountain
 systems still require the planned process-informed stages.
 
 The generated elevation array is Float32 metres in memory. The PNG is a derived
-visual product with transparent ocean, an ordered and colour-vision-deficiency-safe
-`oleron` land tint, subtle hillshade, source name, settings, and palette metadata.
-Dark green means low elevation, ochre and light brown mean uplands, and pale buff
-means the configured elevation ceiling. These colours do not claim vegetation,
-rock exposure, or snow. The PNG is not an authoritative DEM file; GeoTIFF and a
-versioned build manifest remain future work. The display decision and research
-are recorded in [ADR-0010](../../../docs/adr/0010-use-oleron-land-colours-for-elevation.md)
-and the [elevation colour-ramp note](../../../docs/research/2026-09-03-elevation-colour-ramp.md).
+visual product with transparent ocean, elevation tint, hillshade, source name,
+settings, render style, and palette metadata. The preview toolbar switches
+between **Cartographic relief**, the default green/yellow/brown/pale map style
+with stronger terrain shading, and **Scientific elevation**, the ordered and
+colour-vision-deficiency-safe Oleron land sequence with subtle shading. Changing
+style re-renders the same DEM and does not regenerate or alter elevation.
+
+These colours express elevation only; they do not claim vegetation, exposed
+rock, or snow. The PNG is not an authoritative DEM file; GeoTIFF and a versioned
+build manifest remain future work. The current display decision is recorded in
+[ADR-0011](../../../docs/adr/0011-separate-cartographic-and-scientific-relief-styles.md),
+with supporting [cartographic-style analysis](../../../docs/research/2026-09-03-cartographic-relief-style.md)
+and [scientific colour-ramp research](../../../docs/research/2026-09-03-elevation-colour-ramp.md).
 
 ## Inputs
 

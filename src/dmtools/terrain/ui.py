@@ -20,6 +20,7 @@ from dmtools.terrain.adapters import (
     CoastlineInputError,
     CoastlineSource,
     LoadedTerrainProject,
+    RenderStyle,
     TerrainProjectInputError,
     elevation_legend_colours,
     load_svg_coastline_source,
@@ -56,6 +57,11 @@ _HEIGHT_COLOUR = "#f2c14e"
 _RIDGE_COLOUR = "#e47b58"
 _VALLEY_COLOUR = "#54a6c2"
 _BRUSH_COLOUR = "#9fbe72"
+
+_RENDER_STYLE_LABELS: dict[str, RenderStyle] = {
+    "Cartographic relief": "cartographic",
+    "Scientific elevation": "scientific",
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -173,6 +179,8 @@ class TerrainApp:
         self._brush_intensity_percent = tk.DoubleVar(
             value=authoring_defaults.brush.intensity * 100.0
         )
+        self._render_style_label = tk.StringVar(value="Cartographic relief")
+        self._legend_swatches: list[tk.Frame] = []
         self._brush_cursor: tuple[float, float] | None = None
         self._active_brush_values: tuple[float, float, float, ElevationMode] | None = None
         self._tool_buttons: dict[str, tk.Button] = {}
@@ -365,6 +373,23 @@ class TerrainApp:
             font=("Consolas", 9),
         )
         self.preview_meta.pack(side="right")
+        self.render_style_input = ttk.Combobox(
+            toolbar,
+            values=tuple(_RENDER_STYLE_LABELS),
+            textvariable=self._render_style_label,
+            width=20,
+            state="readonly",
+            font=("Segoe UI", 8),
+        )
+        self.render_style_input.pack(side="right", padx=(12, 0))
+        self.render_style_input.bind("<<ComboboxSelected>>", self._on_render_style_changed)
+        tk.Label(
+            toolbar,
+            text="STYLE",
+            background=_PREVIEW,
+            foreground="#80918e",
+            font=("Consolas", 8, "bold"),
+        ).pack(side="right", padx=(12, 0))
 
         authoring = tk.Frame(parent, background="#203033", padx=10, pady=8)
         authoring.grid(row=1, column=0, sticky="ew", padx=16, pady=(0, 8))
@@ -586,7 +611,9 @@ class TerrainApp:
             font=("Segoe UI", 7, "bold"),
         ).pack()
         for colour in elevation_legend_colours():
-            tk.Frame(legend, background=colour, width=22, height=34).pack()
+            swatch = tk.Frame(legend, background=colour, width=22, height=34)
+            swatch.pack()
+            self._legend_swatches.append(swatch)
         tk.Label(
             legend,
             text="0 m",
@@ -596,6 +623,29 @@ class TerrainApp:
         ).pack(pady=(3, 0))
         self._set_authoring_enabled(False)
         self._set_authoring_tool("brush")
+
+    def _selected_render_style(self) -> RenderStyle:
+        return _RENDER_STYLE_LABELS.get(self._render_style_label.get(), "cartographic")
+
+    def _on_render_style_changed(self, _event: tk.Event[tk.Misc] | None = None) -> None:
+        style = self._selected_render_style()
+        for swatch, colour in zip(
+            self._legend_swatches,
+            elevation_legend_colours(style=style),
+            strict=True,
+        ):
+            swatch.configure(background=colour)
+        if self._terrain is None:
+            return
+        self._image = render_height_map(self._terrain, style=style)
+        self.status_label.configure(
+            text=(
+                "Cartographic relief ready."
+                if style == "cartographic"
+                else "Scientific elevation view ready."
+            )
+        )
+        self._draw_preview()
 
     def _set_authoring_enabled(self, enabled: bool) -> None:
         self._authoring_enabled = enabled
@@ -1360,12 +1410,14 @@ class TerrainApp:
         self.open_project_button.configure(state="disabled")
         self.save_project_button.configure(state="disabled")
         self.export_button.configure(state="disabled")
+        self.render_style_input.configure(state="disabled")
         self._set_authoring_enabled(False)
         self.progress.stop()
         self.progress.configure(mode="determinate", value=0)
         self.status_label.configure(text="Starting deterministic generation…")
         coastline = self._coastline
         constraints = tuple(self._constraints)
+        render_style = self._selected_render_style()
 
         def worker() -> None:
             try:
@@ -1376,7 +1428,7 @@ class TerrainApp:
                     constraints=constraints,
                 )
                 self._events.put(_ProgressEvent(0.97, "Rendering colour relief"))
-                image = render_height_map(terrain)
+                image = render_height_map(terrain, style=render_style)
                 self._events.put(_ResultEvent(terrain, image))
             except Exception as error:
                 self._events.put(
@@ -1436,6 +1488,7 @@ class TerrainApp:
                     )
                     self.generate_button.configure(state="normal")
                     self.export_button.configure(state="normal")
+                    self.render_style_input.configure(state="readonly")
                     self._set_authoring_enabled(True)
                     self._draw_preview()
                 else:
@@ -1453,6 +1506,7 @@ class TerrainApp:
                     self.export_button.configure(
                         state="normal" if self._terrain is not None else "disabled"
                     )
+                    self.render_style_input.configure(state="readonly")
                     source_name = (
                         self._coastline.source_name
                         if self._coastline is not None

@@ -1,5 +1,8 @@
 # Elevation colour-ramp research — 2026-09-03
 
+**Status:** Retained for the scientific inspection style; superseded as the
+everyday default by ADR-0011.
+
 ## Question
 
 What default colour ramp lets a person read relative elevation reliably while
@@ -8,9 +11,9 @@ grayscale display?
 
 There is no universally best ramp for every map. A purely analytical DEM view,
 a printed atlas, and an illustrated fantasy map have different priorities. The
-best default for this workbench is therefore a scientifically ordered
-topographic ramp; decorative and specialist inspection presets can remain
-separate later choices.
+best scientific-inspection view for this workbench is therefore a
+scientifically ordered topographic ramp; the everyday cartographic style is a
+separate display choice.
 
 ## Why the previous ramp was confusing
 
@@ -27,7 +30,7 @@ uneven perceptual gradients can exaggerate some numeric intervals and hide
 others, and that colour maps should remain readable for people with
 colour-vision deficiencies and in black and white.
 
-## Selected default
+## Selected scientific palette
 
 Use the **land half of Fabio Crameri's `oleron` Scientific Colour Map 8.0**.
 `oleron` is the suite's special surface-topography map. Its full form has
