@@ -172,27 +172,50 @@ def _metric_constraints(
         index: [] for index in structure_indices
     }
     for point_index, point_constraint in enumerate(converted):
-        if point_constraint.kind != "point" or point_constraint.elevation_mode != "absolute":
+        if point_constraint.kind != "point":
             continue
-        attached = False
+        compatible: list[tuple[float, int]] = []
         for structure_index in structure_indices:
             structure = converted[structure_index]
-            if structure.elevation_mode != "absolute":
+            if structure.elevation_mode != point_constraint.elevation_mode:
                 continue
             attachment_distance = max(
                 point_constraint.influence_radius_km,
                 structure.influence_radius_km,
             )
-            if structure.geometry.distance(point_constraint.geometry) > attachment_distance:
+            distance = float(structure.geometry.distance(point_constraint.geometry))
+            if distance > attachment_distance:
                 continue
+            compatible.append((distance, structure_index))
+
+        if point_constraint.elevation_mode == "relative" and compatible:
+            compatible.sort()
+            if len(compatible) > 1 and abs(compatible[0][0] - compatible[1][0]) <= 1e-6:
+                compatible = []
+            else:
+                compatible = compatible[:1]
+
+        attached = False
+        for _distance, structure_index in compatible:
+            structure = converted[structure_index]
             project_line = cast(Any, structure.geometry)
             along_km = float(project_line.project(point_constraint.geometry))
             along_radius_km = max(
                 2.0 * point_constraint.influence_radius_km,
                 structure.influence_radius_km,
             )
+            if point_constraint.elevation_mode == "absolute":
+                profile_target_m = point_constraint.elevation_m
+            elif structure.kind == "ridge":
+                profile_target_m = structure.elevation_m + point_constraint.elevation_m
+            else:
+                profile_target_m = structure.elevation_m - point_constraint.elevation_m
+            if profile_target_m < 0.0:
+                raise ValueError(
+                    f"Relative point would reverse the {structure.kind} at its profile anchor."
+                )
             anchors[structure_index].append(
-                (along_km, point_constraint.elevation_m, along_radius_km)
+                (along_km, profile_target_m, along_radius_km)
             )
             attached = True
         if attached:
@@ -274,7 +297,7 @@ def _structure_profile(
             previous = coalesced[-1]
             if abs(anchor[1] - previous[1]) > 1e-6:
                 raise ValueError(
-                    "Conflicting absolute height points project to the same structure position."
+                    "Conflicting height points project to the same structure position."
                 )
             coalesced[-1] = (previous[0], previous[1], max(previous[2], anchor[2]))
         else:
@@ -474,16 +497,23 @@ def _apply_constraints(
     for constraint in constraints:
         if constraint.kind != "ridge" or constraint.elevation_mode != "relative":
             continue
-        weight, _line_positions = _structure_response(
+        weight, line_positions = _structure_response(
             constraint,
             sample_points,
             distance_to_coast_km,
             largest_feature_km,
             detail_driver,
         )
+        profile_target, authored_control = _structure_profile(
+            constraint, line_positions
+        )
+        profiled_relief = (
+            constraint.elevation_m * (1.0 - authored_control)
+            + profile_target * authored_control
+        )
         relative_ridge_raise = np.maximum(
             relative_ridge_raise,
-            weight * constraint.elevation_m,
+            weight * profiled_relief,
         )
     elevation += relative_ridge_raise
 
@@ -533,22 +563,33 @@ def _apply_constraints(
     for constraint in constraints:
         if constraint.kind != "valley" or constraint.elevation_mode != "relative":
             continue
-        weight, _line_positions = _structure_response(
+        weight, line_positions = _structure_response(
             constraint,
             sample_points,
             distance_to_coast_km,
             largest_feature_km,
             detail_driver,
         )
+        profile_target, authored_control = _structure_profile(
+            constraint, line_positions
+        )
+        profiled_depth = (
+            constraint.elevation_m * (1.0 - authored_control)
+            + profile_target * authored_control
+        )
         relative_valley_cut = np.maximum(
             relative_valley_cut,
-            weight * constraint.elevation_m,
+            weight * profiled_depth,
         )
     elevation -= relative_valley_cut
 
     relative_point_delta = np.zeros_like(elevation)
     for constraint in constraints:
-        if constraint.kind != "point" or constraint.elevation_mode != "relative":
+        if (
+            constraint.kind != "point"
+            or constraint.elevation_mode != "relative"
+            or constraint.attached_to_structure
+        ):
             continue
         raw_distance = cast(Any, shapely.distance(sample_points, constraint.geometry))
         distance = cast(NDArray[np.float64], np.asarray(raw_distance, dtype=np.float64))

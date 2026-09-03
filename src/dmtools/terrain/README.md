@@ -85,16 +85,21 @@ width varies with the deterministic terrain field instead of producing a
 perfect extrusion. Free ends taper. A height point close enough to a ridge or
 valley also becomes an elevation anchor along that structure, so peaks, passes,
 and floor heights bend its longitudinal profile rather than forming an
-independent circular stamp. This automatic attachment applies to absolute points
-and absolute structures; relative points instead deform the already conditioned
-surface and therefore naturally build on a ridge beneath them.
+independent circular stamp. Absolute points attach to nearby absolute
+structures. A relative point attaches only to the uniquely nearest relative
+structure; if ownership is ambiguous or no compatible line is nearby, it keeps
+its free-standing displacement behavior.
 
-When several absolute anchors lie on one absolute structure, a
-shape-preserving cubic profile connects them along the line without overshooting
-the adjacent elevations. The authored span can raise or lower the centreline:
-two peaks surrounding a lower point therefore create a geometric saddle, while
-the terrain still falls away across the ridge. Conflicting hard heights at the
-same projected line position are rejected rather than silently averaged.
+When several anchors lie on one compatible structure, a shape-preserving cubic
+profile connects them along the line without overshooting adjacent targets.
+Absolute anchors set world elevations. On a relative ridge, a point's signed
+displacement is added to the line's base relief; on a relative valley, it is
+subtracted from the base incision depth, so a positive point makes the floor
+shallower and a negative point makes it deeper. A profile cannot reverse the
+parent feature's kind. Two peaks surrounding a lower point can therefore create
+a geometric saddle while the terrain still falls away across the ridge.
+Conflicting targets at the same projected line position are rejected rather
+than silently averaged.
 
 Constraints use normalized coastline-bounds coordinates while being authored
 and are converted to explicit metric coordinates during generation. They are

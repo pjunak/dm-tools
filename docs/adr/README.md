@@ -21,3 +21,4 @@ ADRs preserve significant technical decisions and their trade-offs.
 - [ADR-0005: Separate absolute elevation from relative relief](0005-relative-relief.md)
 - [ADR-0006: Persist authored terrain as versioned JSON with a verified SVG reference](0006-versioned-terrain-project.md)
 - [ADR-0007: Use shape-preserving longitudinal profiles for anchored structures](0007-shape-preserving-structure-profiles.md)
+- [ADR-0008: Interpret relative points as relative structure profile anchors](0008-relative-structure-profile-anchors.md)

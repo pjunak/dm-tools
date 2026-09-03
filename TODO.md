@@ -128,8 +128,9 @@ export. Those are not repeated below as unfinished work.
   cubic profile with controlled shoulders.
 - [ ] **P0 — Generalize passes beyond absolute structure anchors.** An attached
   absolute point now forms a validated geometric saddle, lower along the ridge
-  and higher across it. Explicit crossing direction, relative ridge semantics,
-  and the dedicated pass constraint remain.
+  and higher across it. Relative points now shape the relief/depth profile of
+  the uniquely nearest relative ridge or valley. Explicit crossing direction,
+  mixed-mode attachment, and the dedicated pass constraint remain.
 - [ ] **P1 — Vary ridge width and cross-section continuously.** Support broad
   old ranges, narrow alpine crests, rounded ridges, sharp crests, asymmetric
   escarpments, and smooth transitions between authored vertex values.

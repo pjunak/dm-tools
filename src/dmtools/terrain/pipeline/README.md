@@ -22,5 +22,12 @@ passes, while the existing cross-structure weight turns a lower crest anchor
 into a saddle. Synthetic crest/floor variation is suppressed inside that
 authored span so it cannot overshoot the supplied anchors.
 
+A relative point near a relative structure is attached to the uniquely nearest
+compatible line and uses the same longitudinal interpolation. Its signed value
+modifies ridge relief as `base relief + displacement` or valley incision as
+`base depth - displacement`. An attached point is consumed by the structure
+profile and is not applied again as a circular point field. Ambiguous and
+unattached relative points retain their free-standing displacement behavior.
+
 Stages must not depend on implicit process state such as the current directory,
 wall-clock time, ambient random generators, or undeclared environment settings.

@@ -22,4 +22,6 @@ detection on both load and save.
 The first quantitative terrain-quality fixture models two ridge peaks and a
 lower pass. It checks exact anchors, interval overshoot, saddle geometry,
 constraint-order independence, conflicting hard anchors, and nested-resolution
-equality.
+equality. Equivalent relative-profile fixtures check signed ridge relief,
+shallower and deeper valley sections, single application of attached points,
+structure-kind preservation, and the same ordering and refinement invariants.

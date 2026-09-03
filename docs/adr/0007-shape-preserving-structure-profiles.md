@@ -3,6 +3,7 @@
 **Status:** Accepted
 **Date:** 2026-09-03
 **Deciders:** Repository owner and project maintainer
+**Amended by:** [ADR-0008](0008-relative-structure-profile-anchors.md)
 
 ## Context
 

@@ -1,6 +1,7 @@
 import json
 from dataclasses import replace
 from pathlib import Path
+from typing import Literal
 
 import numpy as np
 import pytest
@@ -198,7 +199,7 @@ def test_conflicting_height_anchors_on_one_structure_are_rejected() -> None:
     first = ElevationPoint((0.5, 0.5), 2_400.0, 40.0)
     conflicting = ElevationPoint((0.5, 0.5), 2_800.0, 40.0)
 
-    with pytest.raises(ValueError, match="Conflicting absolute height points"):
+    with pytest.raises(ValueError, match="Conflicting height points"):
         generate_terrain(_square(), _settings(), constraints=(ridge, first, conflicting))
 
 
@@ -291,6 +292,53 @@ def test_relative_peak_builds_on_relative_ridge_and_preserves_background_relief(
     )
 
 
+def test_relative_points_shape_a_relative_ridge_without_profile_overshoot() -> None:
+    settings = _settings(
+        maximum_elevation_m=6_000.0,
+        variability=0.0,
+    )
+    ridge = TerrainStructure(
+        "ridge",
+        ((0.125, 0.5), (0.875, 0.5)),
+        800.0,
+        55.0,
+        "relative",
+    )
+    west_peak = ElevationPoint((0.25, 0.5), 400.0, 35.0, "relative")
+    mountain_pass = ElevationPoint((0.5, 0.5), -500.0, 35.0, "relative")
+    east_peak = ElevationPoint((0.75, 0.5), 300.0, 35.0, "relative")
+    constraints = (ridge, west_peak, mountain_pass, east_peak)
+
+    baseline = generate_terrain(_square(), settings)
+    terrain = generate_terrain(_square(), settings, constraints=constraints)
+    centreline_relief = terrain.elevation_m[32] - baseline.elevation_m[32]
+
+    assert centreline_relief[16] == pytest.approx(1_200.0, abs=0.001)
+    assert centreline_relief[32] == pytest.approx(300.0, abs=0.001)
+    assert centreline_relief[48] == pytest.approx(1_100.0, abs=0.001)
+    assert np.max(centreline_relief[16:33]) <= 1_200.001
+    assert np.min(centreline_relief[16:33]) >= 299.999
+    assert np.max(centreline_relief[32:49]) <= 1_100.001
+    assert np.min(centreline_relief[32:49]) >= 299.999
+    assert centreline_relief[28] > centreline_relief[32]
+    assert centreline_relief[36] > centreline_relief[32]
+    assert terrain.elevation_m[28, 32] < terrain.elevation_m[32, 32]
+    assert terrain.elevation_m[36, 32] < terrain.elevation_m[32, 32]
+
+    reordered = generate_terrain(
+        _square(),
+        settings,
+        constraints=(east_peak, mountain_pass, ridge, west_peak),
+    )
+    finer = generate_terrain(
+        _square(),
+        replace(settings, resolution_px=129),
+        constraints=constraints,
+    )
+    np.testing.assert_array_equal(terrain.elevation_m, reordered.elevation_m)
+    np.testing.assert_array_equal(terrain.elevation_m, finer.elevation_m[::2, ::2])
+
+
 def test_relative_valley_keeps_the_elevation_difference_of_its_surroundings() -> None:
     settings = _settings(maximum_elevation_m=6_000.0)
     baseline = generate_terrain(_square(), settings)
@@ -310,6 +358,85 @@ def test_relative_valley_keeps_the_elevation_difference_of_its_surroundings() ->
             500.0,
             abs=0.001,
         )
+
+
+def test_relative_points_shape_relative_valley_depth() -> None:
+    settings = _settings(maximum_elevation_m=6_000.0, variability=0.0)
+    baseline = generate_terrain(_square(), settings)
+    valley = TerrainStructure(
+        "valley",
+        ((0.125, 0.5), (0.875, 0.5)),
+        700.0,
+        55.0,
+        "relative",
+    )
+    shallow = ElevationPoint((0.25, 0.5), 400.0, 35.0, "relative")
+    deep = ElevationPoint((0.75, 0.5), -200.0, 35.0, "relative")
+
+    terrain = generate_terrain(
+        _square(),
+        settings,
+        constraints=(valley, shallow, deep),
+    )
+    centreline_depth = baseline.elevation_m[32] - terrain.elevation_m[32]
+
+    assert centreline_depth[16] == pytest.approx(300.0, abs=0.001)
+    assert centreline_depth[48] == pytest.approx(900.0, abs=0.001)
+    assert np.max(centreline_depth[16:49]) <= 900.001
+    assert np.min(centreline_depth[16:49]) >= 299.999
+
+
+@pytest.mark.parametrize(
+    ("kind", "structure_value", "point_value"),
+    (("ridge", 400.0, -500.0), ("valley", 400.0, 500.0)),
+)
+def test_relative_point_cannot_reverse_attached_structure(
+    kind: Literal["ridge", "valley"],
+    structure_value: float,
+    point_value: float,
+) -> None:
+    structure = TerrainStructure(
+        kind,
+        ((0.2, 0.5), (0.8, 0.5)),
+        structure_value,
+        50.0,
+        "relative",
+    )
+    point = ElevationPoint((0.5, 0.5), point_value, 40.0, "relative")
+
+    with pytest.raises(ValueError, match=f"would reverse the {kind}"):
+        generate_terrain(_square(), _settings(), constraints=(structure, point))
+
+
+def test_ambiguous_relative_point_attachment_is_order_independent() -> None:
+    south_ridge = TerrainStructure(
+        "ridge",
+        ((0.2, 0.45), (0.8, 0.45)),
+        600.0,
+        80.0,
+        "relative",
+    )
+    north_ridge = TerrainStructure(
+        "ridge",
+        ((0.2, 0.55), (0.8, 0.55)),
+        1_000.0,
+        80.0,
+        "relative",
+    )
+    point = ElevationPoint((0.5, 0.5), 400.0, 40.0, "relative")
+
+    first = generate_terrain(
+        _square(),
+        _settings(maximum_elevation_m=6_000.0),
+        constraints=(south_ridge, north_ridge, point),
+    )
+    reordered = generate_terrain(
+        _square(),
+        _settings(maximum_elevation_m=6_000.0),
+        constraints=(point, north_ridge, south_ridge),
+    )
+
+    np.testing.assert_array_equal(first.elevation_m, reordered.elevation_m)
 
 
 def test_overlapping_terrain_brushes_are_order_independent() -> None:
