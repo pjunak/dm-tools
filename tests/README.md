@@ -11,6 +11,8 @@ Prefer numeric assertions and invariants over large binary golden files.
 
 The current terrain suite specifically verifies that nested resolutions retain
 identical masks and Float32 elevations at shared world-coordinate samples. It
+verifies multipart SVG import, adjacent-land dissolution, near-touching seam
+repair, islands, retained enclosed water, and rejection of cross-water lines. It
 also verifies that soft terrain-brush strength is monotonic, can raise or lower
 the base, preserves sea level, and survives preview metadata export.
 Absolute and relative elevation modes are tested separately, including relative

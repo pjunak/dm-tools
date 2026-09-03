@@ -23,8 +23,8 @@ def create_parser() -> argparse.ArgumentParser:
     terrain_commands = terrain.add_subparsers(dest="terrain_command", title="terrain commands")
     gui = terrain_commands.add_parser(
         "gui",
-        help="Open the local coastline terrain workbench.",
-        description="Import one closed SVG coastline and generate a colour height map.",
+        help="Open the local land-geometry terrain workbench.",
+        description="Import closed SVG land shapes and generate a colour height map.",
     )
     gui.set_defaults(_handler=_run_terrain_gui)
     return parser

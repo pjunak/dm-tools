@@ -12,7 +12,8 @@ from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 
 from PIL import Image, ImageTk
-from shapely.geometry import LineString, Point, Polygon
+from shapely.geometry import LineString, MultiPolygon, Point, Polygon
+from shapely.ops import unary_union
 
 from dmtools.terrain.adapters import (
     PROJECT_EXTENSION,
@@ -141,7 +142,7 @@ class TerrainApp:
         self._terrain: GeneratedTerrain | None = None
         self._image: Image.Image | None = None
         self._preview_photo: ImageTk.PhotoImage | None = None
-        self._coast_polygon: Polygon | None = None
+        self._coast_polygon: Polygon | MultiPolygon | None = None
         self._constraints: list[TerrainConstraint] = []
         self._draft_points: list[tuple[float, float]] = []
         self._events: queue.Queue[_UiEvent] = queue.Queue()
@@ -263,7 +264,7 @@ class TerrainApp:
             row=0, column=0, sticky="w"
         )
         self.source_label = ttk.Label(
-            top, text="No coastline loaded", style="Muted.TLabel", width=34
+            top, text="No land geometry loaded", style="Muted.TLabel", width=34
         )
         self.source_label.grid(row=1, column=0, columnspan=3, sticky="w", pady=(3, 7))
         self.import_button = ttk.Button(
@@ -341,7 +342,7 @@ class TerrainApp:
         )
         self.progress.grid(row=row + 2, column=0, sticky="ew", pady=(12, 0))
         self.status_label = ttk.Label(
-            parent, text="Import one closed SVG loop to begin.", style="Muted.TLabel"
+            parent, text="Import closed SVG land shapes to begin.", style="Muted.TLabel"
         )
         self.status_label.grid(row=row + 3, column=0, sticky="w", pady=(6, 0))
 
@@ -357,7 +358,7 @@ class TerrainApp:
         ).pack(side="left")
         self.preview_meta = tk.Label(
             toolbar,
-            text="Awaiting coastline",
+            text="Awaiting land geometry",
             background=_PREVIEW,
             foreground="#80918e",
             font=("Consolas", 9),
@@ -544,7 +545,7 @@ class TerrainApp:
 
         self.authoring_hint = tk.Label(
             authoring,
-            text="Import a coastline to start drawing.",
+            text="Import land geometry to start drawing.",
             background="#203033",
             foreground="#8fa5a1",
             font=("Segoe UI", 8),
@@ -560,7 +561,7 @@ class TerrainApp:
         self.preview.create_text(
             20,
             20,
-            text="Import a coastline\nto establish the land mask.",
+            text="Import SVG land shapes\nto establish the land mask.",
             anchor="nw",
             fill="#71817e",
             font=("Segoe UI", 14),
@@ -699,7 +700,7 @@ class TerrainApp:
         )
 
         if not self._authoring_enabled:
-            hint = "Import a coastline to start drawing."
+            hint = "Import land geometry to start drawing."
         elif selected == "brush":
             action = (
                 "toward an absolute height"
@@ -824,7 +825,7 @@ class TerrainApp:
         position = self._brush_map_position(float(event.x), float(event.y))
         if position is None:
             self.root.bell()
-            self.status_label.configure(text="Paint inside the coastline.")
+            self.status_label.configure(text="Paint on a land component.")
             return
         values = self._read_brush_values()
         if values is None:
@@ -930,7 +931,7 @@ class TerrainApp:
         source_point = self._normalized_to_source(position)
         if not self._coast_polygon.covers(Point(source_point)):
             self.root.bell()
-            self.status_label.configure(text="Place authored features inside the coastline.")
+            self.status_label.configure(text="Place authored features on a land component.")
             return
 
         tool = self._authoring_tool.get()
@@ -1044,14 +1045,14 @@ class TerrainApp:
     def _choose_svg(self) -> None:
         selected = filedialog.askopenfilename(
             parent=self.root,
-            title="Import one closed coastline",
+            title="Import SVG land geometry",
             filetypes=(("SVG vector", "*.svg"), ("All files", "*.*")),
         )
         if not selected:
             return
         if (self._constraints or self._draft_points) and not messagebox.askyesno(
             "Replace the coastline?",
-            "Importing a different coastline clears the authored terrain brush strokes, "
+            "Importing different land geometry clears the authored terrain brush strokes, "
             "height points, ridges, and valleys.",
             parent=self.root,
         ):
@@ -1146,8 +1147,8 @@ class TerrainApp:
     def _save_project(self) -> None:
         if self._coastline is None or self._coastline_source is None:
             messagebox.showinfo(
-                "Import a coastline",
-                "Import an SVG coastline before saving a terrain project.",
+                "Import land geometry",
+                "Import closed SVG land shapes before saving a terrain project.",
                 parent=self.root,
             )
             return
@@ -1227,7 +1228,15 @@ class TerrainApp:
         self._coastline = coastline
         self._coastline_source = source
         self._project_path = None
-        self._coast_polygon = Polygon(coastline.points)
+        land_geometry = unary_union(
+            [
+                Polygon(component.exterior, holes=component.holes)
+                for component in coastline.components
+            ]
+        )
+        if not isinstance(land_geometry, (Polygon, MultiPolygon)):
+            raise ValueError("The imported coastlines do not form polygonal land geometry.")
+        self._coast_polygon = land_geometry
         self._constraints.clear()
         self._draft_points.clear()
         self._active_brush_values = None
@@ -1243,8 +1252,16 @@ class TerrainApp:
         self.export_button.configure(state="disabled")
         self._set_authoring_enabled(True)
         self.source_label.configure(text=coastline.source_name)
-        self.status_label.configure(text="Coastline valid. Draw controls or generate directly.")
-        self.preview_meta.configure(text=f"{len(coastline.points) - 1:,} sampled boundary points")
+        self.status_label.configure(
+            text="Land geometry valid. Draw controls or generate directly."
+        )
+        component_label = "component" if coastline.component_count == 1 else "components"
+        self.preview_meta.configure(
+            text=(
+                f"{coastline.boundary_point_count:,} sampled boundary points · "
+                f"{coastline.component_count} land {component_label}"
+            )
+        )
         self._refresh_authoring_controls()
         self._draw_preview()
 
@@ -1326,7 +1343,9 @@ class TerrainApp:
     def _generate(self) -> None:
         if self._coastline is None:
             messagebox.showinfo(
-                "Import a coastline", "Choose one closed SVG vector object first.", parent=self.root
+                "Import land geometry",
+                "Choose one or more closed SVG land objects first.",
+                parent=self.root,
             )
             return
         try:
@@ -1436,7 +1455,7 @@ class TerrainApp:
                     source_name = (
                         self._coastline.source_name
                         if self._coastline is not None
-                        else "No coastline loaded"
+                        else "No land geometry loaded"
                     )
                     self.source_label.configure(text=source_name)
                     self.status_label.configure(text=event.status)
@@ -1451,7 +1470,7 @@ class TerrainApp:
             self.preview.create_text(
                 20,
                 20,
-                text="Import a coastline\nto establish the land mask.",
+                text="Import SVG land shapes\nto establish the land mask.",
                 anchor="nw",
                 fill="#71817e",
                 font=("Segoe UI", 14),
@@ -1472,42 +1491,59 @@ class TerrainApp:
             self._preview_photo = ImageTk.PhotoImage(display)
             self.preview.create_image(left, top, image=self._preview_photo, anchor="nw")
         else:
-            boundary_coordinates = self._coastline_canvas_coordinates()
-            self.preview.create_polygon(
-                boundary_coordinates,
-                fill="#243638",
-                outline="",
-            )
+            for exterior, holes in self._coastline_canvas_coordinates():
+                self.preview.create_polygon(
+                    exterior,
+                    fill="#243638",
+                    outline="",
+                )
+                for hole in holes:
+                    self.preview.create_polygon(
+                        hole,
+                        fill=_MAP_BACKGROUND,
+                        outline="",
+                    )
 
-        boundary_coordinates = self._coastline_canvas_coordinates()
-        self.preview.create_line(
-            boundary_coordinates,
-            fill="#b9cbc6",
-            width=1.5,
-            joinstyle="round",
-        )
+        for exterior, holes in self._coastline_canvas_coordinates():
+            for boundary_coordinates in (exterior, *holes):
+                self.preview.create_line(
+                    boundary_coordinates,
+                    fill="#b9cbc6",
+                    width=1.5,
+                    joinstyle="round",
+                )
         for constraint in self._constraints:
             self._draw_constraint(constraint)
         self._draw_draft_structure()
         self._draw_brush_cursor()
 
-    def _coastline_canvas_coordinates(self) -> list[float]:
+    def _coastline_canvas_coordinates(
+        self,
+    ) -> list[tuple[list[float], tuple[list[float], ...]]]:
         if self._coastline is None:
             return []
         min_x, min_y, max_x, max_y = self._coastline.bounds
         span_x = max_x - min_x
         span_y = max_y - min_y
-        points = self._coastline.points
-        step = max(1, (len(points) - 1) // 1_200)
-        sampled = list(points[:-1:step])
-        sampled.append(points[-1])
-        coordinates: list[float] = []
-        for x, y in sampled:
-            canvas_x, canvas_y = self._normalized_to_canvas(
-                ((x - min_x) / span_x, (y - min_y) / span_y)
+        def canvas_ring(points: tuple[tuple[float, float], ...]) -> list[float]:
+            step = max(1, (len(points) - 1) // 1_200)
+            sampled = list(points[:-1:step])
+            sampled.append(points[-1])
+            coordinates: list[float] = []
+            for x, y in sampled:
+                canvas_x, canvas_y = self._normalized_to_canvas(
+                    ((x - min_x) / span_x, (y - min_y) / span_y)
+                )
+                coordinates.extend((canvas_x, canvas_y))
+            return coordinates
+
+        return [
+            (
+                canvas_ring(component.exterior),
+                tuple(canvas_ring(hole) for hole in component.holes),
             )
-            coordinates.extend((canvas_x, canvas_y))
-        return coordinates
+            for component in self._coastline.components
+        ]
 
     def _influence_radius_pixels(self, influence_radius_km: float) -> float:
         rect = self._map_rect()

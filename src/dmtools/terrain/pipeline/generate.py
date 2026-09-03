@@ -9,7 +9,8 @@ from typing import Any, cast
 import numpy as np
 import shapely
 from numpy.typing import NDArray
-from shapely.geometry import LineString, Point, Polygon
+from shapely.geometry import LineString, MultiPolygon, Point, Polygon
+from shapely.ops import unary_union
 
 from dmtools.terrain.domain import (
     Coastline,
@@ -51,7 +52,12 @@ def _report(callback: ProgressCallback | None, fraction: float, message: str) ->
         callback(fraction, message)
 
 
-def _metric_polygon(coastline: Coastline, object_scale_km: float) -> tuple[Polygon, float, float]:
+type LandGeometry = Polygon | MultiPolygon
+
+
+def _metric_polygon(
+    coastline: Coastline, object_scale_km: float
+) -> tuple[LandGeometry, float, float]:
     min_x, min_y, max_x, max_y = coastline.bounds
     span_x = max_x - min_x
     span_y = max_y - min_y
@@ -59,11 +65,24 @@ def _metric_polygon(coastline: Coastline, object_scale_km: float) -> tuple[Polyg
     if longest_span <= 0:
         raise ValueError("The coastline has no measurable extent.")
     km_per_source_unit = object_scale_km / longest_span
-    points_km = [
-        ((x - min_x) * km_per_source_unit, (y - min_y) * km_per_source_unit)
-        for x, y in coastline.points
+    def metric_ring(
+        ring: tuple[tuple[float, float], ...],
+    ) -> list[tuple[float, float]]:
+        return [
+            ((x - min_x) * km_per_source_unit, (y - min_y) * km_per_source_unit)
+            for x, y in ring
+        ]
+
+    polygons = [
+        Polygon(
+            metric_ring(component.exterior),
+            holes=[metric_ring(hole) for hole in component.holes],
+        )
+        for component in coastline.components
     ]
-    polygon = Polygon(points_km)
+    polygon = unary_union(polygons)
+    if not isinstance(polygon, (Polygon, MultiPolygon)):
+        raise ValueError("The coastlines do not form polygonal land geometry.")
     if not polygon.is_valid or polygon.area <= 0:
         raise ValueError("The coastline does not form a valid land polygon.")
     return polygon, span_x * km_per_source_unit, span_y * km_per_source_unit
@@ -111,7 +130,7 @@ def _smooth_structure_points(
 
 def _metric_constraints(
     constraints: Sequence[TerrainConstraint],
-    polygon: Polygon,
+    polygon: LandGeometry,
     width_km: float,
     height_km: float,
     maximum_elevation_m: float,

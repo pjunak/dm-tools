@@ -10,9 +10,10 @@ refined into consistent regional and local maps.
 .\.venv\Scripts\dmtools.exe terrain gui
 ```
 
-The current workbench imports one SVG coastline, exposes every implemented
-generator setting as a slider and numeric stepper, and lets the user draw exact
-height points plus ridge and valley centrelines over the map. A terrain brush
+The current workbench imports closed SVG land shapes, dissolves adjacent
+mainland sections, and retains disconnected islands in the same map. It exposes
+every implemented generator setting as a slider and numeric stepper, and lets
+the user draw exact height points plus ridge and valley centrelines. A terrain brush
 paints broad soft elevation guidance directly over the continent. Import
 validation and generation run on background workers with progress reporting.
 The result is previewed and can be exported as a transparent colour-relief PNG.
@@ -26,16 +27,23 @@ directly.
 ## Current input contract
 
 - The file must be SVG.
-- It must contain exactly one drawable vector object.
-- That object must contain exactly one continuous, closed subpath.
-- The loop must enclose positive area and must not self-intersect.
+- If groups named `Land Shapes` exist, only drawable objects beneath those
+  groups are land. Otherwise, every drawable object is treated as land.
+- Every land object must contain exactly one continuous, closed subpath.
+- Every loop must enclose positive area and must not self-intersect.
 - SVG transforms are applied before the coastline is sampled.
-- Holes, islands, and multiple land objects are intentionally deferred.
+- Overlapping or nearly touching land objects are dissolved. Their shared edges
+  do not become coastlines or terrain-generation boundaries.
+- Disconnected polygons become islands or other separate land components in one
+  shared generation. Larger enclosed gaps remain water; sub-sampling slivers at
+  separately drawn borders are repaired.
+- Explicit compound-path holes and semantic lake levels are not yet supported.
 
-The imported object's **longest bounding-box dimension** is the object scale in
-kilometres. The shorter dimension keeps the SVG aspect ratio. This convention is
-explicit so that the same coastline and scale always establish the same metric
-coordinate system.
+The combined land geometry's **longest bounding-box dimension** is the object
+scale in kilometres. The shorter dimension keeps the SVG aspect ratio. This
+convention is explicit so that the same source and scale always establish the
+same metric coordinate system. Every mainland section and island is evaluated
+in that one coordinate-addressed field and with the same stage seed.
 
 ## Authoring topography
 

@@ -1,6 +1,6 @@
 # ADR-0002: Build the first terrain workbench with Tk and SVG input
 
-**Status:** Accepted
+**Status:** Accepted; single-object SVG restriction superseded by ADR-0009
 **Date:** 2026-09-02
 **Deciders:** Repository owner and project maintainer
 

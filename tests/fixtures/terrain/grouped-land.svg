@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     xmlns:serif="http://www.serif.com/"
+     viewBox="0 0 200 100">
+  <g id="west-region">
+    <g id="Land-Shapes" serif:id="Land Shapes">
+      <path id="mainland" d="M 5 10 L 55 10 L 55 90 L 5 90 Z" />
+      <g id="islands">
+        <path d="M 12 2 L 20 2 L 20 8 L 12 8 Z" />
+      </g>
+    </g>
+  </g>
+  <g id="east-region">
+    <g id="Land-Shapes-2" serif:id="Land Shapes">
+      <path id="mainland-2" d="M 45 10 L 95 10 L 95 90 L 45 90 Z" />
+    </g>
+    <g id="Terrain-Elevation" serif:id="Terrain &amp; Elevation">
+      <path d="M 150 20 L 190 20 L 190 80 L 150 80 Z" />
+    </g>
+  </g>
+</svg>

@@ -59,6 +59,12 @@ domain models. It resolves the external SVG relative to the project, verifies
 its content hash, then delegates coastline parsing to the SVG adapter. Neither
 the domain nor the generation pipeline reads project files directly.
 
+The SVG adapter turns one or more closed land shapes into dissolved polygonal
+land geometry. Shared subcontinent edges are removed before generation;
+disconnected islands and retained enclosed water use the same metric extent and
+coordinate-addressed field. The pipeline therefore receives geometry, not SVG
+layer or path boundaries.
+
 ## Deferred decisions
 
 - Build-manifest schema details and project migration tooling

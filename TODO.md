@@ -15,9 +15,9 @@ Priority labels:
   before selecting one.
 
 The current baseline already includes deterministic coordinate-addressed
-detail, one closed SVG coastline, absolute and relative brush/point/line
-constraints, per-tool settings, project save/open, colour preview, and PNG
-export. Those are not repeated below as unfinished work.
+detail, dissolved multipart SVG land geometry, absolute and relative
+brush/point/line constraints, per-tool settings, project save/open, colour
+preview, and PNG export. Those are not repeated below as unfinished work.
 
 ## Features
 
@@ -59,9 +59,12 @@ export. Those are not repeated below as unfinished work.
   named profile controlling broad relief, roughness, drainage density, erosion
   resistance, and transition distance without baking those properties into a
   raster paint mask.
-- [ ] **P1 — Support holes, islands, lakes, and multiple land objects.** Define
-  water levels and topology explicitly rather than treating every closed loop
-  as equivalent coastline.
+- [x] **P1 — Support adjacent mainland sections and disconnected islands.** SVG
+  land objects are dissolved into one polygonal mask, sub-sampling border
+  slivers are repaired, and all components share one metric field and seed.
+- [ ] **P1 — Add explicit lakes and authored water holes.** Define water levels,
+  outlets, endorheic status, and compound-path semantics rather than inferring
+  all enclosed gaps from filled land shapes.
 - [ ] **P2 — Add reusable terrain profiles/presets.** Profiles should be
   versioned authored inputs with their own content hashes and should expose the
   effective values used by a build.

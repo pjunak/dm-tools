@@ -20,4 +20,4 @@ def test_terrain_gui_help_is_available(capsys: pytest.CaptureFixture[str]) -> No
         main(["terrain", "gui", "--help"])
 
     assert exit_info.value.code == 0
-    assert "closed SVG coastline" in capsys.readouterr().out
+    assert "closed SVG land shapes" in capsys.readouterr().out

@@ -11,6 +11,7 @@ from dmtools.terrain.adapters import render_height_map, save_height_map
 from dmtools.terrain.domain import (
     Coastline,
     ElevationPoint,
+    LandComponent,
     TerrainBrushStroke,
     TerrainSettings,
     TerrainStructure,
@@ -23,6 +24,52 @@ def _square() -> Coastline:
     return Coastline(
         points=((0.0, 0.0), (10.0, 0.0), (10.0, 10.0), (0.0, 10.0), (0.0, 0.0)),
         source_name="square.svg",
+    )
+
+
+def _mainland_and_island() -> Coastline:
+    return Coastline(
+        points=(
+            (0.0, 0.0),
+            (60.0, 0.0),
+            (60.0, 100.0),
+            (0.0, 100.0),
+            (0.0, 0.0),
+        ),
+        source_name="mainland-and-island.svg",
+        additional_components=(
+            LandComponent(
+                exterior=(
+                    (80.0, 40.0),
+                    (100.0, 40.0),
+                    (100.0, 60.0),
+                    (80.0, 60.0),
+                    (80.0, 40.0),
+                ),
+            ),
+        ),
+    )
+
+
+def _land_with_inland_water() -> Coastline:
+    return Coastline(
+        points=(
+            (0.0, 0.0),
+            (100.0, 0.0),
+            (100.0, 100.0),
+            (0.0, 100.0),
+            (0.0, 0.0),
+        ),
+        source_name="land-with-inland-water.svg",
+        holes=(
+            (
+                (40.0, 40.0),
+                (60.0, 40.0),
+                (60.0, 60.0),
+                (40.0, 60.0),
+                (40.0, 40.0),
+            ),
+        ),
     )
 
 
@@ -62,6 +109,54 @@ def test_nested_resolution_preserves_existing_samples() -> None:
 
     np.testing.assert_array_equal(coarse.land_mask, fine.land_mask[::2, ::2])
     np.testing.assert_array_equal(coarse.elevation_m, fine.elevation_m[::2, ::2])
+
+
+def test_generates_mainland_and_island_in_one_shared_grid() -> None:
+    terrain = generate_terrain(
+        _mainland_and_island(),
+        _settings(resolution_px=101),
+    )
+
+    assert terrain.land_mask[50, 30]
+    assert not terrain.land_mask[50, 70]
+    assert terrain.land_mask[50, 90]
+    assert terrain.elevation_m[50, 80] == np.float32(0.0)
+
+
+def test_constraint_on_island_is_accepted_but_cross_ocean_line_is_rejected() -> None:
+    island_peak = ElevationPoint((0.9, 0.5), 1_500.0, 30.0)
+    terrain = generate_terrain(
+        _mainland_and_island(),
+        _settings(resolution_px=101),
+        constraints=(island_peak,),
+    )
+
+    assert terrain.elevation_m[50, 90] == np.float32(1_500.0)
+
+    crossing_ridge = TerrainStructure(
+        "ridge",
+        ((0.5, 0.5), (0.9, 0.5)),
+        1_500.0,
+        30.0,
+    )
+    with pytest.raises(ValueError, match="outside the coastline"):
+        generate_terrain(
+            _mainland_and_island(),
+            _settings(resolution_px=101),
+            constraints=(crossing_ridge,),
+        )
+
+
+def test_enclosed_water_is_excluded_and_acts_as_a_coastline() -> None:
+    terrain = generate_terrain(
+        _land_with_inland_water(),
+        _settings(resolution_px=101),
+    )
+
+    assert terrain.land_mask[20, 50]
+    assert not terrain.land_mask[50, 50]
+    assert terrain.land_mask[40, 50]
+    assert terrain.elevation_m[40, 50] == np.float32(0.0)
 
 
 def test_authored_height_point_sets_its_target_elevation() -> None:

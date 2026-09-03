@@ -1,7 +1,7 @@
 # Terrain adapters
 
 This package contains concrete integration boundaries. The current adapters
-load and fingerprint an SVG coastline, strictly read and atomically write the
+load, dissolve, validate, and fingerprint SVG land geometry, strictly read and atomically write the
 versioned JSON terrain project, and render or save a PNG preview. Future adapters
 will add GeoPackage and GeoTIFF I/O, projection libraries, and optional external
 scientific engines.

@@ -11,8 +11,8 @@ interface should call the same engine rather than replacing it.
 ## Status
 
 The first terrain-generator vertical slice is usable. Its desktop workbench can
-import one closed SVG coastline, paint broad soft elevation guidance, draw exact
-or relative height points plus ridge and valley centrelines, generate a
+import and dissolve closed SVG mainland and island shapes, paint broad soft
+elevation guidance, draw exact or relative height points plus ridge and valley centrelines, generate a
 deterministic constraint-conditioned elevation field, preview it as colour
 relief, and export the preview as a transparent PNG. Every authoring tool keeps
 its own mode, value, and width while the user switches tools. Authored work can

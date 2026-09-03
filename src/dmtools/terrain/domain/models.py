@@ -9,25 +9,64 @@ type StructureKind = Literal["ridge", "valley"]
 type ElevationMode = Literal["absolute", "relative"]
 
 
+def _validate_ring(points: tuple[Point2D, ...], label: str) -> None:
+    if len(points) < 4:
+        raise ValueError(f"{label} needs at least three vertices and a closing vertex.")
+    if points[0] != points[-1]:
+        raise ValueError(f"{label} must be closed.")
+    if any(not isfinite(value) for point in points for value in point):
+        raise ValueError(f"{label} coordinates must be finite.")
+
+
+@dataclass(frozen=True, slots=True)
+class LandComponent:
+    """One connected land polygon with optional enclosed water holes."""
+
+    exterior: tuple[Point2D, ...]
+    holes: tuple[tuple[Point2D, ...], ...] = ()
+
+    def __post_init__(self) -> None:
+        _validate_ring(self.exterior, "Land-component exterior")
+        for index, hole in enumerate(self.holes, start=1):
+            _validate_ring(hole, f"Land-component hole {index}")
+
+
 @dataclass(frozen=True, slots=True)
 class Coastline:
-    """One closed coastline expressed in source-vector coordinates."""
+    """Dissolved land geometry expressed as closed source-vector coastlines."""
 
     points: tuple[Point2D, ...]
     source_name: str
+    holes: tuple[tuple[Point2D, ...], ...] = ()
+    additional_components: tuple[LandComponent, ...] = ()
 
     def __post_init__(self) -> None:
-        if len(self.points) < 4:
-            raise ValueError("A coastline needs at least three vertices and a closing vertex.")
-        if self.points[0] != self.points[-1]:
-            raise ValueError("The coastline must be closed.")
-        if any(not isfinite(value) for point in self.points for value in point):
-            raise ValueError("Coastline coordinates must be finite.")
+        _validate_ring(self.points, "Primary land-component exterior")
+        for index, hole in enumerate(self.holes, start=1):
+            _validate_ring(hole, f"Primary land-component hole {index}")
+
+    @property
+    def components(self) -> tuple[LandComponent, ...]:
+        """Return the primary landmass followed by disconnected land components."""
+
+        return (LandComponent(self.points, self.holes), *self.additional_components)
+
+    @property
+    def component_count(self) -> int:
+        return 1 + len(self.additional_components)
+
+    @property
+    def boundary_point_count(self) -> int:
+        return sum(
+            len(component.exterior) - 1
+            + sum(len(hole) - 1 for hole in component.holes)
+            for component in self.components
+        )
 
     @property
     def bounds(self) -> tuple[float, float, float, float]:
-        xs = [point[0] for point in self.points]
-        ys = [point[1] for point in self.points]
+        xs = [point[0] for component in self.components for point in component.exterior]
+        ys = [point[1] for component in self.components for point in component.exterior]
         return min(xs), min(ys), max(xs), max(ys)
 
 
