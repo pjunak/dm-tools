@@ -192,9 +192,10 @@ switches between **Cartographic relief**, the default fixed 0–10,000 m world
 scale with stronger terrain shading, and **Scientific elevation**, the ordered
 and colour-vision-deficiency-safe Oleron land sequence normalized to the active
 generation ceiling. The cartographic scale uses green lowlands, yellow and
-brown ordinary uplands, dark muted red from 7,000 m, progressively lighter red
-above 8,200 m, and near-white only at 10,000 m. Changing style re-renders the
-same DEM and does not regenerate or alter elevation.
+brown ordinary uplands, a gradual umber-to-muted-red transition from 6,000 to
+8,200 m, progressively lighter red above 8,200 m, and near-white only at
+10,000 m. Changing style re-renders the same DEM and does not regenerate or
+alter elevation.
 
 The **Elevation ceiling** remains a generation control, not a colour control.
 Its default is 4,500 m and its UI range extends to 12,000 m for exceptional

@@ -618,7 +618,7 @@ def test_render_is_transparent_outside_and_png_records_settings(tmp_path: Path) 
         assert exported.mode == "RGBA"
         assert exported.info["dmtools.source"] == "square.svg"
         assert exported.info["dmtools.render_style"] == "cartographic"
-        assert exported.info["dmtools.colour_palette"] == "dmtools-cartographic-relief@2"
+        assert exported.info["dmtools.colour_palette"] == "dmtools-cartographic-relief@3"
         assert exported.info["dmtools.colour_scale_maximum_m"] == "10000"
         assert '"seed": 42' in exported.info["dmtools.settings"]
         constraints = json.loads(exported.info["dmtools.constraints"])
@@ -658,15 +658,19 @@ def test_scientific_elevation_palette_is_ordered_by_lightness() -> None:
 
 
 def test_cartographic_palette_reserves_red_and_white_for_extreme_summits() -> None:
-    rgb = elevation_palette_rgb(np.array([0.0, 0.60, 0.70, 0.82, 0.90, 0.96, 1.0]))
+    rgb = elevation_palette_rgb(
+        np.array([0.0, 0.60, 0.65, 0.70, 0.75, 0.82, 0.90, 0.96, 1.0])
+    )
 
     np.testing.assert_allclose(rgb[0], np.array([54, 95, 55]) / 255.0)
     np.testing.assert_allclose(rgb[1], np.array([124, 75, 48]) / 255.0)
-    np.testing.assert_allclose(rgb[2], np.array([101, 43, 43]) / 255.0)
-    np.testing.assert_allclose(rgb[3], np.array([151, 67, 59]) / 255.0)
-    np.testing.assert_allclose(rgb[4], np.array([198, 112, 96]) / 255.0)
-    np.testing.assert_allclose(rgb[5], np.array([231, 182, 168]) / 255.0)
-    np.testing.assert_allclose(rgb[6], np.array([247, 246, 242]) / 255.0)
+    np.testing.assert_allclose(rgb[2], np.array([124, 71, 50]) / 255.0)
+    np.testing.assert_allclose(rgb[3], np.array([126, 67, 54]) / 255.0)
+    np.testing.assert_allclose(rgb[4], np.array([137, 65, 57]) / 255.0)
+    np.testing.assert_allclose(rgb[5], np.array([155, 74, 65]) / 255.0)
+    np.testing.assert_allclose(rgb[6], np.array([198, 112, 96]) / 255.0)
+    np.testing.assert_allclose(rgb[7], np.array([231, 182, 168]) / 255.0)
+    np.testing.assert_allclose(rgb[8], np.array([247, 246, 242]) / 255.0)
 
 
 def test_cartographic_colours_use_fixed_world_elevations() -> None:

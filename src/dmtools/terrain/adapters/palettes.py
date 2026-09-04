@@ -156,7 +156,9 @@ CARTOGRAPHIC_RELIEF_ELEVATION_STOPS_M = np.array(
         3_500.0,
         4_500.0,
         6_000.0,
+        6_500.0,
         7_000.0,
+        7_500.0,
         8_200.0,
         9_000.0,
         9_600.0,
@@ -177,8 +179,10 @@ CARTOGRAPHIC_RELIEF_RGB = (
             (212, 190, 115),
             (181, 138, 79),
             (124, 75, 48),
-            (101, 43, 43),
-            (151, 67, 59),
+            (124, 71, 50),
+            (126, 67, 54),
+            (137, 65, 57),
+            (155, 74, 65),
             (198, 112, 96),
             (231, 182, 168),
             (247, 246, 242),
@@ -187,4 +191,4 @@ CARTOGRAPHIC_RELIEF_RGB = (
     )
     / 255.0
 )
-CARTOGRAPHIC_RELIEF_PALETTE_ID = "dmtools-cartographic-relief@2"
+CARTOGRAPHIC_RELIEF_PALETTE_ID = "dmtools-cartographic-relief@3"

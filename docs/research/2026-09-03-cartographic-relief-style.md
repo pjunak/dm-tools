@@ -46,11 +46,13 @@ being stretched to each terrain generation's configured ceiling. This makes a
 7,000 m summit the same dark red on every continent and prevents an ordinary
 4,500 m regional maximum from being painted white.
 
-Brown covers ordinary mountains through 6,000 m. Dark muted red begins at
-7,000 m, lighter reds appear from 8,200 m through 9,600 m, and white is reserved
-for terrain at 10,000 m or above. The scientific style intentionally remains
-normalized to the active elevation ceiling because its purpose is inspecting
-relative variation within a generated surface.
+Brown covers ordinary mountains through 6,000 m. Additional anchors at 6,500,
+7,000, and 7,500 m carry it gradually through warm umber and brown-red into a
+muted red at 8,200 m, avoiding a visually dense dark band. Lighter reds appear
+from 9,000 m through 9,600 m, and white is reserved for terrain at 10,000 m or
+above. The scientific style intentionally remains normalized to the active
+elevation ceiling because its purpose is inspecting relative variation within
+a generated surface.
 
 ## Limits of palette matching
 
