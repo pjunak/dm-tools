@@ -7,6 +7,10 @@ implemented with tests. Notes are listed newest first and package-support claims
 may become stale; use the
 [current development strategy](../strategy/README.md) for the active order.
 
+- [Geological structure and terrain composition — 2026-09-05](2026-09-05-geological-structure-and-terrain-composition.md)
+  adds R40–R44: related regional recipes, material-coordinate and event-order
+  requirements, distinct terrain/water graphs, directional measurements,
+  multiscale landform classification and significant peak/pass comparisons.
 - [Terrain prototype contracts — 2026-09-04](2026-09-04-terrain-prototype-contracts.md)
   narrows the first experiments with measured noise/grid effects, source audits
   of SPACE and GPU references, landform suitability, numeric exchange gates,

@@ -171,6 +171,15 @@ before evaluating external multiscale engines. Shared-node equality and parent
 cell-average consistency need separate tests. Meanderpy and pyDeltaRCM remain
 focused channel/delta comparisons after their prerequisites, not dependencies.
 
+The [geological-composition follow-up](../research/2026-09-05-geological-structure-and-terrain-composition.md)
+adds R40–R44 within those experiments. Compare related regional recipes and a
+small analytical substrate before considering a geological engine. Measure
+spatial arrangement, direction and observation scale alongside height
+distributions. Keep morphological ridges, drainage divides and active channels
+semantically distinct, and compare important peak/pass relationships across
+stages. LoopStructural, SurfaceNetwork and TTK are optional reference tools;
+their appearance in research does not change the core dependency plan.
+
 Create or amend an ADR when a prototype selects a new solver, file format,
 external engine, climate contract, or classification contract. Revisit this
 order when a prerequisite is measured complete, a dependency lacks supported

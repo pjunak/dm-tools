@@ -302,6 +302,8 @@ which records primary sources, tool boundaries, and proposed experiments.
 The [prototype-contract follow-up](docs/research/2026-09-04-terrain-prototype-contracts.md)
 refines those items with local measurements and source audits, and adds
 `R34`–`R39`. All IDs remain stable; source inspection is not runtime validation.
+The [geological-composition follow-up](docs/research/2026-09-05-geological-structure-and-terrain-composition.md)
+adds `R40`–`R44` and refines geological, graph and measurement requirements.
 Priorities remain conditional on the current strategy's prerequisites.
 
 #### Coordinate, scale, and drainage contracts
@@ -347,14 +349,21 @@ Priorities remain conditional on the current strategy's prerequisites.
   between tributaries, preserve divides and saddle connections, and measure
   network crossings, orphan peaks, junction angles and branch scale. Extend
   existing hierarchical branching rather than creating a second ridge system.
+  Preserve the distinct surface-ridge, divide, thalweg and channel meanings
+  described by R42 rather than assuming the two skeletons are exact duals.
 - [ ] **Research — R10: Add layered substrate to lithology regions.** Evaluate
   resistant caps, bed thickness, dip and differential erodibility for mesas,
   cuestas, escarpments and canyon walls. Distinguish geometry from decorative
   strata colours; keep weathered/mobile cover separate from bedrock.
+  Prototype material-coordinate queries at the eroding bedrock surface. Check
+  true versus vertical thickness, contact geometry and process-grid support;
+  compare effective coarse resistance with resolved regional layers.
 - [ ] **Research — R11: Represent regional process histories.** Compare a short
   authored sequence of uplift, incision, deposition and glacial episodes with
   one uniform erosion-age parameter. Record order, units and assumptions;
   label the history a design hypothesis rather than inferred canon.
+  Compare a simple analytical event sequence with LoopStructural as an optional
+  reference; distinguish reverse-time reconstruction from forward simulation.
 - [ ] **Research — R12: Prototype contour-guided authoring.** Compare the 2026
   iso-contour approach for plateaus, basin margins and elevation bands. Reject
   crossing/contradictory contours and quantify DEM reconstruction, river-floor
@@ -496,6 +505,34 @@ Priorities remain conditional on the current strategy's prerequisites.
   inlet/outlet continuity, sediment flux and domain boundaries. Audit material
   assumptions and runtime support; keep coast/river changes reviewable.
 
+#### Geological composition and structural measurements — 2026-09-05
+
+- [ ] **Research — R40: Compose related terrain regions.** Add optional,
+  editable relationships between belts, plateau margins, basins, valley
+  corridors and receiving plains. Compare coherent recipes with independent
+  regional textures; measure cross-sections, transitions and outlet alignment.
+  Surface conflicts with authored geography instead of silently relocating it.
+- [ ] **Research — R41: Measure directional structure over physical scales.**
+  Extend analogue comparisons with directional variograms/spectra, physical
+  lag distances, mask support and explicit detrending. Separate orientation
+  agreement from rotation-normalized character. Include identical-histogram
+  ramp/shuffle fixtures so distribution matching cannot masquerade as realism.
+- [ ] **Research — R42: Type terrain and drainage graph relationships.** Keep
+  authored lines, morphological ridges/thalwegs, divides and active channels
+  distinct, with source-surface and depression-policy provenance. Compare
+  SurfaceNetwork externally on saddles, dry valleys, flats and outlet basins;
+  audit its GPL boundary and hole semantics before reuse.
+- [ ] **Research — R43: Retain landform measurements at several scales.**
+  Compare GRASS geomorphons and quadratic-fit descriptors at world-unit radii.
+  Record thresholds, rounded windows, orientation/curvature conventions and
+  support/halo limits. Test local flatness on plateaus versus valley floors,
+  rotated fixtures and small coastal islands before driving process masks.
+- [ ] **Research — R44: Track significant peaks and passes across stages.**
+  Compare persistence and peak/saddle relationships using TTK as a read-only
+  reference. Specify metre thresholds, prominence conventions, ties, masks and
+  island boundaries. Protect authored passes even when persistence is small;
+  distinguish added local detail from unwanted changes to large landmarks.
+
 ## UI / UX improvements
 
 ### Editing and navigation
@@ -573,6 +610,9 @@ Priorities remain conditional on the current strategy's prerequisites.
 
 ## Related decisions and research
 
+- [Geological structure and terrain composition — 2026-09-05](docs/research/2026-09-05-geological-structure-and-terrain-composition.md)
+  connects geological controls, network semantics, measured descriptor limits
+  and optional structural/topology tools to R40–R44 and existing experiments.
 - [Terrain prototype contracts — 2026-09-04](docs/research/2026-09-04-terrain-prototype-contracts.md)
   records measured noise/grid effects, external source audits, R34–R39 and
   three bounded mountain-detail, sediment-valley and refinement experiments.
