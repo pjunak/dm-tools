@@ -64,6 +64,9 @@ reports direct outlet connectivity and potential inland terminals. Priority-
 Flood runs only on a copy to quantify significant fill cells, maximum fill
 depth, estimated volume, and largest conditioned outlet catchment. The compact
 summary is resolution-independent and never repairs the authoritative DEM.
+Significant fill cells are grouped by 8-connectivity into deterministic coarse
+basin candidates. Candidate measurements and preview markers support review;
+they are not lake polygons, nested depression trees, or authored constraints.
 
 Free ridge and valley endpoints narrow gradually so authored structures do not
 end as blunt walls. When an endpoint meets another structure of the same kind

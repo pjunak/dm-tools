@@ -21,7 +21,10 @@ automatic MFD accumulation, D8 centreline concentration, downstream valley
 width, floor-detail suppression, nested resolutions, and preservation of the
 underlying relief field. Canonical drainage diagnostics have planar-outlet and
 known-depression fixtures covering direct connectivity, significant fill depth,
-fill volume, non-mutation, metadata, and resolution-independent summaries.
+fill volume, non-mutation, metadata, and resolution-independent summaries. The
+known depression also verifies candidate floor, spill, area, volume, terminal
+membership, and normalized location; a two-depression fixture verifies stable
+depth ordering and separate connected components.
 Project contract tests cover every current constraint kind and per-tool setting,
 relative coastline paths, strict schema-version handling, and SVG hash mismatch
 detection on both load and save.

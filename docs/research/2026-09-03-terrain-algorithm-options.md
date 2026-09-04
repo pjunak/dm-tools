@@ -194,6 +194,14 @@ cell count, depth, volume, outlets, and largest conditioned catchment. The
 summary is diagnostic only: it neither changes the Float32 DEM nor decides
 whether a depression is accidental, a lake, or an endorheic basin.
 
+The first review layer groups 8-connected significant-fill cells into ranked
+basin candidates. It records a deepest-cell location, coarse area, floor and
+spill estimates, depth, volume, and terminal membership, then overlays the
+largest candidates in the workbench. This is deliberately not a depression
+hierarchy: connected fill regions can merge nested depressions. Barnes et al.'s
+binary-tree hierarchy and Fill-Spill-Merge routing are the appropriate next
+reference when nested topology or water storage becomes a concrete feature.
+
 ## Process-informed erosion and slope relaxation
 
 The most useful scientific prototype is stream-power incision coupled with a
@@ -344,6 +352,8 @@ resolution-specific gullies or improves only the colour preview.
   and [conjugate gradient solver](https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.cg.html).
 - Australian National University, [ANUDEM 5.3](https://fennerschool.anu.edu.au/research/products/anudem-version-5-3).
 - Barnes et al., [Priority-Flood depression filling](https://arxiv.org/abs/1511.04463).
+- Barnes et al., [Depression hierarchies](https://esurf.copernicus.org/articles/8/431/2020/)
+  and [Fill-Spill-Merge](https://esurf.copernicus.org/articles/9/105/2021/).
 - Génevaux et al., [Terrain Generation Using Procedural Models Based on Hydrology](https://doi.org/10.1145/2461912.2461996), 2013.
 - Cordonnier et al., [Large Scale Terrain Generation from Tectonic Uplift and Fluvial Erosion](https://doi.org/10.1111/cgf.12820), 2016.
 - Lague, [The stream power river incision model](https://doi.org/10.1002/esp.3462), 2014.

@@ -196,8 +196,10 @@ landscape-process spikes. It is working research, not an accepted architecture.
   coastline outlets that fail to reach sea level. A resolution-independent
   129-cell canonical check now reports strict-D8 direct connectivity, potential
   sink cells, Priority-Flood depth/volume, outlets, and largest catchment without
-  mutating terrain. Authored basin classification, river-segment checks, local
-  refinement diagnostics, and review overlays remain.
+  mutating terrain. Significant fill components are now ranked as coarse basin
+  candidates and marked in the workbench with floor, spill, area, depth, and
+  volume metadata. Authored basin classification, a full nested depression
+  hierarchy, river-segment checks, and local refinement diagnostics remain.
 - [ ] **Research — Compare a mature hydrology adapter with selected in-project
   primitives.** Candidates already considered include ANUDEM-style
   hydrological conditioning and established GIS flow/depression tooling. Keep

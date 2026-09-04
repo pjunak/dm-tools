@@ -1475,10 +1475,16 @@ class TerrainApp:
                     self.progress.configure(mode="determinate")
                     self.progress.configure(value=100)
                     drainage = event.terrain.drainage
-                    if drainage.potential_sink_cell_count:
+                    if drainage.basin_candidate_count:
+                        drainage_status = (
+                            f"Drainage check grouped "
+                            f"{drainage.potential_sink_cell_count:,} potential terminal cells "
+                            f"into {drainage.basin_candidate_count:,} basin candidates."
+                        )
+                    elif drainage.potential_sink_cell_count:
                         drainage_status = (
                             f"Drainage check found {drainage.potential_sink_cell_count:,} "
-                            "potential sink cells."
+                            "flat or sub-tolerance terminal cells."
                         )
                     else:
                         drainage_status = "No potential sinks on the canonical grid."
@@ -1494,6 +1500,7 @@ class TerrainApp:
                             f"{event.terrain.width} x {event.terrain.height} px"
                             f"  ·  peak {peak:,.0f} m"
                             f"  ·  direct drainage {connected_percent:.1f}%"
+                            f"  ·  {drainage.basin_candidate_count:,} basin candidates"
                         )
                     )
                     self.import_button.configure(state="normal")
@@ -1582,10 +1589,57 @@ class TerrainApp:
                     width=1.5,
                     joinstyle="round",
                 )
+        self._draw_drainage_candidates()
         for constraint in self._constraints:
             self._draw_constraint(constraint)
         self._draw_draft_structure()
         self._draw_brush_cursor()
+
+    def _draw_drainage_candidates(self) -> None:
+        """Overlay the most significant derived basins without altering the image."""
+
+        if self._terrain is None:
+            return
+        candidates = self._terrain.drainage.basin_candidates
+        for rank, candidate in enumerate(candidates[:20], start=1):
+            x, y = self._normalized_to_canvas(
+                (candidate.normalized_x, candidate.normalized_y)
+            )
+            radius = min(12.0, 4.0 + 0.012 * candidate.maximum_fill_depth_m)
+            self.preview.create_oval(
+                x - radius,
+                y - radius,
+                x + radius,
+                y + radius,
+                outline="#d889ff",
+                width=2,
+                dash=(3, 2),
+            )
+            self.preview.create_line(
+                x - 3,
+                y,
+                x + 3,
+                y,
+                fill="#f1c6ff",
+                width=1,
+            )
+            self.preview.create_line(
+                x,
+                y - 3,
+                x,
+                y + 3,
+                fill="#f1c6ff",
+                width=1,
+            )
+            if rank <= 8:
+                self.preview.create_text(
+                    x + radius + 3,
+                    y - radius,
+                    text=f"basin {rank}  {candidate.maximum_fill_depth_m:,.0f} m fill",
+                    anchor="sw",
+                    fill="#f1c6ff",
+                    font=("Consolas", 8, "bold"),
+                )
 
     def _coastline_canvas_coordinates(
         self,

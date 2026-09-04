@@ -55,6 +55,43 @@ def test_drainage_diagnostics_quantifies_an_inland_depression_without_mutating_i
     assert diagnostics.depression_cell_count >= 1
     assert diagnostics.maximum_fill_depth_m >= 15.0
     assert diagnostics.depression_fill_volume_km3 > 0.0
+    assert diagnostics.basin_candidate_count == 1
+    assert diagnostics.flat_terminal_cell_count == 0
+    candidate = diagnostics.basin_candidates[0]
+    assert candidate.normalized_x == 0.5
+    assert candidate.normalized_y == 0.5
+    assert candidate.cell_count == 1
+    assert candidate.area_km2 == 1.0
+    assert candidate.floor_elevation_m == -10.0
+    assert candidate.spill_elevation_m == np.nextafter(5.0, np.inf)
+    assert candidate.maximum_fill_depth_m >= 15.0
+    assert candidate.fill_volume_km3 >= 0.015
+    assert candidate.terminal_cell_count == 1
+
+
+def test_drainage_diagnostics_orders_separate_basin_candidates_by_depth() -> None:
+    elevation = np.zeros((7, 9), dtype=np.float64)
+    elevation[1:-1, 1:-1] = 5.0
+    elevation[3, 2] = -20.0
+    elevation[3, 6] = -5.0
+    land = np.ones_like(elevation, dtype=np.bool_)
+
+    diagnostics = drainage_diagnostics(
+        elevation,
+        land,
+        x_spacing_km=2.0,
+        y_spacing_km=3.0,
+    )
+
+    assert diagnostics.basin_candidate_count == 2
+    deeper, shallower = diagnostics.basin_candidates
+    assert deeper.maximum_fill_depth_m > shallower.maximum_fill_depth_m
+    assert deeper.normalized_x == 0.25
+    assert deeper.normalized_y == 0.5
+    assert deeper.area_km2 == 6.0
+    assert shallower.normalized_x == 0.75
+    assert shallower.normalized_y == 0.5
+    assert shallower.area_km2 == 6.0
 
 
 def test_priority_flood_gives_an_accidental_depression_a_downhill_route() -> None:

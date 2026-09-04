@@ -209,9 +209,14 @@ field is not yet exported or certified as a river network.
 Every result includes a canonical broad-scale drainage check. It reports direct
 coast connectivity, potential sink cells, and how much Priority-Flood filling a
 copied diagnostic surface would require. These findings are embedded in PNG
-metadata and shown in the workbench, but they do not change elevation. A
-potential sink may still be an intentional lake or endorheic basin until those
-features have explicit authored semantics.
+metadata and shown in the workbench, but they do not change elevation.
+Eight-connected significant fill cells are grouped into ranked basin candidates
+with a deepest-point marker, coarse area, floor and spill estimates, fill depth,
+and fill volume. The twenty deepest candidates appear as purple review markers
+over the interactive preview; they are not baked into the exported relief.
+A candidate may contain nested depressions and may still represent an
+intentional lake or endorheic basin until those features have explicit authored
+semantics.
 
 The generated elevation array is Float32 metres in memory. The PNG is a derived
 visual product with transparent ocean, elevation tint, hillshade, source name,
