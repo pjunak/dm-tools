@@ -296,9 +296,13 @@ landscape-process spikes. It is working research, not an accepted architecture.
 - [ ] **P1 — Generate refinement halos and crop final tiles.** Evaluate all
   neighbourhood-dependent solvers and erosion on buffered bounds to avoid
   seams, then verify overlap and downsample consistency numerically.
-- [ ] **P2 — Profile memory and runtime by stage.** Prefer chunked/vectorized
-  computation and measured optimizations; consider compiled or external engines
-  only for demonstrated bottlenecks.
+- [ ] **P0 — Profile memory and runtime by stage.** Establish repeatable draft,
+  regional and maximum-resolution benchmarks with simple and complex coasts,
+  authored constraints and multiple seeds. Separate generation, rendering,
+  diagnostics, I/O, startup and peak memory; distinguish native calls from
+  Python loops. The first public-example timing/profile is recorded in the
+  [language assessment](docs/research/2026-09-05-language-and-performance.md);
+  it is not yet a representative benchmark suite or memory measurement.
 
 ### Realism research register — 2026-09-04
 
@@ -312,6 +316,8 @@ refines those items with local measurements and source audits, and adds
 `R34`–`R39`. All IDs remain stable; source inspection is not runtime validation.
 The [geological-composition follow-up](docs/research/2026-09-05-geological-structure-and-terrain-composition.md)
 adds `R40`–`R44` and refines geological, graph and measurement requirements.
+The [language and performance assessment](docs/research/2026-09-05-language-and-performance.md)
+adds `R45`–`R47` and brings stage profiling forward before a language migration.
 Priorities remain conditional on the current strategy's prerequisites.
 
 #### Coordinate, scale, and drainage contracts
@@ -547,6 +553,27 @@ Priorities remain conditional on the current strategy's prerequisites.
   island boundaries. Protect authored passes even when persistence is small;
   distinguish added local detail from unwanted changes to large landmarks.
 
+#### Performance and language migration
+
+- [ ] **Research — R45: Reduce geometry-query work before changing language.**
+  Compare exact indexed boundary-segment queries, reusable distance fields and
+  avoiding unnecessary off-land samples against the current GEOS calls.
+  Key caches by geometry, coordinates and algorithm identity. Any approximate
+  distance field needs an explicit error budget, coastline/constraint checks,
+  and refinement tests; never simplify authored geometry silently.
+- [ ] **Research — R46: Compare compiled kernels on demonstrated bottlenecks.**
+  Start with fused noise evaluation and allocation reduction; test hydrology
+  loops when representative profiles justify them. Compare existing NumPy,
+  a bounded Numba experiment and an optional Rust proof using identical inputs.
+  Include cold/warm latency, memory, transfer costs and complete-generation
+  speedup. Verify Python/NumPy/Windows compatibility before installing anything.
+- [ ] **Research — R47: Define the evidence gate for a Rust migration.**
+  Stabilize units, grids, constraint priority, seeds, stage boundaries and
+  numerical tolerances first. Require representative fixtures, an end-to-end
+  measured benefit and a tested native-library/Windows packaging path. Explicitly
+  choose a temporary Python/Rust bridge or a complete runtime replacement;
+  a kernel port does not establish full project, CLI or desktop workflow parity.
+
 ## UI / UX improvements
 
 ### Editing and navigation
@@ -624,6 +651,9 @@ Priorities remain conditional on the current strategy's prerequisites.
 
 ## Related decisions and research
 
+- [Language and performance — 2026-09-05](docs/research/2026-09-05-language-and-performance.md)
+  records generation timings, native geometry/noise bottlenecks, a foundations-
+  first recommendation, language tradeoffs and proposed migration gates R45–R47.
 - [Geological structure and terrain composition — 2026-09-05](docs/research/2026-09-05-geological-structure-and-terrain-composition.md)
   connects geological controls, network semantics, measured descriptor limits
   and optional structural/topology tools to R40–R44 and existing experiments.

@@ -7,6 +7,9 @@ implemented with tests. Notes are listed newest first and package-support claims
 may become stale; use the
 [current development strategy](../strategy/README.md) for the active order.
 
+- [Language and performance — 2026-09-05](2026-09-05-language-and-performance.md)
+  measures the current generator, recommends a bounded foundation/performance
+  pass in Python, compares a future Rust migration and records R45–R47 gates.
 - [Geological structure and terrain composition — 2026-09-05](2026-09-05-geological-structure-and-terrain-composition.md)
   adds R40–R44: related regional recipes, material-coordinate and event-order
   requirements, distinct terrain/water graphs, directional measurements,
