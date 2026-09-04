@@ -299,6 +299,9 @@ diagnostic items. They are possible improvements, not a commitment to implement
 every process. `R01`–`R33` are stable references into the
 [landform-diversity research](docs/research/2026-09-04-terrain-realism-and-landform-diversity.md),
 which records primary sources, tool boundaries, and proposed experiments.
+The [prototype-contract follow-up](docs/research/2026-09-04-terrain-prototype-contracts.md)
+refines those items with local measurements and source audits, and adds
+`R34`–`R39`. All IDs remain stable; source inspection is not runtime validation.
 Priorities remain conditional on the current strategy's prerequisites.
 
 #### Coordinate, scale, and drainage contracts
@@ -315,6 +318,8 @@ Priorities remain conditional on the current strategy's prerequisites.
   raster registration, integration/resampling, and anti-aliasing policy. Test
   coordinate round trips and parent restriction separately from existing
   bit-identical shared-point tests; do not silently weaken those tests.
+  For endpoint-node grids test `2*(N-1)+1` refinement, not doubled node counts;
+  shared-node equality does not imply equal coarse-cell averages.
 - [ ] **P0 — R04: Route on authored macro geography.** Compare the current
   unconstrained automatic-routing surface with one including accepted ridges,
   divides, brush guidance and water constraints. Use an explicit stage order
@@ -369,15 +374,22 @@ Priorities remain conditional on the current strategy's prerequisites.
   the MIT 2024 reference implementation with current residual detail on one
   refined mountain/valley window. Preserve parent restrictions, inherited
   upstream inflow and boundary gradients; include deposition and seam checks.
+  Verify actual OpenGL/GLSL requirements, numeric export normalization,
+  finite shader outputs and fixed-step operation before judging its images.
 - [ ] **Research — R16: Prototype bedrock plus mobile sediment.** Start with a
   Landlab SPACE comparison on a channel opening onto a plain. Track erosion,
   storage, deposition and export; verify nonnegative cover and bounded balance
   error before adding floodplain or alluvial-fan presets.
+  The audited large-scale SPACE component needs single-receiver routing;
+  start with a D8 reference, explicit discharge units, porosity/control-volume
+  accounting and explicit flooded-node behavior rather than passing MFD data.
 - [ ] **Research — R17: Evaluate 2026 stochastic geomorphological transport.**
   Compare resolved regional meanders/fans with a stream-power baseline.
   Distinguish MIT `geotransport` reference code from LGPL/CUDA `soillib`;
   verify Windows/Python runtime, seed ensembles, GPU repeatability, transport
   conservation and resolution behavior before proposing adoption.
+  Measure floating-point atomic-reduction variance independently of seed
+  repeatability; package metadata alone does not prove runtime compatibility.
 - [ ] **Research — R18: Separate catchment trees from channel regimes.** Define
   confined bedrock, alluvial, meandering, braided and delta/distributary
   networks. Relate width to discharge/material/confinement, not Strahler order
@@ -451,6 +463,38 @@ Priorities remain conditional on the current strategy's prerequisites.
   Keep contributing area distinct from water flux. Test wet/dry catchments of
   equal size, seasonal assumptions and upstream boundary flux; full climate
   generation remains deferred under the existing strategy.
+
+#### Prototype findings and additional improvement candidates
+
+- [ ] **Research — R34: Stabilize amplitudes when adding detail bands.** Compare
+  fixed versioned band budgets with the current normalized sum. A local default
+  2-to-6-band probe reduces existing band coefficients by 28.26%; this is a
+  setting-change effect, not broken shared-coordinate determinism. Measure
+  coarse power and parent restriction after nonlinear mapping and processes;
+  preserve old presets and algorithm identifiers.
+- [ ] **Research — R35: Constrain regional transition gradients.** Match
+  province reference levels and budget the extra slope from blending surfaces
+  at different heights. Measure slope/curvature across flat, plateau and
+  mountain boundaries; smooth blend weights alone do not prevent escarpments.
+- [ ] **Research — R36: Stabilize oriented-detail reference fields.** Compare
+  ridge-axis and directed-flow orientation, define low-slope confidence and
+  fallback, and test saddles, crest reversals and phase seams. Keep the
+  reference field independent of preview resolution and tile boundaries.
+- [ ] **Research — R37: Gate processes by landform suitability.** Combine
+  authored landform, slope/relief, substrate and confinement to select detail
+  recipes. The controlled-pattern paper is a mountain-detail candidate with
+  explicit plateau/cliff/floodplain limitations. Test masks and transitions;
+  expose uncertainty and keep alternate valley/plateau recipes available.
+- [ ] **Research — R38: Prove external numeric exchange before comparisons.**
+  Round-trip an asymmetric signed metre ramp with nodata, unequal axis spacing
+  and explicit registration. Detect normalization, quantization, transposition
+  and half-cell shifts. Record engine commit, settings, step counts, scale,
+  offset and output identity; visual exports alone cannot validate elevation.
+- [ ] **Research — R39: Compare focused meander and delta references.** Evaluate
+  Apache-2.0 meanderpy against a bounded authored corridor, and MIT pyDeltaRCM
+  against a distributary recipe. Check cutoff semantics, valley confinement,
+  inlet/outlet continuity, sediment flux and domain boundaries. Audit material
+  assumptions and runtime support; keep coast/river changes reviewable.
 
 ## UI / UX improvements
 
@@ -529,6 +573,9 @@ Priorities remain conditional on the current strategy's prerequisites.
 
 ## Related decisions and research
 
+- [Terrain prototype contracts — 2026-09-04](docs/research/2026-09-04-terrain-prototype-contracts.md)
+  records measured noise/grid effects, external source audits, R34–R39 and
+  three bounded mountain-detail, sediment-valley and refinement experiments.
 - [Terrain realism and landform diversity — 2026-09-04](docs/research/2026-09-04-terrain-realism-and-landform-diversity.md)
   connects R01–R33 to code limitations, scientific papers, tool/runtime
   boundaries, real-data comparisons and ordered prototype gates.

@@ -161,6 +161,16 @@ constraint restoration and parent restriction. The 2026 stochastic-transport
 paper merits an isolated comparison; retain the existing reproducibility and
 constraint gates rather than rejecting particle methods as a whole.
 
+The [prototype-contract follow-up](../research/2026-09-04-terrain-prototype-contracts.md)
+adds R34–R39 and narrows the first detail experiment to suitable mountain
+regions. Measure spectral-amplitude changes and regional transition gradients
+before judging oriented detail; use separate recipes for plateau tops and
+alluvial floors. Compare SPACE with a single-receiver reference and a sediment
+ledger. Establish numeric exchange, fixed iteration counts and grid registration
+before evaluating external multiscale engines. Shared-node equality and parent
+cell-average consistency need separate tests. Meanderpy and pyDeltaRCM remain
+focused channel/delta comparisons after their prerequisites, not dependencies.
+
 Create or amend an ADR when a prototype selects a new solver, file format,
 external engine, climate contract, or classification contract. Revisit this
 order when a prerequisite is measured complete, a dependency lacks supported

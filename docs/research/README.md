@@ -7,6 +7,10 @@ implemented with tests. Notes are listed newest first and package-support claims
 may become stale; use the
 [current development strategy](../strategy/README.md) for the active order.
 
+- [Terrain prototype contracts — 2026-09-04](2026-09-04-terrain-prototype-contracts.md)
+  narrows the first experiments with measured noise/grid effects, source audits
+  of SPACE and GPU references, landform suitability, numeric exchange gates,
+  and focused meander/delta alternatives. Adds R34–R39 to the roadmap.
 - [Terrain realism and landform diversity — 2026-09-04](2026-09-04-terrain-realism-and-landform-diversity.md)
   extends the roadmap with R01–R33: regional composition, sediment, specialized
   landforms, scale contracts, recent papers, external tools, and comparison
