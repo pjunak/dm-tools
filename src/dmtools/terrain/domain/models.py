@@ -117,7 +117,7 @@ class ElevationPoint:
 
 @dataclass(frozen=True, slots=True)
 class TerrainStructure:
-    """An authored ridge or valley centreline in normalized coastline coordinates."""
+    """An authored ridge or upstream-to-downstream valley centreline."""
 
     kind: StructureKind
     points: tuple[Point2D, ...]

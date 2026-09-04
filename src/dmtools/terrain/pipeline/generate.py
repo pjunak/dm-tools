@@ -100,6 +100,8 @@ class _MetricConstraint:
     attached_to_structure: bool = False
     taper_start: bool = True
     taper_end: bool = True
+    downstream_positions_km: tuple[float, ...] = ()
+    downstream_floor_m: tuple[float, ...] = ()
 
 
 def _smooth_structure_points(
@@ -339,16 +341,9 @@ def _line_positions_km(
     return cast(NDArray[np.float64], np.asarray(raw_positions, dtype=np.float64))
 
 
-def _structure_profile(
+def _coalesced_profile_anchors(
     constraint: _MetricConstraint,
-    line_positions_km: NDArray[np.float64],
-) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
-    """Return a shape-preserving target and its authored longitudinal control."""
-
-    target = np.full_like(line_positions_km, constraint.elevation_m)
-    if not constraint.profile_anchors:
-        return target, np.zeros_like(line_positions_km)
-
+) -> list[tuple[float, float, float]]:
     coalesced: list[tuple[float, float, float]] = []
     for anchor in constraint.profile_anchors:
         if coalesced and abs(anchor[0] - coalesced[-1][0]) <= 1e-6:
@@ -360,6 +355,20 @@ def _structure_profile(
             coalesced[-1] = (previous[0], previous[1], max(previous[2], anchor[2]))
         else:
             coalesced.append(anchor)
+    return coalesced
+
+
+def _structure_profile(
+    constraint: _MetricConstraint,
+    line_positions_km: NDArray[np.float64],
+) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
+    """Return a shape-preserving target and its authored longitudinal control."""
+
+    target = np.full_like(line_positions_km, constraint.elevation_m)
+    if not constraint.profile_anchors:
+        return target, np.zeros_like(line_positions_km)
+
+    coalesced = _coalesced_profile_anchors(constraint)
 
     line = cast(LineString, constraint.geometry)
     line_length = float(line.length)
@@ -450,6 +459,57 @@ def _structure_response(
     return (
         _coast_conditioned_weight(weight, distance, distance_to_coast_km),
         line_positions,
+    )
+
+
+def _base_elevation_fields(
+    x_km: NDArray[np.float64],
+    y_km: NDArray[np.float64],
+    distance_to_coast_km: NDArray[np.float64],
+    settings: TerrainSettings,
+) -> tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]]:
+    """Return full detail, stable macro elevation, and the shared detail driver."""
+
+    relief_noise = fractal_value_noise(
+        x_km,
+        y_km,
+        seed=settings.seed,
+        largest_feature_km=settings.largest_feature_km,
+        detail_levels=settings.detail_levels,
+        roughness=settings.roughness,
+    )
+    coastal_envelope = 1.0 - np.exp(-distance_to_coast_km / settings.coastal_rise_km)
+    shaped_noise = np.power(np.clip(0.5 + 0.5 * relief_noise, 0.0, 1.0), 1.35)
+    relief = (1.0 - settings.variability) * 0.72 + settings.variability * shaped_noise
+    unconditioned_elevation = settings.maximum_elevation_m * coastal_envelope * relief
+
+    macro_noise = fractal_value_noise(
+        x_km,
+        y_km,
+        seed=settings.seed,
+        largest_feature_km=settings.largest_feature_km,
+        detail_levels=min(2, settings.detail_levels),
+        roughness=settings.roughness,
+    )
+    shaped_macro = np.power(np.clip(0.5 + 0.5 * macro_noise, 0.0, 1.0), 1.35)
+    macro_relief = (
+        (1.0 - settings.variability) * 0.72
+        + settings.variability * shaped_macro
+    )
+    macro_elevation = settings.maximum_elevation_m * coastal_envelope * macro_relief
+    return unconditioned_elevation, macro_elevation, relief_noise
+
+
+def _downstream_valley_floor(
+    constraint: _MetricConstraint,
+    line_positions_km: NDArray[np.float64],
+) -> NDArray[np.float64]:
+    if not constraint.downstream_positions_km or not constraint.downstream_floor_m:
+        raise RuntimeError("Valley constraint has no prepared downstream floor profile.")
+    return np.interp(
+        line_positions_km,
+        np.asarray(constraint.downstream_positions_km, dtype=np.float64),
+        np.asarray(constraint.downstream_floor_m, dtype=np.float64),
     )
 
 
@@ -583,8 +643,6 @@ def _apply_constraints(
     elevation += relative_ridge_raise
 
     valley_cut = np.zeros_like(elevation)
-    valley_profile_weight = np.zeros_like(elevation)
-    valley_profile_targets = np.zeros_like(elevation)
     for constraint in constraints:
         if constraint.kind != "valley" or constraint.elevation_mode != "absolute":
             continue
@@ -596,33 +654,12 @@ def _apply_constraints(
             detail_driver,
         )
         detail_suppression = np.maximum(detail_suppression, weight)
-        target, authored_control = _structure_profile(constraint, line_positions)
-        generated_incision = np.minimum(0.15 * target, 300.0)
-        target -= (
-            generated_incision
-            * np.clip(0.5 + 0.5 * detail_driver, 0.0, 1.0)
-            * (1.0 - authored_control)
-        )
+        target = _downstream_valley_floor(constraint, line_positions)
         valley_cut = np.maximum(
             valley_cut,
-            weight * (1.0 - authored_control) * np.maximum(elevation - target, 0.0),
+            weight * np.maximum(elevation - target, 0.0),
         )
-        profile_weight = weight * authored_control
-        valley_profile_weight += profile_weight
-        valley_profile_targets += profile_weight * target
     elevation -= valley_cut
-    valley_profile_affected = valley_profile_weight > 0.0
-    if np.any(valley_profile_affected):
-        valley_profile_target = np.divide(
-            valley_profile_targets,
-            valley_profile_weight,
-            out=np.zeros_like(valley_profile_targets),
-            where=valley_profile_affected,
-        )
-        valley_profile_blend = np.clip(valley_profile_weight, 0.0, 1.0)
-        elevation = elevation * (1.0 - valley_profile_blend) + (
-            valley_profile_target * valley_profile_blend
-        )
 
     relative_valley_cut = np.zeros_like(elevation)
     for constraint in constraints:
@@ -635,16 +672,11 @@ def _apply_constraints(
             largest_feature_km,
             detail_driver,
         )
-        profile_target, authored_control = _structure_profile(
-            constraint, line_positions
-        )
-        profiled_depth = (
-            constraint.elevation_m * (1.0 - authored_control)
-            + profile_target * authored_control
-        )
+        detail_suppression = np.maximum(detail_suppression, weight)
+        floor_target = _downstream_valley_floor(constraint, line_positions)
         relative_valley_cut = np.maximum(
             relative_valley_cut,
-            weight * profiled_depth,
+            weight * np.maximum(elevation - floor_target, 0.0),
         )
     elevation -= relative_valley_cut
 
@@ -704,6 +736,158 @@ def _apply_constraints(
     return elevation, np.clip(detail_suppression, 0.0, 1.0)
 
 
+def _absolute_valley_profile(
+    constraint: _MetricConstraint,
+    positions_km: NDArray[np.float64],
+) -> NDArray[np.float64]:
+    """Build an upstream-to-outlet floor through exact absolute anchors."""
+
+    anchors = _coalesced_profile_anchors(constraint)
+    if not anchors:
+        return np.full_like(positions_km, constraint.elevation_m)
+
+    line = cast(LineString, constraint.geometry)
+    augmented = list(anchors)
+    first_position, first_elevation, first_radius = augmented[0]
+    if first_position > 1e-6:
+        augmented.insert(0, (0.0, first_elevation, first_radius))
+    last_position, _last_elevation, last_radius = augmented[-1]
+    if last_position < line.length - 1e-6:
+        augmented.append((float(line.length), constraint.elevation_m, last_radius))
+
+    elevations = np.asarray([anchor[1] for anchor in augmented], dtype=np.float64)
+    if np.any(np.diff(elevations) > 1e-6):
+        raise ValueError(
+            "Absolute valley floor anchors must not rise downstream; "
+            "draw the valley from its head toward its outlet."
+        )
+    profiled_constraint = replace(constraint, profile_anchors=tuple(augmented))
+    target, _authored_control = _structure_profile(
+        profiled_constraint,
+        positions_km,
+    )
+    return target
+
+
+def _relative_valley_depth_profile(
+    constraint: _MetricConstraint,
+    positions_km: NDArray[np.float64],
+) -> NDArray[np.float64]:
+    """Extend the first authored incision upstream before shaping the outlet reach."""
+
+    anchors = _coalesced_profile_anchors(constraint)
+    if not anchors:
+        return np.full_like(positions_km, constraint.elevation_m)
+
+    line = cast(LineString, constraint.geometry)
+    augmented = list(anchors)
+    first_position, first_depth, first_radius = augmented[0]
+    if first_position > 1e-6:
+        augmented.insert(0, (0.0, first_depth, first_radius))
+    last_position, _last_depth, last_radius = augmented[-1]
+    if last_position < line.length - 1e-6:
+        augmented.append((float(line.length), constraint.elevation_m, last_radius))
+    profiled_constraint = replace(constraint, profile_anchors=tuple(augmented))
+    depth, _authored_control = _structure_profile(
+        profiled_constraint,
+        positions_km,
+    )
+    return depth
+
+
+def _prepare_downstream_valley_profiles(
+    constraints: tuple[_MetricConstraint, ...],
+    boundary: Any,
+    settings: TerrainSettings,
+) -> tuple[_MetricConstraint, ...]:
+    """Prepare resolution-independent non-rising floors for authored valleys."""
+
+    if not any(constraint.kind == "valley" for constraint in constraints):
+        return constraints
+    reference_constraints = tuple(
+        constraint
+        for constraint in constraints
+        if constraint.kind in ("brush", "ridge")
+    )
+    prepared: list[_MetricConstraint] = []
+    for constraint in constraints:
+        if constraint.kind != "valley":
+            prepared.append(constraint)
+            continue
+
+        line = cast(LineString, constraint.geometry)
+        sample_spacing_km = min(
+            2.0,
+            max(0.25, 0.25 * constraint.influence_radius_km),
+        )
+        sample_count = max(2, int(np.ceil(line.length / sample_spacing_km)) + 1)
+        positions_km = np.linspace(0.0, line.length, sample_count, dtype=np.float64)
+        if constraint.profile_anchors:
+            positions_km = np.unique(
+                np.concatenate(
+                    (
+                        positions_km,
+                        np.asarray(
+                            [anchor[0] for anchor in constraint.profile_anchors],
+                            dtype=np.float64,
+                        ),
+                    )
+                )
+            )
+        if constraint.elevation_mode == "absolute":
+            preferred_floor = _absolute_valley_profile(constraint, positions_km)
+        else:
+            coordinates = np.asarray(
+                [line.interpolate(float(position)).coords[0] for position in positions_km],
+                dtype=np.float64,
+            )
+            x_km = coordinates[:, 0]
+            y_km = coordinates[:, 1]
+            sample_points: Any = shapely.points(x_km, y_km)
+            raw_distance_to_coast = cast(
+                Any,
+                shapely.distance(sample_points, boundary),
+            )
+            distance_to_coast_km = cast(
+                NDArray[np.float64],
+                np.asarray(raw_distance_to_coast, dtype=np.float64),
+            )
+            full_elevation, macro_elevation, detail_driver = _base_elevation_fields(
+                x_km,
+                y_km,
+                distance_to_coast_km,
+                settings,
+            )
+            conditioned_macro, reference_influence = _apply_constraints(
+                macro_elevation,
+                sample_points,
+                distance_to_coast_km,
+                reference_constraints,
+                settings.largest_feature_km,
+                settings.maximum_elevation_m,
+                detail_driver,
+            )
+            reference_elevation = conditioned_macro + (
+                (full_elevation - macro_elevation) * (1.0 - reference_influence)
+            )
+            depth = _relative_valley_depth_profile(constraint, positions_km)
+            preferred_floor = reference_elevation - depth
+        preferred_floor = np.clip(
+            preferred_floor,
+            0.0,
+            settings.maximum_elevation_m,
+        )
+        downstream_floor = np.minimum.accumulate(preferred_floor)
+        prepared.append(
+            replace(
+                constraint,
+                downstream_positions_km=tuple(float(value) for value in positions_km),
+                downstream_floor_m=tuple(float(value) for value in downstream_floor),
+            )
+        )
+    return tuple(prepared)
+
+
 def generate_terrain(
     coastline: Coastline,
     settings: TerrainSettings,
@@ -731,6 +915,13 @@ def generate_terrain(
     elevation = np.full((height, width), np.nan, dtype=np.float32)
     mask = np.zeros((height, width), dtype=np.bool_)
     boundary = polygon.boundary
+    if any(constraint.kind == "valley" for constraint in metric_constraints):
+        _report(progress, 0.05, "Preparing downstream valley profiles")
+        metric_constraints = _prepare_downstream_valley_profiles(
+            metric_constraints,
+            boundary,
+            settings,
+        )
 
     chunk_rows = 128
     for start in range(0, height, chunk_rows):
@@ -742,36 +933,13 @@ def generate_terrain(
         distance_to_coast = cast(
             NDArray[np.float64], np.asarray(raw_distance_to_coast, dtype=np.float64)
         )
-        relief_noise = fractal_value_noise(
+        unconditioned_elevation, macro_elevation, relief_noise = _base_elevation_fields(
             x_grid,
             y_grid,
-            seed=settings.seed,
-            largest_feature_km=settings.largest_feature_km,
-            detail_levels=settings.detail_levels,
-            roughness=settings.roughness,
+            distance_to_coast,
+            settings,
         )
-
-        coastal_envelope = 1.0 - np.exp(-distance_to_coast / settings.coastal_rise_km)
-        shaped_noise = np.power(np.clip(0.5 + 0.5 * relief_noise, 0.0, 1.0), 1.35)
-        relief = (1.0 - settings.variability) * 0.72 + settings.variability * shaped_noise
-        unconditioned_elevation = settings.maximum_elevation_m * coastal_envelope * relief
         if metric_constraints:
-            macro_noise = fractal_value_noise(
-                x_grid,
-                y_grid,
-                seed=settings.seed,
-                largest_feature_km=settings.largest_feature_km,
-                detail_levels=min(2, settings.detail_levels),
-                roughness=settings.roughness,
-            )
-            shaped_macro = np.power(np.clip(0.5 + 0.5 * macro_noise, 0.0, 1.0), 1.35)
-            macro_relief = (
-                (1.0 - settings.variability) * 0.72
-                + settings.variability * shaped_macro
-            )
-            macro_elevation = (
-                settings.maximum_elevation_m * coastal_envelope * macro_relief
-            )
             conditioned_elevation, constraint_influence = _apply_constraints(
                 macro_elevation,
                 points,

@@ -150,6 +150,18 @@ toward its outlet, except across an explicitly authored lake or basin. Its
 floor then becomes a relative inequality against the reference terrain. Flow
 analysis verifies the result; it must not silently move the authored route.
 
+### Implemented downstream profile
+
+The first implementation samples the complete deterministic surface entering
+the valley stage at resolution-independent metric positions no more than 2 km
+apart, inserting every authored profile anchor as an exact knot. Valley points
+are ordered from head to outlet. Relative depth produces a preferred floor;
+applying a cumulative downstream minimum makes the smallest downstream-only
+cuts needed to remove rises. Absolute anchors must already be non-rising and a
+conflict is reported instead of moving a hard height. This is longitudinal
+conditioning, not yet full drainage validation: lakes, endorheic basins, flow
+routing, and outlet-to-sea checks remain separate work.
+
 ## Process-informed erosion and slope relaxation
 
 The most useful scientific prototype is stream-power incision coupled with a

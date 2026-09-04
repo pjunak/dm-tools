@@ -168,10 +168,12 @@ landscape-process spikes. It is working research, not an accepted architecture.
 
 ### Valleys, rivers, and hydrology
 
-- [ ] **P0 — Give valleys a downstream longitudinal profile.** Enforce
+- [x] **P0 — Give valleys a downstream longitudinal profile.** Enforce
   non-increasing flow toward an outlet except where an authored lake or basin
   permits otherwise; let high-terrain valleys remain high while retaining
-  relative incision.
+  relative incision. Valleys are now ordered head-to-outlet and use a stable
+  pre-valley metric reference profile plus downstream-only floor correction. Authored
+  lake and basin exceptions remain part of the explicit-water work.
 - [ ] **P1 — Add variable valley cross-sections.** Support narrow V-shaped
   valleys, glacial U-shaped valleys, broad floodplains, terraces, and smooth
   width/depth changes along a line.

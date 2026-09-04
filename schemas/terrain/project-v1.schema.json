@@ -186,10 +186,15 @@
         "points": {
           "type": "array",
           "minItems": 2,
+          "description": "Ordered from the upstream valley head toward the downstream outlet.",
           "items": {"$ref": "#/$defs/normalizedPoint"}
         },
         "elevation_mode": {"$ref": "#/$defs/elevationMode"},
-        "elevation_m": {"type": "number", "minimum": 0},
+        "elevation_m": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Absolute mode uses the downstream outlet floor; relative mode uses preferred incision depth."
+        },
         "influence_radius_km": {"type": "number", "exclusiveMinimum": 0}
       }
     },

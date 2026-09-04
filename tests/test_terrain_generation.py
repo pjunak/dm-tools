@@ -219,7 +219,11 @@ def test_structure_response_has_a_broad_falloff_beyond_its_core_width() -> None:
 def test_connected_structure_segments_do_not_pinch_at_their_junction(
     kind: Literal["ridge", "valley"],
 ) -> None:
-    settings = _settings(maximum_elevation_m=6_000.0, variability=0.0)
+    settings = _settings(
+        maximum_elevation_m=6_000.0,
+        variability=0.0,
+        coastal_rise_km=1.0,
+    )
     whole = TerrainStructure(
         kind,
         ((0.2, 0.5), (0.8, 0.5)),
@@ -506,7 +510,11 @@ def test_relative_points_shape_a_relative_ridge_without_profile_overshoot() -> N
 
 
 def test_relative_valley_keeps_the_elevation_difference_of_its_surroundings() -> None:
-    settings = _settings(maximum_elevation_m=6_000.0)
+    settings = _settings(
+        maximum_elevation_m=6_000.0,
+        variability=0.0,
+        coastal_rise_km=1.0,
+    )
     baseline = generate_terrain(_square(), settings)
     valley = TerrainStructure(
         "valley",
@@ -527,7 +535,11 @@ def test_relative_valley_keeps_the_elevation_difference_of_its_surroundings() ->
 
 
 def test_relative_points_shape_relative_valley_depth() -> None:
-    settings = _settings(maximum_elevation_m=6_000.0, variability=0.0)
+    settings = _settings(
+        maximum_elevation_m=6_000.0,
+        variability=0.0,
+        coastal_rise_km=1.0,
+    )
     baseline = generate_terrain(_square(), settings)
     valley = TerrainStructure(
         "valley",
@@ -550,6 +562,109 @@ def test_relative_points_shape_relative_valley_depth() -> None:
     assert centreline_depth[48] == pytest.approx(900.0, abs=0.001)
     assert np.max(centreline_depth[16:49]) <= 900.001
     assert np.min(centreline_depth[16:49]) >= 299.999
+
+
+def test_relative_valley_floor_never_rises_toward_its_authored_outlet() -> None:
+    settings = _settings(maximum_elevation_m=6_000.0, variability=0.0)
+    baseline = generate_terrain(_square(), settings)
+    valley = TerrainStructure(
+        "valley",
+        ((0.2, 0.5), (0.5, 0.5)),
+        500.0,
+        60.0,
+        "relative",
+    )
+
+    terrain = generate_terrain(_square(), settings, constraints=(valley,))
+    centreline = terrain.elevation_m[32, 13:33]
+    baseline_centreline = baseline.elevation_m[32, 13:33]
+
+    assert np.all(np.diff(centreline) <= 0.001)
+    assert np.all(baseline_centreline - centreline >= 499.999)
+    assert centreline[0] > 2_500.0
+
+
+def test_relative_valley_keeps_requested_depth_with_residual_detail() -> None:
+    settings = _settings(
+        resolution_px=129,
+        maximum_elevation_m=6_000.0,
+        variability=0.8,
+    )
+    valley = TerrainStructure(
+        "valley",
+        ((0.25, 0.5), (0.5, 0.5)),
+        500.0,
+        45.0,
+        "relative",
+    )
+
+    baseline = generate_terrain(_square(), settings)
+    terrain = generate_terrain(_square(), settings, constraints=(valley,))
+    baseline_centreline = baseline.elevation_m[64, 32:65]
+    centreline = terrain.elevation_m[64, 32:65]
+
+    assert np.min(baseline_centreline - centreline) >= 499.0
+    assert np.all(np.diff(centreline) <= 0.001)
+
+
+def test_absolute_valley_connects_non_rising_floor_anchors_to_its_outlet() -> None:
+    settings = _settings(
+        maximum_elevation_m=6_000.0,
+        variability=0.0,
+        coastal_rise_km=1.0,
+    )
+    valley = TerrainStructure(
+        "valley",
+        ((0.125, 0.5), (0.875, 0.5)),
+        500.0,
+        55.0,
+        "absolute",
+    )
+    head = ElevationPoint((0.25, 0.5), 2_500.0, 35.0)
+    middle = ElevationPoint((0.5, 0.5), 1_700.0, 35.0)
+    lower = ElevationPoint((0.75, 0.5), 900.0, 35.0)
+    constraints = (valley, head, middle, lower)
+
+    terrain = generate_terrain(_square(), settings, constraints=constraints)
+    centreline = terrain.elevation_m[32, 8:57]
+
+    assert terrain.elevation_m[32, 16] == np.float32(2_500.0)
+    assert terrain.elevation_m[32, 32] == np.float32(1_700.0)
+    assert terrain.elevation_m[32, 48] == np.float32(900.0)
+    assert terrain.elevation_m[32, 56] <= np.float32(500.01)
+    assert np.all(np.diff(centreline) <= 0.001)
+
+    reordered = generate_terrain(
+        _square(),
+        settings,
+        constraints=(lower, middle, valley, head),
+    )
+    finer = generate_terrain(
+        _square(),
+        replace(settings, resolution_px=129),
+        constraints=constraints,
+    )
+    np.testing.assert_array_equal(terrain.elevation_m, reordered.elevation_m)
+    np.testing.assert_array_equal(terrain.elevation_m, finer.elevation_m[::2, ::2])
+
+
+def test_absolute_valley_rejects_a_floor_anchor_that_rises_downstream() -> None:
+    valley = TerrainStructure(
+        "valley",
+        ((0.2, 0.5), (0.8, 0.5)),
+        500.0,
+        60.0,
+        "absolute",
+    )
+    upstream = ElevationPoint((0.3, 0.5), 1_000.0, 30.0)
+    downstream = ElevationPoint((0.6, 0.5), 1_500.0, 30.0)
+
+    with pytest.raises(ValueError, match="must not rise downstream"):
+        generate_terrain(
+            _square(),
+            _settings(maximum_elevation_m=3_000.0),
+            constraints=(valley, upstream, downstream),
+        )
 
 
 @pytest.mark.parametrize(

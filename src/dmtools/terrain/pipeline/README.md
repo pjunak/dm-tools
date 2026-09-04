@@ -29,6 +29,17 @@ modifies ridge relief as `base relief + displacement` or valley incision as
 profile and is not applied again as a circular point field. Ambiguous and
 unattached relative points retain their free-standing displacement behavior.
 
+Valley vertex order is semantic: the first vertex is upstream and the final
+vertex is the outlet. Before chunked raster generation, the pipeline samples
+the complete deterministic surface entering the valley stage at metric
+positions spaced by at most 2 km, with every authored anchor inserted as an
+exact knot. Relative incision profiles are subtracted from this reference. A
+cumulative downstream minimum then removes only floor rises; it never raises
+the preferred floor. Absolute valleys interpolate non-rising world-height
+anchors toward the line's outlet-floor value and reject an uphill hard-anchor
+sequence. The prepared profile is independent of output raster resolution and
+is reused by every processing chunk.
+
 Free ridge and valley endpoints narrow gradually so authored structures do not
 end as blunt walls. When an endpoint meets another structure of the same kind
 and elevation mode, the junction keeps its full cross-section instead. A stable

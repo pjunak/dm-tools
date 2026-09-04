@@ -52,7 +52,8 @@ After importing a coastline, select a drawing tool above the map:
 - **Terrain brush** paints broad, soft elevation guidance.
 - **Height point** places one local height or height offset.
 - **Ridge line** establishes a crest or adds ridge relief.
-- **Valley line** establishes a floor or adds relative incision.
+- **Valley line** runs from an upstream head toward its outlet and establishes
+  an outlet floor or adds relative incision.
 
 Each tool keeps its own mode, elevation value, and radius or width while tools
 are switched. Brush strength is also retained independently. The initial modes
@@ -62,7 +63,7 @@ Every feature can use one of two elevation modes:
 
 | Mode | Meaning |
 |---|---|
-| **Absolute** | Specifies a world elevation in metres above sea level. A point is exact, a ridge is a minimum crest, a valley is a maximum floor, and a brush blends toward its target. |
+| **Absolute** | Specifies a world elevation in metres above sea level. A point is exact, a ridge is a minimum crest, a valley value is its downstream outlet floor, and a brush blends toward its target. |
 | **Relative** | Specifies displacement from the terrain entering that pipeline stage. Positive point or brush values raise terrain, negative values lower it, ridge values add relief, and valley values add incision depth. |
 
 Relative mode is deliberately local relief rather than true topographic
@@ -87,6 +88,8 @@ cut-off; a lower-amplitude geological shoulder continues beyond it. Ridge and
 valley lines collect vertices until **Finish line** is pressed or the map is
 right-clicked. **Undo** first removes unfinished vertices, then committed
 features. Importing another coastline asks before clearing authored features.
+Valleys must be drawn from their upstream head toward their downstream outlet;
+the arrow at the final vertex makes this direction visible.
 
 Polyline corners are gently rounded during generation, and their effective
 width varies with the deterministic terrain field instead of producing a
@@ -108,6 +111,17 @@ parent feature's kind. Two peaks surrounding a lower point can therefore create
 a geometric saddle while the terrain still falls away across the ridge.
 Conflicting targets at the same projected line position are rejected rather
 than silently averaged.
+
+Before raster generation, every valley samples the stable terrain surface
+entering the valley stage at resolution-independent metric positions. Relative
+depth is subtracted from that reference, then a downstream-only correction
+removes any uphill floor segment without ever raising terrain. This keeps a
+valley through a high plateau high while still making its route drain toward
+the authored outlet. Absolute floor anchors must already be non-rising in the
+authored direction and are rejected if they conflict. Relative depth remains a
+preferred minimum incision: the downstream correction may deepen it where that
+is necessary to avoid an uphill floor. Authored lakes and endorheic exceptions
+are not yet supported.
 
 Constraints use normalized coastline-bounds coordinates while being authored
 and are converted to explicit metric coordinates during generation. They are

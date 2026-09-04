@@ -726,7 +726,7 @@ class TerrainApp:
             ("height", "relative"): "Height offset",
             ("ridge", "absolute"): "Minimum crest",
             ("ridge", "relative"): "Ridge relief",
-            ("valley", "absolute"): "Maximum floor",
+            ("valley", "absolute"): "Outlet floor",
             ("valley", "relative"): "Valley depth",
         }
         self.value_label.configure(text=value_labels[(selected, elevation_mode)])
@@ -771,9 +771,10 @@ class TerrainApp:
                 if elevation_mode == "absolute"
                 else "adds relief or incision relative to the terrain beneath it"
             )
+            direction = " Draw from head toward outlet." if selected == "valley" else ""
             hint = (
                 f"Click along the {feature}; Finish line or right-click at 2+ points. "
-                f"It {behavior}."
+                f"It {behavior}.{direction}"
             )
         count = len(self._constraints)
         if count:
@@ -1714,15 +1715,28 @@ class TerrainApp:
             canvas_point = self._normalized_to_canvas(point)
             canvas_points.append(canvas_point)
             coordinates.extend(canvas_point)
-        self.preview.create_line(
-            coordinates,
-            fill=colour,
-            width=3,
-            joinstyle="round",
-            capstyle="round",
-            smooth=True,
-            splinesteps=16,
-        )
+        if constraint.kind == "valley":
+            self.preview.create_line(
+                coordinates,
+                fill=colour,
+                width=3,
+                joinstyle="round",
+                capstyle="round",
+                smooth=True,
+                splinesteps=16,
+                arrow=tk.LAST,
+                arrowshape=(9, 11, 4),
+            )
+        else:
+            self.preview.create_line(
+                coordinates,
+                fill=colour,
+                width=3,
+                joinstyle="round",
+                capstyle="round",
+                smooth=True,
+                splinesteps=16,
+            )
         for x, y in canvas_points:
             self.preview.create_oval(x - 3, y - 3, x + 3, y + 3, fill=colour, outline="")
         label_x, label_y = canvas_points[len(canvas_points) // 2]
@@ -1735,7 +1749,11 @@ class TerrainApp:
                     f"{'relief' if constraint.kind == 'ridge' else 'depth'} "
                     f"{constraint.elevation_m:,.0f} m"
                     if constraint.elevation_mode == "relative"
-                    else f"{constraint.elevation_m:,.0f} m absolute"
+                    else (
+                        f"outlet floor {constraint.elevation_m:,.0f} m"
+                        if constraint.kind == "valley"
+                        else f"{constraint.elevation_m:,.0f} m absolute"
+                    )
                 )
             ),
             anchor="sw",
@@ -1758,15 +1776,28 @@ class TerrainApp:
             canvas_points.append(canvas_point)
             coordinates.extend(canvas_point)
         if len(canvas_points) >= 2:
-            self.preview.create_line(
-                coordinates,
-                fill=colour,
-                width=2,
-                dash=(6, 4),
-                joinstyle="round",
-                smooth=True,
-                splinesteps=16,
-            )
+            if tool == "valley":
+                self.preview.create_line(
+                    coordinates,
+                    fill=colour,
+                    width=2,
+                    dash=(6, 4),
+                    joinstyle="round",
+                    smooth=True,
+                    splinesteps=16,
+                    arrow=tk.LAST,
+                    arrowshape=(9, 11, 4),
+                )
+            else:
+                self.preview.create_line(
+                    coordinates,
+                    fill=colour,
+                    width=2,
+                    dash=(6, 4),
+                    joinstyle="round",
+                    smooth=True,
+                    splinesteps=16,
+                )
         for x, y in canvas_points:
             self.preview.create_oval(
                 x - 4,
