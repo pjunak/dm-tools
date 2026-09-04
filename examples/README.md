@@ -8,6 +8,8 @@ rebuildable, and large outputs should remain outside Git.
 
 ## Terrain
 
-[`terrain/coastline.svg`](terrain/coastline.svg) is a single closed vector
-object suitable for the first desktop workbench. It is synthetic and contains
-no campaign geography.
+[`terrain/example.dmterrain.json`](terrain/example.dmterrain.json) is a complete
+versioned project that references
+[`terrain/coastline.svg`](terrain/coastline.svg), a synthetic closed vector
+object containing no campaign geography. Open the JSON to restore settings and
+authored constraints, or import the SVG alone to begin a fresh project.

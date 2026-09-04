@@ -4,6 +4,11 @@ The first terrain vertical slice uses the following runtime dependencies. The
 version range in `pyproject.toml` is authoritative; versions below are the
 minimum accepted versions when the dependency was adopted.
 
+This register lists packages and data actually used at runtime. Evaluated
+candidates remain in [dated research](research/README.md) and the
+[current strategy](strategy/README.md) until an implementation has an immediate
+need, supported-platform validation, and a completed license review.
+
 | Dependency | Minimum | Purpose | License |
 |---|---:|---|---|
 | CPython Tk/ttk | 3.14 / Tk 9 | Native desktop widgets, progress, and file dialogs | PSF / Tcl-Tk BSD-style |

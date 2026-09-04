@@ -1,0 +1,155 @@
+# Current development strategy
+
+This document is the current execution order for DM Tools. It translates the
+categorized backlog and dated research into one dependency-aware plan. Update it
+when measurements change the recommended order; preserve accepted decisions in
+ADRs and preserve dated research as evidence.
+
+## Document authority
+
+When documents differ, use this order:
+
+1. implemented code, public schemas, tests, and accepted ADRs define current
+   behavior;
+2. this strategy and the architecture overview define the current direction;
+3. the roadmap lists possible and scheduled work by area, not execution order;
+4. dated research records evidence available at the time and may become stale.
+
+An evaluated package does not become a dependency merely by appearing in
+research or this strategy. Adoption requires an immediate implementation use,
+license review, Python 3.14 and Windows verification, and a measured benefit.
+
+## Product boundary
+
+```text
+authored geography + versioned settings + master seed
+                         |
+                         v
+             deterministic terrain build
+                         |
+                authoritative Float32 DEM
+                         |
+       +-----------------+------------------+
+       |                 |                  |
+       v                 v                  v
+  terrain measures   climate fields   visual/GIS products
+       |                 |
+       +--------+--------+
+                v
+       ecological suitability
+                |
+                v
+  biome, wetland, landform, and land-use views
+```
+
+The authored inputs and generated DEM remain authoritative for terrain.
+Climate, ecological classifications, contours, drainage, and presentation
+layers are derived products that can be rebuilt and inspected independently.
+
+## Recommended execution order
+
+### 1. Make terrain builds durable and reproducible
+
+- Define the versioned build manifest and lock algorithm and stage identifiers.
+- Export the authoritative Float32 DEM as a georeferenced GeoTIFF.
+- Add the headless `terrain build` operation using the same project and pipeline
+  as the desktop workbench.
+- Record hashes, units, extent, sample spacing, effective settings, dependency
+  versions, diagnostics, and output provenance.
+
+Rasterio is the preferred Python GeoTIFF adapter, with pyproj for coordinate
+operations and GDAL command-line tools as independent interoperability checks.
+
+### 2. Measure before replacing the base solver
+
+- Finish the quantitative landform fixtures and statistics in the roadmap.
+- Add SciPy only for a focused comparison of local-neighbour RBF correction and
+  a sparse screened-Poisson solve against the current surface.
+- Select a replacement only if constraint residuals, slope continuity,
+  runtime, and nested-resolution behavior improve measurably.
+
+### 3. Complete the authored-terrain contract
+
+- Separate hard equalities, soft guidance, and inequalities explicitly.
+- Add per-vertex structure profiles, passes, asymmetric sides, and
+  terrain-character regions.
+- Reproject hard constraints after every optional process stage and report soft
+  residuals rather than silently changing authored intent.
+
+### 4. Finish hydrology semantics and validation
+
+- Define authored lakes, outlets, endorheic basins, depression policy, and the
+  public drainage and catchment products.
+- Compare the in-project routing against Landlab first and GRASS GIS as an
+  external reference. Keep Whitebox behind a separately audited optional
+  boundary because its product family has mixed licensing.
+- Treat landscape evolution as an optional, deterministic post-process only
+  after hydrology and constraint preservation have quantitative tests.
+
+### 5. Prove regional refinement
+
+- Define parent-build identity, world-coordinate bounds, target spacing, halo,
+  crop, and numeric downsample tolerance.
+- Keep GeoTIFF as the first durable format. Evaluate chunked Zarr storage only
+  after profiling demonstrates a real partial-I/O or large-array need.
+
+### 6. Prototype climate as a separate global-context system
+
+Do not implement climate continent by continent without shared global context.
+The first deterministic prototype should consume the fixed world projection,
+latitude, land/ocean mask, accepted DEM, orbital and rotational parameters,
+prevailing circulation, and explicit authored overrides. It should produce
+continuous seasonal or monthly fields before assigning named zones:
+
+- surface temperature and seasonal range;
+- precipitation, moisture transport, orographic enhancement, and rain shadow;
+- coastal moderation and continentality;
+- potential evapotranspiration, aridity, runoff, and terrain wetness; and
+- diagnostics and uncertainty or suitability values.
+
+Use a transparent NumPy/SciPy process model first. Smith-Barstad-style linear
+orographic precipitation, FAO Penman-Monteith evapotranspiration, and the Budyko
+water-balance relation are useful scientific components. Climlab and xclim are
+reference or comparison libraries; ExoPlaSim is an external plausibility
+experiment, not an interactive production dependency.
+
+### 7. Derive classifications without collapsing their meanings
+
+Named climate zones should be versioned classification views over continuous
+fields. A familiar Köppen–Geiger-like view and a Holdridge-like ecological
+cross-check can coexist. Biomes should use climate plus elevation, slope,
+aspect, wetness, substrate, and authored overrides, preferably as fuzzy
+suitability fields before a display classification.
+
+Environmental concepts must remain separate overlapping layers:
+
+| Concept | Layer | Main evidence |
+|---|---|---|
+| Tundra | Biome or life zone | Temperature, growing season, moisture, elevation |
+| Bog | Wetland/ecosystem | Water balance, drainage, terrain wetness, substrate |
+| Plain | Landform | Relief, slope, curvature, scale |
+| Field | Cultural land use | Human choice plus terrain, climate, soil, and access suitability |
+
+This prevents a single enum from forcing physically valid combinations such as
+a bog on a tundra plain or cultivated fields within a temperate grassland into
+mutually exclusive categories.
+
+## Current technology position
+
+| Area | Recommendation now | Evidence gate before adoption |
+|---|---|---|
+| Numeric core | Keep NumPy; spike SciPy locally | Fixture improvements and deterministic tolerances |
+| DEM exchange | Rasterio GeoTIFF; pyproj metadata | Round-trip tests and GDAL interoperability |
+| Hydrology comparison | Landlab, then external GRASS | Routing and basin fixture agreement |
+| Large multidimensional data | Defer xarray/Zarr | Measured climate or partial-I/O requirement |
+| Climate prototype | Transparent NumPy/SciPy fields | Earth analog fixtures and energy/water sanity checks |
+| Full climate model | External ExoPlaSim experiment only | Reproducible workflow and useful validation signal |
+| Classifications | Versioned in-project rules | Published definitions, edge fixtures, and uncertainty |
+
+## Revisit points
+
+Create or amend an ADR when a prototype selects a new solver, file format,
+external engine, climate contract, or classification contract. Revisit this
+order when a prerequisite is measured complete, a dependency lacks supported
+Python 3.14/Windows behavior, or a supposedly later capability is proven to
+change an earlier public data contract.

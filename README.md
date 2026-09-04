@@ -12,11 +12,12 @@ interface should call the same engine rather than replacing it.
 
 The first terrain-generator vertical slice is usable. Its desktop workbench can
 import and dissolve closed SVG mainland and island shapes, paint broad soft
-elevation guidance, draw exact or relative height points plus ridge and valley centrelines, generate a
-deterministic constraint-conditioned elevation field, preview it as colour
-relief, and export the preview as a transparent PNG. Every authoring tool keeps
-its own mode, value, and width while the user switches tools. Authored work can
-be saved and reopened as a versioned `.dmterrain.json` project.
+elevation guidance, draw exact or relative height points plus ridge and valley
+centrelines, generate a deterministic constraint-conditioned elevation field,
+preview it as colour relief, and export the preview as a transparent PNG. Every
+authoring tool keeps its own mode, value, and width while the user switches
+tools. Authored work can be saved and reopened as a versioned
+`.dmterrain.json` project.
 
 ## Requirements
 
@@ -92,10 +93,14 @@ The accepted version-1 contract is published in
 | `tests/` | Unit, contract, integration, and deterministic regression tests |
 | `docs/architecture/` | Current system structure and data flow |
 | `docs/adr/` | Append-only architecture decisions |
+| `docs/strategy/` | Current dependency-aware development order |
+| `docs/research/` | Dated evidence and prototype recommendations |
 
-See [the documentation index](docs/README.md), [the architecture overview](docs/architecture/README.md), and [the terrain tool guide](src/dmtools/terrain/README.md).
-The categorized implementation backlog is maintained in the
-[terrain tool roadmap](TODO.md).
+Start with [the current development strategy](docs/strategy/README.md), then see
+[the documentation index](docs/README.md),
+[the architecture overview](docs/architecture/README.md), and
+[the terrain tool guide](src/dmtools/terrain/README.md). The categorized
+implementation backlog is maintained in the [terrain tool roadmap](TODO.md).
 
 ## Design principles
 

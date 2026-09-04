@@ -6,6 +6,11 @@ treating every idea as an accepted design. Items marked **Research** need a
 small prototype or architecture decision before they become implementation
 commitments.
 
+The [current development strategy](docs/strategy/README.md) is the authoritative
+dependency-aware execution order. The sections below are grouped by product
+area; their visual order is not a promise that every feature precedes algorithm
+or UI work.
+
 Priority labels:
 
 - **P0** — next foundation or prerequisite;
@@ -91,6 +96,38 @@ preview, and PNG export. Those are not repeated below as unfinished work.
 - [ ] **P1 — Select a public project license before distribution.** Recheck the
   licenses and distribution implications of every optional scientific engine
   included in a hosted or downloadable build.
+
+### World climate, ecology, and environmental zones (deferred)
+
+These are backlog entries only. Do not begin implementation until the durable
+terrain-output and regional-refinement contracts needed by the
+[current strategy](docs/strategy/README.md) are proven.
+
+- [ ] **Research — Define the global climate input and output contract.** Inputs
+  should include the fixed world projection and latitude, ocean/land mask,
+  accepted DEM, orbital and rotational assumptions, circulation or prevailing
+  winds, and authored overrides. Outputs should be continuous monthly or
+  seasonal fields with units, provenance, diagnostics, and uncertainty.
+- [ ] **P2 — Prototype deterministic continuous climate fields.** Generate
+  temperature, seasonal range, precipitation, coastal moderation,
+  continentality, orographic precipitation and rain shadow, potential
+  evapotranspiration, aridity, and runoff before assigning named zones.
+- [ ] **P2 — Add versioned climate-zone classification views.** Derive familiar
+  Köppen–Geiger-like and ecological Holdridge-like views from the continuous
+  fields; keep thresholds and classification-version metadata explicit.
+- [ ] **P2 — Generate biome suitability and display classes.** Use climate,
+  elevation, growing season, slope, aspect, terrain wetness, substrate, and
+  authored exceptions. Preserve fuzzy transitions or confidence instead of
+  pretending every boundary is exact.
+- [ ] **P2 — Generate separate, overlapping environmental layers.** Treat bogs
+  and other wetlands as hydrology/ecosystem results, plains as landforms,
+  tundra as a biome, and fields as cultural land use. Include additional
+  grassland, forest, desert, marsh, fen, floodplain, alpine, and coastal types
+  only within the layer whose semantics fit.
+- [ ] **P2 — Preserve global-to-continent and refinement consistency.** Climate
+  and ecology builds must share global boundary conditions while allowing
+  continent and local resolution, authored corrections, rebuildable exports,
+  and parent-build provenance.
 
 ## Algorithm and result improvements
 
@@ -331,6 +368,12 @@ landscape-process spikes. It is working research, not an accepted architecture.
   download UX only at the service boundary.
 
 ## Related decisions and research
+
+- [Current development strategy](docs/strategy/README.md) orders work by
+  dependencies and records the evidence gates for adopting evaluated tools.
+- [Technology and world systems — 2026-09-04](docs/research/2026-09-04-technology-and-world-systems.md)
+  refreshes numerical, GIS, hydrology, storage, climate, classification, and
+  licensing options.
 
 - [Terrain algorithm options — 2026-09-03](docs/research/2026-09-03-terrain-algorithm-options.md)
   records the current solver, hydrology, erosion, multiresolution, validation,

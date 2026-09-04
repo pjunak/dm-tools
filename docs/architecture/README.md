@@ -32,16 +32,26 @@ scientific engines; core contracts must not depend on those concrete libraries.
 
 ## Terrain pipeline
 
-The planned high-level stages are:
+The current implemented path is:
 
-1. Load and validate a versioned terrain project.
-2. Normalize authored constraints into a metric working grid.
-3. Construct a low-frequency base surface satisfying hard and soft constraints.
-4. Add deterministic residual relief that fades near authored structures.
-5. Apply optional process-informed erosion or diffusion.
-6. Validate hydrology, constraints, finite values, and level-of-detail
-   consistency.
-7. Write the authoritative DEM, derived vectors, previews, and build manifest.
+1. Load and validate an SVG or versioned terrain project, then dissolve its
+   closed land geometry.
+2. Project normalized authored constraints into one metric working grid shared
+   by mainland sections and islands.
+3. Construct the deterministic broad base, generated drainage guidance, and
+   structure-conditioned correction fields.
+4. Apply authored brush, point, ridge, and valley semantics and restore
+   coordinate-addressed residual detail.
+5. Condition generated valley floors and calculate finite-value, coastline,
+   constraint, basin, and drainage diagnostics.
+6. Return the Float32 DEM in memory and derive the workbench colour preview and
+   PNG export.
+
+The target durable build adds a versioned manifest, GeoTIFF, headless command,
+derived GIS products, explicit hard/soft/inequality projection after optional
+processes, and regional-refinement validation. Climate and ecological products
+are a later derived system that consumes accepted terrain and global world
+context rather than becoming an implicit terrain stage.
 
 Each stage receives explicit inputs and configuration. It must not obtain
 randomness, time, environment settings, or coordinate assumptions implicitly.
@@ -69,9 +79,13 @@ layer or path boundaries.
 
 - Build-manifest schema details and project migration tooling
 - Elevation profiles and asymmetric side slopes along structural lines
-- Hydrology engine
+- Authored lake, outlet, endorheic-basin, and depression-policy semantics
+- Public drainage/catchment products and external hydrology validation boundary
 - Multiresolution storage and refinement strategy
+- Global climate-field and ecological-classification contracts
 - Web framework, queue, storage, and frontend
 - Public project license
 
-These belong in ADRs when enough evidence exists to make the decision.
+These belong in ADRs when enough evidence exists to make the decision. The
+[current development strategy](../strategy/README.md) gives their recommended
+dependency order; the roadmap remains grouped by product area.

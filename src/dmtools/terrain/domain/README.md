@@ -10,8 +10,9 @@ an absolute elevation or a relative displacement, relief, or incision depth.
 The domain also owns a format-independent terrain project and the authoring-tool
 defaults that must survive between workbench sessions.
 
-Future domain types will add units, coordinate reference systems, structure
-profiles, grids, manifests, stage identifiers, and validation errors.
+The domain should grow only when a public contract requires it. Planned areas
+include explicit coordinate-reference metadata, per-vertex structure profiles,
+build manifests, stable stage identifiers, and structured validation results.
 
 Domain code must not read files, call external tools, render images, or depend on
 CLI and web frameworks.
