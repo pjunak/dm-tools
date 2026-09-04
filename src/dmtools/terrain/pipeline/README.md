@@ -84,6 +84,15 @@ additional 2% of the generation ceiling; cap-limited edges remain explicit
 internal diagnostics. This is conservative generated-network conditioning, not
 final-DEM filling or authored stream burning.
 
+A second generated-only profile pass checks consecutive channel edges with
+normalized steepness `S * A^0.45`. A downstream reach may be up to eight times
+the upstream normalized steepness before it is treated as an extreme numerical
+knickpoint. The solver lowers only the middle cell, reuses the existing incision
+cap, and converges through at most 16 fixed upstream-to-downstream passes.
+Ordinary slope variation remains, and bound-limited residuals are reported.
+This heuristic does not apply to authored terrain and does not infer uplift,
+lithology, waterfall status, erosion rate, or equilibrium.
+
 After all generated and authored shaping, the pipeline re-evaluates the complete
 surface on a fixed 129-cell-longest-side diagnostic grid. Strict downhill D8
 reports direct outlet connectivity and potential inland terminals. Priority-

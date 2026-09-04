@@ -216,6 +216,11 @@ enough to retain a 0.01 m drop, never raised, and never cut without limit. The
 pass may use at most 60% of reconstructed local elevation and add at most 2% of
 the generation ceiling. It affects generated centre cells only and runs before
 authored constraints.
+Consecutive generated-channel edges then receive a second bounded profile
+check. Only a downstream normalized-steepness increase above eight is relaxed,
+using `S * A^0.45`; the middle cell is lowered under the same incision cap.
+This removes extreme numerical knickpoints without flattening ordinary profile
+variation or modifying authored features.
 The model still does **not** simulate plate tectonics, rock type, sediment,
 climate, geological time, authored lakes, or endorheic basins, and its drainage
 field is not yet exported or certified as a river network.

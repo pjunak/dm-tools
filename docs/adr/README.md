@@ -35,3 +35,4 @@ ADRs preserve significant technical decisions and their trade-offs.
 - [ADR-0019: Initiate generated channels with bounded area-slope thresholds](0019-initiate-generated-channels-with-bounded-area-slope-thresholds.md)
 - [ADR-0020: Condition generated channel floors downstream](0020-condition-generated-channel-floors-downstream.md)
 - [ADR-0021: Correct broad valleys with MFD convergence](0021-correct-broad-valleys-with-mfd-convergence.md)
+- [ADR-0022: Bound extreme generated-channel steepening](0022-bound-extreme-generated-channel-steepening.md)

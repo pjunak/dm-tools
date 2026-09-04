@@ -210,6 +210,14 @@ terminal cells, basin candidates, and estimated fill volume; the 129-cell
 summary can alias the narrower correction, confirming that regional builds
 need their own buffered drainage diagnostics.
 
+A following bounded pass measures consecutive generated-channel edges with the
+normalized steepness relation `S * A^theta`. It uses an explicit reference
+concavity of `theta = 0.45` and relaxes only downstream ratios above 8 by
+lowering the shared middle cell. Sixteen fixed upstream-to-downstream passes
+converge the adjacent inequalities while reusing the existing incision cap.
+This is deliberately not a chi-space equilibrium fit: ordinary and potentially
+meaningful slope changes remain, and authored knickpoints are outside its scope.
+
 This is intentionally narrower than a landscape-evolution model. It does not
 iterate uplift, erosion, sediment, or hillslope diffusion, and it fills every
 unclassified depression only in the temporary routing surface. Authored

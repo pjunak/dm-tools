@@ -29,7 +29,10 @@ class DrainageIncision:
     channel_mask: NDArray[np.bool_]
     channel_head_mask: NDArray[np.bool_]
     floor_correction_m: NDArray[np.float64]
+    steepness_correction_m: NDArray[np.float64]
     unresolved_uphill_channel_edge_count: int
+    unresolved_steepening_edge_count: int
+    maximum_downstream_steepening_ratio: float
 
 
 @dataclass(frozen=True, slots=True)
@@ -621,6 +624,212 @@ def _condition_downstream_channel_floors(
     return conditioned, np.maximum(conditioned - incision_m, 0.0), unresolved
 
 
+def _normalized_downstream_steepening_ratio(
+    flat_floor_m: NDArray[np.float64],
+    flat_accumulation_km2: NDArray[np.float64],
+    donor: int,
+    middle: int,
+    downstream: int,
+    *,
+    width: int,
+    x_spacing_km: float,
+    y_spacing_km: float,
+    reference_concavity: float,
+) -> tuple[float, float, float]:
+    donor_row, donor_column = divmod(donor, width)
+    middle_row, middle_column = divmod(middle, width)
+    downstream_row, downstream_column = divmod(downstream, width)
+    upstream_distance_km = hypot(
+        (donor_column - middle_column) * x_spacing_km,
+        (donor_row - middle_row) * y_spacing_km,
+    )
+    downstream_distance_km = hypot(
+        (middle_column - downstream_column) * x_spacing_km,
+        (middle_row - downstream_row) * y_spacing_km,
+    )
+    minimum_slope = np.finfo(np.float64).eps
+    upstream_slope = max(
+        (flat_floor_m[donor] - flat_floor_m[middle])
+        / (1_000.0 * upstream_distance_km),
+        minimum_slope,
+    )
+    downstream_slope = max(
+        (flat_floor_m[middle] - flat_floor_m[downstream])
+        / (1_000.0 * downstream_distance_km),
+        minimum_slope,
+    )
+    upstream_steepness = upstream_slope * (
+        flat_accumulation_km2[donor] ** reference_concavity
+    )
+    downstream_steepness = downstream_slope * (
+        flat_accumulation_km2[middle] ** reference_concavity
+    )
+    return (
+        downstream_steepness / upstream_steepness,
+        upstream_distance_km,
+        downstream_distance_km,
+    )
+
+
+def condition_downstream_channel_steepness(
+    source_elevation_m: NDArray[np.float64],
+    incision_m: NDArray[np.float64],
+    maximum_incision_m: NDArray[np.float64],
+    channel_mask: NDArray[np.bool_],
+    receivers: NDArray[np.int64],
+    routing_surface_m: NDArray[np.float64],
+    accumulation_km2: NDArray[np.float64],
+    *,
+    x_spacing_km: float,
+    y_spacing_km: float,
+    reference_concavity: float = 0.45,
+    maximum_steepening_ratio: float = 8.0,
+    maximum_passes: int = 16,
+) -> tuple[NDArray[np.float64], NDArray[np.float64], int, float]:
+    """Limit only extreme generated-channel steepening toward the outlet."""
+
+    shape = source_elevation_m.shape
+    if any(
+        values.shape != shape
+        for values in (
+            incision_m,
+            maximum_incision_m,
+            channel_mask,
+            receivers,
+            routing_surface_m,
+            accumulation_km2,
+        )
+    ):
+        raise ValueError("Channel-steepness conditioning arrays must share a shape.")
+    if x_spacing_km <= 0.0 or y_spacing_km <= 0.0:
+        raise ValueError("Grid spacing must be positive.")
+    if not 0.0 < reference_concavity < 1.0:
+        raise ValueError("Reference concavity must be between zero and one.")
+    if maximum_steepening_ratio <= 1.0 or maximum_passes < 1:
+        raise ValueError("Steepening ratio and pass count must exceed one and zero.")
+    if any(
+        np.any(channel_mask & ~np.isfinite(values))
+        for values in (
+            source_elevation_m,
+            incision_m,
+            maximum_incision_m,
+            routing_surface_m,
+        )
+    ):
+        raise ValueError("Selected-channel profile values must be finite.")
+    if np.any(
+        channel_mask
+        & (
+            (incision_m < 0.0)
+            | (maximum_incision_m + 1e-12 < incision_m)
+        )
+    ):
+        raise ValueError("Selected-channel incision must be nonnegative and within its cap.")
+    if np.any(
+        channel_mask
+        & (
+            ~np.isfinite(accumulation_km2)
+            | (accumulation_km2 <= 0.0)
+        )
+    ):
+        raise ValueError("Selected channels must have positive finite accumulation.")
+
+    conditioned = np.minimum(incision_m, maximum_incision_m).copy()
+    flat_source = source_elevation_m.ravel()
+    flat_conditioned = conditioned.ravel()
+    flat_maximum = maximum_incision_m.ravel()
+    flat_channel = channel_mask.ravel()
+    flat_receivers = receivers.ravel()
+    flat_accumulation = accumulation_km2.ravel()
+    flat_floor = flat_source - flat_conditioned
+    channel_indices = np.flatnonzero(flat_channel)
+    upstream_first = channel_indices[
+        np.argsort(-routing_surface_m.ravel()[channel_indices], kind="stable")
+    ]
+    width = shape[1]
+
+    for _ in range(maximum_passes):
+        changed = False
+        for donor_value in upstream_first:
+            donor = int(donor_value)
+            middle = int(flat_receivers[donor])
+            if middle < 0 or not flat_channel[middle]:
+                continue
+            downstream = int(flat_receivers[middle])
+            if downstream < 0 or not flat_channel[downstream]:
+                continue
+            ratio, upstream_distance_km, downstream_distance_km = (
+                _normalized_downstream_steepening_ratio(
+                    flat_floor,
+                    flat_accumulation,
+                    donor,
+                    middle,
+                    downstream,
+                    width=width,
+                    x_spacing_km=x_spacing_km,
+                    y_spacing_km=y_spacing_km,
+                    reference_concavity=reference_concavity,
+                )
+            )
+            if ratio <= maximum_steepening_ratio * (1.0 + 1e-12):
+                continue
+            slope_factor = maximum_steepening_ratio * (
+                flat_accumulation[donor] / flat_accumulation[middle]
+            ) ** reference_concavity
+            maximum_middle_floor_m = (
+                slope_factor * downstream_distance_km * flat_floor[donor]
+                + upstream_distance_km * flat_floor[downstream]
+            ) / (
+                upstream_distance_km
+                + slope_factor * downstream_distance_km
+            )
+            required_incision_m = flat_source[middle] - maximum_middle_floor_m
+            revised_incision_m = min(
+                flat_maximum[middle],
+                max(flat_conditioned[middle], required_incision_m),
+            )
+            if revised_incision_m <= flat_conditioned[middle] + 1e-9:
+                continue
+            flat_conditioned[middle] = revised_incision_m
+            flat_floor[middle] = flat_source[middle] - revised_incision_m
+            changed = True
+        if not changed:
+            break
+
+    unresolved = 0
+    largest_ratio = 0.0
+    for donor_value in channel_indices:
+        donor = int(donor_value)
+        middle = int(flat_receivers[donor])
+        if middle < 0 or not flat_channel[middle]:
+            continue
+        downstream = int(flat_receivers[middle])
+        if downstream < 0 or not flat_channel[downstream]:
+            continue
+        ratio, _upstream_distance_km, _downstream_distance_km = (
+            _normalized_downstream_steepening_ratio(
+                flat_floor,
+                flat_accumulation,
+                donor,
+                middle,
+                downstream,
+                width=width,
+                x_spacing_km=x_spacing_km,
+                y_spacing_km=y_spacing_km,
+                reference_concavity=reference_concavity,
+            )
+        )
+        largest_ratio = max(largest_ratio, ratio)
+        if ratio > maximum_steepening_ratio * (1.0 + 1e-6):
+            unresolved += 1
+    return (
+        conditioned,
+        np.maximum(conditioned - incision_m, 0.0),
+        unresolved,
+        largest_ratio,
+    )
+
+
 def drainage_incision(
     elevation_m: NDArray[np.float64],
     land_mask: NDArray[np.bool_],
@@ -793,6 +1002,23 @@ def drainage_incision(
             routing_surface,
         )
     )
+    (
+        incision_m,
+        steepness_correction_m,
+        unresolved_steepening_edges,
+        maximum_downstream_steepening_ratio,
+    ) = condition_downstream_channel_steepness(
+        source_elevation_m,
+        incision_m,
+        maximum_incision_m,
+        channel,
+        receivers,
+        routing_surface,
+        tree_accumulation_km2,
+        x_spacing_km=x_spacing_km,
+        y_spacing_km=y_spacing_km,
+    )
+    floor_correction_m += steepness_correction_m
     return DrainageIncision(
         incision_m=np.where(land_mask, incision_m, 0.0),
         accumulation_km2=accumulation_km2,
@@ -800,5 +1026,8 @@ def drainage_incision(
         channel_mask=channel,
         channel_head_mask=channel_heads,
         floor_correction_m=np.where(land_mask, floor_correction_m, 0.0),
+        steepness_correction_m=np.where(land_mask, steepness_correction_m, 0.0),
         unresolved_uphill_channel_edge_count=unresolved_uphill_edges,
+        unresolved_steepening_edge_count=unresolved_steepening_edges,
+        maximum_downstream_steepening_ratio=maximum_downstream_steepening_ratio,
     )

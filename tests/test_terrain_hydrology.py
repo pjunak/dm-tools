@@ -1,6 +1,7 @@
 import numpy as np
 
 from dmtools.terrain.pipeline.hydrology import (
+    condition_downstream_channel_steepness,
     drainage_diagnostics,
     drainage_incision,
     multiple_flow_accumulation,
@@ -8,6 +9,63 @@ from dmtools.terrain.pipeline.hydrology import (
     steepest_flow_accumulation,
     steepest_flow_receivers,
 )
+
+
+def test_extreme_generated_knickpoint_is_lowered_within_the_existing_cap() -> None:
+    source = np.array([[100.0, 99.0, 20.0, 0.0]], dtype=np.float64)
+    incision = np.zeros_like(source)
+    maximum_incision = np.array([[0.0, 50.0, 20.0, 0.0]], dtype=np.float64)
+    channel = np.ones_like(source, dtype=np.bool_)
+    receivers = np.array([[1, 2, 3, -1]], dtype=np.int64)
+    accumulation = np.array([[1.0, 2.0, 3.0, 4.0]], dtype=np.float64)
+
+    conditioned, correction, unresolved, largest_ratio = (
+        condition_downstream_channel_steepness(
+            source,
+            incision,
+            maximum_incision,
+            channel,
+            receivers,
+            source,
+            accumulation,
+            x_spacing_km=1.0,
+            y_spacing_km=1.0,
+        )
+    )
+    floor = source - conditioned
+
+    assert correction[0, 1] > 0.0
+    assert correction[0, 1] <= maximum_incision[0, 1]
+    assert np.all(np.diff(floor[0]) < 0.0)
+    assert unresolved == 0
+    assert largest_ratio <= 8.0 * (1.0 + 1e-6)
+
+
+def test_bound_limited_generated_knickpoint_remains_explicit() -> None:
+    source = np.array([[100.0, 99.0, 20.0, 0.0]], dtype=np.float64)
+    incision = np.zeros_like(source)
+    channel = np.ones_like(source, dtype=np.bool_)
+    receivers = np.array([[1, 2, 3, -1]], dtype=np.int64)
+    accumulation = np.array([[1.0, 2.0, 3.0, 4.0]], dtype=np.float64)
+
+    conditioned, correction, unresolved, largest_ratio = (
+        condition_downstream_channel_steepness(
+            source,
+            incision,
+            incision,
+            channel,
+            receivers,
+            source,
+            accumulation,
+            x_spacing_km=1.0,
+            y_spacing_km=1.0,
+        )
+    )
+
+    assert np.array_equal(conditioned, incision)
+    assert not np.any(correction)
+    assert unresolved == 1
+    assert largest_ratio > 8.0
 
 
 def test_drainage_diagnostics_reports_a_fully_connected_planar_slope() -> None:

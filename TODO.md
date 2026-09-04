@@ -192,9 +192,11 @@ landscape-process spikes. It is working research, not an accepted architecture.
   headwaters earlier, preserves large gentle rivers, and closes every selected
   path downstream. Generated floors are now conditioned after residual-detail
   restoration with bounded downstream-only cuts; the aligned Tharkeniss network
-  improves, while the coarser completed-surface diagnostic documents remaining
-  scale aliasing. Public drainage products, authored depression policy, basin
-  labels, and user-facing drainage-density profiles remain.
+  improves. Extreme generated knickpoints now receive a second bounded
+  normalized-steepness pass with explicit unresolved diagnostics, while the
+  coarser completed-surface diagnostic documents remaining scale aliasing.
+  Public drainage products, authored depression policy, basin labels, and
+  user-facing drainage-density profiles remain.
 - [ ] **P1 — Reconcile authored rivers with generated drainage.** Rivers should
   descend to a valid outlet and occupy a local valley; report conflicts rather
   than silently moving an authored route.
@@ -234,7 +236,10 @@ landscape-process spikes. It is working research, not an accepted architecture.
   slope and curvature distributions, hypsometry, coastline correctness,
   drainage statistics, and the fraction of terrain clipped by elevation bounds.
   The first compact drainage summary now travels with generated terrain and PNG
-  metadata; the other statistics and a durable build report remain.
+  metadata. Internal generated-channel results now also report total and
+  steepness-only floor corrections, excessive normalized-steepness ratios, and
+  unresolved uphill edges; public profile statistics and a durable build report
+  remain.
 - [ ] **P1 — Add explicit prominence and saddle analysis.** Keep this derived
   measurement separate from the current relative-relief controls.
 - [ ] **P0 — Lock algorithm and stage identifiers before long-lived builds.**
