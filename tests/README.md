@@ -18,8 +18,12 @@ the base, preserves sea level, and survives preview metadata export.
 Absolute and relative elevation modes are tested separately, including relative
 peaks on ridges, relative valley incision, per-mode validation, deterministic
 automatic MFD accumulation, D8 centreline concentration, downstream valley
-width, floor-detail suppression, nested resolutions, and preservation of the
-underlying relief field. Canonical drainage diagnostics have planar-outlet and
+width, floor-detail suppression, bounded area-slope channel initiation,
+downstream network closure, nested resolutions, and preservation of the
+underlying relief field. The two-slope initiation fixture requires steep
+headwaters to start earlier with nonzero relief while retaining a large gentle
+river. Canonical
+drainage diagnostics have planar-outlet and
 known-depression fixtures covering direct connectivity, significant fill depth,
 fill volume, non-mutation, metadata, and resolution-independent summaries. The
 known depression also verifies candidate floor, spill, area, volume, terminal

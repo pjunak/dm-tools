@@ -180,6 +180,18 @@ residual detail most strongly on major floors. A fixed-relief cross-section
 fixture verifies that downstream trunks grow wider, without treating one
 terrestrial width-area exponent as universal.
 
+The third refinement replaces a single contributing-area channel-head cutoff
+with a bounded area-slope rule. Once-smoothed receiver slope adjusts the local
+area threshold by `(reference slope / local slope)^2`, clamped between 0.35 and
+4.0. This preserves the observed inverse direction between source area and
+channel-head slope without allowing one steep range to erase major rivers from
+gentle plains. Every initiated cell is traced downstream over the D8 tree, so
+the selected network is connected by construction. The constants are
+continent-relative heuristics, not climate or substrate calibration.
+A small 0-8% logarithmic width/depth ramp begins at the minimum eligible source
+area. The additional steep reaches therefore gain visible relief, while the
+existing higher-area hierarchy still controls downstream trunk scale.
+
 This is intentionally narrower than a landscape-evolution model. It does not
 iterate uplift, erosion, sediment, or hillslope diffusion, and it fills every
 unclassified depression only in the temporary routing surface. Authored
@@ -352,6 +364,11 @@ resolution-specific gullies or improves only the colour preview.
   and [conjugate gradient solver](https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.cg.html).
 - Australian National University, [ANUDEM 5.3](https://fennerschool.anu.edu.au/research/products/anudem-version-5-3).
 - Barnes et al., [Priority-Flood depression filling](https://arxiv.org/abs/1511.04463).
+- Montgomery and Dietrich,
+  [Source areas, drainage density, and channel initiation](https://doi.org/10.1029/WR025i008p01907)
+  and [Channel initiation and landscape scale](https://doi.org/10.1126/science.255.5046.826).
+- Orlandini et al.,
+  [Prediction of channel heads in complex alpine terrain](https://doi.org/10.1029/2010WR009648).
 - Barnes et al., [Depression hierarchies](https://esurf.copernicus.org/articles/8/431/2020/)
   and [Fill-Spill-Merge](https://esurf.copernicus.org/articles/9/105/2021/).
 - Génevaux et al., [Terrain Generation Using Procedural Models Based on Hydrology](https://doi.org/10.1145/2461912.2461996), 2013.

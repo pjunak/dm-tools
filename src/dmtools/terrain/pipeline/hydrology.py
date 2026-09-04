@@ -26,6 +26,8 @@ class DrainageIncision:
     incision_m: NDArray[np.float64]
     accumulation_km2: NDArray[np.float64]
     detail_suppression: NDArray[np.float64]
+    channel_mask: NDArray[np.bool_]
+    channel_head_mask: NDArray[np.bool_]
 
 
 @dataclass(frozen=True, slots=True)
@@ -300,7 +302,24 @@ def steepest_flow_accumulation(
         y_spacing_km=y_spacing_km,
     )
 
-    cell_area_km2 = x_spacing_km * y_spacing_km
+    accumulation = _accumulate_steepest_receivers(
+        routing_elevation_m,
+        land_mask,
+        receivers,
+        cell_area_km2=x_spacing_km * y_spacing_km,
+    )
+    return accumulation, receiver_slope
+
+
+def _accumulate_steepest_receivers(
+    routing_elevation_m: NDArray[np.float64],
+    land_mask: NDArray[np.bool_],
+    receivers: NDArray[np.int64],
+    *,
+    cell_area_km2: float,
+) -> NDArray[np.float64]:
+    """Accumulate cell area through an already computed receiver tree."""
+
     accumulation = np.where(land_mask, cell_area_km2, 0.0).astype(np.float64)
     flat_indices = np.flatnonzero(land_mask)
     order = flat_indices[
@@ -312,8 +331,7 @@ def steepest_flow_accumulation(
         receiver = int(flat_receivers[flat_index])
         if receiver >= 0:
             flat_accumulation[receiver] += flat_accumulation[flat_index]
-
-    return accumulation, receiver_slope
+    return accumulation
 
 
 def steepest_flow_receivers(
@@ -502,6 +520,38 @@ def _masked_smooth(
     return result
 
 
+def _connected_channel_network(
+    initiation_mask: NDArray[np.bool_],
+    receivers: NDArray[np.int64],
+    land_mask: NDArray[np.bool_],
+) -> tuple[NDArray[np.bool_], NDArray[np.bool_]]:
+    """Trace every initiated channel downstream and identify network heads."""
+
+    if initiation_mask.shape != land_mask.shape or receivers.shape != land_mask.shape:
+        raise ValueError("Channel initiation, receivers, and land must share a shape.")
+    flat_channel = (initiation_mask & land_mask).ravel().copy()
+    flat_receivers = receivers.ravel()
+    for starting_index_value in np.flatnonzero(flat_channel):
+        current = int(starting_index_value)
+        while True:
+            receiver = int(flat_receivers[current])
+            if receiver < 0 or flat_channel[receiver]:
+                break
+            flat_channel[receiver] = True
+            current = receiver
+
+    has_channel_donor = np.zeros(flat_channel.shape, dtype=np.bool_)
+    for donor_value in np.flatnonzero(flat_channel):
+        receiver = int(flat_receivers[int(donor_value)])
+        if receiver >= 0 and flat_channel[receiver]:
+            has_channel_donor[receiver] = True
+    channel_heads = flat_channel & ~has_channel_donor
+    return (
+        flat_channel.reshape(land_mask.shape),
+        channel_heads.reshape(land_mask.shape),
+    )
+
+
 def drainage_incision(
     elevation_m: NDArray[np.float64],
     land_mask: NDArray[np.bool_],
@@ -521,20 +571,53 @@ def drainage_incision(
         x_spacing_km=x_spacing_km,
         y_spacing_km=y_spacing_km,
     )
-    tree_accumulation_km2, slope = steepest_flow_accumulation(
+    receivers, slope = steepest_flow_receivers(
         routing_surface,
         land_mask,
         x_spacing_km=x_spacing_km,
         y_spacing_km=y_spacing_km,
     )
     cell_area_km2 = x_spacing_km * y_spacing_km
+    tree_accumulation_km2 = _accumulate_steepest_receivers(
+        routing_surface,
+        land_mask,
+        receivers,
+        cell_area_km2=cell_area_km2,
+    )
     land_area_km2 = float(np.count_nonzero(land_mask)) * cell_area_km2
     channel_threshold_km2 = max(12.0 * cell_area_km2, 0.0015 * land_area_km2)
+    minimum_source_area_km2 = max(4.0 * cell_area_km2, 0.00025 * land_area_km2)
+    initiation_slope = _masked_smooth(slope, land_mask, iterations=1)
+    initiation_sample = (
+        land_mask
+        & (tree_accumulation_km2 >= minimum_source_area_km2)
+        & (initiation_slope > 0.0)
+    )
+    initiation_reference_slope = (
+        max(float(np.percentile(initiation_slope[initiation_sample], 65.0)), 0.001)
+        if np.any(initiation_sample)
+        else 0.001
+    )
+    local_threshold_km2 = channel_threshold_km2 * np.clip(
+        np.square(
+            initiation_reference_slope
+            / np.maximum(initiation_slope, np.finfo(np.float64).eps)
+        ),
+        0.35,
+        4.0,
+    )
+    initiation_index = tree_accumulation_km2 / local_threshold_km2
+    initiation_mask = initiation_sample & (initiation_index >= 1.0)
+    channel, channel_heads = _connected_channel_network(
+        initiation_mask,
+        receivers,
+        land_mask,
+    )
     largest_area_km2 = max(
         float(np.max(tree_accumulation_km2, initial=channel_threshold_km2)),
         channel_threshold_km2 * 1.01,
     )
-    log_progress = np.clip(
+    established_progress = np.clip(
         np.log(
             np.maximum(tree_accumulation_km2, channel_threshold_km2)
             / channel_threshold_km2
@@ -543,7 +626,16 @@ def drainage_incision(
         0.0,
         1.0,
     )
-    channel = tree_accumulation_km2 >= channel_threshold_km2
+    headwater_progress = 0.08 * np.clip(
+        np.log(
+            np.maximum(tree_accumulation_km2, minimum_source_area_km2)
+            / minimum_source_area_km2
+        )
+        / np.log(channel_threshold_km2 / minimum_source_area_km2),
+        0.0,
+        1.0,
+    )
+    log_progress = np.maximum(established_progress, headwater_progress)
     channel_slopes = slope[channel]
     reference_slope = (
         max(float(np.percentile(channel_slopes, 90.0)), 0.001)
@@ -589,4 +681,6 @@ def drainage_incision(
         incision_m=np.where(land_mask, incision_m, 0.0),
         accumulation_km2=accumulation_km2,
         detail_suppression=np.where(land_mask, detail_suppression, 0.0),
+        channel_mask=channel,
+        channel_head_mask=channel_heads,
     )

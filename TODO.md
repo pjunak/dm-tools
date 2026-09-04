@@ -186,8 +186,10 @@ landscape-process spikes. It is working research, not an accepted architecture.
   fixtures so grid-direction bias is measurable. A fixed canonical-grid
   Priority-Flood + MFD accumulation stage now drives automatic broad valleys,
   with a rotated fixture, and a complementary D8 tree supplies unique generated
-  centrelines. Public drainage products, authored depression policy, basin
-  labels, and full connectivity diagnostics remain.
+  centrelines. A bounded area-slope channel-head rule now starts steep
+  headwaters earlier, preserves large gentle rivers, and closes every selected
+  path downstream. Public drainage products, authored depression policy, basin
+  labels, and user-facing drainage-density profiles remain.
 - [ ] **P1 — Reconcile authored rivers with generated drainage.** Rivers should
   descend to a valid outlet and occupy a local valley; report conflicts rather
   than silently moving an authored route.

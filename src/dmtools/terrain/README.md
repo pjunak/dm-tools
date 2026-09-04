@@ -201,7 +201,11 @@ flow, and uses contributing area plus slope to incise broad automatic valleys.
 The generated valley hierarchy stays fixed when output resolution changes.
 MFD represents broad convergence, a deterministic D8 tree locates one centre,
 and drainage-area hierarchy makes major downstream trunks broader and smoother
-than their headwaters.
+than their headwaters. Channel heads now use a bounded area-slope criterion:
+steep convergent terrain can initiate with less source area, while a fourfold
+cap on the local area threshold preserves large rivers through gentle plains.
+Every initiated cell is traced down the D8 tree so selected channels cannot
+vanish merely because a downstream reach becomes flatter.
 The model still does **not** simulate plate tectonics, rock type, sediment,
 climate, geological time, authored lakes, or endorheic basins, and its drainage
 field is not yet exported or certified as a river network.

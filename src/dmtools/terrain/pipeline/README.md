@@ -58,6 +58,17 @@ field suppresses fine residual noise most strongly on major floors and tapers
 that suppression across shoulders. D8 here is an internal shaping tree, not yet
 an exported or validated river product.
 
+Channel initiation combines source area and once-smoothed receiver slope. The
+local area threshold follows a bounded `A*S^2` relation: it may fall to 35% of
+the base threshold on steep terrain or rise to four times that threshold on
+gentle terrain. Initiated cells are closed downstream over the D8 receiver tree,
+so large low-gradient trunks remain connected even where they would not
+independently satisfy the headwater test. This is a heterogeneous-terrain
+heuristic, not a rainfall- or substrate-calibrated channel prediction.
+A small logarithmic relief ramp rises from zero to 8% between the minimum
+source area and the established area threshold. This makes selected heads
+visible without allowing their cross-sections to rival downstream trunks.
+
 After all generated and authored shaping, the pipeline re-evaluates the complete
 surface on a fixed 129-cell-longest-side diagnostic grid. Strict downhill D8
 reports direct outlet connectivity and potential inland terminals. Priority-

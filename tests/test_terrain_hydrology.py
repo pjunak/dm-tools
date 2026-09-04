@@ -6,6 +6,7 @@ from dmtools.terrain.pipeline.hydrology import (
     multiple_flow_accumulation,
     priority_flood_surface,
     steepest_flow_accumulation,
+    steepest_flow_receivers,
 )
 
 
@@ -196,6 +197,54 @@ def test_drainage_incision_selects_convergent_channels_not_the_whole_slope() -> 
     assert drainage.accumulation_km2[20, -1] > drainage.accumulation_km2[5, -1]
     assert drainage.incision_m[20, 30] > drainage.incision_m[5, 30]
     assert drainage.detail_suppression[20, 30] > drainage.detail_suppression[5, 30]
+    assert np.count_nonzero(drainage.channel_head_mask) > 0
+    receivers, _slope = steepest_flow_receivers(
+        priority_flood_surface(elevation, land),
+        land,
+        x_spacing_km=4.0,
+        y_spacing_km=4.0,
+    )
+    flat_channel = drainage.channel_mask.ravel()
+    for channel_index in np.flatnonzero(flat_channel):
+        receiver = int(receivers.ravel()[channel_index])
+        assert receiver < 0 or flat_channel[receiver]
+
+
+def test_area_slope_initiation_starts_steep_headwaters_before_gentle_ones() -> None:
+    height, width = 15, 41
+    rows, columns = np.indices((height, width), dtype=np.float64)
+    land = np.zeros((height, width), dtype=np.bool_)
+    land[1:7, :] = True
+    land[8:14, :] = True
+    elevation = np.zeros((height, width), dtype=np.float64)
+    elevation[1:7, :] = (
+        2_000.0
+        - 25.0 * columns[1:7, :]
+        + 4.0 * np.square(rows[1:7, :] - 3.5)
+    )
+    elevation[8:14, :] = (
+        500.0
+        - 3.0 * columns[8:14, :]
+        + 4.0 * np.square(rows[8:14, :] - 10.5)
+    )
+    distance_to_coast = np.where(land, 50.0, 0.0)
+
+    drainage = drainage_incision(
+        elevation,
+        land,
+        distance_to_coast,
+        x_spacing_km=2.0,
+        y_spacing_km=2.0,
+        maximum_elevation_m=3_000.0,
+        variability=0.7,
+    )
+
+    steep_heads = np.argwhere(drainage.channel_head_mask[1:7, :])
+    gentle_heads = np.argwhere(drainage.channel_head_mask[8:14, :])
+    assert steep_heads.size > 0
+    assert gentle_heads.size > 0
+    assert int(np.min(steep_heads[:, 1])) < int(np.min(gentle_heads[:, 1]))
+    assert np.all(drainage.incision_m[drainage.channel_head_mask] > 0.0)
 
 
 def test_large_downstream_valley_has_broader_shoulders_than_its_headwaters() -> None:
