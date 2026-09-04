@@ -50,6 +50,12 @@ layers are derived products that can be rebuilt and inspected independently.
 
 ### 1. Make terrain builds durable and reproducible
 
+The first local build slice is implemented: headless project builds preserve
+numeric NPY arrays, both previews, spatial diagnostics and a versioned manifest.
+See the [build guide](../terrain-builds.md). It records the existing endpoint
+grid and explicitly leaves world CRS/planetary radius unspecified; the steps
+below still govern georeferenced output and independently seeded future stages.
+
 - Define source-world origin, planetary model, working projection, raster
   registration and effective process spacing before freezing georeferenced
   outputs. The current object-width local plane is not a world CRS contract.

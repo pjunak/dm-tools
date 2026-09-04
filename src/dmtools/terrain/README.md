@@ -19,6 +19,12 @@ validation and generation run on background workers with progress reporting.
 The result is previewed and can be exported as a transparent colour-relief PNG.
 The same window can save and open authored `.dmterrain.json` projects.
 
+For saved projects, `dmtools terrain build PROJECT --output NEW_DIRECTORY`
+uses the same pipeline without opening the GUI. It saves the Float32 DEM,
+mask, coordinates, both PNG styles, diagnostics and a completion manifest.
+See the [numeric build guide](../../../docs/terrain-builds.md). The coordinate
+model remains the local SVG plane; world-georeferenced GeoTIFF is still planned.
+
 [`examples/terrain/example.dmterrain.json`](../../../examples/terrain/example.dmterrain.json)
 is a small public project for trying the complete workflow; its referenced
 [`coastline.svg`](../../../examples/terrain/coastline.svg) can also be imported
@@ -298,6 +304,7 @@ A successful build is expected to produce:
 
 | Module | Responsibility |
 |---|---|
+| `application/` | Shared saved-project build operation and completion checks |
 | `domain/` | Units, coordinates, constraints, profiles, grids, manifests, and ports |
 | `pipeline/` | Deterministic stage orchestration and refinement rules |
 | `adapters/` | File formats, GIS libraries, renderers, and optional engines |
@@ -309,7 +316,7 @@ them only when an implemented behavior needs them.
 
 The next end-to-end work should deliberately remain staged:
 
-1. Define the build-manifest schema for generated artifacts.
+1. Extend the implemented local build manifest with an accepted world-coordinate contract.
 2. Define elevation profiles and asymmetric side slopes along ridge and valley
    structures.
 3. Persist the Float32 DEM as GeoTIFF with explicit coordinate metadata.

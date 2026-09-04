@@ -30,6 +30,10 @@ from dmtools.terrain.pipeline.profile import shape_preserving_profile
 
 type ProgressCallback = Callable[[float, str], None]
 
+GENERATOR_ALGORITHM_ID = "coastline-constraint-terrain@1"
+AUTOMATIC_VALLEY_ALGORITHM_ID = "canonical-mfd-d8-valleys@1"
+NOISE_ALGORITHM_ID = "coordinate-value-noise-normalized@1"
+
 
 @dataclass(frozen=True, slots=True)
 class GeneratedTerrain:
@@ -43,6 +47,7 @@ class GeneratedTerrain:
     constraints: tuple[TerrainConstraint, ...]
     source_name: str
     drainage: DrainageDiagnostics
+    routing_grid_shape: tuple[int, int]
 
     @property
     def width(self) -> int:
@@ -1203,4 +1208,5 @@ def generate_terrain(
         constraints=authored_constraints,
         source_name=coastline.source_name,
         drainage=drainage,
+        routing_grid_shape=(automatic_valleys.y_km.size, automatic_valleys.x_km.size),
     )

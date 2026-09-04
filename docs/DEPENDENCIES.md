@@ -4,7 +4,8 @@ The first terrain vertical slice uses the following runtime dependencies. The
 version range in `pyproject.toml` is authoritative; versions below are the
 minimum accepted versions when the dependency was adopted.
 
-This register lists packages and data actually used at runtime. Evaluated
+This register lists adopted runtime packages and data, plus development-only
+validation tooling below. Evaluated
 candidates remain in [dated research](research/README.md) and the
 [current strategy](strategy/README.md) until an implementation has an immediate
 need, supported-platform validation, and a completed license review.
@@ -24,6 +25,15 @@ Primary references:
 - [Pillow licensing](https://github.com/python-pillow/Pillow/blob/main/LICENSE)
 - [Shapely project documentation](https://shapely.readthedocs.io/)
 - [svgelements package page](https://pypi.org/project/svgelements/)
+
+## Development-only schema validation
+
+`jsonschema >=4.25,<5` (MIT) validates the new build manifest and its project
+schema reference in tests. Version 4.26.0 and its dependency stack were verified
+on Windows / CPython 3.14.7. It is installed through the `dev` extra and is not
+needed by the build command or desktop runtime. Its `referencing` dependency
+provides the offline schema registry used by those tests.
+See the [validator documentation](https://python-jsonschema.readthedocs.io/en/stable/validate/).
 
 ## Vendored data assets
 

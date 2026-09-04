@@ -18,6 +18,8 @@ preview it as colour relief, and export the preview as a transparent PNG. Every
 authoring tool keeps its own mode, value, and width while the user switches
 tools. Authored work can be saved and reopened as a versioned
 `.dmterrain.json` project.
+The headless build command also saves numeric elevations, both preview styles,
+spatial measurements and a versioned provenance manifest in a new directory.
 
 ## Requirements
 
@@ -72,14 +74,17 @@ Authored vector constraints and configuration remain inputs. A floating-point
 raster DEM is the authoritative generated elevation surface. Contours, drainage,
 hillshade, colour relief, and future meshes are derived products.
 
-The future non-interactive command will consume the same versioned project used
-by the workbench and is expected to resemble:
+Build the same saved project without opening the workbench:
 
 ```powershell
-dmtools terrain build examples/terrain/minimal/continent.dmterrain.json
+dmtools terrain build examples/terrain/example.dmterrain.json --output artifacts/example-build
 ```
 
-The accepted version-1 contract is published in
+Read the [numeric build guide](docs/terrain-builds.md) for products, coordinate
+limits, diagnostics and completion checks. The current build uses lossless NPY
+arrays in the existing local SVG plane; world-georeferenced GeoTIFF is planned.
+
+The accepted version-1 project contract is published in
 [`schemas/terrain/project-v1.schema.json`](schemas/terrain/project-v1.schema.json).
 
 ## Repository layout

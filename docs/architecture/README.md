@@ -45,9 +45,11 @@ The current implemented path is:
 5. Condition generated valley floors and calculate finite-value, coastline,
    constraint, basin, and drainage diagnostics.
 6. Return the Float32 DEM in memory and derive the workbench colour preview and
-   PNG export.
+   PNG export. The shared headless application operation also writes numeric
+   NPY arrays, both preview styles, spatial measurements and a completion
+   manifest using the existing local-coordinate model.
 
-The target durable build adds a versioned manifest, GeoTIFF, headless command,
+The next durable-build work adds world georeferencing, GeoTIFF,
 derived GIS products, explicit hard/soft/inequality projection after optional
 processes, and regional-refinement validation. Climate and ecological products
 are a later derived system that consumes accepted terrain and global world
@@ -60,7 +62,7 @@ randomness, time, environment settings, or coordinate assumptions implicitly.
 
 The first useful interface is a Tk/ttk desktop workbench launched through the
 CLI. It maps controls to typed domain settings, then delegates to the same
-pipeline and adapters that a future non-interactive build operation will use.
+pipeline and adapters used by the non-interactive build operation.
 A future HTTP service can call those operations while adding job management,
 storage, authentication, and resource limits outside the engine.
 
@@ -77,7 +79,7 @@ layer or path boundaries.
 
 ## Deferred decisions
 
-- Build-manifest schema details and project migration tooling
+- World-georeferenced build contracts and project migration tooling
 - Elevation profiles and asymmetric side slopes along structural lines
 - Authored lake, outlet, endorheic-basin, and depression-policy semantics
 - Public drainage/catchment products and external hydrology validation boundary

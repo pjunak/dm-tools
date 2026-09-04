@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:dmtools:schema:terrain-build:1",
+  "title": "DM Tools local terrain build version 1",
+  "description": "Completion manifest for a local SVG-plane numeric build. Verify product hashes before consumption; this is not a world CRS or GeoTIFF contract.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "schema_version", "status", "build_id", "inputs", "settings", "runtime", "algorithms", "coordinates", "routing_grid", "outputs", "warnings"],
+  "properties": {
+    "schema": {"const": "dmtools.terrain-build"},
+    "schema_version": {"const": 1},
+    "status": {"const": "complete"},
+    "build_id": {"$ref": "#/$defs/hash"},
+    "inputs": {
+      "type": "object", "additionalProperties": false,
+      "required": ["project_sha256", "svg_sha256", "project_schema_version"],
+      "properties": {
+        "project_sha256": {"$ref": "#/$defs/hash"},
+        "svg_sha256": {"$ref": "#/$defs/hash"},
+        "project_schema_version": {"const": 1}
+      }
+    },
+    "settings": {"$ref": "urn:dmtools:schema:terrain-project:1#/$defs/generatorSettings"},
+    "runtime": {
+      "type": "object", "additionalProperties": false,
+      "required": ["dmtools_version", "package_source_sha256", "python", "implementation", "platform", "machine", "byteorder", "dependencies", "geos"],
+      "properties": {
+        "dmtools_version": {"type": "string"},
+        "package_source_sha256": {"$ref": "#/$defs/hash"},
+        "python": {"type": "string"},
+        "implementation": {"type": "string"},
+        "platform": {"type": "string"},
+        "machine": {"type": "string"},
+        "byteorder": {"enum": ["little", "big"]},
+        "geos": {"type": "string"},
+        "dependencies": {
+          "type": "object", "additionalProperties": false,
+          "required": ["numpy", "Pillow", "shapely", "svgelements"],
+          "properties": {
+            "numpy": {"type": "string"}, "Pillow": {"type": "string"},
+            "shapely": {"type": "string"}, "svgelements": {"type": "string"}
+          }
+        }
+      }
+    },
+    "algorithms": {
+      "type": "object", "additionalProperties": false,
+      "required": ["generator", "automatic_valleys", "noise", "drainage_diagnostics", "seed_policy", "full_detail_seed", "macro_detail_seed"],
+      "properties": {
+        "generator": {"type": "string", "minLength": 1},
+        "automatic_valleys": {"type": "string", "minLength": 1},
+        "noise": {"type": "string", "minLength": 1},
+        "drainage_diagnostics": {"type": "string", "minLength": 1},
+        "seed_policy": {"const": "legacy-shared-coordinate-seed@1"},
+        "full_detail_seed": {"type": "integer", "minimum": 0, "maximum": 4294967295},
+        "macro_detail_seed": {"type": "integer", "minimum": 0, "maximum": 4294967295}
+      }
+    },
+    "coordinates": {
+      "type": "object", "additionalProperties": false,
+      "required": ["model", "world_crs", "planetary_radius_m", "source_bounds", "km_per_source_unit", "origin", "x_direction", "y_direction", "registration", "horizontal_units", "elevation_units", "elevation_dtype", "nodata", "extent_km", "width", "height", "x_spacing_km", "y_spacing_km"],
+      "properties": {
+        "model": {"const": "local-svg-plane@1"},
+        "world_crs": {"type": "null"},
+        "planetary_radius_m": {"type": "null"},
+        "source_bounds": {"$ref": "#/$defs/bounds"},
+        "km_per_source_unit": {"$ref": "#/$defs/positive"},
+        "origin": {"const": "minimum source x and y"},
+        "x_direction": {"const": "source-right"},
+        "y_direction": {"const": "source-down"},
+        "registration": {"const": "endpoint-nodes"},
+        "horizontal_units": {"const": "km"},
+        "elevation_units": {"const": "m"},
+        "elevation_dtype": {"const": "float32"},
+        "nodata": {"const": "NaN outside land mask"},
+        "extent_km": {"$ref": "#/$defs/bounds"},
+        "width": {"type": "integer", "minimum": 2},
+        "height": {"type": "integer", "minimum": 2},
+        "x_spacing_km": {"$ref": "#/$defs/positive"},
+        "y_spacing_km": {"$ref": "#/$defs/positive"}
+      }
+    },
+    "routing_grid": {
+      "type": "object", "additionalProperties": false,
+      "required": ["width", "height", "x_spacing_km", "y_spacing_km"],
+      "properties": {
+        "width": {"type": "integer", "minimum": 3},
+        "height": {"type": "integer", "minimum": 3},
+        "x_spacing_km": {"$ref": "#/$defs/positive"},
+        "y_spacing_km": {"$ref": "#/$defs/positive"}
+      }
+    },
+    "outputs": {
+      "type": "object", "additionalProperties": false,
+      "required": ["elevation.npy", "land-mask.npy", "x-km.npy", "y-km.npy", "inputs.json", "diagnostics.json", "cartographic.png", "scientific.png"],
+      "properties": {
+        "elevation.npy": {"$ref": "#/$defs/product"},
+        "land-mask.npy": {"$ref": "#/$defs/product"},
+        "x-km.npy": {"$ref": "#/$defs/product"},
+        "y-km.npy": {"$ref": "#/$defs/product"},
+        "inputs.json": {"$ref": "#/$defs/product"},
+        "diagnostics.json": {"$ref": "#/$defs/product"},
+        "cartographic.png": {"$ref": "#/$defs/product"},
+        "scientific.png": {"$ref": "#/$defs/product"}
+      }
+    },
+    "warnings": {"type": "array", "items": {"type": "string"}}
+  },
+  "$defs": {
+    "hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "positive": {"type": "number", "exclusiveMinimum": 0},
+    "bounds": {"type": "array", "items": {"type": "number"}, "minItems": 4, "maxItems": 4},
+    "product": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sha256", "bytes", "role"],
+      "properties": {
+        "sha256": {"$ref": "#/$defs/hash"},
+        "bytes": {"type": "integer", "minimum": 1},
+        "role": {"enum": ["authoritative", "input-snapshot", "derived"]}
+      }
+    }
+  }
+}

@@ -1,0 +1,105 @@
+# Build and inspect numeric terrain
+
+Generate a saved project without opening the desktop workbench:
+
+```powershell
+.\.venv\Scripts\dmtools.exe terrain build examples/terrain/example.dmterrain.json --output artifacts/example-build
+```
+
+Choose a **new output directory** for every build. The command rejects an
+existing file or directory and returns a nonzero exit code on failure. It
+uses the project's saved settings and constraints with the same generator as
+the workbench. No input file or generator setting is changed.
+
+## Products
+
+| File | Meaning |
+|---|---|
+| `elevation.npy` | Authoritative little-endian Float32 elevations in metres; NaN outside land |
+| `land-mask.npy` | Authoritative boolean land membership, separate from zero elevation |
+| `x-km.npy`, `y-km.npy` | Authoritative Float64 coordinate vectors in kilometres |
+| `inputs.json` | Effective input snapshot including dissolved geometry, settings, constraints and authoring state |
+| `cartographic.png`, `scientific.png` | The two existing display styles derived from this DEM |
+| `diagnostics.json` | Delivered-surface quality measurements and separately labelled canonical drainage diagnostics |
+| `manifest.json` | Completion record, input/runtime identities, coordinates, output sizes and SHA-256 hashes |
+
+The NPY files contain numeric arrays only and need no pickle loading. They are
+a local numeric format, not GeoTIFF. The current plane maps the longest SVG
+dimension to the authored object size, with x increasing right and y increasing
+down. Samples include both extent endpoints. World CRS and planetary radius
+are explicitly unspecified. Do not import these arrays as longitude/latitude
+or assume they already follow a campaign world's projection.
+
+Example numeric inspection from the repository root:
+
+```python
+from pathlib import Path
+import numpy as np
+
+build = Path("artifacts/example-build")
+elevation_m = np.load(build / "elevation.npy", allow_pickle=False)
+land = np.load(build / "land-mask.npy", allow_pickle=False)
+x_km = np.load(build / "x-km.npy", allow_pickle=False)
+y_km = np.load(build / "y-km.npy", allow_pickle=False)
+print(elevation_m.dtype, elevation_m.shape)
+print(float(elevation_m[land].min()), float(elevation_m[land].max()))
+```
+
+`inputs.json` is for provenance; it is not accepted by **Open project**.
+Retain the original `.dmterrain.json` and its SVG to regenerate through the
+supported loader. Portable project bundles remain separate future work.
+
+## Read the diagnostics
+
+`delivered_surface_quality` measures the saved output grid. Elevation minimum,
+maximum, mean and standard deviation use valid land samples with equal weight;
+they are not area-weighted estimates. Directional records report:
+
+- requested distance and effective rounded distance in kilometres;
+- axis and integer lag in sample intervals;
+- number of supported sample pairs;
+- average absolute height difference in metres; and
+- semivariance in square metres, half the mean squared height difference.
+
+The current requested distances are 25, 100 and 400 km. Each axis rounds
+independently to the nearest interval, with half intervals rounding upward
+and a minimum of one interval. No interpolation or detrending is performed.
+Every sample along the pair's axis-aligned segment must be land; comparisons
+cannot jump across a masked coast or hole. An unsupported lag has zero pairs
+and null statistics. Zero semivariance with supported pairs means equal
+heights, which is different from insufficient support.
+
+Use the effective distances and pair counts when comparing grids. A 25 km
+request cannot measure 25 km structure on a grid spaced 60 km apart. These
+raw axis measurements distinguish orientation and spatial disorder; they are
+not a complete landform classifier or a realism score.
+
+`canonical_drainage` evaluates the separate existing diagnostic grid. Its
+dimensions and spacing are recorded, as is the automatic routing grid in the
+manifest. Neither becomes finer merely because output resolution increases.
+
+## Completion and reproducibility
+
+Only a successfully published `manifest.json` marks completion. Failed builds
+can retain partial files or `.manifest.pending`; use a new directory when
+retrying. Source edits detected during a build abort completion. The source
+project, SVG and installed Python package files are fingerprinted; runtime and
+dependency versions are recorded. No network service is needed to build.
+
+Consumers must validate the manifest and verify product hashes. The public
+[build schema](../schemas/terrain/build-v1.schema.json) references the existing
+project schema by its `urn:dmtools:schema:terrain-project:1` ID; register both
+schemas locally when validating, without fetching remote references.
+
+The build ID is SHA-256 of the manifest serialized with sorted keys, two-space
+indentation, default JSON ASCII escaping and a trailing newline, excluding
+the `build_id` field itself. It includes product hashes and excludes timestamps
+and destination paths. Two runs of identical inputs, installed source and
+runtime should reproduce the same files and ID. Changing display code can
+change this identity even when DEM samples remain equal; compare the
+`elevation.npy` hash to distinguish that case. These records do not guarantee
+cross-platform bitwise equality or archive dependency binaries.
+
+See [ADR-0024](adr/0024-publish-local-numeric-terrain-builds.md) for the accepted
+scope and the [development strategy](strategy/README.md) for world-coordinate,
+GeoTIFF and terrain-algorithm work that follows.

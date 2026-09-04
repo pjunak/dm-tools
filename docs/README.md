@@ -12,6 +12,8 @@
    [terrain tool roadmap](../TODO.md).
 5. For public file contracts and runnable inputs, see
    [schemas](../schemas/README.md) and [examples](../examples/README.md).
+6. To generate and compare numeric output, use the
+   [headless build guide](terrain-builds.md).
 
 ## Document roles and authority
 

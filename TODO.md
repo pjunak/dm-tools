@@ -28,16 +28,21 @@ preview, and PNG export. Those are not repeated below as unfinished work.
 
 ### Durable data and output products
 
-- [ ] **P0 — Define the versioned build manifest.** Record project and input
+- [x] **P0 — Define the versioned build manifest.** Record project and input
   hashes, generator and schema versions, master and stage seeds, effective
   parameters, working extent and units, runtime/dependency versions, warnings,
   and authoritative output hashes.
+  Version 1 now accompanies local numeric builds, with explicit legacy shared
+  seeds and null world CRS/planetary radius. World georeferencing and separate
+  stage-seed derivation remain follow-up compatibility work.
 - [ ] **P0 — Export the authoritative Float32 DEM as GeoTIFF.** Include an
   explicit metric coordinate system, extent, pixel size, elevation units,
   nodata value, and a link to the build manifest.
-- [ ] **P1 — Add a non-interactive build command.** Let
+- [x] **P1 — Add a non-interactive build command.** Let
   `dmtools terrain build <project.dmterrain.json>` use the same domain,
   pipeline, and adapters as the desktop workbench.
+  Implemented with required `--output NEW_DIRECTORY`, lossless NPY arrays,
+  both existing preview styles, diagnostics and completion-last publication.
 - [ ] **P1 — Derive contour vectors from a completed DEM.** Make interval,
   index-contour cadence, smoothing, and minimum feature size explicit; identify
   the source DEM in metadata.
@@ -285,6 +290,9 @@ landscape-process spikes. It is working research, not an accepted architecture.
 - [ ] **P0 — Lock algorithm and stage identifiers before long-lived builds.**
   Parameter, solver, stage-order, or seed-derivation changes must be visible in
   the build manifest and regression fixtures.
+  The first local-build manifest records baseline generator, noise, automatic
+  valley and diagnostic IDs plus installed-source hashes. Independent named
+  stage seeds and a broader stage-by-stage correction report remain.
 - [ ] **P1 — Generate refinement halos and crop final tiles.** Evaluate all
   neighbourhood-dependent solvers and erosion on buffered bounds to avoid
   seams, then verify overlap and downsample consistency numerically.
@@ -316,6 +324,9 @@ Priorities remain conditional on the current strategy's prerequisites.
   257-sample drainage and 129-sample diagnostic grids in the build report;
   flag landforms too small to resolve. Define versioned process resolution
   independently of PNG pixels and test small-island/coastal-channel coverage.
+  Local build manifests now expose actual routing, diagnostic and output grid
+  spacing. Feature-resolution warnings and a public process-resolution control
+  remain unfinished.
 - [ ] **Research — R03: Define point samples versus cell averages.** Choose
   raster registration, integration/resampling, and anti-aliasing policy. Test
   coordinate round trips and parent restriction separately from existing
@@ -517,6 +528,9 @@ Priorities remain conditional on the current strategy's prerequisites.
   lag distances, mask support and explicit detrending. Separate orientation
   agreement from rotation-normalized character. Include identical-histogram
   ramp/shuffle fixtures so distribution matching cannot masquerade as realism.
+  Local builds now report masked X/Y semivariances and height differences at
+  requested 25/100/400 km lags, including effective rounded distances and pair
+  counts. Rotation-normalized, arbitrary-angle and detrended comparisons remain.
 - [ ] **Research — R42: Type terrain and drainage graph relationships.** Keep
   authored lines, morphological ridges/thalwegs, divides and active channels
   distinct, with source-surface and depression-policy provenance. Compare
