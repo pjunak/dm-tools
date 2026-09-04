@@ -28,6 +28,39 @@ class DrainageIncision:
     detail_suppression: NDArray[np.float64]
 
 
+@dataclass(frozen=True, slots=True)
+class DrainageDiagnostics:
+    """Compact drainage measurements derived from a completed terrain surface."""
+
+    algorithm_id: str
+    grid_width: int
+    grid_height: int
+    x_spacing_km: float
+    y_spacing_km: float
+    fill_tolerance_m: float
+    land_cell_count: int
+    outlet_cell_count: int
+    potential_sink_cell_count: int
+    directly_connected_land_cell_count: int
+    depression_cell_count: int
+    maximum_fill_depth_m: float
+    depression_fill_volume_km3: float
+    largest_outlet_catchment_km2: float
+
+
+def _outlet_mask(land_mask: NDArray[np.bool_]) -> NDArray[np.bool_]:
+    padded = np.pad(land_mask, 1, mode="constant", constant_values=False)
+    surrounded_by_land = land_mask.copy()
+    for row_offset, column_offset in _NEIGHBOURS:
+        row_slice = slice(1 + row_offset, 1 + row_offset + land_mask.shape[0])
+        column_slice = slice(
+            1 + column_offset,
+            1 + column_offset + land_mask.shape[1],
+        )
+        surrounded_by_land &= padded[row_slice, column_slice]
+    return land_mask & ~surrounded_by_land
+
+
 def priority_flood_surface(
     elevation_m: NDArray[np.float64],
     land_mask: NDArray[np.bool_],
@@ -50,16 +83,9 @@ def priority_flood_surface(
     visited = np.zeros_like(land_mask)
     queue: list[tuple[float, int, int]] = []
 
-    for row, column in np.argwhere(land_mask):
-        is_outlet = row in (0, height - 1) or column in (0, width - 1)
-        if not is_outlet:
-            is_outlet = any(
-                not land_mask[row + row_offset, column + column_offset]
-                for row_offset, column_offset in _NEIGHBOURS
-            )
-        if is_outlet:
-            visited[row, column] = True
-            heappush(queue, (float(filled[row, column]), int(row), int(column)))
+    for row, column in np.argwhere(_outlet_mask(land_mask)):
+        visited[row, column] = True
+        heappush(queue, (float(filled[row, column]), int(row), int(column)))
 
     if np.any(land_mask) and not queue:
         raise ValueError("Land mask has no edge or coastline outlet.")
@@ -164,21 +190,49 @@ def steepest_flow_accumulation(
 ) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
     """Return D8 contributing area and receiver slope for a unique flow tree."""
 
+    receivers, receiver_slope = steepest_flow_receivers(
+        routing_elevation_m,
+        land_mask,
+        x_spacing_km=x_spacing_km,
+        y_spacing_km=y_spacing_km,
+    )
+
+    cell_area_km2 = x_spacing_km * y_spacing_km
+    accumulation = np.where(land_mask, cell_area_km2, 0.0).astype(np.float64)
+    flat_indices = np.flatnonzero(land_mask)
+    order = flat_indices[
+        np.argsort(-routing_elevation_m.ravel()[flat_indices], kind="stable")
+    ]
+    flat_receivers = receivers.ravel()
+    flat_accumulation = accumulation.ravel()
+    for flat_index in order:
+        receiver = int(flat_receivers[flat_index])
+        if receiver >= 0:
+            flat_accumulation[receiver] += flat_accumulation[flat_index]
+
+    return accumulation, receiver_slope
+
+
+def steepest_flow_receivers(
+    routing_elevation_m: NDArray[np.float64],
+    land_mask: NDArray[np.bool_],
+    *,
+    x_spacing_km: float,
+    y_spacing_km: float,
+) -> tuple[NDArray[np.int64], NDArray[np.float64]]:
+    """Return each cell's steepest lower D8 receiver and corresponding slope."""
+
     if routing_elevation_m.shape != land_mask.shape or routing_elevation_m.ndim != 2:
         raise ValueError("Routing elevation and land mask must be equally shaped 2D arrays.")
     if x_spacing_km <= 0.0 or y_spacing_km <= 0.0:
         raise ValueError("Grid spacing must be positive.")
 
-    _height, width = routing_elevation_m.shape
-    cell_area_km2 = x_spacing_km * y_spacing_km
-    accumulation = np.where(land_mask, cell_area_km2, 0.0).astype(np.float64)
+    height, width = routing_elevation_m.shape
+    receivers = np.full(routing_elevation_m.shape, -1, dtype=np.int64)
     receiver_slope = np.zeros_like(routing_elevation_m)
     flat_indices = np.flatnonzero(land_mask)
-    order = flat_indices[
-        np.argsort(-routing_elevation_m.ravel()[flat_indices], kind="stable")
-    ]
 
-    for flat_index in order:
+    for flat_index in flat_indices:
         row, column = divmod(int(flat_index), width)
         current_height = float(routing_elevation_m[row, column])
         receiver: tuple[int, int] | None = None
@@ -187,7 +241,7 @@ def steepest_flow_accumulation(
             neighbour_row = row + row_offset
             neighbour_column = column + column_offset
             if not (
-                0 <= neighbour_row < routing_elevation_m.shape[0]
+                0 <= neighbour_row < height
                 and 0 <= neighbour_column < width
                 and land_mask[neighbour_row, neighbour_column]
             ):
@@ -208,10 +262,95 @@ def steepest_flow_accumulation(
         if receiver is None:
             continue
         receiver_row, receiver_column = receiver
-        accumulation[receiver_row, receiver_column] += accumulation[row, column]
+        receivers[row, column] = receiver_row * width + receiver_column
         receiver_slope[row, column] = steepest_slope
 
-    return accumulation, receiver_slope
+    return receivers, receiver_slope
+
+
+def drainage_diagnostics(
+    elevation_m: NDArray[np.float64],
+    land_mask: NDArray[np.bool_],
+    *,
+    x_spacing_km: float,
+    y_spacing_km: float,
+    fill_tolerance_m: float = 0.01,
+) -> DrainageDiagnostics:
+    """Measure direct sea connectivity and required depression conditioning."""
+
+    if elevation_m.shape != land_mask.shape or elevation_m.ndim != 2:
+        raise ValueError("Elevation and land mask must be equally shaped 2D arrays.")
+    if fill_tolerance_m < 0.0:
+        raise ValueError("Fill tolerance must not be negative.")
+    if np.any(land_mask & ~np.isfinite(elevation_m)):
+        raise ValueError("Land elevations must be finite before drainage analysis.")
+
+    outlets = _outlet_mask(land_mask)
+    receivers, _slopes = steepest_flow_receivers(
+        elevation_m,
+        land_mask,
+        x_spacing_km=x_spacing_km,
+        y_spacing_km=y_spacing_km,
+    )
+    flat_land = np.flatnonzero(land_mask)
+    ascending = flat_land[
+        np.argsort(elevation_m.ravel()[flat_land], kind="stable")
+    ]
+    connected = outlets.ravel().copy()
+    flat_receivers = receivers.ravel()
+    for flat_index in ascending:
+        receiver = int(flat_receivers[flat_index])
+        if receiver >= 0:
+            connected[flat_index] = connected[receiver]
+
+    potential_sinks = land_mask.ravel() & ~outlets.ravel() & (flat_receivers < 0)
+    filled = priority_flood_surface(elevation_m, land_mask)
+    fill_depth_m = np.where(land_mask, np.maximum(filled - elevation_m, 0.0), 0.0)
+    significant_fill = fill_depth_m > fill_tolerance_m
+    conditioned_receivers, _conditioned_slopes = steepest_flow_receivers(
+        filled,
+        land_mask,
+        x_spacing_km=x_spacing_km,
+        y_spacing_km=y_spacing_km,
+    )
+    conditioned_connected = outlets.ravel().copy()
+    flat_conditioned_receivers = conditioned_receivers.ravel()
+    conditioned_ascending = flat_land[
+        np.argsort(filled.ravel()[flat_land], kind="stable")
+    ]
+    for flat_index in conditioned_ascending:
+        receiver = int(flat_conditioned_receivers[flat_index])
+        if receiver >= 0:
+            conditioned_connected[flat_index] = conditioned_connected[receiver]
+    if np.any(land_mask.ravel() & ~conditioned_connected):
+        raise RuntimeError("Conditioned diagnostic surface does not reach an outlet.")
+
+    conditioned_accumulation, _conditioned_slope = steepest_flow_accumulation(
+        filled,
+        land_mask,
+        x_spacing_km=x_spacing_km,
+        y_spacing_km=y_spacing_km,
+    )
+    cell_area_km2 = x_spacing_km * y_spacing_km
+    fill_volume_km3 = float(np.sum(fill_depth_m)) * cell_area_km2 / 1_000.0
+    return DrainageDiagnostics(
+        algorithm_id="canonical-d8-priority-flood-diagnostics@1",
+        grid_width=elevation_m.shape[1],
+        grid_height=elevation_m.shape[0],
+        x_spacing_km=x_spacing_km,
+        y_spacing_km=y_spacing_km,
+        fill_tolerance_m=fill_tolerance_m,
+        land_cell_count=int(np.count_nonzero(land_mask)),
+        outlet_cell_count=int(np.count_nonzero(outlets)),
+        potential_sink_cell_count=int(np.count_nonzero(potential_sinks)),
+        directly_connected_land_cell_count=int(np.count_nonzero(land_mask.ravel() & connected)),
+        depression_cell_count=int(np.count_nonzero(significant_fill)),
+        maximum_fill_depth_m=float(np.max(fill_depth_m, initial=0.0)),
+        depression_fill_volume_km3=fill_volume_km3,
+        largest_outlet_catchment_km2=float(
+            np.max(conditioned_accumulation[outlets], initial=0.0)
+        ),
+    )
 
 
 def _masked_smooth(

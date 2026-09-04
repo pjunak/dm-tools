@@ -20,7 +20,11 @@ from dmtools.terrain.domain import (
     TerrainConstraint,
     TerrainSettings,
 )
-from dmtools.terrain.pipeline.hydrology import drainage_incision
+from dmtools.terrain.pipeline.hydrology import (
+    DrainageDiagnostics,
+    drainage_diagnostics,
+    drainage_incision,
+)
 from dmtools.terrain.pipeline.noise import fractal_value_noise
 from dmtools.terrain.pipeline.profile import shape_preserving_profile
 
@@ -38,6 +42,7 @@ class GeneratedTerrain:
     settings: TerrainSettings
     constraints: tuple[TerrainConstraint, ...]
     source_name: str
+    drainage: DrainageDiagnostics
 
     @property
     def width(self) -> int:
@@ -1013,6 +1018,97 @@ def _prepare_downstream_valley_profiles(
     return tuple(prepared)
 
 
+def _evaluate_elevation_samples(
+    x_grid: NDArray[np.float64],
+    y_grid: NDArray[np.float64],
+    polygon: LandGeometry,
+    boundary: Any,
+    settings: TerrainSettings,
+    constraints: tuple[_MetricConstraint, ...],
+    automatic_valleys: _AutomaticValleyField,
+) -> tuple[NDArray[np.float64], NDArray[np.bool_]]:
+    """Evaluate the complete terrain pipeline at arbitrary metric coordinates."""
+
+    land_mask = np.asarray(
+        shapely.intersects_xy(polygon, x_grid, y_grid),
+        dtype=np.bool_,
+    )
+    points: Any = shapely.points(x_grid, y_grid)
+    raw_distance_to_coast = cast(Any, shapely.distance(points, boundary))
+    distance_to_coast = cast(
+        NDArray[np.float64],
+        np.asarray(raw_distance_to_coast, dtype=np.float64),
+    )
+    unconditioned_elevation, macro_elevation, relief_noise = _base_elevation_fields(
+        x_grid,
+        y_grid,
+        distance_to_coast,
+        settings,
+    )
+    automatic_incision = automatic_valleys.sample_incision(x_grid, y_grid)
+    automatic_detail_suppression = automatic_valleys.sample_detail_suppression(
+        x_grid,
+        y_grid,
+    )
+    residual_detail = unconditioned_elevation - macro_elevation
+    macro_elevation = np.maximum(macro_elevation - automatic_incision, 0.0)
+    unconditioned_elevation = np.maximum(
+        macro_elevation + residual_detail * (1.0 - automatic_detail_suppression),
+        0.0,
+    )
+    if constraints:
+        conditioned_elevation, constraint_influence = _apply_constraints(
+            macro_elevation,
+            points,
+            distance_to_coast,
+            constraints,
+            settings.largest_feature_km,
+            settings.maximum_elevation_m,
+            relief_noise,
+        )
+        residual_detail = unconditioned_elevation - macro_elevation
+        elevation = conditioned_elevation + residual_detail * (1.0 - constraint_influence)
+        elevation = np.clip(elevation, 0.0, settings.maximum_elevation_m)
+    else:
+        elevation = unconditioned_elevation
+    return np.where(land_mask, elevation, 0.0), land_mask
+
+
+def _prepare_drainage_diagnostics(
+    polygon: LandGeometry,
+    boundary: Any,
+    width_km: float,
+    height_km: float,
+    constraints: tuple[_MetricConstraint, ...],
+    automatic_valleys: _AutomaticValleyField,
+    settings: TerrainSettings,
+) -> DrainageDiagnostics:
+    """Measure the completed terrain on a fixed resolution-independent grid."""
+
+    longest_km = max(width_km, height_km)
+    diagnostic_longest_cells = 129
+    width = max(3, round(diagnostic_longest_cells * width_km / longest_km))
+    height = max(3, round(diagnostic_longest_cells * height_km / longest_km))
+    x_km = np.linspace(0.0, width_km, width, dtype=np.float64)
+    y_km = np.linspace(0.0, height_km, height, dtype=np.float64)
+    x_grid, y_grid = np.meshgrid(x_km, y_km)
+    elevation_m, land_mask = _evaluate_elevation_samples(
+        x_grid,
+        y_grid,
+        polygon,
+        boundary,
+        settings,
+        constraints,
+        automatic_valleys,
+    )
+    return drainage_diagnostics(
+        elevation_m,
+        land_mask,
+        x_spacing_km=width_km / (width - 1),
+        y_spacing_km=height_km / (height - 1),
+    )
+
+
 def generate_terrain(
     coastline: Coastline,
     settings: TerrainSettings,
@@ -1061,53 +1157,32 @@ def generate_terrain(
     for start in range(0, height, chunk_rows):
         stop = min(start + chunk_rows, height)
         x_grid, y_grid = np.meshgrid(x_km, y_km[start:stop])
-        chunk_mask = shapely.intersects_xy(polygon, x_grid, y_grid)
-        points: Any = shapely.points(x_grid, y_grid)
-        raw_distance_to_coast = cast(Any, shapely.distance(points, boundary))
-        distance_to_coast = cast(
-            NDArray[np.float64], np.asarray(raw_distance_to_coast, dtype=np.float64)
-        )
-        unconditioned_elevation, macro_elevation, relief_noise = _base_elevation_fields(
+        chunk_elevation, chunk_mask = _evaluate_elevation_samples(
             x_grid,
             y_grid,
-            distance_to_coast,
+            polygon,
+            boundary,
             settings,
+            metric_constraints,
+            automatic_valleys,
         )
-        automatic_incision = automatic_valleys.sample_incision(x_grid, y_grid)
-        automatic_detail_suppression = automatic_valleys.sample_detail_suppression(
-            x_grid,
-            y_grid,
-        )
-        residual_detail = unconditioned_elevation - macro_elevation
-        macro_elevation = np.maximum(macro_elevation - automatic_incision, 0.0)
-        unconditioned_elevation = np.maximum(
-            macro_elevation
-            + residual_detail * (1.0 - automatic_detail_suppression),
-            0.0,
-        )
-        if metric_constraints:
-            conditioned_elevation, constraint_influence = _apply_constraints(
-                macro_elevation,
-                points,
-                distance_to_coast,
-                metric_constraints,
-                settings.largest_feature_km,
-                settings.maximum_elevation_m,
-                relief_noise,
-            )
-            residual_detail = unconditioned_elevation - macro_elevation
-            chunk_elevation = conditioned_elevation + residual_detail * (
-                1.0 - constraint_influence
-            )
-            chunk_elevation = np.clip(chunk_elevation, 0.0, settings.maximum_elevation_m)
-        else:
-            chunk_elevation = unconditioned_elevation
         chunk_elevation = np.where(chunk_mask, chunk_elevation, np.nan)
 
         elevation[start:stop] = chunk_elevation.astype(np.float32)
         mask[start:stop] = chunk_mask
         completed = stop / height
         _report(progress, 0.08 + 0.82 * completed, "Building elevation field")
+
+    _report(progress, 0.92, "Checking drainage connectivity")
+    drainage = _prepare_drainage_diagnostics(
+        polygon,
+        boundary,
+        width_km,
+        height_km,
+        metric_constraints,
+        automatic_valleys,
+        settings,
+    )
 
     _report(progress, 0.94, "Validating terrain")
     if not np.any(mask):
@@ -1126,4 +1201,5 @@ def generate_terrain(
         settings=settings,
         constraints=authored_constraints,
         source_name=coastline.source_name,
+        drainage=drainage,
     )

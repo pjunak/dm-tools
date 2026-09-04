@@ -187,6 +187,13 @@ constraints are reapplied after incision and remain authoritative. Connecting
 authored divides and rivers to generated catchments requires a later explicit
 reconciliation stage with conflict diagnostics.
 
+The next implemented measurement re-evaluates the completed pipeline on a
+fixed 129-cell metric grid. Strict downhill D8 reports potential terminal cells
+and direct coast connectivity. Priority-Flood runs on a copy to measure fill
+cell count, depth, volume, outlets, and largest conditioned catchment. The
+summary is diagnostic only: it neither changes the Float32 DEM nor decides
+whether a depression is accidental, a lake, or an endorheic basin.
+
 ## Process-informed erosion and slope relaxation
 
 The most useful scientific prototype is stream-power incision coupled with a

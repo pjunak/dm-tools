@@ -149,6 +149,10 @@ def save_height_map(image: Image.Image, terrain: GeneratedTerrain, destination: 
     metadata.add_text("dmtools.source", terrain.source_name)
     metadata.add_text("dmtools.settings", json.dumps(asdict(terrain.settings), sort_keys=True))
     metadata.add_text(
+        "dmtools.drainage_diagnostics",
+        json.dumps(asdict(terrain.drainage), sort_keys=True),
+    )
+    metadata.add_text(
         "dmtools.render_style",
         str(image.info.get("dmtools.render_style", "cartographic")),
     )

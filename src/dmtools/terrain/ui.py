@@ -1474,14 +1474,26 @@ class TerrainApp:
                     self.progress.stop()
                     self.progress.configure(mode="determinate")
                     self.progress.configure(value=100)
-                    self.status_label.configure(
-                        text="Terrain ready. Preview or export the colour height map."
-                    )
+                    drainage = event.terrain.drainage
+                    if drainage.potential_sink_cell_count:
+                        drainage_status = (
+                            f"Drainage check found {drainage.potential_sink_cell_count:,} "
+                            "potential sink cells."
+                        )
+                    else:
+                        drainage_status = "No potential sinks on the canonical grid."
+                    self.status_label.configure(text=f"Terrain ready. {drainage_status}")
                     peak = float(event.terrain.elevation_m[event.terrain.land_mask].max())
+                    connected_percent = (
+                        100.0
+                        * drainage.directly_connected_land_cell_count
+                        / drainage.land_cell_count
+                    )
                     self.preview_meta.configure(
                         text=(
                             f"{event.terrain.width} x {event.terrain.height} px"
                             f"  ·  peak {peak:,.0f} m"
+                            f"  ·  direct drainage {connected_percent:.1f}%"
                         )
                     )
                     self.import_button.configure(state="normal")

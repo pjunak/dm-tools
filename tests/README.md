@@ -19,7 +19,9 @@ Absolute and relative elevation modes are tested separately, including relative
 peaks on ridges, relative valley incision, per-mode validation, deterministic
 automatic MFD accumulation, D8 centreline concentration, downstream valley
 width, floor-detail suppression, nested resolutions, and preservation of the
-underlying relief field.
+underlying relief field. Canonical drainage diagnostics have planar-outlet and
+known-depression fixtures covering direct connectivity, significant fill depth,
+fill volume, non-mutation, metadata, and resolution-independent summaries.
 Project contract tests cover every current constraint kind and per-tool setting,
 relative coastline paths, strict schema-version handling, and SVG hash mismatch
 detection on both load and save.

@@ -58,6 +58,13 @@ field suppresses fine residual noise most strongly on major floors and tapers
 that suppression across shoulders. D8 here is an internal shaping tree, not yet
 an exported or validated river product.
 
+After all generated and authored shaping, the pipeline re-evaluates the complete
+surface on a fixed 129-cell-longest-side diagnostic grid. Strict downhill D8
+reports direct outlet connectivity and potential inland terminals. Priority-
+Flood runs only on a copy to quantify significant fill cells, maximum fill
+depth, estimated volume, and largest conditioned outlet catchment. The compact
+summary is resolution-independent and never repairs the authoritative DEM.
+
 Free ridge and valley endpoints narrow gradually so authored structures do not
 end as blunt walls. When an endpoint meets another structure of the same kind
 and elevation mode, the junction keeps its full cross-section instead. A stable

@@ -30,3 +30,4 @@ ADRs preserve significant technical decisions and their trade-offs.
 - [ADR-0014: Condition valley floors from head to outlet](0014-condition-valley-floors-downstream.md)
 - [ADR-0015: Route automatic valleys on a canonical hydrology grid](0015-route-automatic-valleys-on-canonical-grid.md)
 - [ADR-0016: Scale generated valley width downstream](0016-scale-generated-valley-width-downstream.md)
+- [ADR-0017: Report canonical drainage diagnostics without repairing the DEM](0017-report-canonical-drainage-diagnostics.md)

@@ -193,7 +193,11 @@ landscape-process spikes. It is working research, not an accepted architecture.
   than silently moving an authored route.
 - [ ] **P1 — Validate basins, outlets, and drainage connectivity.** Detect
   unintended inland sinks, uphill river segments, disconnected channels, and
-  coastline outlets that fail to reach sea level.
+  coastline outlets that fail to reach sea level. A resolution-independent
+  129-cell canonical check now reports strict-D8 direct connectivity, potential
+  sink cells, Priority-Flood depth/volume, outlets, and largest catchment without
+  mutating terrain. Authored basin classification, river-segment checks, local
+  refinement diagnostics, and review overlays remain.
 - [ ] **Research — Compare a mature hydrology adapter with selected in-project
   primitives.** Candidates already considered include ANUDEM-style
   hydrological conditioning and established GIS flow/depression tooling. Keep
@@ -220,6 +224,8 @@ landscape-process spikes. It is working research, not an accepted architecture.
 - [ ] **P1 — Add measurable result diagnostics.** Report constraint residuals,
   slope and curvature distributions, hypsometry, coastline correctness,
   drainage statistics, and the fraction of terrain clipped by elevation bounds.
+  The first compact drainage summary now travels with generated terrain and PNG
+  metadata; the other statistics and a durable build report remain.
 - [ ] **P1 — Add explicit prominence and saddle analysis.** Keep this derived
   measurement separate from the current relative-relief controls.
 - [ ] **P0 — Lock algorithm and stage identifiers before long-lived builds.**

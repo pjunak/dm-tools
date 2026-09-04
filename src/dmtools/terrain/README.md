@@ -206,6 +206,13 @@ The model still does **not** simulate plate tectonics, rock type, sediment,
 climate, geological time, authored lakes, or endorheic basins, and its drainage
 field is not yet exported or certified as a river network.
 
+Every result includes a canonical broad-scale drainage check. It reports direct
+coast connectivity, potential sink cells, and how much Priority-Flood filling a
+copied diagnostic surface would require. These findings are embedded in PNG
+metadata and shown in the workbench, but they do not change elevation. A
+potential sink may still be an intentional lake or endorheic basin until those
+features have explicit authored semantics.
+
 The generated elevation array is Float32 metres in memory. The PNG is a derived
 visual product with transparent ocean, elevation tint, hillshade, source name,
 settings, render style, palette, and colour-scale metadata. The preview toolbar

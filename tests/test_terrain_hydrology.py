@@ -1,11 +1,60 @@
 import numpy as np
 
 from dmtools.terrain.pipeline.hydrology import (
+    drainage_diagnostics,
     drainage_incision,
     multiple_flow_accumulation,
     priority_flood_surface,
     steepest_flow_accumulation,
 )
+
+
+def test_drainage_diagnostics_reports_a_fully_connected_planar_slope() -> None:
+    x = np.linspace(100.0, 0.0, 17, dtype=np.float64)
+    elevation = np.broadcast_to(x, (11, 17)).copy()
+    land = np.ones_like(elevation, dtype=np.bool_)
+
+    diagnostics = drainage_diagnostics(
+        elevation,
+        land,
+        x_spacing_km=2.0,
+        y_spacing_km=2.0,
+    )
+
+    assert diagnostics.potential_sink_cell_count == 0
+    assert diagnostics.directly_connected_land_cell_count == diagnostics.land_cell_count
+    assert diagnostics.depression_cell_count == 0
+    assert diagnostics.maximum_fill_depth_m < 0.01
+    assert diagnostics.largest_outlet_catchment_km2 > 0.0
+
+
+def test_drainage_diagnostics_quantifies_an_inland_depression_without_mutating_it() -> None:
+    elevation = np.array(
+        [
+            [0.0, 0.0, 0.0, 0.0, 0.0],
+            [0.0, 5.0, 5.0, 5.0, 0.0],
+            [0.0, 5.0, -10.0, 5.0, 0.0],
+            [0.0, 5.0, 5.0, 5.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0, 0.0],
+        ],
+        dtype=np.float64,
+    )
+    original = elevation.copy()
+    land = np.ones_like(elevation, dtype=np.bool_)
+
+    diagnostics = drainage_diagnostics(
+        elevation,
+        land,
+        x_spacing_km=1.0,
+        y_spacing_km=1.0,
+    )
+
+    np.testing.assert_array_equal(elevation, original)
+    assert diagnostics.potential_sink_cell_count >= 1
+    assert diagnostics.directly_connected_land_cell_count < diagnostics.land_cell_count
+    assert diagnostics.depression_cell_count >= 1
+    assert diagnostics.maximum_fill_depth_m >= 15.0
+    assert diagnostics.depression_fill_volume_km3 > 0.0
 
 
 def test_priority_flood_gives_an_accidental_depression_a_downhill_route() -> None:
