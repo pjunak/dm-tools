@@ -98,6 +98,8 @@ class _MetricConstraint:
     intensity: float = 1.0
     profile_anchors: tuple[tuple[float, float, float], ...] = ()
     attached_to_structure: bool = False
+    taper_start: bool = True
+    taper_end: bool = True
 
 
 def _smooth_structure_points(
@@ -126,6 +128,42 @@ def _smooth_structure_points(
         refined.append(smoothed[-1])
         smoothed = refined
     return smoothed
+
+
+def _preserve_structure_junction_widths(
+    constraints: list[_MetricConstraint],
+) -> None:
+    """Disable endpoint narrowing where compatible authored structures meet."""
+
+    for index, constraint in enumerate(constraints):
+        if constraint.kind not in ("ridge", "valley"):
+            continue
+        line = cast(LineString, constraint.geometry)
+        endpoints = (Point(line.coords[0]), Point(line.coords[-1]))
+        connected = [False, False]
+        for other_index, other in enumerate(constraints):
+            if (
+                other_index == index
+                or other.kind != constraint.kind
+                or other.elevation_mode != constraint.elevation_mode
+            ):
+                continue
+            tolerance_km = min(
+                2.0,
+                0.02
+                * min(
+                    constraint.influence_radius_km,
+                    other.influence_radius_km,
+                ),
+            )
+            for endpoint_index, endpoint in enumerate(endpoints):
+                if float(other.geometry.distance(endpoint)) <= tolerance_km:
+                    connected[endpoint_index] = True
+        constraints[index] = replace(
+            constraint,
+            taper_start=not connected[0],
+            taper_end=not connected[1],
+        )
 
 
 def _metric_constraints(
@@ -182,6 +220,7 @@ def _metric_constraints(
                 intensity=intensity,
             )
         )
+    _preserve_structure_junction_widths(converted)
     structure_indices = [
         index
         for index, constraint in enumerate(converted)
@@ -388,9 +427,16 @@ def _structure_response(
     distance = cast(NDArray[np.float64], np.asarray(raw_distance, dtype=np.float64))
     line = cast(LineString, constraint.geometry)
     line_positions = _line_positions_km(line, sample_points)
-    distance_to_end = np.minimum(line_positions, line.length - line_positions)
+    distance_to_tapered_end = np.full_like(line_positions, np.inf)
+    if constraint.taper_start:
+        distance_to_tapered_end = np.minimum(distance_to_tapered_end, line_positions)
+    if constraint.taper_end:
+        distance_to_tapered_end = np.minimum(
+            distance_to_tapered_end,
+            line.length - line_positions,
+        )
     taper_length = max(2.0 * constraint.influence_radius_km, 0.12 * line.length)
-    taper_progress = np.clip(distance_to_end / taper_length, 0.0, 1.0)
+    taper_progress = np.clip(distance_to_tapered_end / taper_length, 0.0, 1.0)
     taper = taper_progress * taper_progress * (3.0 - 2.0 * taper_progress)
     width_variation = 0.82 + 0.36 * (0.5 + 0.5 * detail_driver)
     effective_radius = constraint.influence_radius_km * (0.35 + 0.65 * taper)

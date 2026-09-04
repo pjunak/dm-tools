@@ -215,6 +215,72 @@ def test_structure_response_has_a_broad_falloff_beyond_its_core_width() -> None:
     assert ridged.elevation_m[40, 32] > baseline.elevation_m[40, 32]
 
 
+@pytest.mark.parametrize("kind", ("ridge", "valley"))
+def test_connected_structure_segments_do_not_pinch_at_their_junction(
+    kind: Literal["ridge", "valley"],
+) -> None:
+    settings = _settings(maximum_elevation_m=6_000.0, variability=0.0)
+    whole = TerrainStructure(
+        kind,
+        ((0.2, 0.5), (0.8, 0.5)),
+        800.0,
+        80.0,
+        "relative",
+    )
+    west = replace(whole, points=((0.2, 0.5), (0.5, 0.5)))
+    east = replace(whole, points=((0.5, 0.5), (0.8, 0.5)))
+
+    continuous = generate_terrain(_square(), settings, constraints=(whole,))
+    segmented = generate_terrain(_square(), settings, constraints=(west, east))
+    reordered = generate_terrain(_square(), settings, constraints=(east, west))
+
+    np.testing.assert_array_equal(
+        segmented.elevation_m[:, 32],
+        continuous.elevation_m[:, 32],
+    )
+    np.testing.assert_allclose(
+        segmented.elevation_m,
+        continuous.elevation_m,
+        rtol=0.0,
+        atol=3.0,
+    )
+    np.testing.assert_array_equal(segmented.elevation_m, reordered.elevation_m)
+
+
+def test_authored_ridge_branch_keeps_a_full_width_root() -> None:
+    settings = _settings(maximum_elevation_m=6_000.0, variability=0.0)
+    main = TerrainStructure(
+        "ridge",
+        ((0.2, 0.45), (0.8, 0.45)),
+        800.0,
+        80.0,
+        "relative",
+    )
+    branch = TerrainStructure(
+        "ridge",
+        ((0.5, 0.45), (0.5, 0.8)),
+        800.0,
+        80.0,
+        "relative",
+    )
+
+    baseline = generate_terrain(_square(), settings)
+    isolated_branch = generate_terrain(_square(), settings, constraints=(branch,))
+    branched = generate_terrain(_square(), settings, constraints=(main, branch))
+    reordered = generate_terrain(_square(), settings, constraints=(branch, main))
+    root_shoulder = (34, 36)
+    isolated_relief = float(
+        isolated_branch.elevation_m[root_shoulder]
+        - baseline.elevation_m[root_shoulder]
+    )
+    connected_relief = float(
+        branched.elevation_m[root_shoulder] - baseline.elevation_m[root_shoulder]
+    )
+
+    assert connected_relief > isolated_relief + 100.0
+    np.testing.assert_array_equal(branched.elevation_m, reordered.elevation_m)
+
+
 def test_authored_features_do_not_raise_the_coastline() -> None:
     ridge = TerrainStructure(
         kind="ridge",

@@ -105,8 +105,9 @@ landscape-process spikes. It is working research, not an accepted architecture.
   range with two peaks and a pass, a branching mountain system, a high-altitude
   valley, a broad lowland river valley, an escarpment, and a parent/child
   refinement window. Record expected invariants rather than subjective image
-  snapshots alone. The two-peak/one-pass ridge fixture is complete; the other
-  landform fixtures remain.
+  snapshots alone. The two-peak/one-pass ridge, connected-structure junction,
+  and authored branch-root fixtures are complete; full branch topology and
+  statistics and the other landform fixtures remain.
 - [ ] **Research — Compare surface solvers for the low-frequency base.** Test
   the current smooth-response model against feature-curve diffusion/Poisson
   solving, radial-basis interpolation, and hydrologically conditioned
@@ -148,6 +149,9 @@ landscape-process spikes. It is working research, not an accepted architecture.
 - [ ] **P1 — Add hierarchical ridge branching.** Generate secondary ridges and
   spurs from an authored main divide with deterministic branch identity,
   decreasing scale, plausible junction angles, and no isolated mountain blobs.
+  Authored compatible ridge and valley segments now retain full width where
+  their endpoints join; explicit parent/child topology and generated branches
+  remain.
 - [ ] **P1 — Correlate detail along and across structures differently.** Use
   anisotropic fields so ridge grain follows the range rather than cutting across
   it as isotropic noise.

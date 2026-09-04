@@ -29,5 +29,16 @@ modifies ridge relief as `base relief + displacement` or valley incision as
 profile and is not applied again as a circular point field. Ambiguous and
 unattached relative points retain their free-standing displacement behavior.
 
+Free ridge and valley endpoints narrow gradually so authored structures do not
+end as blunt walls. When an endpoint meets another structure of the same kind
+and elevation mode, the junction keeps its full cross-section instead. A stable
+metric tolerance of at most 2 km (and no more than 2% of the narrower structure
+radius) recognizes drawing-level contact without making near but separate
+features connect. Splitting one authored range or valley into compatible
+segments therefore preserves the continuous line's junction cross-section;
+minor bounded differences away from the join can remain because distance to a
+segmented Shapely geometry is not numerically identical to distance to one
+line.
+
 Stages must not depend on implicit process state such as the current directory,
 wall-clock time, ambient random generators, or undeclared environment settings.
