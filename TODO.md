@@ -292,6 +292,166 @@ landscape-process spikes. It is working research, not an accepted architecture.
   computation and measured optimizations; consider compiled or external engines
   only for demonstrated bottlenecks.
 
+### Realism research register — 2026-09-04
+
+These additions extend the existing region, hydrology, refinement, and
+diagnostic items. They are possible improvements, not a commitment to implement
+every process. `R01`–`R33` are stable references into the
+[landform-diversity research](docs/research/2026-09-04-terrain-realism-and-landform-diversity.md),
+which records primary sources, tool boundaries, and proposed experiments.
+Priorities remain conditional on the current strategy's prerequisites.
+
+#### Coordinate, scale, and drainage contracts
+
+- [ ] **P0 — R01: Preserve source-world georeferencing.** Extend the local
+  object-width model with source origin, planetary model, projection and
+  regional working CRS. Check ground-distance distortion and a world/region
+  round trip. A metric label alone must not imply geographic accuracy.
+- [ ] **P0 — R02: Expose effective process and diagnostic spacing.** Record the
+  257-sample drainage and 129-sample diagnostic grids in the build report;
+  flag landforms too small to resolve. Define versioned process resolution
+  independently of PNG pixels and test small-island/coastal-channel coverage.
+- [ ] **Research — R03: Define point samples versus cell averages.** Choose
+  raster registration, integration/resampling, and anti-aliasing policy. Test
+  coordinate round trips and parent restriction separately from existing
+  bit-identical shared-point tests; do not silently weaken those tests.
+- [ ] **P0 — R04: Route on authored macro geography.** Compare the current
+  unconstrained automatic-routing surface with one including accepted ridges,
+  divides, brush guidance and water constraints. Use an explicit stage order
+  and bounded reconciliation; report authored river/divide conflicts.
+- [ ] **P1 — R05: Retain inspectable drainage topology.** Preserve receiver,
+  accumulation, stream-order, channel and outlet fields with their source DEM
+  and resolution, instead of retaining only incision/detail suppression.
+  Measure generated routing and final-surface routing discrepancies.
+- [ ] **P1 — R06: Separate coastline height from coastal terrain character.**
+  Compare regional coastal plains, steep mountain coasts, cliff approaches and
+  plateau margins with the uniform exponential rise. Keep the authored shore
+  fixed and test estuary/outlet continuity. Shelf/bathymetry work depends on R07.
+- [ ] **Research — R07: Support below-sea-level terrain deliberately.** Separate
+  land mask, bed elevation, water surface and sea datum before allowing dry
+  inland depressions, overdeepened lake beds or bathymetry. Audit all zero
+  clipping; test inland isolation, ocean connection and nodata semantics.
+
+#### Regional composition and authoring
+
+- [ ] **P1 — R08: Control regional height distributions.** Add soft targets for
+  lowland fraction, plateau height, local relief and peak density to the
+  terrain-character design. Compare equal-height-ceiling regions, and reject
+  global histogram remapping that alters hard anchors or drainage.
+- [ ] **Research — R09: Couple ridge and drainage skeletons.** Generate spurs
+  between tributaries, preserve divides and saddle connections, and measure
+  network crossings, orphan peaks, junction angles and branch scale. Extend
+  existing hierarchical branching rather than creating a second ridge system.
+- [ ] **Research — R10: Add layered substrate to lithology regions.** Evaluate
+  resistant caps, bed thickness, dip and differential erodibility for mesas,
+  cuestas, escarpments and canyon walls. Distinguish geometry from decorative
+  strata colours; keep weathered/mobile cover separate from bedrock.
+- [ ] **Research — R11: Represent regional process histories.** Compare a short
+  authored sequence of uplift, incision, deposition and glacial episodes with
+  one uniform erosion-age parameter. Record order, units and assumptions;
+  label the history a design hypothesis rather than inferred canon.
+- [ ] **Research — R12: Prototype contour-guided authoring.** Compare the 2026
+  iso-contour approach for plateaus, basin margins and elevation bands. Reject
+  crossing/contradictory contours and quantify DEM reconstruction, river-floor
+  and hard-anchor errors. Exported contours remain derived products.
+- [ ] **Research — R13: Prototype skeleton-preserving deformation.** Use the
+  2025 vector-terrain work to assess moving/stretching a range while retaining
+  internal structure. Preview changes, keep authoring editable, and measure
+  geometry, drainage and reconstruction errors before accepting a deformation.
+
+#### Erosion, deposition, and recognizable landforms
+
+- [ ] **Research — R14: Compare analytical erosion with time stepping.** Use
+  the 2024 analytical stream-power method as a bounded candidate for fast
+  terrain-age control. Test uplift/base-level assumptions, convergence,
+  authored anchors and runtime against the current incision baseline.
+- [ ] **Research — R15: Evaluate multi-scale erosion amplification.** Compare
+  the MIT 2024 reference implementation with current residual detail on one
+  refined mountain/valley window. Preserve parent restrictions, inherited
+  upstream inflow and boundary gradients; include deposition and seam checks.
+- [ ] **Research — R16: Prototype bedrock plus mobile sediment.** Start with a
+  Landlab SPACE comparison on a channel opening onto a plain. Track erosion,
+  storage, deposition and export; verify nonnegative cover and bounded balance
+  error before adding floodplain or alluvial-fan presets.
+- [ ] **Research — R17: Evaluate 2026 stochastic geomorphological transport.**
+  Compare resolved regional meanders/fans with a stream-power baseline.
+  Distinguish MIT `geotransport` reference code from LGPL/CUDA `soillib`;
+  verify Windows/Python runtime, seed ensembles, GPU repeatability, transport
+  conservation and resolution behavior before proposing adoption.
+- [ ] **Research — R18: Separate catchment trees from channel regimes.** Define
+  confined bedrock, alluvial, meandering, braided and delta/distributary
+  networks. Relate width to discharge/material/confinement, not Strahler order
+  alone. Test connectivity, split/join flux and source-DEM consistency.
+- [ ] **Research — R19: Generate terraces from explicit events.** Compare
+  base-level or uplift episodes with authored terrace benches. Require ordered
+  levels, coherent valley continuity and a valid modern outlet; do not terrace
+  the entire elevation field by quantization.
+- [ ] **Research — R20: Add glacial landform options.** Compare a bounded
+  authored U-valley/cirque recipe with the 2023 glacial-erosion reference.
+  Include hanging valleys and overdeepened basins only with explicit former
+  ice context, water semantics, and sufficient regional resolution.
+- [ ] **Research — R21: Add mass-wasting and debris-flow options.** Evaluate
+  the 2024 debris-flow work for scars, scree aprons and cones. Verify material
+  movement, authored crest/pass preservation and downstream blockage after
+  deposition; compare with the existing thermal-relaxation proposal.
+- [ ] **Research — R22: Add wind-shaped terrain selectively.** Use the 2024
+  wind/sand study to compare dune and lee-deposit recipes or simulations.
+  Require wind direction/variability, sand availability and world-unit scale;
+  test boundary flux and avoid treating all deserts as sand seas.
+- [ ] **Research — R23: Add authored volcanic and impact families.** Evaluate
+  cones, shields, calderas, lava plateaus and impact rims as distinct recipes
+  with optional weathering. Validate radial profiles, rim continuity,
+  surrounding transitions and coast preservation; no automatic canon changes.
+- [ ] **Research — R24: Define karst and subsurface-drainage exceptions.** Allow
+  authored sinkholes, losing streams and spring connections in suitable
+  substrate. Test a routed underground connection without carving a surface
+  outlet. Caves and overhangs need a separate representation from the DEM.
+
+#### Comparison tools, rendering, and scientific limits
+
+- [ ] **P1 — R25: Build an Earth-analogue descriptor atlas.** Use small,
+  provenance-recorded USGS 3DEP and optional Copernicus samples at matched
+  extent/resolution. Compare relief, curvature, hypsometry, prominence,
+  directional spectrum and drainage; use terrain-descriptors/GRASS as
+  references. Separate DSM vegetation/buildings from desired terrain texture.
+- [ ] **Research — R26: Compare example-based residual synthesis.** Transfer
+  selected terrain character from reference patches after fitting broad relief
+  and boundaries to authored geography. Measure repeated motifs, seams,
+  constraint errors and drainage changes; retain source data rights/hashes.
+- [ ] **P1 — R27: Add a reproducible candidate comparison gallery.** Extend the
+  existing seed/before-after view with fixed-seed ensembles, region descriptors
+  and multiple valid alternatives. Keep visual interest separate from hard
+  validity; adoption is an explicit author choice, not one opaque quality score.
+- [ ] **P1 — R28: Compare multiscale and multidirectional relief rendering.**
+  Use GDAL hillshade variants and coarse/fine shading at the same DEM and fixed
+  elevation colours. Record exaggeration; test rotated ranges, flat areas and
+  coasts. Material/snow overlays require their own fields or authored inputs.
+- [ ] **Research — R29: Evaluate learned terrain as proposals only.** Compare
+  MESA and PlanetDiffusion for regional inspiration or global-context research.
+  Audit code/weights/data separately, pin the environment and sample settings,
+  preserve the custom planet scale, and validate height/drainage/refinement
+  after conditioning. Do not replace the local deterministic authoring core.
+- [ ] **Research — R30: Define a bounded external-tool comparison adapter.**
+  Assess Houdini, Gaea, World Machine, World Creator and HighMap only where
+  useful. Exchange numeric heights, extent, datum, masks and settings; detect
+  normalization or coast movement. Verify exact component license, automation
+  rights and runtime; pyHighMap currently documents Linux-only support.
+- [ ] **Research — R31: Benchmark GPU routing/process backends after profiling.**
+  Compare FastFlow, compute-shader and CUDA candidates only for a demonstrated
+  bottleneck. Record hardware, drivers, precision and repeat-run variance;
+  retain an inspectable CPU reference and distinguish numeric tolerances from
+  bitwise reproducibility.
+- [ ] **P0 — R32: Audit constraint, process and refinement corrections together.**
+  Extend the measurement harness with per-stage deltas and material accounting.
+  Recheck drainage after hard-height restoration or parent restriction, and
+  report incompatible requirements. Separate intentional basins from numeric
+  sinks and canonical-grid checks from exported-surface checks.
+- [ ] **Research — R33: Weight runoff before assigning river size.** Define an
+  optional authored runoff field and future climate-derived discharge adapter.
+  Keep contributing area distinct from water flux. Test wet/dry catchments of
+  equal size, seasonal assumptions and upstream boundary flux; full climate
+  generation remains deferred under the existing strategy.
+
 ## UI / UX improvements
 
 ### Editing and navigation
@@ -369,6 +529,9 @@ landscape-process spikes. It is working research, not an accepted architecture.
 
 ## Related decisions and research
 
+- [Terrain realism and landform diversity — 2026-09-04](docs/research/2026-09-04-terrain-realism-and-landform-diversity.md)
+  connects R01–R33 to code limitations, scientific papers, tool/runtime
+  boundaries, real-data comparisons and ordered prototype gates.
 - [Current development strategy](docs/strategy/README.md) orders work by
   dependencies and records the evidence gates for adopting evaluated tools.
 - [Technology and world systems — 2026-09-04](docs/research/2026-09-04-technology-and-world-systems.md)

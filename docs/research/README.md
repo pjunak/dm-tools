@@ -7,6 +7,11 @@ implemented with tests. Notes are listed newest first and package-support claims
 may become stale; use the
 [current development strategy](../strategy/README.md) for the active order.
 
+- [Terrain realism and landform diversity — 2026-09-04](2026-09-04-terrain-realism-and-landform-diversity.md)
+  extends the roadmap with R01–R33: regional composition, sediment, specialized
+  landforms, scale contracts, recent papers, external tools, and comparison
+  experiments. It also corrects the earlier procedural-pattern paper title
+  and revisits the blanket preference against particle erosion.
 - [Technology and world systems — 2026-09-04](2026-09-04-technology-and-world-systems.md)
   refreshes numerical, GIS, hydrology, storage, climate-model, classification,
   and licensing options and turns them into staged recommendations.

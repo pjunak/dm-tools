@@ -50,6 +50,9 @@ layers are derived products that can be rebuilt and inspected independently.
 
 ### 1. Make terrain builds durable and reproducible
 
+- Define source-world origin, planetary model, working projection, raster
+  registration and effective process spacing before freezing georeferenced
+  outputs. The current object-width local plane is not a world CRS contract.
 - Define the versioned build manifest and lock algorithm and stage identifiers.
 - Export the authoritative Float32 DEM as a georeferenced GeoTIFF.
 - Add the headless `terrain build` operation using the same project and pipeline
@@ -147,6 +150,16 @@ mutually exclusive categories.
 | Classifications | Versioned in-project rules | Published definitions, edge fixtures, and uncertainty |
 
 ## Revisit points
+
+The [landform-diversity research](../research/2026-09-04-terrain-realism-and-landform-diversity.md)
+adds the R01–R33 candidate register in the roadmap without promoting research
+engines to dependencies. Within the phases above, prioritize a measured
+regional-character/oriented-detail comparison, reconciliation of generated
+drainage with authored macro geography, a sediment-aware valley experiment,
+and multi-scale regional refinement. Measure final-surface drainage after
+constraint restoration and parent restriction. The 2026 stochastic-transport
+paper merits an isolated comparison; retain the existing reproducibility and
+constraint gates rather than rejecting particle methods as a whole.
 
 Create or amend an ADR when a prototype selects a new solver, file format,
 external engine, climate contract, or classification contract. Revisit this
