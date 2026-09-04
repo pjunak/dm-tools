@@ -162,6 +162,23 @@ conflict is reported instead of moving a hard height. This is longitudinal
 conditioning, not yet full drainage validation: lakes, endorheic basins, flow
 routing, and outlet-to-sea checks remain separate work.
 
+### Implemented automatic broad valleys
+
+The first generated-drainage stage follows the network-first direction of
+Génevaux et al. and Cordonnier et al. A fixed 257-cell-longest-side grid routes
+the stable macro surface with Priority-Flood and MFD (`slope^1.1` weights).
+Contributing area selects larger drainage paths; a bounded area-and-slope
+incision proxy plus masked smoothing creates connected valley centres and
+shoulders. The world-coordinate field is sampled by every output resolution,
+so refining an image does not reroute its major network.
+
+This is intentionally narrower than a landscape-evolution model. It does not
+iterate uplift, erosion, sediment, or hillslope diffusion, and it fills every
+unclassified depression only in the temporary routing surface. Authored
+constraints are reapplied after incision and remain authoritative. Connecting
+authored divides and rivers to generated catchments requires a later explicit
+reconciliation stage with conflict diagnostics.
+
 ## Process-informed erosion and slope relaxation
 
 The most useful scientific prototype is stream-power incision coupled with a
@@ -312,6 +329,9 @@ resolution-specific gullies or improves only the colour preview.
   and [conjugate gradient solver](https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.cg.html).
 - Australian National University, [ANUDEM 5.3](https://fennerschool.anu.edu.au/research/products/anudem-version-5-3).
 - Barnes et al., [Priority-Flood depression filling](https://arxiv.org/abs/1511.04463).
+- Génevaux et al., [Terrain Generation Using Procedural Models Based on Hydrology](https://doi.org/10.1145/2461912.2461996), 2013.
+- Cordonnier et al., [Large Scale Terrain Generation from Tectonic Uplift and Fluvial Erosion](https://doi.org/10.1111/cgf.12820), 2016.
+- Lague, [The stream power river incision model](https://doi.org/10.1002/esp.3462), 2014.
 - GRASS GIS, [`r.watershed`](https://grass.osgeo.org/grass85/manuals/r.watershed.html),
   [`r.richdem.filldepressions`](https://grass.osgeo.org/grass-stable/manuals/addons/r.richdem.filldepressions.html),
   [8.5 release](https://grass.osgeo.org/news/2026_05_08_grass_8_5_0_released/),

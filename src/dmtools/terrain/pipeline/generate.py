@@ -20,6 +20,7 @@ from dmtools.terrain.domain import (
     TerrainConstraint,
     TerrainSettings,
 )
+from dmtools.terrain.pipeline.hydrology import drainage_incision
 from dmtools.terrain.pipeline.noise import fractal_value_noise
 from dmtools.terrain.pipeline.profile import shape_preserving_profile
 
@@ -45,6 +46,56 @@ class GeneratedTerrain:
     @property
     def height(self) -> int:
         return int(self.elevation_m.shape[0])
+
+
+@dataclass(frozen=True, slots=True)
+class _AutomaticValleyField:
+    """Resolution-independent broad incision sampled from a canonical grid."""
+
+    x_km: NDArray[np.float64]
+    y_km: NDArray[np.float64]
+    incision_m: NDArray[np.float64]
+
+    def sample(
+        self,
+        x_km: NDArray[np.float64],
+        y_km: NDArray[np.float64],
+    ) -> NDArray[np.float64]:
+        columns = np.clip(
+            np.searchsorted(self.x_km, x_km, side="right") - 1,
+            0,
+            self.x_km.size - 2,
+        )
+        rows = np.clip(
+            np.searchsorted(self.y_km, y_km, side="right") - 1,
+            0,
+            self.y_km.size - 2,
+        )
+        x0 = self.x_km[columns]
+        x1 = self.x_km[columns + 1]
+        y0 = self.y_km[rows]
+        y1 = self.y_km[rows + 1]
+        x_fraction = np.divide(
+            x_km - x0,
+            x1 - x0,
+            out=np.zeros_like(x_km),
+            where=x1 > x0,
+        )
+        y_fraction = np.divide(
+            y_km - y0,
+            y1 - y0,
+            out=np.zeros_like(y_km),
+            where=y1 > y0,
+        )
+        top = (
+            self.incision_m[rows, columns] * (1.0 - x_fraction)
+            + self.incision_m[rows, columns + 1] * x_fraction
+        )
+        bottom = (
+            self.incision_m[rows + 1, columns] * (1.0 - x_fraction)
+            + self.incision_m[rows + 1, columns + 1] * x_fraction
+        )
+        return top * (1.0 - y_fraction) + bottom * y_fraction
 
 
 def _report(callback: ProgressCallback | None, fraction: float, message: str) -> None:
@@ -736,6 +787,51 @@ def _apply_constraints(
     return elevation, np.clip(detail_suppression, 0.0, 1.0)
 
 
+def _prepare_automatic_valley_field(
+    polygon: LandGeometry,
+    boundary: Any,
+    width_km: float,
+    height_km: float,
+    settings: TerrainSettings,
+) -> _AutomaticValleyField:
+    """Route broad drainage once on a canonical, output-resolution-free grid."""
+
+    longest_km = max(width_km, height_km)
+    canonical_longest_cells = 257
+    width = max(3, round(canonical_longest_cells * width_km / longest_km))
+    height = max(3, round(canonical_longest_cells * height_km / longest_km))
+    x_km = np.linspace(0.0, width_km, width, dtype=np.float64)
+    y_km = np.linspace(0.0, height_km, height, dtype=np.float64)
+    x_grid, y_grid = np.meshgrid(x_km, y_km)
+    land_mask = np.asarray(
+        shapely.intersects_xy(polygon, x_grid, y_grid),
+        dtype=np.bool_,
+    )
+    sample_points: Any = shapely.points(x_grid, y_grid)
+    raw_distance_to_coast = cast(Any, shapely.distance(sample_points, boundary))
+    distance_to_coast_km = cast(
+        NDArray[np.float64],
+        np.asarray(raw_distance_to_coast, dtype=np.float64),
+    )
+    _full_elevation, macro_elevation, _detail_driver = _base_elevation_fields(
+        x_grid,
+        y_grid,
+        distance_to_coast_km,
+        settings,
+    )
+    routing_elevation = np.where(land_mask, macro_elevation, 0.0)
+    incision_m, _accumulation_km2 = drainage_incision(
+        routing_elevation,
+        land_mask,
+        distance_to_coast_km,
+        x_spacing_km=width_km / (width - 1),
+        y_spacing_km=height_km / (height - 1),
+        maximum_elevation_m=settings.maximum_elevation_m,
+        variability=settings.variability,
+    )
+    return _AutomaticValleyField(x_km=x_km, y_km=y_km, incision_m=incision_m)
+
+
 def _absolute_valley_profile(
     constraint: _MetricConstraint,
     positions_km: NDArray[np.float64],
@@ -799,6 +895,7 @@ def _prepare_downstream_valley_profiles(
     constraints: tuple[_MetricConstraint, ...],
     boundary: Any,
     settings: TerrainSettings,
+    automatic_valleys: _AutomaticValleyField,
 ) -> tuple[_MetricConstraint, ...]:
     """Prepare resolution-independent non-rising floors for authored valleys."""
 
@@ -867,6 +964,8 @@ def _prepare_downstream_valley_profiles(
                 settings.maximum_elevation_m,
                 detail_driver,
             )
+            automatic_incision = automatic_valleys.sample(x_km, y_km)
+            conditioned_macro = np.maximum(conditioned_macro - automatic_incision, 0.0)
             reference_elevation = conditioned_macro + (
                 (full_elevation - macro_elevation) * (1.0 - reference_influence)
             )
@@ -915,12 +1014,21 @@ def generate_terrain(
     elevation = np.full((height, width), np.nan, dtype=np.float32)
     mask = np.zeros((height, width), dtype=np.bool_)
     boundary = polygon.boundary
+    _report(progress, 0.04, "Routing automatic drainage")
+    automatic_valleys = _prepare_automatic_valley_field(
+        polygon,
+        boundary,
+        width_km,
+        height_km,
+        settings,
+    )
     if any(constraint.kind == "valley" for constraint in metric_constraints):
-        _report(progress, 0.05, "Preparing downstream valley profiles")
+        _report(progress, 0.06, "Preparing downstream valley profiles")
         metric_constraints = _prepare_downstream_valley_profiles(
             metric_constraints,
             boundary,
             settings,
+            automatic_valleys,
         )
 
     chunk_rows = 128
@@ -939,6 +1047,12 @@ def generate_terrain(
             distance_to_coast,
             settings,
         )
+        automatic_incision = automatic_valleys.sample(x_grid, y_grid)
+        unconditioned_elevation = np.maximum(
+            unconditioned_elevation - automatic_incision,
+            0.0,
+        )
+        macro_elevation = np.maximum(macro_elevation - automatic_incision, 0.0)
         if metric_constraints:
             conditioned_elevation, constraint_influence = _apply_constraints(
                 macro_elevation,

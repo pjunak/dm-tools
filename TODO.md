@@ -181,7 +181,10 @@ landscape-process spikes. It is working research, not an accepted architecture.
   depression fill/breach policy, flat handling, edge outlets, and sea
   connectivity before promising hydrologically valid rivers. Prototype MFD for
   continuous accumulation and D8 for unique catchment trees; include rotated
-  fixtures so grid-direction bias is measurable.
+  fixtures so grid-direction bias is measurable. A fixed canonical-grid
+  Priority-Flood + MFD accumulation stage now drives automatic broad valleys,
+  with a rotated fixture. Unique D8 trees, public drainage products, authored
+  depression policy, and full diagnostics remain.
 - [ ] **P1 — Reconcile authored rivers with generated drainage.** Rivers should
   descend to a valid outlet and occupy a local valley; report conflicts rather
   than silently moving an authored route.
@@ -202,7 +205,9 @@ landscape-process spikes. It is working research, not an accepted architecture.
   Start with a small post-process that respects fixed coastline and elevation
   anchors; reject it if it merely adds noisy gullies or makes results
   resolution-dependent. Prefer stream-power incision plus explicit flow
-  routing over a visual particle or droplet erosion filter.
+  routing over a visual particle or droplet erosion filter. The first bounded
+  area-and-slope incision proxy is implemented for automatic broad valleys;
+  time-stepped stream-power evolution and convergence testing remain research.
 - [ ] **Research — Prototype thermal erosion/talus relaxation.** Use it only
   where material and slope assumptions are explicit, and verify that it does
   not erase authored passes, ridges, or valley floors.

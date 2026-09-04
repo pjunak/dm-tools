@@ -4,10 +4,14 @@ This package will orchestrate explicit, named terrain stages. Each stage will
 receive typed inputs, effective configuration, and its own deterministically
 derived seed, then return typed outputs and diagnostics.
 
-The implemented generator builds an unconditioned coordinate-addressed relief
-field. When authored constraints exist, it separately builds a low-frequency
-base, applies broad smooth brush, ridge, valley, and height-point responses, and
-then restores the high-frequency residual. Absolute constraints attenuate that
+The implemented generator builds a coordinate-addressed relief field and a
+separate low-frequency macro surface. It routes MFD contributing area over a
+Priority-Flood-conditioned copy of that macro surface on a fixed canonical
+grid, then cuts a bounded, stream-power-inspired automatic valley field. The
+incision is sampled in world coordinates, so output resolution does not reroute
+the continent's major valleys. When authored constraints exist, the pipeline
+then applies broad smooth brush, ridge, valley, and height-point responses and
+restores the high-frequency residual. Absolute constraints attenuate that
 residual to satisfy world elevations. Relative constraints are deterministic
 displacement fields over the surface entering their stage and preserve its
 residual relief. The order is brush, ridge, valley, relative point, then exact
@@ -39,6 +43,12 @@ the preferred floor. Absolute valleys interpolate non-rising world-height
 anchors toward the line's outlet-floor value and reject an uphill hard-anchor
 sequence. The prepared profile is independent of output raster resolution and
 is reused by every processing chunk.
+
+Automatic drainage is broad terrain structure, not a hydrologic certification.
+Its temporary filled surface is never substituted for the DEM, and it currently
+routes the generated macro surface before authored structures are reapplied.
+It does not yet represent authored lakes, endorheic basins, sediment, lithology,
+climate, unique river trees, or river vector export.
 
 Free ridge and valley endpoints narrow gradually so authored structures do not
 end as blunt walls. When an endpoint meets another structure of the same kind

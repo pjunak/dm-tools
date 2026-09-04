@@ -28,3 +28,4 @@ ADRs preserve significant technical decisions and their trade-offs.
 - [ADR-0012: Fix the cartographic colour scale at ten kilometres](0012-fix-cartographic-colour-scale-at-ten-kilometres.md)
 - [ADR-0013: Preserve authored structure width at junctions](0013-preserve-structure-width-at-junctions.md)
 - [ADR-0014: Condition valley floors from head to outlet](0014-condition-valley-floors-downstream.md)
+- [ADR-0015: Route automatic valleys on a canonical hydrology grid](0015-route-automatic-valleys-on-canonical-grid.md)

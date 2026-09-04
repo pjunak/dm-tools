@@ -194,10 +194,14 @@ high plateau remains high while being incised. A smooth outer shoulder prevents
 structures from appearing as hard-edged stamps, while a coast-distance gate
 keeps the coastline fixed at sea level.
 
-This is a constraint-aware interpolation model, not yet a landscape-evolution
-model. It does **not** model plate tectonics, rock type, erosion, drainage,
-sediment, or climate. River networks and geomorphically believable mountain
-systems still require the planned process-informed stages.
+This is a constraint-aware, process-informed terrain model, not a full
+landscape-evolution model. A fixed-resolution hydrology stage now fills
+accidental sinks on a temporary routing surface, accumulates multiple-direction
+flow, and uses contributing area plus slope to incise broad automatic valleys.
+The generated valley hierarchy stays fixed when output resolution changes.
+The model still does **not** simulate plate tectonics, rock type, sediment,
+climate, geological time, authored lakes, or endorheic basins, and its drainage
+field is not yet exported or certified as a river network.
 
 The generated elevation array is Float32 metres in memory. The PNG is a derived
 visual product with transparent ocean, elevation tint, hillshade, source name,
