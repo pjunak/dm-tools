@@ -834,7 +834,7 @@ def _prepare_automatic_valley_field(
         NDArray[np.float64],
         np.asarray(raw_distance_to_coast, dtype=np.float64),
     )
-    _full_elevation, macro_elevation, _detail_driver = _base_elevation_fields(
+    full_elevation, macro_elevation, _detail_driver = _base_elevation_fields(
         x_grid,
         y_grid,
         distance_to_coast_km,
@@ -849,6 +849,7 @@ def _prepare_automatic_valley_field(
         y_spacing_km=height_km / (height - 1),
         maximum_elevation_m=settings.maximum_elevation_m,
         variability=settings.variability,
+        residual_detail_m=full_elevation - macro_elevation,
     )
     return _AutomaticValleyField(
         x_km=x_km,

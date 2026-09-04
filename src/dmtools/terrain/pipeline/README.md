@@ -69,6 +69,14 @@ A small logarithmic relief ramp rises from zero to 8% between the minimum
 source area and the established area threshold. This makes selected heads
 visible without allowing their cross-sections to rival downstream trunks.
 
+The generated floor is checked again after its permitted residual detail is
+restored. A stable upstream-to-downstream pass lowers a selected receiver only
+when its reconstructed floor would otherwise climb, enforcing a 0.01 m minimum
+drop. Correction is limited to 60% of reconstructed local elevation and an
+additional 2% of the generation ceiling; cap-limited edges remain explicit
+internal diagnostics. This is conservative generated-network conditioning, not
+final-DEM filling or authored stream burning.
+
 After all generated and authored shaping, the pipeline re-evaluates the complete
 surface on a fixed 129-cell-longest-side diagnostic grid. Strict downhill D8
 reports direct outlet connectivity and potential inland terminals. Priority-

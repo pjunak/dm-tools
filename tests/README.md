@@ -22,7 +22,9 @@ width, floor-detail suppression, bounded area-slope channel initiation,
 downstream network closure, nested resolutions, and preservation of the
 underlying relief field. The two-slope initiation fixture requires steep
 headwaters to start earlier with nonzero relief while retaining a large gentle
-river. Canonical
+river. A retained-detail fixture places a 100 m bump on a selected channel and
+requires the bounded correction to restore downstream descent without
+unresolved edges. Canonical
 drainage diagnostics have planar-outlet and
 known-depression fixtures covering direct connectivity, significant fill depth,
 fill volume, non-mutation, metadata, and resolution-independent summaries. The

@@ -192,6 +192,17 @@ A small 0-8% logarithmic width/depth ramp begins at the minimum eligible source
 area. The additional steep reaches therefore gain visible relief, while the
 existing higher-area hierarchy still controls downstream trunk scale.
 
+The next refinement reconstructs the generated floor after residual-detail
+suppression and applies a bounded upstream-to-downstream inequality pass over
+the selected D8 tree. A downstream centre cell is lowered only enough to retain
+a 0.01 m drop. Total incision is limited to 60% of reconstructed local
+elevation, and the pass may add no more than 2% of the generation ceiling. This
+removes local generated barriers without globally filling the DEM or deciding
+the status of lakes and basins. On the aligned Tharkeniss grid it reduces
+terminal cells, basin candidates, and estimated fill volume; the 129-cell
+summary can alias the narrower correction, confirming that regional builds
+need their own buffered drainage diagnostics.
+
 This is intentionally narrower than a landscape-evolution model. It does not
 iterate uplift, erosion, sediment, or hillslope diffusion, and it fills every
 unclassified depression only in the temporary routing surface. Authored
@@ -369,6 +380,10 @@ resolution-specific gullies or improves only the colour preview.
   and [Channel initiation and landscape scale](https://doi.org/10.1126/science.255.5046.826).
 - Orlandini et al.,
   [Prediction of channel heads in complex alpine terrain](https://doi.org/10.1029/2010WR009648).
+- ANU Fenner School,
+  [ANUDEM drainage enforcement](https://fennerschool.anu.edu.au/research/products/anudem-version-5-3).
+- Zhang et al.,
+  [Topographic hydro-conditioning with preserved depressions](https://pmc.ncbi.nlm.nih.gov/articles/PMC10434835/).
 - Barnes et al., [Depression hierarchies](https://esurf.copernicus.org/articles/8/431/2020/)
   and [Fill-Spill-Merge](https://esurf.copernicus.org/articles/9/105/2021/).
 - Génevaux et al., [Terrain Generation Using Procedural Models Based on Hydrology](https://doi.org/10.1145/2461912.2461996), 2013.

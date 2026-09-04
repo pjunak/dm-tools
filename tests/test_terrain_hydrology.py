@@ -247,6 +247,50 @@ def test_area_slope_initiation_starts_steep_headwaters_before_gentle_ones() -> N
     assert np.all(drainage.incision_m[drainage.channel_head_mask] > 0.0)
 
 
+def test_retained_detail_cannot_make_generated_channel_floors_climb() -> None:
+    rows, columns = np.indices((41, 41), dtype=np.float64)
+    elevation = 1_500.0 - 12.0 * columns + 0.9 * np.square(rows - 20.0)
+    elevation = np.maximum(elevation, 0.0)
+    land = np.ones_like(elevation, dtype=np.bool_)
+    distance_to_coast = np.full_like(elevation, 50.0)
+    residual_detail = np.zeros_like(elevation)
+    residual_detail[17, 25] = 100.0
+
+    drainage = drainage_incision(
+        elevation,
+        land,
+        distance_to_coast,
+        x_spacing_km=4.0,
+        y_spacing_km=4.0,
+        maximum_elevation_m=3_000.0,
+        variability=0.7,
+        residual_detail_m=residual_detail,
+    )
+
+    final_surface = (
+        elevation
+        - drainage.incision_m
+        + residual_detail * (1.0 - drainage.detail_suppression)
+    )
+    receivers, _slope = steepest_flow_receivers(
+        priority_flood_surface(elevation, land),
+        land,
+        x_spacing_km=4.0,
+        y_spacing_km=4.0,
+    )
+    flat_channel = drainage.channel_mask.ravel()
+    flat_surface = final_surface.ravel()
+    for donor_value in np.flatnonzero(flat_channel):
+        donor = int(donor_value)
+        receiver = int(receivers.ravel()[donor])
+        if receiver < 0 or not flat_channel[receiver]:
+            continue
+        assert flat_surface[receiver] <= flat_surface[donor] - 0.01 + 1e-9
+
+    assert drainage.floor_correction_m[17, 25] > 0.0
+    assert drainage.unresolved_uphill_channel_edge_count == 0
+
+
 def test_large_downstream_valley_has_broader_shoulders_than_its_headwaters() -> None:
     rows, columns = np.indices((61, 61), dtype=np.float64)
     elevation = 2_000.0 - 15.0 * columns + 1.2 * np.square(rows - 30.0)

@@ -28,6 +28,8 @@ class DrainageIncision:
     detail_suppression: NDArray[np.float64]
     channel_mask: NDArray[np.bool_]
     channel_head_mask: NDArray[np.bool_]
+    floor_correction_m: NDArray[np.float64]
+    unresolved_uphill_channel_edge_count: int
 
 
 @dataclass(frozen=True, slots=True)
@@ -552,6 +554,73 @@ def _connected_channel_network(
     )
 
 
+def _condition_downstream_channel_floors(
+    source_elevation_m: NDArray[np.float64],
+    incision_m: NDArray[np.float64],
+    maximum_incision_m: NDArray[np.float64],
+    channel_mask: NDArray[np.bool_],
+    receivers: NDArray[np.int64],
+    routing_surface_m: NDArray[np.float64],
+    *,
+    minimum_drop_m: float = 0.01,
+) -> tuple[NDArray[np.float64], NDArray[np.float64], int]:
+    """Lower generated channel floors just enough to maintain downstream descent."""
+
+    shape = source_elevation_m.shape
+    if any(
+        values.shape != shape
+        for values in (
+            incision_m,
+            maximum_incision_m,
+            channel_mask,
+            receivers,
+            routing_surface_m,
+        )
+    ):
+        raise ValueError("Channel-floor conditioning arrays must share a shape.")
+    if minimum_drop_m < 0.0:
+        raise ValueError("Minimum downstream drop must not be negative.")
+
+    conditioned = np.minimum(incision_m, maximum_incision_m).copy()
+    flat_source = source_elevation_m.ravel()
+    flat_conditioned = conditioned.ravel()
+    flat_maximum = maximum_incision_m.ravel()
+    flat_channel = channel_mask.ravel()
+    flat_receivers = receivers.ravel()
+    channel_indices = np.flatnonzero(flat_channel)
+    order = channel_indices[
+        np.argsort(-routing_surface_m.ravel()[channel_indices], kind="stable")
+    ]
+
+    for donor_value in order:
+        donor = int(donor_value)
+        receiver = int(flat_receivers[donor])
+        if receiver < 0 or not flat_channel[receiver]:
+            continue
+        donor_floor_m = flat_source[donor] - flat_conditioned[donor]
+        maximum_receiver_floor_m = donor_floor_m - minimum_drop_m
+        receiver_floor_m = flat_source[receiver] - flat_conditioned[receiver]
+        if receiver_floor_m <= maximum_receiver_floor_m:
+            continue
+        required_incision_m = flat_source[receiver] - maximum_receiver_floor_m
+        flat_conditioned[receiver] = min(
+            flat_maximum[receiver],
+            max(flat_conditioned[receiver], required_incision_m),
+        )
+
+    unresolved = 0
+    for donor_value in channel_indices:
+        donor = int(donor_value)
+        receiver = int(flat_receivers[donor])
+        if receiver < 0 or not flat_channel[receiver]:
+            continue
+        donor_floor_m = flat_source[donor] - flat_conditioned[donor]
+        receiver_floor_m = flat_source[receiver] - flat_conditioned[receiver]
+        if receiver_floor_m > donor_floor_m - minimum_drop_m + 1e-9:
+            unresolved += 1
+    return conditioned, np.maximum(conditioned - incision_m, 0.0), unresolved
+
+
 def drainage_incision(
     elevation_m: NDArray[np.float64],
     land_mask: NDArray[np.bool_],
@@ -561,9 +630,15 @@ def drainage_incision(
     y_spacing_km: float,
     maximum_elevation_m: float,
     variability: float,
+    residual_detail_m: NDArray[np.float64] | None = None,
 ) -> DrainageIncision:
     """Derive broad valley incision and contributing area from a terrain surface."""
 
+    if residual_detail_m is not None:
+        if residual_detail_m.shape != elevation_m.shape:
+            raise ValueError("Residual detail must share the elevation grid shape.")
+        if np.any(land_mask & ~np.isfinite(residual_detail_m)):
+            raise ValueError("Land residual detail must be finite.")
     routing_surface = priority_flood_surface(elevation_m, land_mask)
     accumulation_km2, _mfd_slope = multiple_flow_accumulation(
         routing_surface,
@@ -677,10 +752,35 @@ def drainage_incision(
         0.92,
     )
     detail_suppression *= coastal_gate
+    retained_detail_m = (
+        np.zeros_like(elevation_m)
+        if residual_detail_m is None
+        else residual_detail_m * (1.0 - detail_suppression)
+    )
+    source_elevation_m = elevation_m + retained_detail_m
+    maximum_incision_m = np.maximum(
+        incision_m,
+        np.minimum(
+            0.60 * np.maximum(source_elevation_m, 0.0),
+            incision_m + 0.02 * maximum_elevation_m,
+        ),
+    )
+    incision_m, floor_correction_m, unresolved_uphill_edges = (
+        _condition_downstream_channel_floors(
+            source_elevation_m,
+            incision_m,
+            maximum_incision_m,
+            channel,
+            receivers,
+            routing_surface,
+        )
+    )
     return DrainageIncision(
         incision_m=np.where(land_mask, incision_m, 0.0),
         accumulation_km2=accumulation_km2,
         detail_suppression=np.where(land_mask, detail_suppression, 0.0),
         channel_mask=channel,
         channel_head_mask=channel_heads,
+        floor_correction_m=np.where(land_mask, floor_correction_m, 0.0),
+        unresolved_uphill_channel_edge_count=unresolved_uphill_edges,
     )

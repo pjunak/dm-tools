@@ -188,7 +188,10 @@ landscape-process spikes. It is working research, not an accepted architecture.
   with a rotated fixture, and a complementary D8 tree supplies unique generated
   centrelines. A bounded area-slope channel-head rule now starts steep
   headwaters earlier, preserves large gentle rivers, and closes every selected
-  path downstream. Public drainage products, authored depression policy, basin
+  path downstream. Generated floors are now conditioned after residual-detail
+  restoration with bounded downstream-only cuts; the aligned Tharkeniss network
+  improves, while the coarser completed-surface diagnostic documents remaining
+  scale aliasing. Public drainage products, authored depression policy, basin
   labels, and user-facing drainage-density profiles remain.
 - [ ] **P1 — Reconcile authored rivers with generated drainage.** Rivers should
   descend to a valid outlet and occupy a local valley; report conflicts rather

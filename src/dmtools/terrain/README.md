@@ -206,6 +206,12 @@ steep convergent terrain can initiate with less source area, while a fourfold
 cap on the local area threshold preserves large rivers through gentle plains.
 Every initiated cell is traced down the D8 tree so selected channels cannot
 vanish merely because a downstream reach becomes flatter.
+After residual detail is restored on the canonical grid, generated channel
+floors receive a bounded downstream-only correction: a receiver is lowered just
+enough to retain a 0.01 m drop, never raised, and never cut without limit. The
+pass may use at most 60% of reconstructed local elevation and add at most 2% of
+the generation ceiling. It affects generated centre cells only and runs before
+authored constraints.
 The model still does **not** simulate plate tectonics, rock type, sediment,
 climate, geological time, authored lakes, or endorheic basins, and its drainage
 field is not yet exported or certified as a river network.
