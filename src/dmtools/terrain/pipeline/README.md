@@ -58,6 +58,13 @@ field suppresses fine residual noise most strongly on major floors and tapers
 that suppression across shoulders. D8 here is an internal shaping tree, not yet
 an exported or validated river product.
 
+The broad response also receives a deliberately small MFD convergence
+correction. MFD area is normalized logarithmically above the channel threshold,
+raised to a high-order trunk gate, combined with bounded local slope, and added
+at 4% strength. This pulls a D8-quantized cross-section toward the continuous
+flow minimum without replacing the connected D8 network or its floor
+conditioning. The established residual-detail suppression field is unchanged.
+
 Channel initiation combines source area and once-smoothed receiver slope. The
 local area threshold follows a bounded `A*S^2` relation: it may fall to 35% of
 the base threshold on steep terrain or rise to four times that threshold on

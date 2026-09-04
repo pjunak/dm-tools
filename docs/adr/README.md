@@ -34,3 +34,4 @@ ADRs preserve significant technical decisions and their trade-offs.
 - [ADR-0018: Group diagnostic fill regions into basin candidates](0018-group-diagnostic-fill-regions-into-basin-candidates.md)
 - [ADR-0019: Initiate generated channels with bounded area-slope thresholds](0019-initiate-generated-channels-with-bounded-area-slope-thresholds.md)
 - [ADR-0020: Condition generated channel floors downstream](0020-condition-generated-channel-floors-downstream.md)
+- [ADR-0021: Correct broad valleys with MFD convergence](0021-correct-broad-valleys-with-mfd-convergence.md)

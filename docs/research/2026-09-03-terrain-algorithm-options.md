@@ -180,6 +180,13 @@ residual detail most strongly on major floors. A fixed-relief cross-section
 fixture verifies that downstream trunks grow wider, without treating one
 terrestrial width-area exponent as universal.
 
+A later calibration uses that continuous MFD signal directly as a small broad-
+valley correction. Logarithmic MFD progression is strongly gated toward major
+trunks and contributes only 4% beside the established D8 and smoothed shoulder
+terms. Full flow-connected D8 shoulders and full replacement by MFD were both
+rejected after synthetic and Tharkeniss measurements: the former preserved D8
+gaps, while the latter worsened completed-surface drainage diagnostics.
+
 The third refinement replaces a single contributing-area channel-head cutoff
 with a bounded area-slope rule. Once-smoothed receiver slope adjusts the local
 area threshold by `(reference slope / local slope)^2`, clamped between 0.35 and

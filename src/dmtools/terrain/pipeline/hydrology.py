@@ -723,13 +723,31 @@ def drainage_incision(
         log_progress * (0.45 + 0.55 * slope_factor),
         0.0,
     )
+    largest_mfd_area_km2 = max(
+        float(np.max(accumulation_km2, initial=channel_threshold_km2)),
+        channel_threshold_km2 * 1.01,
+    )
+    mfd_progress = np.clip(
+        np.log(
+            np.maximum(accumulation_km2, channel_threshold_km2)
+            / channel_threshold_km2
+        )
+        / np.log(largest_mfd_area_km2 / channel_threshold_km2),
+        0.0,
+        1.0,
+    )
+    convergence_shape = np.power(mfd_progress, 2.5) * (
+        0.45
+        + 0.55 * np.sqrt(np.clip(_mfd_slope / reference_slope, 0.0, 1.0))
+    )
     near_shoulders = _masked_smooth(stream_power_shape, land_mask, iterations=2)
     trunk_source = stream_power_shape * np.power(log_progress, 1.4)
     trunk_shoulders = _masked_smooth(trunk_source, land_mask, iterations=7)
     valley_shape = np.clip(
         0.56 * stream_power_shape
         + 0.30 * near_shoulders
-        + 0.28 * trunk_shoulders,
+        + 0.28 * trunk_shoulders
+        + 0.04 * convergence_shape,
         0.0,
         1.0,
     )

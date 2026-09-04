@@ -177,8 +177,10 @@ landscape-process spikes. It is working research, not an accepted architecture.
 - [ ] **P1 — Add variable valley cross-sections.** Support narrow V-shaped
   valleys, glacial U-shaped valleys, broad floodplains, terraces, and smooth
   width/depth changes along a line. Generated fluvial valleys now widen and
-  smooth downstream with drainage hierarchy; authored per-vertex shape,
-  glacial forms, floodplains, and terraces remain.
+  smooth downstream with drainage hierarchy. A high-order, low-weight MFD
+  convergence correction now reduces D8 cross-section gaps without cutting
+  across a synthetic drainage divide; authored per-vertex shape, glacial
+  forms, floodplains, and terraces remain.
 - [ ] **P0 — Derive drainage direction and flow accumulation.** Define the
   depression fill/breach policy, flat handling, edge outlets, and sea
   connectivity before promising hydrologically valid rivers. Prototype MFD for

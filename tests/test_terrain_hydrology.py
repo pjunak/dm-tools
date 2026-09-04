@@ -196,6 +196,7 @@ def test_drainage_incision_selects_convergent_channels_not_the_whole_slope() -> 
     )
     assert drainage.accumulation_km2[20, -1] > drainage.accumulation_km2[5, -1]
     assert drainage.incision_m[20, 30] > drainage.incision_m[5, 30]
+    assert drainage.incision_m[20, 30] > 5.0
     assert drainage.detail_suppression[20, 30] > drainage.detail_suppression[5, 30]
     assert np.count_nonzero(drainage.channel_head_mask) > 0
     receivers, _slope = steepest_flow_receivers(
@@ -317,3 +318,32 @@ def test_large_downstream_valley_has_broader_shoulders_than_its_headwaters() -> 
 
     assert downstream_width > upstream_width
     assert drainage.detail_suppression[30, 46] > drainage.detail_suppression[30, 24]
+
+
+def test_mfd_valley_shoulders_do_not_blur_across_a_drainage_divide() -> None:
+    rows, columns = np.indices((61, 61), dtype=np.float64)
+    two_valley_cross_section = np.minimum(
+        1.8 * np.square(rows - 18.0),
+        1.8 * np.square(rows - 42.0),
+    )
+    elevation = np.maximum(
+        2_400.0 - 14.0 * columns + two_valley_cross_section,
+        0.0,
+    )
+    land = np.ones_like(elevation, dtype=np.bool_)
+    distance_to_coast = np.full_like(elevation, 100.0)
+
+    drainage = drainage_incision(
+        elevation,
+        land,
+        distance_to_coast,
+        x_spacing_km=4.0,
+        y_spacing_km=4.0,
+        maximum_elevation_m=4_000.0,
+        variability=0.7,
+    )
+
+    assert drainage.incision_m[18, 40] > 15.0
+    assert drainage.incision_m[42, 40] > 15.0
+    assert drainage.incision_m[30, 40] == 0.0
+    assert drainage.detail_suppression[30, 40] == 0.0

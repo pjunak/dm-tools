@@ -206,6 +206,10 @@ steep convergent terrain can initiate with less source area, while a fourfold
 cap on the local area threshold preserves large rivers through gentle plains.
 Every initiated cell is traced down the D8 tree so selected channels cannot
 vanish merely because a downstream reach becomes flatter.
+A high-order, 4%-strength MFD convergence correction now nudges broad generated
+valleys toward the continuous flow minimum where the unique D8 tree is
+directionally quantized. It leaves the connected D8 centreline, downstream
+floor correction, and residual-detail suppression authoritative.
 After residual detail is restored on the canonical grid, generated channel
 floors receive a bounded downstream-only correction: a receiver is lowered just
 enough to retain a 0.01 m drop, never raised, and never cut without limit. The
