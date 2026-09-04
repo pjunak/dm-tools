@@ -179,8 +179,10 @@ landscape-process spikes. It is working research, not an accepted architecture.
   width/depth changes along a line. Generated fluvial valleys now widen and
   smooth downstream with drainage hierarchy. A high-order, low-weight MFD
   convergence correction now reduces D8 cross-section gaps without cutting
-  across a synthetic drainage divide; authored per-vertex shape, glacial
-  forms, floodplains, and terraces remain.
+  across a synthetic drainage divide. The generated D8 tree now carries
+  Horton-Strahler order, but measured regressions rejected using it as a direct
+  width or depth control without valley character or confinement; authored
+  per-vertex shape, glacial forms, floodplains, and terraces remain.
 - [ ] **P0 — Derive drainage direction and flow accumulation.** Define the
   depression fill/breach policy, flat handling, edge outlets, and sea
   connectivity before promising hydrologically valid rivers. Prototype MFD for
@@ -195,8 +197,9 @@ landscape-process spikes. It is working research, not an accepted architecture.
   improves. Extreme generated knickpoints now receive a second bounded
   normalized-steepness pass with explicit unresolved diagnostics, while the
   coarser completed-surface diagnostic documents remaining scale aliasing.
-  Public drainage products, authored depression policy, basin labels, and
-  user-facing drainage-density profiles remain.
+  Horton-Strahler order now records equal-tributary hierarchy without changing
+  the DEM. Public drainage products, authored depression policy, basin labels,
+  and user-facing drainage-density profiles remain.
 - [ ] **P1 — Reconcile authored rivers with generated drainage.** Rivers should
   descend to a valid outlet and occupy a local valley; report conflicts rather
   than silently moving an authored route.

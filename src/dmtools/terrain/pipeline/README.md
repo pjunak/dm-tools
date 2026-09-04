@@ -58,6 +58,15 @@ field suppresses fine residual noise most strongly on major floors and tapers
 that suppression across shoulders. D8 here is an internal shaping tree, not yet
 an exported or validated river product.
 
+The selected D8 tree also receives deterministic Horton-Strahler order. Channel
+heads have order one; equal highest-order tributaries increment the downstream
+order, while a smaller tributary joining a larger reach does not. The order
+raster is retained as typed internal topology, with zero outside the channel
+network. It does not currently modify elevation or width: direct order-based
+width and centreline-depth experiments regressed the synthetic width fixture or
+the coarse Tharkeniss drainage diagnostic. Area and slope therefore remain the
+active shaping controls until valley character and confinement are explicit.
+
 The broad response also receives a deliberately small MFD convergence
 correction. MFD area is normalized logarithmically above the channel threshold,
 raised to a high-order trunk gate, combined with bounded local slope, and added

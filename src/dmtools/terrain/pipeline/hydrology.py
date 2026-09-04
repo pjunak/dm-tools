@@ -28,6 +28,7 @@ class DrainageIncision:
     detail_suppression: NDArray[np.float64]
     channel_mask: NDArray[np.bool_]
     channel_head_mask: NDArray[np.bool_]
+    stream_order: NDArray[np.uint16]
     floor_correction_m: NDArray[np.float64]
     steepness_correction_m: NDArray[np.float64]
     unresolved_uphill_channel_edge_count: int
@@ -557,6 +558,67 @@ def _connected_channel_network(
     )
 
 
+def strahler_stream_order(
+    channel_mask: NDArray[np.bool_],
+    receivers: NDArray[np.int64],
+    routing_surface_m: NDArray[np.float64],
+) -> NDArray[np.uint16]:
+    """Return deterministic Horton-Strahler order for a routed channel tree.
+
+    First-order reaches begin at channel heads. Equal-order tributaries raise
+    the downstream order by one; a lower-order tributary joining a larger
+    reach leaves the larger order unchanged.
+    """
+
+    if (
+        channel_mask.ndim != 2
+        or receivers.shape != channel_mask.shape
+        or routing_surface_m.shape != channel_mask.shape
+    ):
+        raise ValueError("Channel order arrays must share an equally shaped 2D grid.")
+    if np.any(channel_mask & ~np.isfinite(routing_surface_m)):
+        raise ValueError("Selected-channel routing elevations must be finite.")
+
+    flat_channel = channel_mask.ravel()
+    flat_receivers = receivers.ravel()
+    flat_routing_surface_m = routing_surface_m.ravel()
+    channel_indices = np.flatnonzero(flat_channel)
+    upstream_first = channel_indices[
+        np.argsort(-flat_routing_surface_m[channel_indices], kind="stable")
+    ]
+    order = np.zeros(flat_channel.shape, dtype=np.uint16)
+    largest_donor_order = np.zeros(flat_channel.shape, dtype=np.uint16)
+    largest_donor_count = np.zeros(flat_channel.shape, dtype=np.uint16)
+
+    for channel_index_value in upstream_first:
+        channel_index = int(channel_index_value)
+        donor_order = int(largest_donor_order[channel_index])
+        if donor_order == 0:
+            current_order = 1
+        else:
+            current_order = donor_order + int(largest_donor_count[channel_index] >= 2)
+        if current_order > np.iinfo(np.uint16).max:
+            raise OverflowError("Channel hierarchy exceeds the supported stream order.")
+        order[channel_index] = current_order
+
+        receiver = int(flat_receivers[channel_index])
+        if receiver < 0:
+            continue
+        if receiver >= flat_channel.size:
+            raise ValueError("Channel receiver index falls outside the grid.")
+        if not flat_channel[receiver]:
+            continue
+        if flat_routing_surface_m[receiver] >= flat_routing_surface_m[channel_index]:
+            raise ValueError("Channel receivers must descend on the routing surface.")
+        if current_order > largest_donor_order[receiver]:
+            largest_donor_order[receiver] = current_order
+            largest_donor_count[receiver] = 1
+        elif current_order == largest_donor_order[receiver]:
+            largest_donor_count[receiver] += 1
+
+    return order.reshape(channel_mask.shape)
+
+
 def _condition_downstream_channel_floors(
     source_elevation_m: NDArray[np.float64],
     incision_m: NDArray[np.float64],
@@ -897,6 +959,7 @@ def drainage_incision(
         receivers,
         land_mask,
     )
+    stream_order = strahler_stream_order(channel, receivers, routing_surface)
     largest_area_km2 = max(
         float(np.max(tree_accumulation_km2, initial=channel_threshold_km2)),
         channel_threshold_km2 * 1.01,
@@ -1025,6 +1088,7 @@ def drainage_incision(
         detail_suppression=np.where(land_mask, detail_suppression, 0.0),
         channel_mask=channel,
         channel_head_mask=channel_heads,
+        stream_order=stream_order,
         floor_correction_m=np.where(land_mask, floor_correction_m, 0.0),
         steepness_correction_m=np.where(land_mask, steepness_correction_m, 0.0),
         unresolved_uphill_channel_edge_count=unresolved_uphill_edges,

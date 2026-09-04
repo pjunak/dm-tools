@@ -199,6 +199,16 @@ A small 0-8% logarithmic width/depth ramp begins at the minimum eligible source
 area. The additional steep reaches therefore gain visible relief, while the
 existing higher-area hierarchy still controls downstream trunk scale.
 
+The generated D8 tree now also receives Horton-Strahler order as a separate
+topology descriptor. Equal-order tributaries increment the downstream order;
+unequal joins retain the larger order. Directly adding this signal to valley
+width failed the synthetic downstream-width invariant, while 3% and 1%
+centreline-depth experiments increased coarse Tharkeniss diagnostic fill
+volume. The accepted implementation therefore retains order for inspection and
+future river-vector hierarchy without modifying terrain. A later experiment
+must combine it with authored or inferred confinement, lithology, and valley
+character rather than treating topology as a universal width law.
+
 The next refinement reconstructs the generated floor after residual-detail
 suppression and applies a bounded upstream-to-downstream inequality pass over
 the selected D8 tree. A downstream centre cell is lowered only enough to retain

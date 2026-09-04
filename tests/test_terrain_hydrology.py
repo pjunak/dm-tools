@@ -8,7 +8,47 @@ from dmtools.terrain.pipeline.hydrology import (
     priority_flood_surface,
     steepest_flow_accumulation,
     steepest_flow_receivers,
+    strahler_stream_order,
 )
+
+
+def test_strahler_order_increases_only_when_equal_hierarchy_reaches_join() -> None:
+    channel = np.array(
+        [
+            [True, False, False, False, False],
+            [False, True, True, True, True],
+            [True, False, False, False, False],
+            [False, False, True, False, False],
+        ],
+        dtype=np.bool_,
+    )
+    receivers = np.full(channel.shape, -1, dtype=np.int64)
+    receivers[0, 0] = 6
+    receivers[2, 0] = 6
+    receivers[1, 1] = 7
+    receivers[3, 2] = 7
+    receivers[1, 2] = 8
+    receivers[1, 3] = 9
+    routing_surface = np.array(
+        [
+            [100.0, 0.0, 0.0, 0.0, 0.0],
+            [0.0, 80.0, 60.0, 40.0, 20.0],
+            [100.0, 0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 70.0, 0.0, 0.0],
+        ],
+        dtype=np.float64,
+    )
+
+    order = strahler_stream_order(channel, receivers, routing_surface)
+
+    assert order[0, 0] == 1
+    assert order[2, 0] == 1
+    assert order[1, 1] == 2
+    assert order[3, 2] == 1
+    assert order[1, 2] == 2
+    assert order[1, 3] == 2
+    assert order[1, 4] == 2
+    assert np.all(order[~channel] == 0)
 
 
 def test_extreme_generated_knickpoint_is_lowered_within_the_existing_cap() -> None:
@@ -257,6 +297,9 @@ def test_drainage_incision_selects_convergent_channels_not_the_whole_slope() -> 
     assert drainage.incision_m[20, 30] > 5.0
     assert drainage.detail_suppression[20, 30] > drainage.detail_suppression[5, 30]
     assert np.count_nonzero(drainage.channel_head_mask) > 0
+    assert np.all(drainage.stream_order[drainage.channel_head_mask] == 1)
+    assert np.all(drainage.stream_order[~drainage.channel_mask] == 0)
+    assert np.max(drainage.stream_order) > 1
     receivers, _slope = steepest_flow_receivers(
         priority_flood_surface(elevation, land),
         land,
@@ -267,6 +310,10 @@ def test_drainage_incision_selects_convergent_channels_not_the_whole_slope() -> 
     for channel_index in np.flatnonzero(flat_channel):
         receiver = int(receivers.ravel()[channel_index])
         assert receiver < 0 or flat_channel[receiver]
+        if receiver >= 0:
+            assert drainage.stream_order.ravel()[receiver] >= drainage.stream_order.ravel()[
+                channel_index
+            ]
 
 
 def test_area_slope_initiation_starts_steep_headwaters_before_gentle_ones() -> None:

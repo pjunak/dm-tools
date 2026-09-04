@@ -27,6 +27,9 @@ requires the bounded correction to restore downstream descent without
 unresolved edges. A separate longitudinal-profile fixture requires an extreme
 generated knickpoint to relax under the existing incision cap while retaining
 strict descent and the normalized-steepness limit. Canonical drainage
+topology has a deterministic Horton-Strahler fixture covering equal-order and
+unequal-order tributary joins, zero order outside the channel mask, head order,
+and nondecreasing downstream hierarchy. Canonical drainage
 diagnostics have planar-outlet and
 known-depression fixtures covering direct connectivity, significant fill depth,
 fill volume, non-mutation, metadata, and resolution-independent summaries. The

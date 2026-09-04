@@ -206,6 +206,11 @@ steep convergent terrain can initiate with less source area, while a fourfold
 cap on the local area threshold preserves large rivers through gentle plains.
 Every initiated cell is traced down the D8 tree so selected channels cannot
 vanish merely because a downstream reach becomes flatter.
+The generated tree now also carries Horton-Strahler order, distinguishing joins
+of comparable tributaries from small tributaries entering a larger trunk. This
+is retained as derived topology only. Tests showed that making order directly
+widen or deepen valleys could regress downstream-width or coarse drainage
+measurements, so it does not yet alter the DEM.
 A high-order, 4%-strength MFD convergence correction now nudges broad generated
 valleys toward the continuous flow minimum where the unique D8 tree is
 directionally quantized. It leaves the connected D8 centreline, downstream

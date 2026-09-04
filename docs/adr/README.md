@@ -36,3 +36,4 @@ ADRs preserve significant technical decisions and their trade-offs.
 - [ADR-0020: Condition generated channel floors downstream](0020-condition-generated-channel-floors-downstream.md)
 - [ADR-0021: Correct broad valleys with MFD convergence](0021-correct-broad-valleys-with-mfd-convergence.md)
 - [ADR-0022: Bound extreme generated-channel steepening](0022-bound-extreme-generated-channel-steepening.md)
+- [ADR-0023: Derive Strahler order without forcing valley width](0023-derive-strahler-order-without-forcing-valley-width.md)
