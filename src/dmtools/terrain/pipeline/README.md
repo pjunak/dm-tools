@@ -50,6 +50,14 @@ routes the generated macro surface before authored structures are reapplied.
 It does not yet represent authored lakes, endorheic basins, sediment, lithology,
 climate, unique river trees, or river vector export.
 
+MFD accumulation measures broad convergence, while a complementary D8 receiver
+tree supplies one generated valley centreline. A logarithmic contributing-area
+hierarchy blends narrow channel, near-shoulder, and broad trunk responses so
+larger downstream valleys widen at a fixed incision relief. The same canonical
+field suppresses fine residual noise most strongly on major floors and tapers
+that suppression across shoulders. D8 here is an internal shaping tree, not yet
+an exported or validated river product.
+
 Free ridge and valley endpoints narrow gradually so authored structures do not
 end as blunt walls. When an endpoint meets another structure of the same kind
 and elevation mode, the junction keeps its full cross-section instead. A stable

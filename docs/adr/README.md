@@ -29,3 +29,4 @@ ADRs preserve significant technical decisions and their trade-offs.
 - [ADR-0013: Preserve authored structure width at junctions](0013-preserve-structure-width-at-junctions.md)
 - [ADR-0014: Condition valley floors from head to outlet](0014-condition-valley-floors-downstream.md)
 - [ADR-0015: Route automatic valleys on a canonical hydrology grid](0015-route-automatic-valleys-on-canonical-grid.md)
+- [ADR-0016: Scale generated valley width downstream](0016-scale-generated-valley-width-downstream.md)

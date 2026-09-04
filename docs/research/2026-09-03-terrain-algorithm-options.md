@@ -172,6 +172,14 @@ incision proxy plus masked smoothing creates connected valley centres and
 shoulders. The world-coordinate field is sampled by every output resolution,
 so refining an image does not reroute its major network.
 
+The second refinement separates continuous accumulation from centreline
+topology: MFD retains broad convergence, while a steepest-receiver D8 tree
+locates one generated centre. A bounded logarithmic area hierarchy blends
+narrow, near-shoulder, and broad-trunk kernels. It also suppresses stochastic
+residual detail most strongly on major floors. A fixed-relief cross-section
+fixture verifies that downstream trunks grow wider, without treating one
+terrestrial width-area exponent as universal.
+
 This is intentionally narrower than a landscape-evolution model. It does not
 iterate uplift, erosion, sediment, or hillslope diffusion, and it fills every
 unclassified depression only in the temporary routing surface. Authored

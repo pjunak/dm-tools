@@ -17,7 +17,9 @@ also verifies that soft terrain-brush strength is monotonic, can raise or lower
 the base, preserves sea level, and survives preview metadata export.
 Absolute and relative elevation modes are tested separately, including relative
 peaks on ridges, relative valley incision, per-mode validation, deterministic
-nested resolutions, and preservation of the underlying relief field.
+automatic MFD accumulation, D8 centreline concentration, downstream valley
+width, floor-detail suppression, nested resolutions, and preservation of the
+underlying relief field.
 Project contract tests cover every current constraint kind and per-tool setting,
 relative coastline paths, strict schema-version handling, and SVG hash mismatch
 detection on both load and save.

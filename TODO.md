@@ -176,15 +176,18 @@ landscape-process spikes. It is working research, not an accepted architecture.
   lake and basin exceptions remain part of the explicit-water work.
 - [ ] **P1 — Add variable valley cross-sections.** Support narrow V-shaped
   valleys, glacial U-shaped valleys, broad floodplains, terraces, and smooth
-  width/depth changes along a line.
+  width/depth changes along a line. Generated fluvial valleys now widen and
+  smooth downstream with drainage hierarchy; authored per-vertex shape,
+  glacial forms, floodplains, and terraces remain.
 - [ ] **P0 — Derive drainage direction and flow accumulation.** Define the
   depression fill/breach policy, flat handling, edge outlets, and sea
   connectivity before promising hydrologically valid rivers. Prototype MFD for
   continuous accumulation and D8 for unique catchment trees; include rotated
   fixtures so grid-direction bias is measurable. A fixed canonical-grid
   Priority-Flood + MFD accumulation stage now drives automatic broad valleys,
-  with a rotated fixture. Unique D8 trees, public drainage products, authored
-  depression policy, and full diagnostics remain.
+  with a rotated fixture, and a complementary D8 tree supplies unique generated
+  centrelines. Public drainage products, authored depression policy, basin
+  labels, and full connectivity diagnostics remain.
 - [ ] **P1 — Reconcile authored rivers with generated drainage.** Rivers should
   descend to a valid outlet and occupy a local valley; report conflicts rather
   than silently moving an authored route.

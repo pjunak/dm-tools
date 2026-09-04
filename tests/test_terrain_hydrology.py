@@ -4,6 +4,7 @@ from dmtools.terrain.pipeline.hydrology import (
     drainage_incision,
     multiple_flow_accumulation,
     priority_flood_surface,
+    steepest_flow_accumulation,
 )
 
 
@@ -65,6 +66,23 @@ def test_mfd_accumulation_rotates_with_the_terrain() -> None:
     np.testing.assert_allclose(rotated_accumulation, np.rot90(accumulation), rtol=1e-12)
 
 
+def test_d8_tree_concentrates_each_cell_into_one_downstream_receiver() -> None:
+    rows, columns = np.indices((17, 17), dtype=np.float64)
+    elevation = 800.0 - 10.0 * columns + 0.8 * np.square(rows - 8.0)
+    land = np.ones_like(elevation, dtype=np.bool_)
+
+    accumulation, slope = steepest_flow_accumulation(
+        elevation,
+        land,
+        x_spacing_km=2.0,
+        y_spacing_km=2.0,
+    )
+
+    assert accumulation[8, -1] > accumulation[4, -1]
+    assert accumulation[8, -1] > accumulation[8, 8]
+    assert slope[8, 8] > 0.0
+
+
 def test_drainage_incision_selects_convergent_channels_not_the_whole_slope() -> None:
     rows, columns = np.indices((41, 41), dtype=np.float64)
     elevation = 1_500.0 - 12.0 * columns + 0.9 * np.square(rows - 20.0)
@@ -74,7 +92,7 @@ def test_drainage_incision_selects_convergent_channels_not_the_whole_slope() -> 
         (rows, columns, 40.0 - rows, 40.0 - columns)
     )
 
-    incision, accumulation = drainage_incision(
+    drainage = drainage_incision(
         elevation,
         land,
         distance_to_coast,
@@ -84,7 +102,39 @@ def test_drainage_incision_selects_convergent_channels_not_the_whole_slope() -> 
         variability=0.7,
     )
 
-    assert np.max(incision) > 0.0
-    assert np.count_nonzero(incision > 0.25 * np.max(incision)) < incision.size // 3
-    assert accumulation[20, -1] > accumulation[5, -1]
-    assert incision[20, 30] > incision[5, 30]
+    assert np.max(drainage.incision_m) > 0.0
+    assert (
+        np.count_nonzero(drainage.incision_m > 0.25 * np.max(drainage.incision_m))
+        < drainage.incision_m.size // 3
+    )
+    assert drainage.accumulation_km2[20, -1] > drainage.accumulation_km2[5, -1]
+    assert drainage.incision_m[20, 30] > drainage.incision_m[5, 30]
+    assert drainage.detail_suppression[20, 30] > drainage.detail_suppression[5, 30]
+
+
+def test_large_downstream_valley_has_broader_shoulders_than_its_headwaters() -> None:
+    rows, columns = np.indices((61, 61), dtype=np.float64)
+    elevation = 2_000.0 - 15.0 * columns + 1.2 * np.square(rows - 30.0)
+    land = np.ones_like(elevation, dtype=np.bool_)
+    distance_to_coast = np.minimum.reduce(
+        (rows, columns, 60.0 - rows, 60.0 - columns)
+    )
+
+    drainage = drainage_incision(
+        elevation,
+        land,
+        distance_to_coast,
+        x_spacing_km=4.0,
+        y_spacing_km=4.0,
+        maximum_elevation_m=4_000.0,
+        variability=0.7,
+    )
+
+    upstream = drainage.incision_m[:, 24]
+    downstream = drainage.incision_m[:, 46]
+    fixed_relief_threshold_m = 0.01 * 4_000.0
+    upstream_width = np.count_nonzero(upstream > fixed_relief_threshold_m)
+    downstream_width = np.count_nonzero(downstream > fixed_relief_threshold_m)
+
+    assert downstream_width > upstream_width
+    assert drainage.detail_suppression[30, 46] > drainage.detail_suppression[30, 24]

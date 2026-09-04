@@ -199,6 +199,9 @@ landscape-evolution model. A fixed-resolution hydrology stage now fills
 accidental sinks on a temporary routing surface, accumulates multiple-direction
 flow, and uses contributing area plus slope to incise broad automatic valleys.
 The generated valley hierarchy stays fixed when output resolution changes.
+MFD represents broad convergence, a deterministic D8 tree locates one centre,
+and drainage-area hierarchy makes major downstream trunks broader and smoother
+than their headwaters.
 The model still does **not** simulate plate tectonics, rock type, sediment,
 climate, geological time, authored lakes, or endorheic basins, and its drainage
 field is not yet exported or certified as a river network.

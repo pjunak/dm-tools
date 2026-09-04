@@ -55,9 +55,11 @@ class _AutomaticValleyField:
     x_km: NDArray[np.float64]
     y_km: NDArray[np.float64]
     incision_m: NDArray[np.float64]
+    detail_suppression: NDArray[np.float64]
 
-    def sample(
+    def _sample(
         self,
+        values: NDArray[np.float64],
         x_km: NDArray[np.float64],
         y_km: NDArray[np.float64],
     ) -> NDArray[np.float64]:
@@ -88,14 +90,28 @@ class _AutomaticValleyField:
             where=y1 > y0,
         )
         top = (
-            self.incision_m[rows, columns] * (1.0 - x_fraction)
-            + self.incision_m[rows, columns + 1] * x_fraction
+            values[rows, columns] * (1.0 - x_fraction)
+            + values[rows, columns + 1] * x_fraction
         )
         bottom = (
-            self.incision_m[rows + 1, columns] * (1.0 - x_fraction)
-            + self.incision_m[rows + 1, columns + 1] * x_fraction
+            values[rows + 1, columns] * (1.0 - x_fraction)
+            + values[rows + 1, columns + 1] * x_fraction
         )
         return top * (1.0 - y_fraction) + bottom * y_fraction
+
+    def sample_incision(
+        self,
+        x_km: NDArray[np.float64],
+        y_km: NDArray[np.float64],
+    ) -> NDArray[np.float64]:
+        return self._sample(self.incision_m, x_km, y_km)
+
+    def sample_detail_suppression(
+        self,
+        x_km: NDArray[np.float64],
+        y_km: NDArray[np.float64],
+    ) -> NDArray[np.float64]:
+        return self._sample(self.detail_suppression, x_km, y_km)
 
 
 def _report(callback: ProgressCallback | None, fraction: float, message: str) -> None:
@@ -820,7 +836,7 @@ def _prepare_automatic_valley_field(
         settings,
     )
     routing_elevation = np.where(land_mask, macro_elevation, 0.0)
-    incision_m, _accumulation_km2 = drainage_incision(
+    drainage = drainage_incision(
         routing_elevation,
         land_mask,
         distance_to_coast_km,
@@ -829,7 +845,12 @@ def _prepare_automatic_valley_field(
         maximum_elevation_m=settings.maximum_elevation_m,
         variability=settings.variability,
     )
-    return _AutomaticValleyField(x_km=x_km, y_km=y_km, incision_m=incision_m)
+    return _AutomaticValleyField(
+        x_km=x_km,
+        y_km=y_km,
+        incision_m=drainage.incision_m,
+        detail_suppression=drainage.detail_suppression,
+    )
 
 
 def _absolute_valley_profile(
@@ -964,10 +985,15 @@ def _prepare_downstream_valley_profiles(
                 settings.maximum_elevation_m,
                 detail_driver,
             )
-            automatic_incision = automatic_valleys.sample(x_km, y_km)
+            automatic_incision = automatic_valleys.sample_incision(x_km, y_km)
+            automatic_detail_suppression = (
+                automatic_valleys.sample_detail_suppression(x_km, y_km)
+            )
             conditioned_macro = np.maximum(conditioned_macro - automatic_incision, 0.0)
             reference_elevation = conditioned_macro + (
-                (full_elevation - macro_elevation) * (1.0 - reference_influence)
+                (full_elevation - macro_elevation)
+                * (1.0 - automatic_detail_suppression)
+                * (1.0 - reference_influence)
             )
             depth = _relative_valley_depth_profile(constraint, positions_km)
             preferred_floor = reference_elevation - depth
@@ -1047,12 +1073,18 @@ def generate_terrain(
             distance_to_coast,
             settings,
         )
-        automatic_incision = automatic_valleys.sample(x_grid, y_grid)
+        automatic_incision = automatic_valleys.sample_incision(x_grid, y_grid)
+        automatic_detail_suppression = automatic_valleys.sample_detail_suppression(
+            x_grid,
+            y_grid,
+        )
+        residual_detail = unconditioned_elevation - macro_elevation
+        macro_elevation = np.maximum(macro_elevation - automatic_incision, 0.0)
         unconditioned_elevation = np.maximum(
-            unconditioned_elevation - automatic_incision,
+            macro_elevation
+            + residual_detail * (1.0 - automatic_detail_suppression),
             0.0,
         )
-        macro_elevation = np.maximum(macro_elevation - automatic_incision, 0.0)
         if metric_constraints:
             conditioned_elevation, constraint_influence = _apply_constraints(
                 macro_elevation,

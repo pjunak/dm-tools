@@ -1,5 +1,6 @@
 """Deterministic regular-grid primitives for drainage-guided terrain shaping."""
 
+from dataclasses import dataclass
 from heapq import heappop, heappush
 from math import hypot
 
@@ -16,6 +17,15 @@ _NEIGHBOURS = (
     (1, 0),
     (1, 1),
 )
+
+
+@dataclass(frozen=True, slots=True)
+class DrainageIncision:
+    """Canonical automatic-valley products derived from one routing surface."""
+
+    incision_m: NDArray[np.float64]
+    accumulation_km2: NDArray[np.float64]
+    detail_suppression: NDArray[np.float64]
 
 
 def priority_flood_surface(
@@ -145,6 +155,65 @@ def multiple_flow_accumulation(
     return accumulation, maximum_slope
 
 
+def steepest_flow_accumulation(
+    routing_elevation_m: NDArray[np.float64],
+    land_mask: NDArray[np.bool_],
+    *,
+    x_spacing_km: float,
+    y_spacing_km: float,
+) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
+    """Return D8 contributing area and receiver slope for a unique flow tree."""
+
+    if routing_elevation_m.shape != land_mask.shape or routing_elevation_m.ndim != 2:
+        raise ValueError("Routing elevation and land mask must be equally shaped 2D arrays.")
+    if x_spacing_km <= 0.0 or y_spacing_km <= 0.0:
+        raise ValueError("Grid spacing must be positive.")
+
+    _height, width = routing_elevation_m.shape
+    cell_area_km2 = x_spacing_km * y_spacing_km
+    accumulation = np.where(land_mask, cell_area_km2, 0.0).astype(np.float64)
+    receiver_slope = np.zeros_like(routing_elevation_m)
+    flat_indices = np.flatnonzero(land_mask)
+    order = flat_indices[
+        np.argsort(-routing_elevation_m.ravel()[flat_indices], kind="stable")
+    ]
+
+    for flat_index in order:
+        row, column = divmod(int(flat_index), width)
+        current_height = float(routing_elevation_m[row, column])
+        receiver: tuple[int, int] | None = None
+        steepest_slope = 0.0
+        for row_offset, column_offset in _NEIGHBOURS:
+            neighbour_row = row + row_offset
+            neighbour_column = column + column_offset
+            if not (
+                0 <= neighbour_row < routing_elevation_m.shape[0]
+                and 0 <= neighbour_column < width
+                and land_mask[neighbour_row, neighbour_column]
+            ):
+                continue
+            drop_m = current_height - float(
+                routing_elevation_m[neighbour_row, neighbour_column]
+            )
+            if drop_m <= 0.0:
+                continue
+            distance_km = hypot(
+                column_offset * x_spacing_km,
+                row_offset * y_spacing_km,
+            )
+            slope = drop_m / (1_000.0 * distance_km)
+            if slope > steepest_slope:
+                steepest_slope = slope
+                receiver = neighbour_row, neighbour_column
+        if receiver is None:
+            continue
+        receiver_row, receiver_column = receiver
+        accumulation[receiver_row, receiver_column] += accumulation[row, column]
+        receiver_slope[row, column] = steepest_slope
+
+    return accumulation, receiver_slope
+
+
 def _masked_smooth(
     values: NDArray[np.float64],
     land_mask: NDArray[np.bool_],
@@ -185,11 +254,17 @@ def drainage_incision(
     y_spacing_km: float,
     maximum_elevation_m: float,
     variability: float,
-) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
+) -> DrainageIncision:
     """Derive broad valley incision and contributing area from a terrain surface."""
 
     routing_surface = priority_flood_surface(elevation_m, land_mask)
-    accumulation_km2, slope = multiple_flow_accumulation(
+    accumulation_km2, _mfd_slope = multiple_flow_accumulation(
+        routing_surface,
+        land_mask,
+        x_spacing_km=x_spacing_km,
+        y_spacing_km=y_spacing_km,
+    )
+    tree_accumulation_km2, slope = steepest_flow_accumulation(
         routing_surface,
         land_mask,
         x_spacing_km=x_spacing_km,
@@ -199,16 +274,19 @@ def drainage_incision(
     land_area_km2 = float(np.count_nonzero(land_mask)) * cell_area_km2
     channel_threshold_km2 = max(12.0 * cell_area_km2, 0.0015 * land_area_km2)
     largest_area_km2 = max(
-        float(np.max(accumulation_km2, initial=channel_threshold_km2)),
+        float(np.max(tree_accumulation_km2, initial=channel_threshold_km2)),
         channel_threshold_km2 * 1.01,
     )
     log_progress = np.clip(
-        np.log(np.maximum(accumulation_km2, channel_threshold_km2) / channel_threshold_km2)
+        np.log(
+            np.maximum(tree_accumulation_km2, channel_threshold_km2)
+            / channel_threshold_km2
+        )
         / np.log(largest_area_km2 / channel_threshold_km2),
         0.0,
         1.0,
     )
-    channel = accumulation_km2 >= channel_threshold_km2
+    channel = tree_accumulation_km2 >= channel_threshold_km2
     channel_slopes = slope[channel]
     reference_slope = (
         max(float(np.percentile(channel_slopes, 90.0)), 0.001)
@@ -221,8 +299,16 @@ def drainage_incision(
         log_progress * (0.45 + 0.55 * slope_factor),
         0.0,
     )
-    shoulders = _masked_smooth(stream_power_shape, land_mask, iterations=3)
-    valley_shape = 0.58 * stream_power_shape + 0.42 * shoulders
+    near_shoulders = _masked_smooth(stream_power_shape, land_mask, iterations=2)
+    trunk_source = stream_power_shape * np.power(log_progress, 1.4)
+    trunk_shoulders = _masked_smooth(trunk_source, land_mask, iterations=7)
+    valley_shape = np.clip(
+        0.56 * stream_power_shape
+        + 0.30 * near_shoulders
+        + 0.28 * trunk_shoulders,
+        0.0,
+        1.0,
+    )
     maximum_depth_m = maximum_elevation_m * (0.035 + 0.085 * variability)
     incision_m = maximum_depth_m * valley_shape
     coastal_gate = np.clip(
@@ -232,4 +318,18 @@ def drainage_incision(
     )
     incision_m *= coastal_gate
     incision_m = np.minimum(incision_m, 0.55 * np.maximum(elevation_m, 0.0))
-    return np.where(land_mask, incision_m, 0.0), accumulation_km2
+    floor_control = np.where(channel, 0.35 + 0.60 * log_progress, 0.0)
+    floor_shoulders = _masked_smooth(floor_control, land_mask, iterations=2)
+    detail_suppression = np.clip(
+        0.68 * floor_control
+        + 0.22 * floor_shoulders
+        + 0.22 * trunk_shoulders,
+        0.0,
+        0.92,
+    )
+    detail_suppression *= coastal_gate
+    return DrainageIncision(
+        incision_m=np.where(land_mask, incision_m, 0.0),
+        accumulation_km2=accumulation_km2,
+        detail_suppression=np.where(land_mask, detail_suppression, 0.0),
+    )
