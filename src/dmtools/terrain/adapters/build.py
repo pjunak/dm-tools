@@ -15,7 +15,7 @@ import shapely
 import dmtools
 from dmtools.terrain.adapters.project import PROJECT_SCHEMA_VERSION
 from dmtools.terrain.adapters.render import render_height_map, save_height_map
-from dmtools.terrain.domain import TerrainProject
+from dmtools.terrain.domain import LocalMetricFrame, TerrainProject
 from dmtools.terrain.pipeline.generate import (
     AUTOMATIC_VALLEY_ALGORITHM_ID,
     GENERATOR_ALGORITHM_ID,
@@ -120,9 +120,8 @@ def publish_build_manifest(
     outputs: dict[str, object],
 ) -> Path:
     """Publish completion last, after inputs and all products have been checked."""
-    bounds = project.coastline.bounds
-    routing_height, routing_width = terrain.routing_grid_shape
-    width_km, height_km = float(terrain.x_km[-1]), float(terrain.y_km[-1])
+    frame = LocalMetricFrame(project.coastline.bounds, project.settings.object_scale_km)
+    grid, routing_grid = terrain.grid, terrain.routing_grid
     document: dict[str, object] = {
         "schema": "dmtools.terrain-build",
         "schema_version": 1,
@@ -144,31 +143,30 @@ def publish_build_manifest(
             "macro_detail_seed": project.settings.seed,
         },
         "coordinates": {
-            "model": "local-svg-plane@1",
+            "model": frame.model_id,
             "world_crs": None,
             "planetary_radius_m": None,
-            "source_bounds": bounds,
-            "km_per_source_unit": project.settings.object_scale_km
-            / max(bounds[2] - bounds[0], bounds[3] - bounds[1]),
+            "source_bounds": frame.source_bounds,
+            "km_per_source_unit": frame.km_per_source_unit,
             "origin": "minimum source x and y",
             "x_direction": "source-right",
             "y_direction": "source-down",
-            "registration": "endpoint-nodes",
+            "registration": grid.registration,
             "horizontal_units": "km",
             "elevation_units": "m",
             "elevation_dtype": "float32",
             "nodata": "NaN outside land mask",
-            "extent_km": [0.0, 0.0, width_km, height_km],
+            "extent_km": list(grid.extent_km),
             "width": terrain.width,
             "height": terrain.height,
-            "x_spacing_km": width_km / (terrain.width - 1),
-            "y_spacing_km": height_km / (terrain.height - 1),
+            "x_spacing_km": grid.x_spacing_km,
+            "y_spacing_km": grid.y_spacing_km,
         },
         "routing_grid": {
-            "width": routing_width,
-            "height": routing_height,
-            "x_spacing_km": width_km / (routing_width - 1),
-            "y_spacing_km": height_km / (routing_height - 1),
+            "width": routing_grid.width,
+            "height": routing_grid.height,
+            "x_spacing_km": routing_grid.x_spacing_km,
+            "y_spacing_km": routing_grid.y_spacing_km,
         },
         "outputs": outputs,
         "warnings": [

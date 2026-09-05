@@ -47,8 +47,8 @@ def build_terrain_project(
     quality = measure_terrain_quality(
         terrain.elevation_m,
         terrain.land_mask,
-        x_spacing_km=float(terrain.x_km[-1]) / (terrain.width - 1),
-        y_spacing_km=float(terrain.y_km[-1]) / (terrain.height - 1),
+        x_spacing_km=terrain.grid.x_spacing_km,
+        y_spacing_km=terrain.grid.y_spacing_km,
     )
     outputs = write_build_products(terrain, project, quality, target)
     verify_inputs()

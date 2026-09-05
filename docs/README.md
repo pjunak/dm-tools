@@ -14,6 +14,8 @@
    [schemas](../schemas/README.md) and [examples](../examples/README.md).
 6. To generate and compare numeric output, use the
    [headless build guide](terrain-builds.md).
+7. For source/local conversion, endpoint grids and world-positioning limits,
+   read the [coordinate contract](terrain-coordinates.md).
 
 ## Document roles and authority
 

@@ -29,6 +29,8 @@ dimension to the authored object size, with x increasing right and y increasing
 down. Samples include both extent endpoints. World CRS and planetary radius
 are explicitly unspecified. Do not import these arrays as longitude/latitude
 or assume they already follow a campaign world's projection.
+The [coordinate contract](terrain-coordinates.md) explains the shared frame,
+endpoint registration and distinct output/routing/diagnostic spacings.
 
 Example numeric inspection from the repository root:
 

@@ -328,9 +328,12 @@ Priorities remain conditional on the current strategy's prerequisites.
 #### Coordinate, scale, and drainage contracts
 
 - [ ] **P0 — R01: Preserve source-world georeferencing.** Extend the local
-  object-width model with source origin, planetary model, projection and
+  longest-dimension model with source origin, planetary model, projection and
   regional working CRS. Check ground-distance distortion and a world/region
   round trip. A metric label alone must not imply geographic accuracy.
+  The [shared coordinate contract](docs/terrain-coordinates.md) now preserves
+  source/local inverse conversion and explicit grid extents. World placement,
+  planetary metadata and working-CRS declarations remain future project work.
 - [ ] **P0 — R02: Expose effective process and diagnostic spacing.** Record the
   257-sample drainage and 129-sample diagnostic grids in the build report;
   flag landforms too small to resolve. Define versioned process resolution
@@ -344,6 +347,9 @@ Priorities remain conditional on the current strategy's prerequisites.
   bit-identical shared-point tests; do not silently weaken those tests.
   For endpoint-node grids test `2*(N-1)+1` refinement, not doubled node counts;
   shared-node equality does not imply equal coarse-cell averages.
+  Endpoint registration, interval-based grid refinement, axis-specific spacing
+  and current stage shape rounding now have a shared domain implementation and
+  numerical tests. Cell averages, resampling and parent restriction remain open.
 - [ ] **P0 — R04: Route on authored macro geography.** Compare the current
   unconstrained automatic-routing surface with one including accepted ridges,
   divides, brush guidance and water constraints. Use an explicit stage order
@@ -659,6 +665,9 @@ Priorities remain conditional on the current strategy's prerequisites.
   download UX only at the service boundary.
 
 ## Related decisions and research
+
+- [ADR-0025](docs/adr/0025-centralize-local-frames-and-endpoint-grids.md) centralizes
+  source/local conversion and endpoint grids while preserving existing terrain.
 
 - [Selective terrain sampling — 2026-09-05](docs/research/2026-09-05-selective-terrain-sampling.md)
   records implemented profiling and ocean-sample elimination, exact numeric

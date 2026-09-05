@@ -73,8 +73,9 @@ def elevation_legend_colours(
 
 def _illumination(terrain: GeneratedTerrain, vertical_exaggeration: float) -> np.ndarray:
     elevation_km = np.nan_to_num(terrain.elevation_m, nan=0.0).astype(np.float64) / 1_000.0
-    y_spacing = float(terrain.y_km[-1] - terrain.y_km[0]) / max(1, terrain.height - 1)
-    x_spacing = float(terrain.x_km[-1] - terrain.x_km[0]) / max(1, terrain.width - 1)
+    grid = terrain.grid
+    y_spacing = grid.y_spacing_km
+    x_spacing = grid.x_spacing_km
     gradient_y, gradient_x = np.gradient(elevation_km, y_spacing, x_spacing)
 
     normal_x = -gradient_x * vertical_exaggeration

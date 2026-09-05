@@ -16,10 +16,13 @@ from dmtools.terrain.domain import (
     Coastline,
     ElevationMode,
     ElevationPoint,
+    EndpointGrid,
+    LocalMetricFrame,
     TerrainBrushStroke,
     TerrainConstraint,
     TerrainSettings,
 )
+from dmtools.terrain.pipeline.grid import grid_coordinates
 from dmtools.terrain.pipeline.hydrology import (
     DrainageDiagnostics,
     drainage_diagnostics,
@@ -48,6 +51,19 @@ class GeneratedTerrain:
     source_name: str
     drainage: DrainageDiagnostics
     routing_grid_shape: tuple[int, int]
+
+    @property
+    def grid(self) -> EndpointGrid:
+        return EndpointGrid(
+            (float(self.x_km[0]), float(self.y_km[0]),
+             float(self.x_km[-1]), float(self.y_km[-1])),
+            self.width, self.height,
+        )
+
+    @property
+    def routing_grid(self) -> EndpointGrid:
+        height, width = self.routing_grid_shape
+        return EndpointGrid(self.grid.extent_km, width, height)
 
     @property
     def width(self) -> int:
@@ -135,20 +151,11 @@ type LandGeometry = Polygon | MultiPolygon
 def _metric_polygon(
     coastline: Coastline, object_scale_km: float
 ) -> tuple[LandGeometry, float, float]:
-    min_x, min_y, max_x, max_y = coastline.bounds
-    span_x = max_x - min_x
-    span_y = max_y - min_y
-    longest_span = max(span_x, span_y)
-    if longest_span <= 0:
-        raise ValueError("The coastline has no measurable extent.")
-    km_per_source_unit = object_scale_km / longest_span
+    frame = LocalMetricFrame(coastline.bounds, object_scale_km)
     def metric_ring(
         ring: tuple[tuple[float, float], ...],
     ) -> list[tuple[float, float]]:
-        return [
-            ((x - min_x) * km_per_source_unit, (y - min_y) * km_per_source_unit)
-            for x, y in ring
-        ]
+        return [frame.source_to_local(point) for point in ring]
 
     polygons = [
         Polygon(
@@ -162,7 +169,7 @@ def _metric_polygon(
         raise ValueError("The coastlines do not form polygonal land geometry.")
     if not polygon.is_valid or polygon.area <= 0:
         raise ValueError("The coastline does not form a valid land polygon.")
-    return polygon, span_x * km_per_source_unit, span_y * km_per_source_unit
+    return polygon, frame.width_km, frame.height_km
 
 
 @dataclass(frozen=True, slots=True)
@@ -822,12 +829,8 @@ def _prepare_automatic_valley_field(
 ) -> _AutomaticValleyField:
     """Route broad drainage once on a canonical, output-resolution-free grid."""
 
-    longest_km = max(width_km, height_km)
-    canonical_longest_cells = 257
-    width = max(3, round(canonical_longest_cells * width_km / longest_km))
-    height = max(3, round(canonical_longest_cells * height_km / longest_km))
-    x_km = np.linspace(0.0, width_km, width, dtype=np.float64)
-    y_km = np.linspace(0.0, height_km, height, dtype=np.float64)
+    grid = EndpointGrid.for_extent((0.0, 0.0, width_km, height_km), 257, minimum_samples=3)
+    x_km, y_km = grid_coordinates(grid)
     x_grid, y_grid = np.meshgrid(x_km, y_km)
     land_mask = np.asarray(
         shapely.intersects_xy(polygon, x_grid, y_grid),
@@ -850,8 +853,8 @@ def _prepare_automatic_valley_field(
         routing_elevation,
         land_mask,
         distance_to_coast_km,
-        x_spacing_km=width_km / (width - 1),
-        y_spacing_km=height_km / (height - 1),
+        x_spacing_km=grid.x_spacing_km,
+        y_spacing_km=grid.y_spacing_km,
         maximum_elevation_m=settings.maximum_elevation_m,
         variability=settings.variability,
         residual_detail_m=full_elevation - macro_elevation,
@@ -1118,12 +1121,8 @@ def _prepare_drainage_diagnostics(
 ) -> DrainageDiagnostics:
     """Measure the completed terrain on a fixed resolution-independent grid."""
 
-    longest_km = max(width_km, height_km)
-    diagnostic_longest_cells = 129
-    width = max(3, round(diagnostic_longest_cells * width_km / longest_km))
-    height = max(3, round(diagnostic_longest_cells * height_km / longest_km))
-    x_km = np.linspace(0.0, width_km, width, dtype=np.float64)
-    y_km = np.linspace(0.0, height_km, height, dtype=np.float64)
+    grid = EndpointGrid.for_extent((0.0, 0.0, width_km, height_km), 129, minimum_samples=3)
+    x_km, y_km = grid_coordinates(grid)
     x_grid, y_grid = np.meshgrid(x_km, y_km)
     elevation_m, land_mask = _evaluate_elevation_samples(
         x_grid,
@@ -1137,8 +1136,8 @@ def _prepare_drainage_diagnostics(
     return drainage_diagnostics(
         elevation_m,
         land_mask,
-        x_spacing_km=width_km / (width - 1),
-        y_spacing_km=height_km / (height - 1),
+        x_spacing_km=grid.x_spacing_km,
+        y_spacing_km=grid.y_spacing_km,
     )
 
 
@@ -1161,11 +1160,9 @@ def generate_terrain(
         height_km,
         settings.maximum_elevation_m,
     )
-    longest_km = max(width_km, height_km)
-    width = max(2, round(settings.resolution_px * width_km / longest_km))
-    height = max(2, round(settings.resolution_px * height_km / longest_km))
-    x_km = np.linspace(0.0, width_km, width, dtype=np.float64)
-    y_km = np.linspace(0.0, height_km, height, dtype=np.float64)
+    grid = EndpointGrid.for_extent((0.0, 0.0, width_km, height_km), settings.resolution_px)
+    width, height = grid.width, grid.height
+    x_km, y_km = grid_coordinates(grid)
     elevation = np.full((height, width), np.nan, dtype=np.float32)
     mask = np.zeros((height, width), dtype=np.bool_)
     boundary = polygon.boundary

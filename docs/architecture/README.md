@@ -55,6 +55,12 @@ processes, and regional-refinement validation. Climate and ecological products
 are a later derived system that consumes accepted terrain and global world
 context rather than becoming an implicit terrain stage.
 
+Source-to-local conversion and uniform endpoint grids are dependency-light
+domain values shared by generation, routing, diagnostics, rendering and build
+metadata. NumPy axis construction stays in the pipeline. Read the
+[coordinate contract](../terrain-coordinates.md) and
+[ADR-0025](../adr/0025-centralize-local-frames-and-endpoint-grids.md).
+
 Each stage receives explicit inputs and configuration. It must not obtain
 randomness, time, environment settings, or coordinate assumptions implicitly.
 

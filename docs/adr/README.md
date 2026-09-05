@@ -38,3 +38,4 @@ ADRs preserve significant technical decisions and their trade-offs.
 - [ADR-0022: Bound extreme generated-channel steepening](0022-bound-extreme-generated-channel-steepening.md)
 - [ADR-0023: Derive Strahler order without forcing valley width](0023-derive-strahler-order-without-forcing-valley-width.md)
 - [ADR-0024: Publish local numeric terrain builds before changing algorithms](0024-publish-local-numeric-terrain-builds.md)
+- [ADR-0025: Centralize local frames and endpoint grids](0025-centralize-local-frames-and-endpoint-grids.md)

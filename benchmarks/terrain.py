@@ -157,8 +157,8 @@ def probe(case: str, resolution: int, seed: int) -> dict[str, Any]:
     quality = measure_terrain_quality(
         terrain.elevation_m,
         terrain.land_mask,
-        x_spacing_km=float(terrain.x_km[-1]) / (terrain.width - 1),
-        y_spacing_km=float(terrain.y_km[-1]) / (terrain.height - 1),
+        x_spacing_km=terrain.grid.x_spacing_km,
+        y_spacing_km=terrain.grid.y_spacing_km,
     )
     quality_seconds = perf_counter() - start
     render_seconds: dict[str, float] = {}

@@ -1,5 +1,6 @@
 """Dependency-light terrain concepts and validation rules."""
 
+from dmtools.terrain.domain.coordinates import EndpointGrid, LocalMetricFrame
 from dmtools.terrain.domain.models import (
     Coastline,
     ElevationMode,
@@ -24,8 +25,10 @@ __all__ = [
     "Coastline",
     "ElevationMode",
     "ElevationPoint",
+    "EndpointGrid",
     "FeatureToolSettings",
     "LandComponent",
+    "LocalMetricFrame",
     "TerrainAuthoringState",
     "TerrainBrushStroke",
     "TerrainConstraint",
