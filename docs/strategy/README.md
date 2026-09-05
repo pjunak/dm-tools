@@ -71,6 +71,10 @@ operations and GDAL command-line tools as independent interoperability checks.
 
 ### 2. Measure before replacing the base solver
 
+- Use the [benchmark harness](../../benchmarks/README.md) to record stage timing,
+  process memory and numeric identities before changing algorithms or language.
+  Keep Python for the current foundation/terrain experiments; reconsider a
+  native core against the [migration gates](../research/2026-09-05-language-and-performance.md).
 - Finish the quantitative landform fixtures and statistics in the roadmap.
 - Add SciPy only for a focused comparison of local-neighbour RBF correction and
   a sparse screened-Poisson solve against the current surface.

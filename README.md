@@ -96,6 +96,7 @@ The accepted version-1 project contract is published in
 | `schemas/` | Versioned public input and manifest schemas |
 | `examples/` | Small public example projects |
 | `tests/` | Unit, contract, integration, and deterministic regression tests |
+| `benchmarks/` | Repeatable development-only terrain timing and memory probes |
 | `docs/architecture/` | Current system structure and data flow |
 | `docs/adr/` | Append-only architecture decisions |
 | `docs/strategy/` | Current dependency-aware development order |
@@ -106,6 +107,8 @@ Start with [the current development strategy](docs/strategy/README.md), then see
 [the architecture overview](docs/architecture/README.md), and
 [the terrain tool guide](src/dmtools/terrain/README.md). The categorized
 implementation backlog is maintained in the [terrain tool roadmap](TODO.md).
+Use the [benchmark guide](benchmarks/README.md) to compare performance without
+changing authored projects or introducing machine-dependent test thresholds.
 
 ## Design principles
 

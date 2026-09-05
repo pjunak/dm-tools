@@ -1039,6 +1039,33 @@ def _evaluate_elevation_samples(
         shapely.intersects_xy(polygon, x_grid, y_grid),
         dtype=np.bool_,
     )
+    if np.all(land_mask):
+        return _evaluate_land_samples(
+            x_grid, y_grid, boundary, settings, constraints, automatic_valleys
+        ), land_mask
+    elevation = np.zeros(land_mask.shape, dtype=np.float64)
+    if np.any(land_mask):
+        elevation[land_mask] = _evaluate_land_samples(
+            x_grid[land_mask], y_grid[land_mask], boundary, settings, constraints, automatic_valleys
+        )
+    return elevation, land_mask
+
+
+def _evaluate_land_samples(
+    x_grid: NDArray[np.float64],
+    y_grid: NDArray[np.float64],
+    boundary: Any,
+    settings: TerrainSettings,
+    constraints: tuple[_MetricConstraint, ...],
+    automatic_valleys: _AutomaticValleyField,
+) -> NDArray[np.float64]:
+    """Evaluate independent points after canonical routing and profiles are prepared.
+
+    No operation here may reduce across neighboring samples: callers can omit
+    ocean points or split land points into different chunks without changing
+    the field. Neighborhood-dependent hydrology remains on its complete grid.
+    """
+
     points: Any = shapely.points(x_grid, y_grid)
     raw_distance_to_coast = cast(Any, shapely.distance(points, boundary))
     distance_to_coast = cast(
@@ -1077,7 +1104,7 @@ def _evaluate_elevation_samples(
         elevation = np.clip(elevation, 0.0, settings.maximum_elevation_m)
     else:
         elevation = unconditioned_elevation
-    return np.where(land_mask, elevation, 0.0), land_mask
+    return elevation
 
 
 def _prepare_drainage_diagnostics(

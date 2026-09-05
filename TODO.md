@@ -303,6 +303,11 @@ landscape-process spikes. It is working research, not an accepted architecture.
   Python loops. The first public-example timing/profile is recorded in the
   [language assessment](docs/research/2026-09-05-language-and-performance.md);
   it is not yet a representative benchmark suite or memory measurement.
+  A [repeatable harness](benchmarks/README.md) now covers four public/synthetic
+  cases, selectable seeds/resolutions, generation stages, CPU time, quality,
+  rendering, process peak memory and numerical hashes in isolated repetitions.
+  Export timing, detailed native/Python CPU profiles, regional-refinement cases
+  and agreed latency/memory budgets remain.
 
 ### Realism research register — 2026-09-04
 
@@ -561,6 +566,10 @@ Priorities remain conditional on the current strategy's prerequisites.
   Key caches by geometry, coordinates and algorithm identity. Any approximate
   distance field needs an explicit error budget, coastline/constraint checks,
   and refinement tests; never simplify authored geometry silently.
+  The first implementation skips ocean samples in the delivered field and
+  diagnostic sampling while preserving full canonical routing grids. Exact
+  indexed segment queries were slower on the public coastline in a small probe;
+  they have not been adopted. Broader indexing/caching comparisons remain.
 - [ ] **Research — R46: Compare compiled kernels on demonstrated bottlenecks.**
   Start with fused noise evaluation and allocation reduction; test hydrology
   loops when representative profiles justify them. Compare existing NumPy,
@@ -651,6 +660,9 @@ Priorities remain conditional on the current strategy's prerequisites.
 
 ## Related decisions and research
 
+- [Selective terrain sampling — 2026-09-05](docs/research/2026-09-05-selective-terrain-sampling.md)
+  records implemented profiling and ocean-sample elimination, exact numeric
+  comparisons, runtime/memory results and the remaining measurement limits.
 - [Language and performance — 2026-09-05](docs/research/2026-09-05-language-and-performance.md)
   records generation timings, native geometry/noise bottlenecks, a foundations-
   first recommendation, language tradeoffs and proposed migration gates R45–R47.

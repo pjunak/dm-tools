@@ -9,6 +9,15 @@ The test suite will be organized around observable contracts:
 
 Prefer numeric assertions and invariants over large binary golden files.
 
+The selective terrain-sampling tests compare complete Float32 outputs against
+the original dense evaluation path, including authored structures on an
+irregular coast, islands and inland water. They also cover water-only chunk
+short-circuiting and exact nested-grid samples around a hole. Benchmark tests
+exercise fresh-process repeatability, native peak-memory reporting and refusal
+to overwrite a report. Performance measurements live separately under
+[`benchmarks/`](../benchmarks/README.md); correctness tests do not assert runtime
+thresholds.
+
 The current terrain suite specifically verifies that nested resolutions retain
 identical masks and Float32 elevations at shared world-coordinate samples. It
 verifies multipart SVG import, adjacent-land dissolution, near-touching seam

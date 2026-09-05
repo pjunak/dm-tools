@@ -58,6 +58,13 @@ context rather than becoming an implicit terrain stage.
 Each stage receives explicit inputs and configuration. It must not obtain
 randomness, time, environment settings, or coordinate assumptions implicitly.
 
+Completed-field sampling separates the pointwise evaluator from land masking
+and output scattering. It omits ocean coordinates while preserving complete
+canonical hydrology grids and precomputed valley profiles. Neighbor-dependent
+algorithms must stay outside that pointwise evaluator. The repository-only
+[benchmark harness](../../benchmarks/README.md) records stage time, process
+memory and numerical identities without adding timing state to the engine.
+
 ## Interfaces
 
 The first useful interface is a Tk/ttk desktop workbench launched through the
