@@ -22,6 +22,7 @@ from dmtools.terrain.domain import (
     TerrainConstraint,
     TerrainSettings,
 )
+from dmtools.terrain.domain.seeds import RELIEF_STAGE_ID, stage_seed
 from dmtools.terrain.pipeline.grid import grid_coordinates
 from dmtools.terrain.pipeline.hydrology import (
     DrainageDiagnostics,
@@ -554,10 +555,12 @@ def _base_elevation_fields(
 ) -> tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]]:
     """Return full detail, stable macro elevation, and the shared detail driver."""
 
+    # Macro and full detail are correlated views of one relief stage.
+    relief_seed = stage_seed(settings.seed, RELIEF_STAGE_ID, settings.seed_policy)
     relief_noise = fractal_value_noise(
         x_km,
         y_km,
-        seed=settings.seed,
+        seed=relief_seed,
         largest_feature_km=settings.largest_feature_km,
         detail_levels=settings.detail_levels,
         roughness=settings.roughness,
@@ -570,7 +573,7 @@ def _base_elevation_fields(
     macro_noise = fractal_value_noise(
         x_km,
         y_km,
-        seed=settings.seed,
+        seed=relief_seed,
         largest_feature_km=settings.largest_feature_km,
         detail_levels=min(2, settings.detail_levels),
         roughness=settings.roughness,

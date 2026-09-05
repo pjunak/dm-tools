@@ -4,6 +4,13 @@ from dataclasses import dataclass
 from math import isfinite
 from typing import Literal
 
+from dmtools.terrain.domain.seeds import (
+    LEGACY_SEED_POLICY,
+    NAMED_SEED_POLICY,
+    SeedPolicy,
+    validate_master_seed,
+)
+
 type Point2D = tuple[float, float]
 type StructureKind = Literal["ridge", "valley"]
 type ElevationMode = Literal["absolute", "relative"]
@@ -187,10 +194,12 @@ class TerrainSettings:
     roughness: float = 0.55
     coastal_rise_km: float = 180.0
     variability: float = 0.75
+    seed_policy: SeedPolicy = LEGACY_SEED_POLICY
 
     def __post_init__(self) -> None:
-        if not 0 <= self.seed <= 4_294_967_295:
-            raise ValueError("Seed must be between 0 and 4,294,967,295.")
+        validate_master_seed(self.seed)
+        if self.seed_policy not in (LEGACY_SEED_POLICY, NAMED_SEED_POLICY):
+            raise ValueError(f"Unsupported seed policy: {self.seed_policy!r}.")
         if self.object_scale_km <= 0:
             raise ValueError("Object scale must be positive.")
         if not 64 <= self.resolution_px <= 4_096:

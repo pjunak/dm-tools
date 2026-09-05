@@ -16,3 +16,9 @@ layout or unversioned implementation details.
 
 Existing schema files are immutable compatibility references. Incompatible
 changes require a new numbered schema and an explicit loader or migration path.
+
+The opt-in [project v2](terrain/project-v2.schema.json) and
+[build v2](terrain/build-v2.schema.json) add named stage seeds. Original-policy
+projects still save/build as v1. Register all four schemas locally for v2
+validation because it references immutable v1 definitions. See the
+[seed contract](../docs/terrain-seeds.md) for policy selection and exact encoding.

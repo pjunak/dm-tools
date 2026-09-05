@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:dmtools:schema:terrain-build:2",
+  "title": "DM Tools local terrain build version 2",
+  "description": "Completion manifest for a local SVG-plane numeric build. Verify product hashes before consumption; this is not a world CRS or GeoTIFF contract.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "schema_version",
+    "status",
+    "build_id",
+    "inputs",
+    "settings",
+    "runtime",
+    "algorithms",
+    "coordinates",
+    "routing_grid",
+    "outputs",
+    "warnings"
+  ],
+  "properties": {
+    "schema": {
+      "$ref": "urn:dmtools:schema:terrain-build:1#/properties/schema"
+    },
+    "schema_version": {
+      "const": 2
+    },
+    "status": {
+      "$ref": "urn:dmtools:schema:terrain-build:1#/properties/status"
+    },
+    "build_id": {
+      "$ref": "urn:dmtools:schema:terrain-build:1#/properties/build_id"
+    },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "project_sha256",
+        "svg_sha256",
+        "project_schema_version"
+      ],
+      "properties": {
+        "project_sha256": {
+          "$ref": "#/$defs/hash"
+        },
+        "svg_sha256": {
+          "$ref": "#/$defs/hash"
+        },
+        "project_schema_version": {
+          "const": 2
+        }
+      }
+    },
+    "settings": {
+      "$ref": "urn:dmtools:schema:terrain-project:2#/$defs/generatorSettings"
+    },
+    "runtime": {
+      "$ref": "urn:dmtools:schema:terrain-build:1#/properties/runtime"
+    },
+    "algorithms": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "generator",
+        "automatic_valleys",
+        "noise",
+        "drainage_diagnostics",
+        "seed_policy",
+        "stage_seeds"
+      ],
+      "properties": {
+        "generator": {
+          "type": "string",
+          "minLength": 1
+        },
+        "automatic_valleys": {
+          "type": "string",
+          "minLength": 1
+        },
+        "noise": {
+          "type": "string",
+          "minLength": 1
+        },
+        "drainage_diagnostics": {
+          "type": "string",
+          "minLength": 1
+        },
+        "seed_policy": {
+          "const": "named-stage-sha256@1"
+        },
+        "stage_seeds": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "terrain.relief"
+          ],
+          "properties": {
+            "terrain.relief": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            }
+          }
+        }
+      }
+    },
+    "coordinates": {
+      "$ref": "urn:dmtools:schema:terrain-build:1#/properties/coordinates"
+    },
+    "routing_grid": {
+      "$ref": "urn:dmtools:schema:terrain-build:1#/properties/routing_grid"
+    },
+    "outputs": {
+      "$ref": "urn:dmtools:schema:terrain-build:1#/properties/outputs"
+    },
+    "warnings": {
+      "$ref": "urn:dmtools:schema:terrain-build:1#/properties/warnings"
+    }
+  },
+  "$defs": {
+    "hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}

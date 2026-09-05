@@ -63,6 +63,9 @@ metadata. NumPy axis construction stays in the pipeline. Read the
 
 Each stage receives explicit inputs and configuration. It must not obtain
 randomness, time, environment settings, or coordinate assumptions implicitly.
+The [named seed policy](../terrain-seeds.md) resolves stable stage identifiers
+from a master without mutable RNG state. Legacy projects retain direct master
+seeding; both coarse and detailed relief remain views of the same stage.
 
 Completed-field sampling separates the pointwise evaluator from land masking
 and output scattering. It omits ocean coordinates while preserving complete
@@ -79,7 +82,7 @@ pipeline and adapters used by the non-interactive build operation.
 A future HTTP service can call those operations while adding job management,
 storage, authentication, and resource limits outside the engine.
 
-The version-1 terrain-project adapter translates the public JSON contract into
+The version-1/version-2 terrain-project adapter translates the public JSON contract into
 domain models. It resolves the external SVG relative to the project, verifies
 its content hash, then delegates coastline parsing to the SVG adapter. Neither
 the domain nor the generation pipeline reads project files directly.

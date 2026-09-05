@@ -91,7 +91,10 @@ dependency versions are recorded. No network service is needed to build.
 Consumers must validate the manifest and verify product hashes. The public
 [build schema](../schemas/terrain/build-v1.schema.json) references the existing
 project schema by its `urn:dmtools:schema:terrain-project:1` ID; register both
-schemas locally when validating, without fetching remote references.
+schemas locally when validating, without fetching remote references. Named-seed
+projects produce [build v2](../schemas/terrain/build-v2.schema.json); register all
+four project/build v1/v2 schemas for its reused definitions. The
+[seed contract](terrain-seeds.md) explains explicit opt-in and compatibility.
 
 The build ID is SHA-256 of the manifest serialized with sorted keys, two-space
 indentation, default JSON ASCII escaping and a trailing newline, excluding

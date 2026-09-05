@@ -54,10 +54,13 @@ The first local build slice is implemented: headless project builds preserve
 numeric NPY arrays, both previews, spatial diagnostics and a versioned manifest.
 See the [build guide](../terrain-builds.md). It records the existing endpoint
 grid and explicitly leaves world CRS/planetary radius unspecified; the steps
-below still govern georeferenced output and independently seeded future stages.
+below still govern georeferenced output.
 The [coordinate contract](../terrain-coordinates.md) now centralizes source/local
 conversion, endpoint registration and spacing across generation and products.
 It preserves current numeric results without assigning a world position.
+The [seed contract](../terrain-seeds.md) now provides portable named stage
+seeds through explicit project/build v2 opt-in while preserving legacy v1.
+Future stochastic stages must get their own stable identifiers.
 
 - Define source-world origin, planetary model, working projection, raster
   registration and effective process spacing before freezing georeferenced

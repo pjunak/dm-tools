@@ -12,12 +12,16 @@ refined into consistent regional and local maps.
 
 The current workbench imports closed SVG land shapes, dissolves adjacent
 mainland sections, and retains disconnected islands in the same map. It exposes
-every implemented generator setting as a slider and numeric stepper, and lets
+numeric generator settings as sliders and steppers, and lets
 the user draw exact height points plus ridge and valley centrelines. A terrain brush
 paints broad soft elevation guidance directly over the continent. Import
 validation and generation run on background workers with progress reporting.
 The result is previewed and can be exported as a transparent colour-relief PNG.
 The same window can save and open authored `.dmterrain.json` projects.
+The Seed row offers **Original terrain** (default) and **Independent stages**.
+Changing this choice changes the terrain realization; opening a saved project
+restores its choice. See the [seed contract](../../../docs/terrain-seeds.md)
+for version compatibility and a public opt-in example.
 
 For saved projects, `dmtools terrain build PROJECT --output NEW_DIRECTORY`
 uses the same pipeline without opening the GUI. It saves the Float32 DEM,

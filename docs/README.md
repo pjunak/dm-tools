@@ -16,6 +16,8 @@
    [headless build guide](terrain-builds.md).
 7. For source/local conversion, endpoint grids and world-positioning limits,
    read the [coordinate contract](terrain-coordinates.md).
+8. For compatible original seeds and portable named stage seeds, read the
+   [seed contract](terrain-seeds.md).
 
 ## Document roles and authority
 

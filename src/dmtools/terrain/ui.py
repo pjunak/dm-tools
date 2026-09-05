@@ -42,6 +42,7 @@ from dmtools.terrain.domain import (
     TerrainSettings,
     TerrainStructure,
 )
+from dmtools.terrain.domain.seeds import LEGACY_SEED_POLICY, NAMED_SEED_POLICY, SeedPolicy
 from dmtools.terrain.pipeline import GeneratedTerrain, generate_terrain
 
 _INK = "#172225"
@@ -133,6 +134,12 @@ _CONTROLS = (
 )
 
 
+_SEED_POLICY_LABELS: dict[str, SeedPolicy] = {
+    "Original terrain": LEGACY_SEED_POLICY,
+    "Independent stages": NAMED_SEED_POLICY,
+}
+
+
 class TerrainApp:
     """Small local workbench for importing, generating, previewing, and exporting."""
 
@@ -179,6 +186,7 @@ class TerrainApp:
         self._brush_intensity_percent = tk.DoubleVar(
             value=authoring_defaults.brush.intensity * 100.0
         )
+        self._seed_policy_label = tk.StringVar(value="Original terrain")
         self._render_style_label = tk.StringVar(value="Cartographic relief")
         self._legend_swatches: list[tk.Frame] = []
         self._brush_cursor: tuple[float, float] | None = None
@@ -302,6 +310,11 @@ class TerrainApp:
         self._variables[spec.key] = variable
 
         ttk.Label(container, text=spec.label, style="Body.TLabel").grid(row=0, column=0, sticky="w")
+        if spec.key == "seed":
+            ttk.Combobox(
+                container, textvariable=self._seed_policy_label,
+                values=tuple(_SEED_POLICY_LABELS), state="readonly", width=18,
+            ).grid(row=0, column=0, sticky="e", padx=(40, 10))
         value_label = ttk.Label(container, style="Value.TLabel", width=14, anchor="e")
         value_label.grid(row=0, column=1, sticky="e")
         self._value_labels[spec.key] = value_label
@@ -1323,6 +1336,7 @@ class TerrainApp:
         values = {key: variable.get() for key, variable in self._variables.items()}
         return TerrainSettings(
             seed=round(values["seed"]),
+            seed_policy=_SEED_POLICY_LABELS[self._seed_policy_label.get()],
             object_scale_km=values["object_scale_km"],
             resolution_px=round(values["resolution_px"]),
             maximum_elevation_m=values["maximum_elevation_m"],
@@ -1334,6 +1348,10 @@ class TerrainApp:
         )
 
     def _apply_settings(self, settings: TerrainSettings) -> None:
+        self._seed_policy_label.set(
+            next(label for label, policy in _SEED_POLICY_LABELS.items()
+                 if policy == settings.seed_policy)
+        )
         for key, variable in self._variables.items():
             variable.set(float(getattr(settings, key)))
             self._refresh_value(key)

@@ -86,6 +86,8 @@ arrays in the existing local SVG plane; world-georeferenced GeoTIFF is planned.
 
 The accepted version-1 project contract is published in
 [`schemas/terrain/project-v1.schema.json`](schemas/terrain/project-v1.schema.json).
+The explicit [named stage seed policy](docs/terrain-seeds.md) uses project/build
+version 2 while preserving original-project behavior by default.
 
 ## Repository layout
 

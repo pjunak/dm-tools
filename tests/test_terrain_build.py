@@ -15,20 +15,31 @@ from dmtools.cli import main
 from dmtools.terrain.adapters.build import canonical_json, file_sha256
 from dmtools.terrain.adapters.project import load_terrain_project, save_terrain_project
 from dmtools.terrain.application import build as build_module
+from dmtools.terrain.domain.seeds import (
+    LEGACY_SEED_POLICY,
+    NAMED_SEED_POLICY,
+    RELIEF_STAGE_ID,
+    SeedPolicy,
+    stage_seed,
+)
 from dmtools.terrain.pipeline.generate import generate_terrain
 
 EXAMPLES = Path(__file__).parents[1] / "examples" / "terrain"
 
 
-@pytest.fixture
-def project_path(tmp_path: Path) -> Path:
+@pytest.fixture(params=[LEGACY_SEED_POLICY, NAMED_SEED_POLICY])
+def project_path(tmp_path: Path, request: pytest.FixtureRequest) -> Path:
     inputs = tmp_path / "inputs"
     inputs.mkdir()
     for name in ("coastline.svg", "example.dmterrain.json"):
         shutil.copyfile(EXAMPLES / name, inputs / name)
     path = inputs / "example.dmterrain.json"
     loaded = load_terrain_project(path)
-    project = replace(loaded.project, settings=replace(loaded.project.settings, resolution_px=64))
+    policy: SeedPolicy = request.param
+    project = replace(
+        loaded.project,
+        settings=replace(loaded.project.settings, resolution_px=64, seed_policy=policy),
+    )
     save_terrain_project(project, loaded.coastline_source, path)
     return path
 
@@ -50,12 +61,30 @@ def test_headless_build_preserves_dem_and_has_repeatable_verified_products(
     build_module.build_terrain_project(project_path, second)
     document: dict[str, Any] = json.loads((first / "manifest.json").read_text())
     schema_dir = EXAMPLES.parents[1] / "schemas" / "terrain"
-    schema: dict[str, Any] = json.loads((schema_dir / "build-v1.schema.json").read_text())
-    project_schema: dict[str, Any] = json.loads((schema_dir / "project-v1.schema.json").read_text())
-    Draft202012Validator.check_schema(schema)
-    Draft202012Validator.check_schema(project_schema)
-    registry = Registry[Any]().with_resource(
-        project_schema["$id"], Resource.from_contents(project_schema)
+    policy = loaded.project.settings.seed_policy
+    version = 1 if policy == LEGACY_SEED_POLICY else 2
+    assert document["schema_version"] == version
+    assert document["inputs"]["project_schema_version"] == version
+    assert document["algorithms"]["seed_policy"] == policy
+    resolved_seed = stage_seed(loaded.project.settings.seed, RELIEF_STAGE_ID, policy)
+    if version == 1:
+        assert document["algorithms"]["full_detail_seed"] == resolved_seed
+        assert document["algorithms"]["macro_detail_seed"] == resolved_seed
+        assert "seed_policy" not in document["settings"]
+    else:
+        assert document["algorithms"]["stage_seeds"] == {RELIEF_STAGE_ID: resolved_seed}
+        assert document["settings"]["seed_policy"] == policy
+    schemas: list[dict[str, Any]] = [
+        json.loads(path.read_text()) for path in sorted(schema_dir.glob("*.schema.json"))
+    ]
+    for item in schemas:
+        Draft202012Validator.check_schema(item)
+    registry = Registry[Any]().with_resources(
+        (item["$id"], Resource.from_contents(item)) for item in schemas
+    )
+    schema = next(
+        item for item in schemas
+        if item["$id"] == f"urn:dmtools:schema:terrain-build:{version}"
     )
     validate(document, schema, cls=Draft202012Validator, registry=registry)
     invalid = {**document, "coordinates": {**document["coordinates"], "world_crs": "EPSG:4326"}}
