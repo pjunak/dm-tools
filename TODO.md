@@ -32,10 +32,8 @@ preview, and PNG export. Those are not repeated below as unfinished work.
   hashes, generator and schema versions, master and stage seeds, effective
   parameters, working extent and units, runtime/dependency versions, warnings,
   and authoritative output hashes.
-  Version 1 now accompanies local numeric builds, with explicit legacy shared
-  seeds and null world CRS/planetary radius. Version 2 now records explicit
-  named stage seeds; legacy projects retain version 1. World georeferencing
-  remains follow-up compatibility work.
+  Current version-3 builds record named stage seeds and explicit local-only
+  coordinates. World georeferencing remains follow-up implementation work.
 - [ ] **P0 — Export the authoritative Float32 DEM as GeoTIFF.** Include an
   explicit metric coordinate system, extent, pixel size, elevation units,
   nodata value, and a link to the build manifest.
@@ -288,18 +286,17 @@ landscape-process spikes. It is working research, not an accepted architecture.
   remain.
 - [ ] **P1 — Add explicit prominence and saddle analysis.** Keep this derived
   measurement separate from the current relative-relief controls.
-- [ ] **P0 — Lock algorithm and stage identifiers before long-lived builds.**
-  Parameter, solver, stage-order, or seed-derivation changes must be visible in
-  the build manifest and regression fixtures.
-  The first local-build manifest records baseline generator, noise, automatic
-  valley and diagnostic IDs plus installed-source hashes. Named seeds now have
-  an explicit v2 contract; a broader stage-by-stage correction report remains.
-- [x] **P0 — Derive stable named seeds without changing legacy projects.**
-  Implemented `named-stage-sha256@1`, the `terrain.relief` stage, strict project
-  and build v2 contracts, a workbench choice and portable reference vectors.
-  Macro/full detail stay views of one relief field. Original behavior remains
-  the default and all 16 saved numeric/render baselines match. See the
-  [seed contract](docs/terrain-seeds.md).
+- [x] **P0 — Record algorithm and stage identifiers in each build.** Record
+  generator, noise, automatic-valley and diagnostic IDs plus source hashes.
+  Deliberate improvements may change outputs; update identifiers and tests.
+- [x] **P0 — Derive stable named seeds.** All generation uses
+  `named-stage-sha256@1` and the `terrain.relief` stage. Macro/full detail stay
+  views of one relief field. Portable reference values and current generation
+  checks exercise the [seed contract](docs/terrain-seeds.md).
+- [x] **P0 — Remove early-development compatibility overhead.** Removed the
+  original seed mode, policy selector, old-save loaders, four superseded
+  schemas, duplicate example and dual-version tests. Only current project/build
+  v3 is supported. Keep obsolete code in Git history, not active support paths.
 - [ ] **P1 — Generate refinement halos and crop final tiles.** Evaluate all
   neighbourhood-dependent solvers and erosion on buffered bounds to avoid
   seams, then verify overlap and downsample consistency numerically.

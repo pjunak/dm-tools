@@ -1,12 +1,10 @@
 import json
 import shutil
-from dataclasses import replace
 from pathlib import Path
 from typing import Any, cast
 
 import pytest
 from jsonschema import Draft202012Validator, validate
-from referencing import Registry, Resource
 
 from dmtools.terrain.adapters import (
     CoastlineSource,
@@ -25,7 +23,6 @@ from dmtools.terrain.domain import (
     TerrainSettings,
     TerrainStructure,
 )
-from dmtools.terrain.domain.seeds import LEGACY_SEED_POLICY, NAMED_SEED_POLICY, SeedPolicy
 
 FIXTURES = Path(__file__).parent / "fixtures" / "terrain"
 EXAMPLES = Path(__file__).parents[1] / "examples" / "terrain"
@@ -68,14 +65,11 @@ def _project_for(source: CoastlineSource) -> TerrainProject:
     )
 
 
-@pytest.mark.parametrize("policy", [LEGACY_SEED_POLICY, NAMED_SEED_POLICY])
 def test_project_round_trip_preserves_authored_state_and_relative_svg_path(
     tmp_path: Path,
-    policy: SeedPolicy,
 ) -> None:
     source = _source_in(tmp_path)
     project = _project_for(source)
-    project = replace(project, settings=replace(project.settings, seed_policy=policy))
     destination = tmp_path / "projects" / "continent.dmterrain.json"
 
     save_terrain_project(project, source, destination)
@@ -88,17 +82,11 @@ def test_project_round_trip_preserves_authored_state_and_relative_svg_path(
     authoring = cast("dict[str, object]", serialized["authoring"])
     tools = cast("dict[str, dict[str, object]]", authoring["tools"])
     assert serialized["schema"] == "dmtools.terrain-project"
-    version = 1 if policy == LEGACY_SEED_POLICY else 2
-    assert serialized["schema_version"] == version
-    schema_dir = EXAMPLES.parents[1] / "schemas" / "terrain"
-    schemas: list[dict[str, Any]] = [
-        json.loads((schema_dir / f"project-v{number}.schema.json").read_text())
-        for number in (1, 2)
-    ]
-    registry = Registry[Any]().with_resources(
-        (schema["$id"], Resource.from_contents(schema)) for schema in schemas
-    )
-    validate(serialized, schemas[version - 1], cls=Draft202012Validator, registry=registry)
+    assert serialized["schema_version"] == 3
+    schema_path = EXAMPLES.parents[1] / "schemas" / "terrain" / "project-v3.schema.json"
+    schema: dict[str, Any] = json.loads(schema_path.read_text(encoding="utf-8"))
+    Draft202012Validator.check_schema(schema)
+    validate(serialized, schema, cls=Draft202012Validator)
     assert coastline["path"] == "../inputs/coastline.svg"
     assert constraints[0]["type"] == "terrain_brush"
     assert tools["brush"]["width_km"] == 240.0
@@ -110,15 +98,10 @@ def test_project_round_trip_preserves_authored_state_and_relative_svg_path(
     assert loaded.path == destination.resolve()
 
 
-@pytest.mark.parametrize(
-    ("name", "policy"),
-    [("example.dmterrain.json", LEGACY_SEED_POLICY),
-     ("named-seeds.dmterrain.json", NAMED_SEED_POLICY)],
-)
-def test_committed_example_project_loads(name: str, policy: SeedPolicy) -> None:
-    loaded = load_terrain_project(EXAMPLES / name)
+def test_committed_example_project_loads() -> None:
+    loaded = load_terrain_project(EXAMPLES / "example.dmterrain.json")
 
-    assert loaded.project.settings == TerrainSettings(seed_policy=policy)
+    assert loaded.project.settings == TerrainSettings()
     assert loaded.project.authoring == TerrainAuthoringState()
     assert loaded.project.constraints == ()
 
@@ -150,6 +133,8 @@ def test_project_save_rejects_coastline_changed_after_import(tmp_path: Path) -> 
 @pytest.mark.parametrize(
     ("field", "value", "message"),
     [
+        ("schema_version", 1, "Unsupported project schema version"),
+        ("schema_version", 2, "Unsupported project schema version"),
         ("schema_version", 99, "Unsupported project schema version"),
         ("unexpected", True, "unknown fields"),
     ],
@@ -173,23 +158,12 @@ def test_project_load_rejects_incompatible_contract(
         load_terrain_project(destination)
 
 
-@pytest.mark.parametrize(
-    ("version", "policy", "message"),
-    [(2, None, "missing: seed_policy"),
-     (2, LEGACY_SEED_POLICY, "Version 2 requires"),
-     (2, "future-policy@9", "Version 2 requires"),
-     (1, NAMED_SEED_POLICY, "unknown fields: seed_policy")],
-)
-def test_project_rejects_ambiguous_seed_policy(
-    tmp_path: Path, version: int, policy: str | None, message: str,
-) -> None:
+def test_project_rejects_removed_seed_policy_setting(tmp_path: Path) -> None:
     source = _source_in(tmp_path)
     path = tmp_path / "project.dmterrain.json"
     save_terrain_project(_project_for(source), source, path)
-    document: dict[str, Any] = json.loads(path.read_text())
-    document["schema_version"] = version
-    if policy is not None:
-        document["settings"]["seed_policy"] = policy
+    document: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+    document["settings"]["seed_policy"] = "named-stage-sha256@1"
     path.write_text(json.dumps(document), encoding="utf-8")
-    with pytest.raises(TerrainProjectInputError, match=message):
+    with pytest.raises(TerrainProjectInputError, match="unknown fields: seed_policy"):
         load_terrain_project(path)

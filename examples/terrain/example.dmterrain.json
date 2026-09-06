@@ -31,7 +31,7 @@
   },
   "constraints": [],
   "schema": "dmtools.terrain-project",
-  "schema_version": 1,
+  "schema_version": 3,
   "settings": {
     "coastal_rise_km": 180.0,
     "detail_levels": 6,

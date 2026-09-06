@@ -556,7 +556,7 @@ def _base_elevation_fields(
     """Return full detail, stable macro elevation, and the shared detail driver."""
 
     # Macro and full detail are correlated views of one relief stage.
-    relief_seed = stage_seed(settings.seed, RELIEF_STAGE_ID, settings.seed_policy)
+    relief_seed = stage_seed(settings.seed, RELIEF_STAGE_ID)
     relief_noise = fractal_value_noise(
         x_km,
         y_km,

@@ -5,6 +5,7 @@ from typing import Literal
 
 import numpy as np
 import pytest
+from numpy.typing import NDArray
 from PIL import Image
 
 from dmtools.terrain.adapters import (
@@ -23,6 +24,19 @@ from dmtools.terrain.domain import (
 )
 from dmtools.terrain.pipeline import generate_terrain
 from dmtools.terrain.pipeline.noise import fractal_value_noise
+
+
+@pytest.fixture
+def uniform_noise(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Measure authored geometry independently of random relief and flank detail."""
+    def zero_noise(
+        x: NDArray[np.float64], y: NDArray[np.float64], **settings: object,
+    ) -> NDArray[np.float64]:
+        return np.zeros(np.broadcast_shapes(x.shape, y.shape), dtype=np.float64)
+
+    monkeypatch.setattr(
+        "dmtools.terrain.pipeline.generate.fractal_value_noise", zero_noise,
+    )
 
 
 def _square() -> Coastline:
@@ -217,6 +231,7 @@ def test_structure_response_has_a_broad_falloff_beyond_its_core_width() -> None:
 
 
 @pytest.mark.parametrize("kind", ("ridge", "valley"))
+@pytest.mark.usefixtures("uniform_noise")
 def test_connected_structure_segments_do_not_pinch_at_their_junction(
     kind: Literal["ridge", "valley"],
 ) -> None:
@@ -320,6 +335,7 @@ def test_nearby_height_point_bends_structure_profile() -> None:
     assert anchored.elevation_m[32, 32] == np.float32(2_800.0)
 
 
+@pytest.mark.usefixtures("uniform_noise")
 def test_peak_and_pass_anchors_form_a_shape_preserving_ridge_profile() -> None:
     ridge = TerrainStructure(
         kind="ridge",
@@ -331,9 +347,13 @@ def test_peak_and_pass_anchors_form_a_shape_preserving_ridge_profile() -> None:
     mountain_pass = ElevationPoint((0.5, 0.5), 2_400.0, 35.0)
     east_peak = ElevationPoint((0.75, 0.5), 3_200.0, 35.0)
 
+    settings = _settings(maximum_elevation_m=5_000.0, variability=1.0)
+    baseline = generate_terrain(_square(), settings)
+    # A ridge-profile fixture requires surrounding land below its lowest crest.
+    assert np.nanmax(baseline.elevation_m) < ridge.elevation_m
     terrain = generate_terrain(
         _square(),
-        _settings(maximum_elevation_m=5_000.0),
+        settings,
         constraints=(ridge, west_peak, mountain_pass, east_peak),
     )
     centreline = terrain.elevation_m[32]
@@ -353,12 +373,12 @@ def test_peak_and_pass_anchors_form_a_shape_preserving_ridge_profile() -> None:
 
     reordered = generate_terrain(
         _square(),
-        _settings(maximum_elevation_m=5_000.0),
+        settings,
         constraints=(east_peak, mountain_pass, ridge, west_peak),
     )
     finer = generate_terrain(
         _square(),
-        _settings(maximum_elevation_m=5_000.0, resolution_px=129),
+        replace(settings, resolution_px=129),
         constraints=(ridge, west_peak, mountain_pass, east_peak),
     )
     np.testing.assert_array_equal(terrain.elevation_m, reordered.elevation_m)

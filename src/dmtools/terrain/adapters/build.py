@@ -13,10 +13,10 @@ import numpy as np
 import shapely
 
 import dmtools
-from dmtools.terrain.adapters.project import project_schema_version, settings_to_json
+from dmtools.terrain.adapters.project import PROJECT_SCHEMA_VERSION, settings_to_json
 from dmtools.terrain.adapters.render import render_height_map, save_height_map
 from dmtools.terrain.domain import LocalMetricFrame, TerrainProject
-from dmtools.terrain.domain.seeds import LEGACY_SEED_POLICY, RELIEF_STAGE_ID, stage_seed
+from dmtools.terrain.domain.seeds import RELIEF_STAGE_ID, SEED_POLICY_ID, stage_seed
 from dmtools.terrain.pipeline.generate import (
     AUTOMATIC_VALLEY_ALGORITHM_ID,
     GENERATOR_ALGORITHM_ID,
@@ -24,6 +24,8 @@ from dmtools.terrain.pipeline.generate import (
     GeneratedTerrain,
 )
 from dmtools.terrain.pipeline.quality import TerrainQuality
+
+BUILD_SCHEMA_VERSION = 3
 
 
 def file_sha256(path: Path) -> str:
@@ -124,34 +126,27 @@ def publish_build_manifest(
     frame = LocalMetricFrame(project.coastline.bounds, project.settings.object_scale_km)
     grid, routing_grid = terrain.grid, terrain.routing_grid
     settings = project.settings
-    relief_seed = stage_seed(settings.seed, RELIEF_STAGE_ID, settings.seed_policy)
+    relief_seed = stage_seed(settings.seed, RELIEF_STAGE_ID)
     algorithms: dict[str, object] = {
         "generator": GENERATOR_ALGORITHM_ID,
         "automatic_valleys": AUTOMATIC_VALLEY_ALGORITHM_ID,
         "noise": NOISE_ALGORITHM_ID,
         "drainage_diagnostics": terrain.drainage.algorithm_id,
-        "seed_policy": settings.seed_policy,
+        "seed_policy": SEED_POLICY_ID,
+        "stage_seeds": {RELIEF_STAGE_ID: relief_seed},
     }
-    if settings.seed_policy == LEGACY_SEED_POLICY:
-        algorithms.update(full_detail_seed=relief_seed, macro_detail_seed=relief_seed)
-    else:
-        algorithms["stage_seeds"] = {RELIEF_STAGE_ID: relief_seed}
     warnings = [
         "Local SVG plane only; world georeferencing and planetary scale are unspecified.",
         "Canonical drainage diagnostics use a separate grid, not the exported DEM grid.",
     ]
-    if settings.seed_policy == LEGACY_SEED_POLICY:
-        warnings.append(
-            "Legacy seed policy retained; named stage seeds require an explicit project change."
-        )
     document: dict[str, object] = {
         "schema": "dmtools.terrain-build",
-        "schema_version": project_schema_version(settings),
+        "schema_version": BUILD_SCHEMA_VERSION,
         "status": "complete",
         "inputs": {
             "project_sha256": project_sha256,
             "svg_sha256": svg_sha256,
-            "project_schema_version": project_schema_version(settings),
+            "project_schema_version": PROJECT_SCHEMA_VERSION,
         },
         "settings": settings_to_json(settings),
         "runtime": runtime,

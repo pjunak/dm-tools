@@ -1,6 +1,7 @@
 # ADR-0026: Version named terrain stage seeds
 
-**Status:** Accepted
+**Status:** Superseded by [ADR-0027](0027-develop-current-behavior-without-legacy-support.md).
+The seed encoding remains current; opt-in and legacy support have been removed.
 **Date:** 2026-09-05
 **Deciders:** Codex implementation within the authorized Python foundation work.
 

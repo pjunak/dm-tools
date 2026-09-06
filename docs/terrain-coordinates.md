@@ -60,4 +60,4 @@ acquire a different physical scale.
 The [ADR](adr/0025-centralize-local-frames-and-endpoint-grids.md) records the
 implementation boundary and alternatives. See the [build guide](terrain-builds.md)
 for the current local numeric products and [TODO](../TODO.md) for remaining
-world-coordinate, seed and refinement work.
+world-coordinate and refinement work.

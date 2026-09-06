@@ -88,13 +88,11 @@ retrying. Source edits detected during a build abort completion. The source
 project, SVG and installed Python package files are fingerprinted; runtime and
 dependency versions are recorded. No network service is needed to build.
 
-Consumers must validate the manifest and verify product hashes. The public
-[build schema](../schemas/terrain/build-v1.schema.json) references the existing
-project schema by its `urn:dmtools:schema:terrain-project:1` ID; register both
-schemas locally when validating, without fetching remote references. Named-seed
-projects produce [build v2](../schemas/terrain/build-v2.schema.json); register all
-four project/build v1/v2 schemas for its reused definitions. The
-[seed contract](terrain-seeds.md) explains explicit opt-in and compatibility.
+Consumers must validate the manifest and verify product hashes. Register the
+[current build schema](../schemas/terrain/build-v3.schema.json) and
+[current project schema](../schemas/terrain/project-v3.schema.json) locally by
+`$id` for offline validation. Older formats are unsupported. The
+[seed contract](terrain-seeds.md) describes the single named-stage algorithm.
 
 The build ID is SHA-256 of the manifest serialized with sorted keys, two-space
 indentation, default JSON ASCII escaping and a trailing newline, excluding

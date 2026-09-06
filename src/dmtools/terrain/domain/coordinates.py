@@ -1,6 +1,6 @@
 """Explicit local-plane conversion and endpoint-node grid contracts.
 
-These values do not assign a world CRS or a planetary scale to legacy inputs.
+These values do not assign a world CRS or a planetary scale to local inputs.
 """
 
 from dataclasses import dataclass
@@ -120,7 +120,7 @@ class EndpointGrid:
     def for_extent(
         cls, extent_km: Bounds, longest_samples: int, *, minimum_samples: int = 2
     ) -> EndpointGrid:
-        """Preserve legacy multiply/divide ordering and ties-to-even rounding."""
+        """Calculate aspect-ratio dimensions with ties-to-even rounding."""
         _bounds(extent_km)
         _count(minimum_samples, 2, "Minimum samples")
         _count(longest_samples, minimum_samples, "Longest-axis samples")

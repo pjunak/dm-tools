@@ -56,5 +56,6 @@ dictionaries or global settings.
   hashes, drainage connectivity where promised, and refinement boundaries.
 - Use small synthetic fixtures with known intent. Large private world maps are
   not test data.
-- Treat changes to schemas, seed derivation, algorithms, or numeric tolerances as
-  compatibility changes requiring explicit documentation.
+- Document changes to schemas, seed derivation, algorithms and numeric
+  tolerances. Follow the root early-development policy: remove superseded
+  behavior and test the current implementation without legacy support.

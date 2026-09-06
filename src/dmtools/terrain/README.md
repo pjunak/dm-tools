@@ -18,10 +18,9 @@ paints broad soft elevation guidance directly over the continent. Import
 validation and generation run on background workers with progress reporting.
 The result is previewed and can be exported as a transparent colour-relief PNG.
 The same window can save and open authored `.dmterrain.json` projects.
-The Seed row offers **Original terrain** (default) and **Independent stages**.
-Changing this choice changes the terrain realization; opening a saved project
-restores its choice. See the [seed contract](../../../docs/terrain-seeds.md)
-for version compatibility and a public opt-in example.
+Every build uses named stage seeds derived from the numeric master Seed.
+See the [seed contract](../../../docs/terrain-seeds.md). Only the current save
+format is supported; older saves must be recreated.
 
 For saved projects, `dmtools terrain build PROJECT --output NEW_DIRECTORY`
 uses the same pipeline without opening the GUI. It saves the Float32 DEM,
@@ -154,10 +153,10 @@ on disk after import; re-importing makes that geographic change deliberate.
 
 Project files contain authored inputs only. Generated arrays and PNG previews
 are not embedded. Saves use a temporary file followed by atomic replacement so
-an interrupted write does not leave a partially written project. Version 1 is
+an interrupted write does not leave a partially written project. The current format is
 strict: unknown fields or unsupported versions are rejected rather than
 guessed. The public contract is
-[`schemas/terrain/project-v1.schema.json`](../../../schemas/terrain/project-v1.schema.json)
+[`schemas/terrain/project-v3.schema.json`](../../../schemas/terrain/project-v3.schema.json)
 and its rationale is recorded in
 [ADR-0006](../../../docs/adr/0006-versioned-terrain-project.md).
 
@@ -289,10 +288,10 @@ The intended input project contains:
 - a master seed; and
 - an explicit planetary model, projection, extent, and working resolution.
 
-The current version-1 project persists the implemented coastline, generator
+The current project persists the implemented coastline, generator
 settings, authoring defaults, brush strokes, height points, ridges, and valleys.
-The remaining planned input kinds will require compatible schema additions or a
-new schema version as their semantics are accepted.
+Add planned input kinds to the current schema as their semantics are accepted;
+remove obsolete formats without maintaining old-save support.
 
 ## Outputs
 

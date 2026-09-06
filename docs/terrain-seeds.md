@@ -1,35 +1,18 @@
 # Reproducible terrain seeds
 
-The Seed row in the workbench now includes **Original terrain** and
-**Independent stages**. Changing this choice changes generated terrain even
-when the numeric seed stays the same. The original behavior remains the
-default. Opening a project restores its saved behavior; saving preserves it.
-Use a new project filename when comparing the two policies.
+All terrain generation uses `named-stage-sha256@1`. The workbench exposes one
+numeric master Seed; there is no seed-policy selector or direct-master mode.
+The public [example](../examples/terrain/example.dmterrain.json) uses the same
+implementation as programmatic calls and headless builds.
 
-The public [named-seed example](../examples/terrain/named-seeds.dmterrain.json)
-opts in explicitly. Build it with the usual command and a fresh directory:
+Only the current project/build format, version 3, is supported. Older saves
+are rejected and must be recreated. Current settings store the master seed;
+the build records the seed algorithm and resolved stage seeds. Future changes
+may replace this behavior without compatibility modes or migrations.
 
-```powershell
-.\.venv\Scripts\dmtools.exe terrain build examples/terrain/named-seeds.dmterrain.json --output artifacts/named-seed-build
-```
-
-## Version compatibility
-
-| Choice | Project/build version | Effective seed |
-|---|---|---|
-| Original terrain | 1 | Master seed passed directly to coordinate noise |
-| Independent stages | 2 | Stable hash of master seed and stage identifier |
-
-Version 1 retains its strict original settings fields. Version 2 requires
-`settings.seed_policy = "named-stage-sha256@1"`. Missing or unsupported policies
-are errors, never inferred defaults. Selecting the original policy again saves
-version 1. Both loaders are supported; older applications reject version 2.
-The version-1 schema files remain unchanged.
-
-The Python `TerrainSettings` default is also the original policy. Callers opt
-in with `seed_policy=NAMED_SEED_POLICY` from `dmtools.terrain.domain.seeds`.
-The master seed must be a genuine unsigned 32-bit integer; booleans and
-floating-point values are rejected.
+The master must be an unsigned 32-bit integer; booleans and floating-point
+values are rejected. Python callers use `stage_seed(master_seed, stage_id)`
+from `dmtools.terrain.domain.seeds`.
 
 ## Stable stage identity
 
@@ -46,9 +29,9 @@ an existing derived seed. This does not promise unchanged output if a new
 process deliberately modifies that stage's inputs.
 
 Names use 1-128 ASCII characters matching
-`[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*`. They are compatibility identifiers, not
-translated display names. Renaming an existing stage or changing seed
-encoding requires a new explicit policy/algorithm contract.
+`[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*`. These identify processes in build records, not
+translated display names. Record algorithm changes when renaming a stage or
+changing seed encoding; update current tests and examples together.
 
 ## Byte contract for another implementation
 
@@ -73,19 +56,18 @@ These reference values were independently calculated with .NET SHA256:
 | 20260902 | 3486507418 | 3681552239 |
 | 4294967295 | 380401938 | 377551747 |
 
-The version-2 build records the master in `settings.seed`, policy in both
-settings and algorithms, and resolved values in
-`algorithms.stage_seeds`, currently containing only `terrain.relief`.
-The version-1 manifest retains its original full/macro seed fields.
-Schemas validate structure; consumers checking provenance must also verify
-that recorded derived values match the declared master and policy.
+The current build records the master in `settings.seed`, the derivation ID in
+`algorithms.seed_policy`, and resolved values in `algorithms.stage_seeds`,
+currently containing only `terrain.relief`. Schemas validate structure;
+consumers checking provenance must also verify that derived values match the
+recorded master and algorithm.
 
-For offline validation, register all four project/build v1/v2 schemas from
-[`schemas/terrain/`](../schemas/README.md) by their `$id` values. Version 2
-reuses immutable version-1 definitions through local URN references.
+For offline validation, register the current project and build schemas from
+[`schemas/terrain/`](../schemas/README.md) by their `$id` values. No historical
+schema is needed.
 
 Exact terrain reproduction still depends on algorithms, settings, geometry,
 and the recorded runtime. Portable seed derivation alone does not guarantee
 identical floating-point terrain across platforms. See the
 [build guide](terrain-builds.md) and
-[ADR-0026](adr/0026-version-named-terrain-stage-seeds.md).
+[current development policy](adr/0027-develop-current-behavior-without-legacy-support.md).

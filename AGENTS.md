@@ -29,6 +29,20 @@ elevation data and derived cartographic products.
 - Record architectural decisions under `docs/adr/`; supersede decisions rather
   than rewriting their history.
 
+## Early-development policy
+
+- Prioritize implementing and improving the current product. Backward
+  compatibility, legacy features and old saves are explicitly out of scope.
+- Remove obsolete code, settings, schemas, examples and tests when replacing
+  behavior. Do not add compatibility modes, old-format loaders, migrations or
+  deprecation periods unless the user explicitly requests them.
+- Update current examples and documentation together with implementation.
+  Record intentional changes; use Git history for superseded implementation.
+- Keep version and algorithm identifiers for build provenance and clear
+  rejection of unsupported inputs, not as a promise to support old versions.
+- Test current correctness and reproducibility. Do not preserve old generated
+  output at the cost of better algorithms or simpler foundations.
+
 ## Architecture boundaries
 
 The expected dependency direction is:

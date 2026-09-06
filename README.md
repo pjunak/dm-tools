@@ -84,10 +84,10 @@ Read the [numeric build guide](docs/terrain-builds.md) for products, coordinate
 limits, diagnostics and completion checks. The current build uses lossless NPY
 arrays in the existing local SVG plane; world-georeferenced GeoTIFF is planned.
 
-The accepted version-1 project contract is published in
-[`schemas/terrain/project-v1.schema.json`](schemas/terrain/project-v1.schema.json).
-The explicit [named stage seed policy](docs/terrain-seeds.md) uses project/build
-version 2 while preserving original-project behavior by default.
+The current [project schema](schemas/terrain/project-v3.schema.json) and
+[named stage seed algorithm](docs/terrain-seeds.md) describe implemented behavior.
+This project is in early development: obsolete features and old saves are not
+supported. Current correctness and useful improvements take priority.
 
 ## Repository layout
 

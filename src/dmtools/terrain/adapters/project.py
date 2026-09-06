@@ -28,10 +28,9 @@ from dmtools.terrain.domain import (
     TerrainSettings,
     TerrainStructure,
 )
-from dmtools.terrain.domain.seeds import LEGACY_SEED_POLICY, NAMED_SEED_POLICY
 
 PROJECT_SCHEMA = "dmtools.terrain-project"
-PROJECT_SCHEMA_VERSION = 2
+PROJECT_SCHEMA_VERSION = 3
 PROJECT_EXTENSION = ".dmterrain.json"
 _MAX_PROJECT_BYTES = 16 * 1024 * 1024
 
@@ -113,7 +112,7 @@ def _points(value: object, context: str) -> tuple[tuple[float, float], ...]:
     return tuple(_point(point, f"{context}[{index}]") for index, point in enumerate(values))
 
 
-def _settings_from_json(value: object, version: int) -> TerrainSettings:
+def _settings_from_json(value: object) -> TerrainSettings:
     data = _mapping(value, "settings")
     expected = {
         "seed",
@@ -126,15 +125,10 @@ def _settings_from_json(value: object, version: int) -> TerrainSettings:
         "coastal_rise_km",
         "variability",
     }
-    if version == 2:
-        expected.add("seed_policy")
     _require_keys(data, expected, "settings")
-    if version == 2 and data["seed_policy"] != NAMED_SEED_POLICY:
-        raise TerrainProjectInputError("Version 2 requires seed_policy named-stage-sha256@1.")
     try:
         return TerrainSettings(
             seed=_integer(data["seed"], "settings.seed"),
-            seed_policy=NAMED_SEED_POLICY if version == 2 else LEGACY_SEED_POLICY,
             object_scale_km=_number(data["object_scale_km"], "settings.object_scale_km"),
             resolution_px=_integer(data["resolution_px"], "settings.resolution_px"),
             maximum_elevation_m=_number(
@@ -241,14 +235,9 @@ def _constraint_from_json(value: object, index: int) -> TerrainConstraint:
     raise TerrainProjectInputError(f"{context}.type is not supported: {kind!r}.")
 
 
-def project_schema_version(settings: TerrainSettings) -> int:
-    """Preserve the v1 contract unless named stage seeds are explicitly selected."""
-    return 1 if settings.seed_policy == LEGACY_SEED_POLICY else PROJECT_SCHEMA_VERSION
-
-
-def settings_to_json(settings: TerrainSettings) -> dict[str, int | float | str]:
-    """Serialize effective settings according to their seed-policy contract."""
-    data: dict[str, int | float | str] = {
+def settings_to_json(settings: TerrainSettings) -> dict[str, int | float]:
+    """Serialize current effective generator settings."""
+    return {
         "seed": settings.seed,
         "object_scale_km": settings.object_scale_km,
         "resolution_px": settings.resolution_px,
@@ -259,9 +248,6 @@ def settings_to_json(settings: TerrainSettings) -> dict[str, int | float | str]:
         "coastal_rise_km": settings.coastal_rise_km,
         "variability": settings.variability,
     }
-    if settings.seed_policy == NAMED_SEED_POLICY:
-        data["seed_policy"] = settings.seed_policy
-    return data
 
 
 def _authoring_to_json(authoring: TerrainAuthoringState) -> dict[str, object]:
@@ -333,7 +319,7 @@ def save_terrain_project(
     target = destination.resolve()
     document: dict[str, object] = {
         "schema": PROJECT_SCHEMA,
-        "schema_version": project_schema_version(project.settings),
+        "schema_version": PROJECT_SCHEMA_VERSION,
         "coastline": {
             "path": _relative_source_path(coastline_source.path, target),
             "sha256": coastline_source.sha256,
@@ -360,7 +346,7 @@ def save_terrain_project(
 
 
 def load_terrain_project(source: Path) -> LoadedTerrainProject:
-    """Load a strict version-1 or version-2 project and verify its referenced coastline."""
+    """Load the current project format and verify its referenced coastline."""
 
     try:
         resolved = source.resolve(strict=True)
@@ -381,9 +367,9 @@ def load_terrain_project(source: Path) -> LoadedTerrainProject:
     if data["schema"] != PROJECT_SCHEMA:
         raise TerrainProjectInputError(f"Unsupported project schema: {data['schema']!r}.")
     version = _integer(data["schema_version"], "schema_version")
-    if version not in (1, PROJECT_SCHEMA_VERSION):
+    if version != PROJECT_SCHEMA_VERSION:
         raise TerrainProjectInputError(
-            f"Unsupported project schema version {version}; expected 1 or {PROJECT_SCHEMA_VERSION}."
+            f"Unsupported project schema version {version}; expected {PROJECT_SCHEMA_VERSION}."
         )
 
     coastline_data = _mapping(data["coastline"], "coastline")
@@ -395,7 +381,7 @@ def load_terrain_project(source: Path) -> LoadedTerrainProject:
     ):
         raise TerrainProjectInputError("coastline.sha256 must be 64 hexadecimal characters.")
 
-    settings = _settings_from_json(data["settings"], version)
+    settings = _settings_from_json(data["settings"])
     constraints = tuple(
         _constraint_from_json(value, index)
         for index, value in enumerate(_sequence(data["constraints"], "constraints"))

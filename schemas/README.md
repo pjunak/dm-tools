@@ -1,24 +1,18 @@
 # Schemas
 
-This directory owns versioned public data contracts for DM Tools. The first
-accepted contract is the
-[`terrain/project-v1.schema.json`](terrain/project-v1.schema.json) schema for
-`.dmterrain.json` authored project files.
+Only the current terrain formats are supported:
 
-The [local build manifest](terrain/build-v1.schema.json) records implemented
-numeric NPY outputs, previews, measurements and reproducibility information.
-It explicitly describes an endpoint-node SVG-local plane with no world CRS.
-See the [build guide](../docs/terrain-builds.md) for file semantics and validation.
+- [Project v3](terrain/project-v3.schema.json): authored `.dmterrain.json` inputs.
+- [Build v3](terrain/build-v3.schema.json): numeric products, coordinates,
+  algorithm identities, named stage seeds and output hashes.
 
-Schemas should describe serialized structure and validation constraints. Python
-models may implement them, but project files must not depend on private class
-layout or unversioned implementation details.
+Register these two schemas locally by `$id` when validating builds. The build
+references current project settings; neither schema depends on old versions.
+The coordinate model is an endpoint-node SVG-local plane with no world CRS.
+See the [build guide](../docs/terrain-builds.md) and
+[seed contract](../docs/terrain-seeds.md).
 
-Existing schema files are immutable compatibility references. Incompatible
-changes require a new numbered schema and an explicit loader or migration path.
-
-The opt-in [project v2](terrain/project-v2.schema.json) and
-[build v2](terrain/build-v2.schema.json) add named stage seeds. Original-policy
-projects still save/build as v1. Register all four schemas locally for v2
-validation because it references immutable v1 definitions. See the
-[seed contract](../docs/terrain-seeds.md) for policy selection and exact encoding.
+During early development, replace obsolete formats and update the current
+example, tests and documentation. Version identifiers record provenance and
+reject unsupported input; old saves, compatibility loaders and migration paths
+are out of scope. Superseded schemas are available in Git history.

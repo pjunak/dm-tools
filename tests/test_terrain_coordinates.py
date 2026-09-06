@@ -65,7 +65,7 @@ def test_grid_extents_are_endpoint_positions_with_offset_independent_spacing() -
     np.testing.assert_array_equal(y, [20.0, 25.0, 30.0])
 
 
-def test_grid_shape_preserves_legacy_rounding_and_stage_minimums() -> None:
+def test_grid_shape_uses_ties_to_even_rounding_and_stage_minimums() -> None:
     assert EndpointGrid.for_extent((0.0, 0.0, 5.0, 10.0), 5).shape == (5, 2)
     assert EndpointGrid.for_extent((0.0, 0.0, 7.0, 10.0), 5).shape == (5, 4)
     thin = (0.0, 0.0, 1000.0, 0.1)

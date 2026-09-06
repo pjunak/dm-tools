@@ -12,6 +12,9 @@ ADRs preserve significant technical decisions and their trade-offs.
    mark the old one `Superseded`.
 5. Link implementation commits and validation evidence when they exist.
 
+Earlier ADRs are historical records. [ADR-0027](0027-develop-current-behavior-without-legacy-support.md)
+supersedes their legacy compatibility commitments during early development.
+
 ## Index
 
 - [ADR-0001: Use Python 3.14 for the application and terrain engine](0001-python-3-14.md)
@@ -40,3 +43,4 @@ ADRs preserve significant technical decisions and their trade-offs.
 - [ADR-0024: Publish local numeric terrain builds before changing algorithms](0024-publish-local-numeric-terrain-builds.md)
 - [ADR-0025: Centralize local frames and endpoint grids](0025-centralize-local-frames-and-endpoint-grids.md)
 - [ADR-0026: Version named terrain stage seeds](0026-version-named-terrain-stage-seeds.md)
+- [ADR-0027: Develop current behavior without legacy support](0027-develop-current-behavior-without-legacy-support.md)

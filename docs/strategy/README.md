@@ -19,6 +19,14 @@ An evaluated package does not become a dependency merely by appearing in
 research or this strategy. Adoption requires an immediate implementation use,
 license review, Python 3.14 and Windows verification, and a measured benefit.
 
+## Early-development priority
+
+Implement and improve current behavior. Remove obsolete features, old-save
+loaders, compatibility switches and superseded schemas as they become
+unnecessary. Version identifiers serve provenance, not support promises.
+The execution order below addresses engineering prerequisites, not a freeze
+on current outputs. See [ADR-0027](../adr/0027-develop-current-behavior-without-legacy-support.md).
+
 ## Product boundary
 
 ```text
@@ -58,8 +66,8 @@ below still govern georeferenced output.
 The [coordinate contract](../terrain-coordinates.md) now centralizes source/local
 conversion, endpoint registration and spacing across generation and products.
 It preserves current numeric results without assigning a world position.
-The [seed contract](../terrain-seeds.md) now provides portable named stage
-seeds through explicit project/build v2 opt-in while preserving legacy v1.
+The [seed contract](../terrain-seeds.md) provides portable named stage seeds
+for all generation. Only the current project/build format is supported.
 Future stochastic stages must get their own stable identifiers.
 
 - Define source-world origin, planetary model, working projection, raster

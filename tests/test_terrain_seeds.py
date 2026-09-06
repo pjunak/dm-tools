@@ -1,22 +1,18 @@
 # pyright: reportPrivateUsage=false
-"""Seed compatibility vectors and their actual generation/settings boundaries."""
+"""Portable seed vectors and current generation/settings boundaries."""
 
 import tkinter as tk
 from dataclasses import replace
-from typing import cast
+from typing import Any, cast
 
 import numpy as np
 import pytest
+from numpy.typing import NDArray
 
 from benchmarks.terrain import fixture
 from dmtools.terrain.domain import TerrainSettings
-from dmtools.terrain.domain.seeds import (
-    LEGACY_SEED_POLICY,
-    NAMED_SEED_POLICY,
-    RELIEF_STAGE_ID,
-    SeedPolicy,
-    stage_seed,
-)
+from dmtools.terrain.domain.seeds import RELIEF_STAGE_ID, stage_seed
+from dmtools.terrain.pipeline import generate as generation
 from dmtools.terrain.pipeline.generate import generate_terrain
 from dmtools.terrain.ui import _CONTROLS, TerrainApp
 
@@ -36,16 +32,15 @@ from dmtools.terrain.ui import _CONTROLS, TerrainApp
     ],
 )
 def test_portable_seed_vectors(master: int, stage: str, expected: int) -> None:
-    assert stage_seed(master, stage, NAMED_SEED_POLICY) == expected
-    assert stage_seed(master, stage, LEGACY_SEED_POLICY) == master
+    assert stage_seed(master, stage) == expected
 
 
 def test_unrelated_stage_insertion_and_order_do_not_change_existing_streams() -> None:
     before = {
-        name: stage_seed(42, name, NAMED_SEED_POLICY) for name in (RELIEF_STAGE_ID, "test.rainfall")
+        name: stage_seed(42, name) for name in (RELIEF_STAGE_ID, "test.rainfall")
     }
     after = {
-        name: stage_seed(42, name, NAMED_SEED_POLICY)
+        name: stage_seed(42, name)
         for name in ("test.rainfall", "test.new-stage", RELIEF_STAGE_ID)
     }
     assert before == {name: after[name] for name in before}
@@ -57,39 +52,37 @@ def test_invalid_master_seed_is_rejected_at_domain_boundary(seed: object) -> Non
     with pytest.raises(ValueError, match="Seed must be an integer"):
         TerrainSettings(seed=cast("int", seed))
     with pytest.raises(ValueError, match="Seed must be an integer"):
-        stage_seed(cast("int", seed), RELIEF_STAGE_ID, NAMED_SEED_POLICY)
+        stage_seed(cast("int", seed), RELIEF_STAGE_ID)
 
 
 @pytest.mark.parametrize("name", ["", "Terrain.relief", "a\x00b", "a/b", "é", "a" * 129])
 def test_invalid_stage_names_are_rejected(name: str) -> None:
     with pytest.raises(ValueError, match="Stage identifier"):
-        stage_seed(42, name, NAMED_SEED_POLICY)
+        stage_seed(42, name)
 
 
-def test_unknown_policy_is_rejected() -> None:
-    policy = cast("SeedPolicy", "unknown@9")
-    with pytest.raises(ValueError, match="Unsupported seed policy"):
-        TerrainSettings(seed_policy=policy)
-    with pytest.raises(ValueError, match="Unsupported seed policy"):
-        stage_seed(42, RELIEF_STAGE_ID, policy)
+def test_generation_uses_derived_seed_for_macro_and_full_noise(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    original = generation.fractal_value_noise
+    seeds: set[int] = set()
+    levels: set[int] = set()
 
+    def inspect_noise(*args: Any, **kwargs: Any) -> NDArray[np.float64]:
+        seeds.add(kwargs["seed"])
+        levels.add(kwargs["detail_levels"])
+        return original(*args, **kwargs)
 
-@pytest.mark.parametrize("case", ["square", "archipelago", "authored"])
-def test_named_generation_uses_one_resolved_relief_stream(case: str) -> None:
-    coast, settings, constraints = fixture(case, 65, 42)
-    named_settings = replace(settings, seed_policy=NAMED_SEED_POLICY)
-    named = generate_terrain(coast, named_settings, constraints=constraints)
-    resolved = replace(settings, seed=2355644248)
-    reference = generate_terrain(coast, resolved, constraints=constraints)
-    np.testing.assert_array_equal(named.elevation_m, reference.elevation_m)
-    np.testing.assert_array_equal(named.land_mask, reference.land_mask)
-    assert named.drainage == reference.drainage
-    assert named.settings == named_settings
+    monkeypatch.setattr(generation, "fractal_value_noise", inspect_noise)
+    coast, settings, constraints = fixture("authored", 65, 42)
+    terrain = generate_terrain(coast, settings, constraints=constraints)
+    assert seeds == {2355644248}
+    assert levels == {2, settings.detail_levels}
+    assert np.isfinite(terrain.elevation_m[terrain.land_mask]).all()
 
 
 def test_named_policy_preserves_nested_samples_and_determinism() -> None:
     coast, settings, constraints = fixture("square", 65, 42)
-    settings = replace(settings, seed_policy=NAMED_SEED_POLICY)
     coarse = generate_terrain(coast, settings, constraints=constraints)
     fine = generate_terrain(coast, replace(settings, resolution_px=129), constraints=constraints)
     repeated = generate_terrain(coast, settings, constraints=constraints)
@@ -98,20 +91,17 @@ def test_named_policy_preserves_nested_samples_and_determinism() -> None:
     assert coarse.drainage == fine.drainage == repeated.drainage
 
 
-@pytest.mark.parametrize("policy", [LEGACY_SEED_POLICY, NAMED_SEED_POLICY])
-def test_workbench_settings_round_trip_retains_policy(
-    policy: SeedPolicy,
+def test_workbench_settings_round_trip(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     # Tcl variables exercise settings persistence without needing a display.
     interpreter = tk.Tcl()
     app = TerrainApp.__new__(TerrainApp)
     app._variables = {spec.key: tk.DoubleVar(interpreter, value=spec.default) for spec in _CONTROLS}
-    app._seed_policy_label = tk.StringVar(interpreter, value="Original terrain")
     def refresh_value(key: str) -> None:
         pass
 
     monkeypatch.setattr(app, "_refresh_value", refresh_value)
-    expected = TerrainSettings(seed=42, resolution_px=129, seed_policy=policy)
+    expected = TerrainSettings(seed=42, resolution_px=129)
     app._apply_settings(expected)
     assert app._read_settings() == expected
