@@ -13,6 +13,11 @@ import numpy as np
 import shapely
 
 import dmtools
+from dmtools.terrain.adapters.geotiff import (
+    geotiff_metadata,
+    rasterio_native_versions,
+    write_terrain_geotiff,
+)
 from dmtools.terrain.adapters.project import PROJECT_SCHEMA_VERSION, settings_to_json
 from dmtools.terrain.adapters.render import render_height_map, save_height_map
 from dmtools.terrain.domain import LocalMetricFrame, TerrainProject
@@ -25,7 +30,7 @@ from dmtools.terrain.pipeline.generate import (
 )
 from dmtools.terrain.pipeline.quality import TerrainQuality
 
-BUILD_SCHEMA_VERSION = 3
+BUILD_SCHEMA_VERSION = 4
 
 
 def file_sha256(path: Path) -> str:
@@ -44,6 +49,7 @@ def runtime_identity() -> dict[str, object]:
         path.relative_to(package).as_posix(): file_sha256(path)
         for path in sorted(package.rglob("*.py"))
     }
+    gdal, proj = rasterio_native_versions()
     return {
         "dmtools_version": dmtools.__version__,
         "package_source_sha256": sha256(canonical_json(sources)).hexdigest(),
@@ -53,9 +59,12 @@ def runtime_identity() -> dict[str, object]:
         "machine": platform.machine(),
         "byteorder": sys.byteorder,
         "dependencies": {
-            name: version(name) for name in ("numpy", "Pillow", "shapely", "svgelements")
+            name: version(name)
+            for name in ("numpy", "Pillow", "shapely", "svgelements", "rasterio", "affine")
         },
         "geos": shapely.geos_version_string,
+        "gdal": gdal,
+        "proj": proj,
     }
 
 
@@ -86,6 +95,11 @@ def write_build_products(
             stream.flush()
             os.fsync(stream.fileno())
         paths.append((name, "authoritative"))
+    write_terrain_geotiff(
+        terrain, destination / "elevation.tif",
+        elevation_sha256=file_sha256(destination / "elevation.npy"),
+    )
+    paths.append(("elevation.tif", "authoritative"))
     _write_json(destination / "inputs.json", asdict(project))
     paths.append(("inputs.json", "input-snapshot"))
     _write_json(
@@ -171,6 +185,7 @@ def publish_build_manifest(
             "x_spacing_km": grid.x_spacing_km,
             "y_spacing_km": grid.y_spacing_km,
         },
+        "geotiff": geotiff_metadata(grid),
         "routing_grid": {
             "width": routing_grid.width,
             "height": routing_grid.height,

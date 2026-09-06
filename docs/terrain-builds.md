@@ -15,6 +15,7 @@ the workbench. No input file or generator setting is changed.
 
 | File | Meaning |
 |---|---|
+| `elevation.tif` | Same Float32 DEM in local-metric GeoTIFF with embedded valid-data mask |
 | `elevation.npy` | Authoritative little-endian Float32 elevations in metres; NaN outside land |
 | `land-mask.npy` | Authoritative boolean land membership, separate from zero elevation |
 | `x-km.npy`, `y-km.npy` | Authoritative Float64 coordinate vectors in kilometres |
@@ -23,8 +24,9 @@ the workbench. No input file or generator setting is changed.
 | `diagnostics.json` | Delivered-surface quality measurements and separately labelled canonical drainage diagnostics |
 | `manifest.json` | Completion record, input/runtime identities, coordinates, output sizes and SHA-256 hashes |
 
-The NPY files contain numeric arrays only and need no pickle loading. They are
-a local numeric format, not GeoTIFF. The current plane maps the longest SVG
+The NPY files contain numeric arrays only and need no pickle loading. The
+GeoTIFF carries the same elevations with local metric coordinates and an
+embedded mask; see the [export contract](terrain-geotiff.md). The current plane maps the longest SVG
 dimension to the authored object size, with x increasing right and y increasing
 down. Samples include both extent endpoints. World CRS and planetary radius
 are explicitly unspecified. Do not import these arrays as longitude/latitude
@@ -89,7 +91,7 @@ project, SVG and installed Python package files are fingerprinted; runtime and
 dependency versions are recorded. No network service is needed to build.
 
 Consumers must validate the manifest and verify product hashes. Register the
-[current build schema](../schemas/terrain/build-v3.schema.json) and
+[current build schema](../schemas/terrain/build-v4.schema.json) and
 [current project schema](../schemas/terrain/project-v3.schema.json) locally by
 `$id` for offline validation. Older formats are unsupported. The
 [seed contract](terrain-seeds.md) describes the single named-stage algorithm.
@@ -104,5 +106,5 @@ change this identity even when DEM samples remain equal; compare the
 cross-platform bitwise equality or archive dependency binaries.
 
 See [ADR-0024](adr/0024-publish-local-numeric-terrain-builds.md) for the accepted
-scope and the [development strategy](strategy/README.md) for world-coordinate,
-GeoTIFF and terrain-algorithm work that follows.
+scope and the [development strategy](strategy/README.md) for world placement
+and terrain-algorithm work that follows.

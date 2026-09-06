@@ -41,3 +41,6 @@ change.
 Promote a selected solver, file-format contract, or external engine into an ADR
 and tests. Do not rewrite old research to make it appear that a later decision
 was already known.
+
+For numeric GIS exchange and its local-coordinate limits, read the
+[GeoTIFF export guide](terrain-geotiff.md).

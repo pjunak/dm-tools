@@ -32,11 +32,20 @@ preview, and PNG export. Those are not repeated below as unfinished work.
   hashes, generator and schema versions, master and stage seeds, effective
   parameters, working extent and units, runtime/dependency versions, warnings,
   and authoritative output hashes.
-  Current version-3 builds record named stage seeds and explicit local-only
-  coordinates. World georeferencing remains follow-up implementation work.
-- [ ] **P0 — Export the authoritative Float32 DEM as GeoTIFF.** Include an
-  explicit metric coordinate system, extent, pixel size, elevation units,
-  nodata value, and a link to the build manifest.
+  Current version-4 builds record named stage seeds, numeric product hashes,
+  and explicit local-only NPY/GeoTIFF coordinates. World placement remains open.
+- [x] **P0 — Export the authoritative Float32 DEM as local-metric GeoTIFF.**
+  Implemented point registration, metre units, NaN nodata, embedded masks,
+  numeric-source hashes and manifest linkage. See the
+  [export contract](docs/terrain-geotiff.md).
+- [ ] **P1 — Verify local GeoTIFF import in desktop GIS and standalone GDAL.**
+  Rasterio numeric reads and Pillow TIFF-tag checks pass. Desktop display is
+  unverified; Rasterio 1.5.1 `rio info` assumes an Earth-coordinate conversion
+  and fails for the current engineering CRS.
+- [ ] **P0 — Add explicit source-to-world placement and projected export.**
+  Declare the planetary model, source correspondence and metric working
+  projection; validate distortion and coordinate round trips. Local TIFF
+  coordinates do not yet place a continent on a world map.
 - [x] **P1 — Add a non-interactive build command.** Let
   `dmtools terrain build <project.dmterrain.json>` use the same domain,
   pipeline, and adapters as the desktop workbench.
@@ -89,8 +98,6 @@ preview, and PNG export. Those are not repeated below as unfinished work.
 - [ ] **P1 — Build only a selected region at higher resolution.** Avoid
   allocating a planet- or continent-sized raster when the user needs one local
   map.
-- [ ] **P2 — Add explicit project migration commands.** Never guess how to
-  reinterpret an older public schema silently.
 - [ ] **P2 — Evaluate a portable project bundle.** A bundle could package the
   JSON and authored source assets while retaining readable hashes; plain JSON
   plus relative files remains the default until portability justifies it.
@@ -296,7 +303,7 @@ landscape-process spikes. It is working research, not an accepted architecture.
 - [x] **P0 — Remove early-development compatibility overhead.** Removed the
   original seed mode, policy selector, old-save loaders, four superseded
   schemas, duplicate example and dual-version tests. Only current project/build
-  v3 is supported. Keep obsolete code in Git history, not active support paths.
+  formats are supported. Keep obsolete code in Git history, not active support paths.
 - [ ] **P1 — Generate refinement halos and crop final tiles.** Evaluate all
   neighbourhood-dependent solvers and erosion on buffered bounds to avoid
   seams, then verify overlap and downsample consistency numerically.

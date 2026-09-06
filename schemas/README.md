@@ -3,12 +3,13 @@
 Only the current terrain formats are supported:
 
 - [Project v3](terrain/project-v3.schema.json): authored `.dmterrain.json` inputs.
-- [Build v3](terrain/build-v3.schema.json): numeric products, coordinates,
+- [Build v4](terrain/build-v4.schema.json): numeric products, coordinates,
   algorithm identities, named stage seeds and output hashes.
 
 Register these two schemas locally by `$id` when validating builds. The build
 references current project settings; neither schema depends on old versions.
-The coordinate model is an endpoint-node SVG-local plane with no world CRS.
+The numeric arrays use an endpoint-node SVG-local plane. GeoTIFF records the
+same samples in local metres with an upward y axis; neither has a world CRS.
 See the [build guide](../docs/terrain-builds.md) and
 [seed contract](../docs/terrain-seeds.md).
 

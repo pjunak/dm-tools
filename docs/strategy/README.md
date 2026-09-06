@@ -59,7 +59,9 @@ layers are derived products that can be rebuilt and inspected independently.
 ### 1. Make terrain builds durable and reproducible
 
 The first local build slice is implemented: headless project builds preserve
-numeric NPY arrays, both previews, spatial diagnostics and a versioned manifest.
+numeric NPY arrays, local-metric GeoTIFF, both previews, spatial diagnostics and
+a versioned manifest. The [GeoTIFF adapter](../terrain-geotiff.md) now handles
+point registration and embedded masks without assigning a world position.
 See the [build guide](../terrain-builds.md). It records the existing endpoint
 grid and explicitly leaves world CRS/planetary radius unspecified; the steps
 below still govern georeferenced output.
@@ -74,14 +76,15 @@ Future stochastic stages must get their own stable identifiers.
   registration and effective process spacing before freezing georeferenced
   outputs. The current longest-dimension local plane is not a world CRS contract.
 - Define the versioned build manifest and lock algorithm and stage identifiers.
-- Export the authoritative Float32 DEM as a georeferenced GeoTIFF.
+- Add world placement to the implemented local-metric Float32 GeoTIFF export.
 - Add the headless `terrain build` operation using the same project and pipeline
   as the desktop workbench.
 - Record hashes, units, extent, sample spacing, effective settings, dependency
   versions, diagnostics, and output provenance.
 
-Rasterio is the preferred Python GeoTIFF adapter, with pyproj for coordinate
-operations and GDAL command-line tools as independent interoperability checks.
+Rasterio now writes the local GeoTIFF. Evaluate pyproj for source/world
+coordinate operations and GDAL command-line tools for additional interoperability
+checks when declaring planetary placement.
 
 ### 2. Measure before replacing the base solver
 

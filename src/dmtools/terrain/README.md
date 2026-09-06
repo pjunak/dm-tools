@@ -26,7 +26,8 @@ For saved projects, `dmtools terrain build PROJECT --output NEW_DIRECTORY`
 uses the same pipeline without opening the GUI. It saves the Float32 DEM,
 mask, coordinates, both PNG styles, diagnostics and a completion manifest.
 See the [numeric build guide](../../../docs/terrain-builds.md). The coordinate
-model remains the local SVG plane; world-georeferenced GeoTIFF is still planned.
+model remains the local SVG plane. Builds now include a
+[local-metric GeoTIFF](../../../docs/terrain-geotiff.md); world placement is still planned.
 
 [`examples/terrain/example.dmterrain.json`](../../../examples/terrain/example.dmterrain.json)
 is a small public project for trying the complete workflow; its referenced
@@ -269,8 +270,8 @@ terrain. Raising it does not stretch ordinary elevations into summit colours;
 on every continent, a given metre elevation retains the same cartographic hue.
 
 These colours express elevation only; they do not claim vegetation, exposed
-rock, or snow. The PNG is not an authoritative DEM file; GeoTIFF and a versioned
-build manifest remain future work. The current display decisions are recorded in
+rock, or snow. The PNG is not an authoritative DEM file; headless builds write
+the numeric GeoTIFF and a completion manifest. The current display decisions are recorded in
 [ADR-0011](../../../docs/adr/0011-separate-cartographic-and-scientific-relief-styles.md)
 and [ADR-0012](../../../docs/adr/0012-fix-cartographic-colour-scale-at-ten-kilometres.md),
 with supporting [cartographic-style analysis](../../../docs/research/2026-09-03-cartographic-relief-style.md)
@@ -322,7 +323,7 @@ The next end-to-end work should deliberately remain staged:
 1. Extend the implemented local build manifest with an accepted world-coordinate contract.
 2. Define elevation profiles and asymmetric side slopes along ridge and valley
    structures.
-3. Persist the Float32 DEM as GeoTIFF with explicit coordinate metadata.
+3. Add world placement to the implemented local-metric GeoTIFF.
 4. Add regional refinement requests in the same world-coordinate frame.
 5. Derive contours and validate hydrology.
 

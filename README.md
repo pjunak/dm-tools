@@ -81,8 +81,9 @@ dmtools terrain build examples/terrain/example.dmterrain.json --output artifacts
 ```
 
 Read the [numeric build guide](docs/terrain-builds.md) for products, coordinate
-limits, diagnostics and completion checks. The current build uses lossless NPY
-arrays in the existing local SVG plane; world-georeferenced GeoTIFF is planned.
+limits, diagnostics and completion checks. Builds include lossless NPY arrays
+and [Float32 GeoTIFF](docs/terrain-geotiff.md) in an explicit local metric frame.
+World placement remains planned.
 
 The current [project schema](schemas/terrain/project-v3.schema.json) and
 [named stage seed algorithm](docs/terrain-seeds.md) describe implemented behavior.

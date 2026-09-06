@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:dmtools:schema:terrain-build:3",
-  "title": "DM Tools local terrain build version 3",
-  "description": "Completion manifest for a local SVG-plane numeric build. Verify product hashes before consumption; this is not a world CRS or GeoTIFF contract.",
+  "$id": "urn:dmtools:schema:terrain-build:4",
+  "title": "DM Tools local terrain build version 4",
+  "description": "Completion manifest for local-metric GeoTIFF and NPY numeric products. No planetary or world placement is implied.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -17,14 +17,15 @@
     "coordinates",
     "routing_grid",
     "outputs",
-    "warnings"
+    "warnings",
+    "geotiff"
   ],
   "properties": {
     "schema": {
       "const": "dmtools.terrain-build"
     },
     "schema_version": {
-      "const": 3
+      "const": 4
     },
     "status": {
       "const": "complete"
@@ -67,7 +68,9 @@
         "machine",
         "byteorder",
         "dependencies",
-        "geos"
+        "geos",
+        "gdal",
+        "proj"
       ],
       "properties": {
         "dmtools_version": {
@@ -104,7 +107,9 @@
             "numpy",
             "Pillow",
             "shapely",
-            "svgelements"
+            "svgelements",
+            "rasterio",
+            "affine"
           ],
           "properties": {
             "numpy": {
@@ -118,8 +123,20 @@
             },
             "svgelements": {
               "type": "string"
+            },
+            "rasterio": {
+              "type": "string"
+            },
+            "affine": {
+              "type": "string"
             }
           }
+        },
+        "gdal": {
+          "type": "string"
+        },
+        "proj": {
+          "type": "string"
         }
       }
     },
@@ -289,7 +306,8 @@
         "inputs.json",
         "diagnostics.json",
         "cartographic.png",
-        "scientific.png"
+        "scientific.png",
+        "elevation.tif"
       ],
       "properties": {
         "elevation.npy": {
@@ -315,6 +333,9 @@
         },
         "scientific.png": {
           "$ref": "#/$defs/product"
+        },
+        "elevation.tif": {
+          "$ref": "#/$defs/product"
         }
       }
     },
@@ -322,6 +343,51 @@
       "type": "array",
       "items": {
         "type": "string"
+      }
+    },
+    "geotiff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "model",
+        "crs_wkt",
+        "affine_m",
+        "bounds_m",
+        "horizontal_units",
+        "x_direction",
+        "y_direction",
+        "registration"
+      ],
+      "properties": {
+        "model": {
+          "const": "local-metric-geotiff@1"
+        },
+        "crs_wkt": {
+          "const": "LOCAL_CS[\"DM Tools source-local metric plane\",UNIT[\"metre\",1],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]"
+        },
+        "affine_m": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 6,
+          "maxItems": 6
+        },
+        "bounds_m": {
+          "$ref": "#/$defs/bounds"
+        },
+        "horizontal_units": {
+          "const": "m"
+        },
+        "x_direction": {
+          "const": "source-right"
+        },
+        "y_direction": {
+          "const": "source-up"
+        },
+        "registration": {
+          "const": "PixelIsPoint"
+        }
       }
     }
   },

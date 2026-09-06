@@ -44,3 +44,4 @@ supersedes their legacy compatibility commitments during early development.
 - [ADR-0025: Centralize local frames and endpoint grids](0025-centralize-local-frames-and-endpoint-grids.md)
 - [ADR-0026: Version named terrain stage seeds](0026-version-named-terrain-stage-seeds.md)
 - [ADR-0027: Develop current behavior without legacy support](0027-develop-current-behavior-without-legacy-support.md)
+- [ADR-0028: Export local-metric GeoTIFF](0028-export-local-metric-geotiff.md)

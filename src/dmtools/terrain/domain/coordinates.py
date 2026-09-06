@@ -35,7 +35,7 @@ def _point(point: Coordinate) -> None:
 
 @dataclass(frozen=True, slots=True)
 class LocalMetricFrame:
-    """Legacy source-right/source-down plane, scaled by its longest dimension."""
+    """Source-right/source-down plane, scaled by its longest dimension."""
 
     source_bounds: Bounds
     longest_side_km: float

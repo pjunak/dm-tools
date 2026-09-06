@@ -17,6 +17,8 @@ need, supported-platform validation, and a completed license review.
 | Pillow | 12.3.0 | In-app raster preview and PNG export | MIT-CMU |
 | Shapely | 2.1.2 | Polygon validity, land mask, and distance-to-coast queries | BSD-3-Clause |
 | svgelements | 1.9.6 | SVG shape/path parsing, transforms, and curve evaluation | MIT |
+| Rasterio | 1.5.1 | Local-metric Float32 GeoTIFF I/O through GDAL | BSD-3-Clause |
+| Affine | 3.0.1 | Explicit sample-to-raster affine mapping | BSD-3-Clause |
 
 Primary references:
 
@@ -49,3 +51,18 @@ than adding a plotting-library dependency. See the
 
 The repository itself still needs a distribution license before a public
 release. Dependency permissions do not license project-owned code.
+
+## GeoTIFF runtime
+
+Rasterio 1.5.1 and Affine 3.0.1 passed local Windows / CPython 3.14.7 checks.
+The installed Rasterio wheel reports GDAL 3.12.4 and PROJ 9.8.1. Build manifests
+record these package/native versions. Rasterio and Affine are runtime
+requirements because every headless build writes a GeoTIFF; native I/O stays
+inside adapters. Domain and numerical generation do not import them.
+
+The upstream [Rasterio license](https://github.com/rasterio/rasterio/blob/main/LICENSE.txt)
+and [Affine license](https://github.com/rasterio/affine/blob/main/LICENSE.txt)
+permit redistribution with attribution/notice retention. GDAL uses an
+[MIT-style license](https://gdal.org/en/stable/license.html); PROJ has its own
+[MIT-style notice](https://proj.org/en/stable/about.html#license).
+When packaging native wheels, retain their bundled third-party notices too.

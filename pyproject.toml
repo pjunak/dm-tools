@@ -19,6 +19,8 @@ dependencies = [
   "Pillow>=12.3,<13",
   "shapely>=2.1.2,<3",
   "svgelements>=1.9.6,<2",
+  "rasterio>=1.5.1,<2",
+  "affine>=3.0.1,<4",
 ]
 
 [project.optional-dependencies]

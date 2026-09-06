@@ -5,7 +5,7 @@ numeric master Seed; there is no seed-policy selector or direct-master mode.
 The public [example](../examples/terrain/example.dmterrain.json) uses the same
 implementation as programmatic calls and headless builds.
 
-Only the current project/build format, version 3, is supported. Older saves
+Only current project format 3 and build format 4 are supported. Older saves
 are rejected and must be recreated. Current settings store the master seed;
 the build records the seed algorithm and resolved stage seeds. Future changes
 may replace this behavior without compatibility modes or migrations.

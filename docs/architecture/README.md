@@ -46,10 +46,10 @@ The current implemented path is:
    constraint, basin, and drainage diagnostics.
 6. Return the Float32 DEM in memory and derive the workbench colour preview and
    PNG export. The shared headless application operation also writes numeric
-   NPY arrays, both preview styles, spatial measurements and a completion
+   NPY arrays, local-metric GeoTIFF, both preview styles, spatial measurements and a completion
    manifest using the existing local-coordinate model.
 
-The next durable-build work adds world georeferencing, GeoTIFF,
+The next durable-build work adds world georeferencing,
 derived GIS products, explicit hard/soft/inequality projection after optional
 processes, and regional-refinement validation. Climate and ecological products
 are a later derived system that consumes accepted terrain and global world
@@ -95,7 +95,7 @@ layer or path boundaries.
 
 ## Deferred decisions
 
-- World-georeferenced build contracts and project migration tooling
+- World-georeferenced build contracts and explicit source placement
 - Elevation profiles and asymmetric side slopes along structural lines
 - Authored lake, outlet, endorheic-basin, and depression-policy semantics
 - Public drainage/catchment products and external hydrology validation boundary

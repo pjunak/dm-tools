@@ -1,12 +1,14 @@
+# pyright: reportUnknownMemberType=false, reportUnknownVariableType=false, reportMissingTypeStubs=false
 import json
 import shutil
 from dataclasses import replace
 from hashlib import sha256
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import pytest
+import rasterio
 from jsonschema import Draft202012Validator, ValidationError, validate
 from PIL import Image
 from referencing import Registry, Resource
@@ -54,7 +56,7 @@ def test_headless_build_preserves_dem_and_has_repeatable_verified_products(
     build_module.build_terrain_project(project_path, second)
     document: dict[str, Any] = json.loads((first / "manifest.json").read_text())
     schema_dir = EXAMPLES.parents[1] / "schemas" / "terrain"
-    assert document["schema_version"] == 3
+    assert document["schema_version"] == 4
     assert document["inputs"]["project_schema_version"] == 3
     assert document["algorithms"]["seed_policy"] == SEED_POLICY_ID
     resolved_seed = stage_seed(loaded.project.settings.seed, RELIEF_STAGE_ID)
@@ -69,7 +71,7 @@ def test_headless_build_preserves_dem_and_has_repeatable_verified_products(
     )
     schema = next(
         item for item in schemas
-        if item["$id"] == "urn:dmtools:schema:terrain-build:3"
+        if item["$id"] == "urn:dmtools:schema:terrain-build:4"
     )
     validate(document, schema, cls=Draft202012Validator, registry=registry)
     invalid = {**document, "coordinates": {**document["coordinates"], "world_crs": "EPSG:4326"}}
@@ -98,6 +100,21 @@ def test_headless_build_preserves_dem_and_has_repeatable_verified_products(
     assert np.array_equal(np.load(first / "x-km.npy"), expected.x_km)
     assert np.array_equal(np.load(first / "y-km.npy"), expected.y_km)
     assert np.isnan(elevation[~expected.land_mask]).all()
+    with cast(Any, rasterio.open(first / "elevation.tif")) as raster:
+        assert raster.read(1).tobytes() == elevation.tobytes()
+        assert raster.tags()["numeric_source_sha256"] == file_sha256(first / "elevation.npy")
+        assert document["geotiff"]["affine_m"] == list(raster.transform)[:6]
+        assert document["geotiff"]["bounds_m"] == list(raster.bounds)
+    assert document["runtime"]["gdal"]
+    assert document["runtime"]["proj"]
+    missing_tiff = {
+        **document,
+        "outputs": {key: value for key, value in document["outputs"].items()
+                    if key != "elevation.tif"},
+    }
+    with pytest.raises(ValidationError):
+        validate(missing_tiff, schema, cls=Draft202012Validator, registry=registry)
+
     assert document["coordinates"]["world_crs"] is None
     assert document["coordinates"]["registration"] == "endpoint-nodes"
     assert document["routing_grid"]["width"] == expected.routing_grid_shape[1]
@@ -222,3 +239,19 @@ def test_cli_build_reports_missing_input_without_completion(
     assert main(["terrain", "build", str(tmp_path / "missing.json"), "--output", str(output)]) == 1
     assert "Terrain build failed" in capsys.readouterr().err
     assert not output.exists()
+
+
+def test_geotiff_failure_cannot_publish_a_completed_build(
+    project_path: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from dmtools.terrain.adapters import build as artifact_module
+
+    def fail_geotiff(*args: object, **kwargs: object) -> None:
+        raise OSError("simulated GeoTIFF failure")
+
+    monkeypatch.setattr(artifact_module, "write_terrain_geotiff", fail_geotiff)
+    output = tmp_path / "failed-tiff"
+    with pytest.raises(OSError, match="simulated GeoTIFF failure"):
+        build_module.build_terrain_project(project_path, output)
+    assert (output / "elevation.npy").exists()
+    assert not (output / "manifest.json").exists()
