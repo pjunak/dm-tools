@@ -3,7 +3,7 @@
 Only the current terrain formats are supported:
 
 - [Project v3](terrain/project-v3.schema.json): authored `.dmterrain.json` inputs.
-- [Build v4](terrain/build-v4.schema.json): numeric products, coordinates,
+- [Build v5](terrain/build-v5.schema.json): numeric products, coordinates,
   algorithm identities, named stage seeds and output hashes.
 
 Register these two schemas locally by `$id` when validating builds. The build

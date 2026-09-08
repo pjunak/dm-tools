@@ -32,7 +32,7 @@ preview, and PNG export. Those are not repeated below as unfinished work.
   hashes, generator and schema versions, master and stage seeds, effective
   parameters, working extent and units, runtime/dependency versions, warnings,
   and authoritative output hashes.
-  Current version-4 builds record named stage seeds, numeric product hashes,
+  Current version-5 builds record named stage seeds, numeric product hashes,
   and explicit local-only NPY/GeoTIFF coordinates. World placement remains open.
 - [x] **P0 â€” Export the authoritative Float32 DEM as local-metric GeoTIFF.**
   Implemented point registration, metre units, NaN nodata, embedded masks,
@@ -361,14 +361,22 @@ Priorities remain conditional on the current strategy's prerequisites.
   Endpoint registration, interval-based grid refinement, axis-specific spacing
   and current stage shape rounding now have a shared domain implementation and
   numerical tests. Cell averages, resampling and parent restriction remain open.
-- [ ] **P0 â€” R04: Route on authored macro geography.** Compare the current
-  unconstrained automatic-routing surface with one including accepted ridges,
-  divides, brush guidance and water constraints. Use an explicit stage order
-  and bounded reconciliation; report authored river/divide conflicts.
-- [ ] **P1 â€” R05: Retain inspectable drainage topology.** Preserve receiver,
-  accumulation, stream-order, channel and outlet fields with their source DEM
-  and resolution, instead of retaining only incision/detail suppression.
-  Measure generated routing and final-surface routing discrepancies.
+- [x] **P0 — R04: Route on currently authored macro geography.** Brush, ridge,
+  point and prepared valley constraints now participate in canonical routing.
+  Relative valley profiles use a stable pre-incision reference, with one
+  planning pass and existing final constraint precedence. Explicit river/divide
+  and water-level entities remain future work; see ADR-0029.
+- [x] **P1 — R05: Retain inspectable drainage topology.** Builds retain source
+  and filled routing DEMs, final-field samples, D8 receivers, MFD accumulation,
+  stream order, channels, heads and outlets with coordinates, mask and hashes.
+  Same-grid receiver differences and uphill edges are reported; the workbench
+  overlay and headless review image expose planned channel conflicts.
+- [ ] **P1 — Reconcile remaining planned/final channel conflicts.** Quantify
+  hard-anchor conflicts separately from residual-detail and depression effects.
+  Preserve authored intent; do not treat filled routes as validated rivers.
+  The seed-42 authored benchmark currently reports 390 uphill edges among 2455
+  planned channel edges (maximum rise 135.07 m); this is a baseline for future
+  reconciliation, not hydrologic acceptance.
 - [ ] **P1 â€” R06: Separate coastline height from coastal terrain character.**
   Compare regional coastal plains, steep mountain coasts, cliff approaches and
   plateau margins with the uniform exponential rise. Keep the authored shore

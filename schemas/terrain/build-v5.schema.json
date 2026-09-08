@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:dmtools:schema:terrain-build:4",
-  "title": "DM Tools local terrain build version 4",
-  "description": "Completion manifest for local-metric GeoTIFF and NPY numeric products. No planetary or world placement is implied.",
+  "$id": "urn:dmtools:schema:terrain-build:5",
+  "title": "DM Tools local terrain build version 5",
+  "description": "Completion manifest for local terrain and authored-macro drainage review products.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -25,7 +25,7 @@
       "const": "dmtools.terrain-build"
     },
     "schema_version": {
-      "const": 4
+      "const": 5
     },
     "status": {
       "const": "complete"
@@ -307,7 +307,9 @@
         "diagnostics.json",
         "cartographic.png",
         "scientific.png",
-        "elevation.tif"
+        "elevation.tif",
+        "routing.npz",
+        "drainage.png"
       ],
       "properties": {
         "elevation.npy": {
@@ -335,6 +337,12 @@
           "$ref": "#/$defs/product"
         },
         "elevation.tif": {
+          "$ref": "#/$defs/product"
+        },
+        "routing.npz": {
+          "$ref": "#/$defs/product"
+        },
+        "drainage.png": {
           "$ref": "#/$defs/product"
         }
       }

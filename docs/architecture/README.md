@@ -38,12 +38,14 @@ The current implemented path is:
    closed land geometry.
 2. Project normalized authored constraints into one metric working grid shared
    by mainland sections and islands.
-3. Construct the deterministic broad base, generated drainage guidance, and
-   structure-conditioned correction fields.
+3. Prepare valley profiles against a stable pre-incision reference and construct
+   the broad routing surface with authored constraints. Route automatic valleys
+   on its canonical grid and retain the drainage topology.
 4. Apply authored brush, point, ridge, and valley semantics and restore
    coordinate-addressed residual detail.
-5. Condition generated valley floors and calculate finite-value, coastline,
-   constraint, basin, and drainage diagnostics.
+5. Calculate finite-value, coastline, basin and drainage diagnostics. Compare
+   planned channels against the finished field on matching routing nodes;
+   preserve authoritative constraints and report unresolved uphill segments.
 6. Return the Float32 DEM in memory and derive the workbench colour preview and
    PNG export. The shared headless application operation also writes numeric
    NPY arrays, local-metric GeoTIFF, both preview styles, spatial measurements and a completion

@@ -21,6 +21,8 @@ the workbench. No input file or generator setting is changed.
 | `x-km.npy`, `y-km.npy` | Authoritative Float64 coordinate vectors in kilometres |
 | `inputs.json` | Effective input snapshot including dissolved geometry, settings, constraints and authoring state |
 | `cartographic.png`, `scientific.png` | The two existing display styles derived from this DEM |
+| `routing.npz` | Canonical planning and final-field elevations, mask, coordinates, receivers, contributing area, channels, heads, orders, outlets and incision |
+| `drainage.png` | Planning/final comparison; blue planned channels, red uphill segments |
 | `diagnostics.json` | Delivered-surface quality measurements and separately labelled canonical drainage diagnostics |
 | `manifest.json` | Completion record, input/runtime identities, coordinates, output sizes and SHA-256 hashes |
 
@@ -82,6 +84,33 @@ not a complete landform classifier or a realism score.
 dimensions and spacing are recorded, as is the automatic routing grid in the
 manifest. Neither becomes finer merely because output resolution increases.
 
+## Inspect planned drainage
+
+`routing.npz` is a numeric-only archive (`np.load(path, allow_pickle=False)`).
+All 2D arrays use the manifest's `routing_grid`; `x_km` and `y_km` give endpoint
+coordinates. `source_elevation_m` is authored macro terrain before automatic
+incision. `filled_routing_elevation_m` is its Priority-Flood copy;
+`final_elevation_m` is the finished Float32 field evaluated on the same nodes,
+stored as Float64 for analysis. These three surfaces use zero outside land:
+apply the archive's `land_mask`, not an elevation threshold.
+
+`receivers` contains row-major flat D8 indices, with -1 for terminals and sea.
+`outlet_mask` identifies terminal land nodes on the filled routing graph.
+`accumulation_km2` is MFD contributing area; channels and Strahler order follow
+the distinct D8 tree. It is not a calibrated water discharge or a watershed ID.
+
+`routing_agreement` in diagnostics compares planned channel receivers against
+Priority-Flood routing of the finished field. It also counts edges rising more
+than 0.001 m on the unfilled finished surface and records their maximum rise.
+Receiver differences can be harmless; an uphill edge is review guidance, not
+a claim about whether a lake should exist. `routing_sha256` binds these metrics
+to the archive, alongside the delivered `elevation_sha256`.
+
+`drainage.png` compares planning and finished terrain with the same planned
+channels. The workbench's **Drainage review** toggle shows blue channels and
+red uphill edges over its preview. Both are coarse-grid reviews, not validated
+river maps. No channel display changes an input or DEM.
+
 ## Completion and reproducibility
 
 Only a successfully published `manifest.json` marks completion. Failed builds
@@ -91,7 +120,7 @@ project, SVG and installed Python package files are fingerprinted; runtime and
 dependency versions are recorded. No network service is needed to build.
 
 Consumers must validate the manifest and verify product hashes. Register the
-[current build schema](../schemas/terrain/build-v4.schema.json) and
+[current build schema](../schemas/terrain/build-v5.schema.json) and
 [current project schema](../schemas/terrain/project-v3.schema.json) locally by
 `$id` for offline validation. Older formats are unsupported. The
 [seed contract](terrain-seeds.md) describes the single named-stage algorithm.

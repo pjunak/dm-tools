@@ -19,7 +19,11 @@ from dmtools.terrain.adapters.geotiff import (
     write_terrain_geotiff,
 )
 from dmtools.terrain.adapters.project import PROJECT_SCHEMA_VERSION, settings_to_json
-from dmtools.terrain.adapters.render import render_height_map, save_height_map
+from dmtools.terrain.adapters.render import (
+    render_drainage_review,
+    render_height_map,
+    save_height_map,
+)
 from dmtools.terrain.domain import LocalMetricFrame, TerrainProject
 from dmtools.terrain.domain.seeds import RELIEF_STAGE_ID, SEED_POLICY_ID, stage_seed
 from dmtools.terrain.pipeline.generate import (
@@ -30,7 +34,7 @@ from dmtools.terrain.pipeline.generate import (
 )
 from dmtools.terrain.pipeline.quality import TerrainQuality
 
-BUILD_SCHEMA_VERSION = 4
+BUILD_SCHEMA_VERSION = 5
 
 
 def file_sha256(path: Path) -> str:
@@ -100,6 +104,32 @@ def write_build_products(
         elevation_sha256=file_sha256(destination / "elevation.npy"),
     )
     paths.append(("elevation.tif", "authoritative"))
+    routing = terrain.routing
+    with (destination / "routing.npz").open("xb") as stream:
+        np.savez_compressed(
+            stream,
+            x_km=np.linspace(terrain.grid.extent_km[0], terrain.grid.extent_km[2],
+                             terrain.routing_grid.width),
+            y_km=np.linspace(terrain.grid.extent_km[1], terrain.grid.extent_km[3],
+                             terrain.routing_grid.height),
+            land_mask=terrain.routing_land_mask,
+            source_elevation_m=routing.source_elevation_m,
+            filled_routing_elevation_m=routing.routing_elevation_m,
+            final_elevation_m=terrain.routing_final_elevation_m,
+            receivers=routing.receivers,
+            accumulation_km2=routing.accumulation_km2,
+            channel_mask=routing.channel_mask,
+            channel_head_mask=routing.channel_head_mask,
+            stream_order=routing.stream_order,
+            outlet_mask=routing.outlet_mask,
+            incision_m=routing.incision_m,
+        )
+        stream.flush()
+        os.fsync(stream.fileno())
+    paths.append(("routing.npz", "derived"))
+    with render_drainage_review(terrain) as review:
+        review.save(destination / "drainage.png")
+    paths.append(("drainage.png", "derived"))
     _write_json(destination / "inputs.json", asdict(project))
     paths.append(("inputs.json", "input-snapshot"))
     _write_json(
@@ -107,6 +137,8 @@ def write_build_products(
         {
             "delivered_surface_quality": asdict(quality),
             "canonical_drainage": asdict(terrain.drainage),
+            "routing_agreement": asdict(terrain.routing_agreement),
+            "routing_sha256": file_sha256(destination / "routing.npz"),
             "elevation_sha256": file_sha256(destination / "elevation.npy"),
         },
     )

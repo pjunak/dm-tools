@@ -26,6 +26,9 @@ from dmtools.terrain.domain.seeds import RELIEF_STAGE_ID, stage_seed
 from dmtools.terrain.pipeline.grid import grid_coordinates
 from dmtools.terrain.pipeline.hydrology import (
     DrainageDiagnostics,
+    DrainageIncision,
+    RoutingAgreement,
+    compare_drainage_routing,
     drainage_diagnostics,
     drainage_incision,
 )
@@ -34,8 +37,8 @@ from dmtools.terrain.pipeline.profile import shape_preserving_profile
 
 type ProgressCallback = Callable[[float, str], None]
 
-GENERATOR_ALGORITHM_ID = "coastline-constraint-terrain@1"
-AUTOMATIC_VALLEY_ALGORITHM_ID = "canonical-mfd-d8-valleys@1"
+GENERATOR_ALGORITHM_ID = "coastline-constraint-terrain@2"
+AUTOMATIC_VALLEY_ALGORITHM_ID = "authored-macro-mfd-d8-valleys@2"
 NOISE_ALGORITHM_ID = "coordinate-value-noise-normalized@1"
 
 
@@ -52,6 +55,10 @@ class GeneratedTerrain:
     source_name: str
     drainage: DrainageDiagnostics
     routing_grid_shape: tuple[int, int]
+    routing: DrainageIncision
+    routing_land_mask: NDArray[np.bool_]
+    routing_final_elevation_m: NDArray[np.float64]
+    routing_agreement: RoutingAgreement
 
     @property
     def grid(self) -> EndpointGrid:
@@ -83,6 +90,8 @@ class _AutomaticValleyField:
     y_km: NDArray[np.float64]
     incision_m: NDArray[np.float64]
     detail_suppression: NDArray[np.float64]
+    drainage: DrainageIncision
+    land_mask: NDArray[np.bool_]
 
     def _sample(
         self,
@@ -829,6 +838,7 @@ def _prepare_automatic_valley_field(
     width_km: float,
     height_km: float,
     settings: TerrainSettings,
+    constraints: tuple[_MetricConstraint, ...],
 ) -> _AutomaticValleyField:
     """Route broad drainage once on a canonical, output-resolution-free grid."""
 
@@ -845,13 +855,19 @@ def _prepare_automatic_valley_field(
         NDArray[np.float64],
         np.asarray(raw_distance_to_coast, dtype=np.float64),
     )
-    full_elevation, macro_elevation, _detail_driver = _base_elevation_fields(
+    full_elevation, macro_elevation, detail_driver = _base_elevation_fields(
         x_grid,
         y_grid,
         distance_to_coast_km,
         settings,
     )
-    routing_elevation = np.where(land_mask, macro_elevation, 0.0)
+    conditioned_macro, constraint_influence = _apply_constraints(
+        macro_elevation, sample_points, distance_to_coast_km, constraints,
+        settings.largest_feature_km, settings.maximum_elevation_m, detail_driver,
+    )
+    routing_elevation = np.where(
+        land_mask, np.clip(conditioned_macro, 0.0, settings.maximum_elevation_m), 0.0,
+    )
     drainage = drainage_incision(
         routing_elevation,
         land_mask,
@@ -860,13 +876,15 @@ def _prepare_automatic_valley_field(
         y_spacing_km=grid.y_spacing_km,
         maximum_elevation_m=settings.maximum_elevation_m,
         variability=settings.variability,
-        residual_detail_m=full_elevation - macro_elevation,
+        residual_detail_m=(full_elevation - macro_elevation) * (1.0 - constraint_influence),
     )
     return _AutomaticValleyField(
         x_km=x_km,
         y_km=y_km,
         incision_m=drainage.incision_m,
         detail_suppression=drainage.detail_suppression,
+        drainage=drainage,
+        land_mask=land_mask,
     )
 
 
@@ -933,7 +951,6 @@ def _prepare_downstream_valley_profiles(
     constraints: tuple[_MetricConstraint, ...],
     boundary: Any,
     settings: TerrainSettings,
-    automatic_valleys: _AutomaticValleyField,
 ) -> tuple[_MetricConstraint, ...]:
     """Prepare resolution-independent non-rising floors for authored valleys."""
 
@@ -1002,15 +1019,10 @@ def _prepare_downstream_valley_profiles(
                 settings.maximum_elevation_m,
                 detail_driver,
             )
-            automatic_incision = automatic_valleys.sample_incision(x_km, y_km)
-            automatic_detail_suppression = (
-                automatic_valleys.sample_detail_suppression(x_km, y_km)
-            )
-            conditioned_macro = np.maximum(conditioned_macro - automatic_incision, 0.0)
+            # Relative depth is measured before generated incision. This fixed
+            # reference breaks the valley-profile / drainage routing cycle.
             reference_elevation = conditioned_macro + (
-                (full_elevation - macro_elevation)
-                * (1.0 - automatic_detail_suppression)
-                * (1.0 - reference_influence)
+                (full_elevation - macro_elevation) * (1.0 - reference_influence)
             )
             depth = _relative_valley_depth_profile(constraint, positions_km)
             preferred_floor = reference_elevation - depth
@@ -1169,22 +1181,14 @@ def generate_terrain(
     elevation = np.full((height, width), np.nan, dtype=np.float32)
     mask = np.zeros((height, width), dtype=np.bool_)
     boundary = polygon.boundary
-    _report(progress, 0.04, "Routing automatic drainage")
-    automatic_valleys = _prepare_automatic_valley_field(
-        polygon,
-        boundary,
-        width_km,
-        height_km,
-        settings,
+    _report(progress, 0.04, "Preparing authored valley profiles")
+    metric_constraints = _prepare_downstream_valley_profiles(
+        metric_constraints, boundary, settings,
     )
-    if any(constraint.kind == "valley" for constraint in metric_constraints):
-        _report(progress, 0.06, "Preparing downstream valley profiles")
-        metric_constraints = _prepare_downstream_valley_profiles(
-            metric_constraints,
-            boundary,
-            settings,
-            automatic_valleys,
-        )
+    _report(progress, 0.06, "Routing drainage over authored terrain")
+    automatic_valleys = _prepare_automatic_valley_field(
+        polygon, boundary, width_km, height_km, settings, metric_constraints,
+    )
 
     chunk_rows = 128
     for start in range(0, height, chunk_rows):
@@ -1217,6 +1221,18 @@ def generate_terrain(
         settings,
     )
 
+    routing_x, routing_y = np.meshgrid(automatic_valleys.x_km, automatic_valleys.y_km)
+    routing_final, _routing_mask = _evaluate_elevation_samples(
+        routing_x, routing_y, polygon, boundary, settings, metric_constraints, automatic_valleys,
+    )
+    # Match the authoritative Float32 field, sampled at canonical routing nodes.
+    routing_final = routing_final.astype(np.float32).astype(np.float64)
+    routing_agreement = compare_drainage_routing(
+        automatic_valleys.drainage, routing_final, automatic_valleys.land_mask,
+        x_spacing_km=float(automatic_valleys.x_km[1] - automatic_valleys.x_km[0]),
+        y_spacing_km=float(automatic_valleys.y_km[1] - automatic_valleys.y_km[0]),
+    )
+
     _report(progress, 0.94, "Validating terrain")
     if not np.any(mask):
         raise ValueError("The coastline does not cover any output pixels.")
@@ -1236,4 +1252,8 @@ def generate_terrain(
         source_name=coastline.source_name,
         drainage=drainage,
         routing_grid_shape=(automatic_valleys.y_km.size, automatic_valleys.x_km.size),
+        routing=automatic_valleys.drainage,
+        routing_land_mask=automatic_valleys.land_mask,
+        routing_final_elevation_m=routing_final,
+        routing_agreement=routing_agreement,
     )

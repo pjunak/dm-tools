@@ -29,6 +29,7 @@ from dmtools.terrain.adapters import (
     save_height_map,
     save_terrain_project,
 )
+from dmtools.terrain.adapters.render import render_drainage_overlay
 from dmtools.terrain.domain import (
     BrushToolSettings,
     Coastline,
@@ -180,6 +181,8 @@ class TerrainApp:
             value=authoring_defaults.brush.intensity * 100.0
         )
         self._render_style_label = tk.StringVar(value="Cartographic relief")
+        self._show_drainage = tk.BooleanVar(value=False)
+        self._drainage_photo: ImageTk.PhotoImage | None = None
         self._legend_swatches: list[tk.Frame] = []
         self._brush_cursor: tuple[float, float] | None = None
         self._active_brush_values: tuple[float, float, float, ElevationMode] | None = None
@@ -351,13 +354,16 @@ class TerrainApp:
         )
         self.progress.grid(row=row + 2, column=0, sticky="ew", pady=(12, 0))
         self.status_label = ttk.Label(
-            parent, text="Import closed SVG land shapes to begin.", style="Muted.TLabel"
+            parent, text="Import closed SVG land shapes to begin.", style="Muted.TLabel",
+            wraplength=300, justify="left",
         )
         self.status_label.grid(row=row + 3, column=0, sticky="w", pady=(6, 0))
 
     def _build_preview(self, parent: tk.Frame) -> None:
-        toolbar = tk.Frame(parent, background=_PREVIEW)
-        toolbar.grid(row=0, column=0, sticky="ew", padx=18, pady=(14, 8))
+        toolbar_container = tk.Frame(parent, background=_PREVIEW)
+        toolbar_container.grid(row=0, column=0, sticky="ew", padx=18, pady=(14, 8))
+        toolbar = tk.Frame(toolbar_container, background=_PREVIEW)
+        toolbar.pack(fill="x")
         tk.Label(
             toolbar,
             text="ELEVATION PREVIEW",
@@ -365,14 +371,19 @@ class TerrainApp:
             foreground="#dce8e3",
             font=("Segoe UI", 9, "bold"),
         ).pack(side="left")
+        tk.Checkbutton(
+            toolbar, text="Drainage review", variable=self._show_drainage,
+            command=self._draw_preview, background=_PREVIEW, foreground="#dce8e3",
+            selectcolor=_PREVIEW, activebackground=_PREVIEW, activeforeground="white",
+        ).pack(side="left", padx=10)
         self.preview_meta = tk.Label(
-            toolbar,
+            toolbar_container,
             text="Awaiting land geometry",
             background=_PREVIEW,
             foreground="#80918e",
             font=("Consolas", 9),
         )
-        self.preview_meta.pack(side="right")
+        self.preview_meta.pack(anchor="w", pady=(4, 0))
         self.render_style_input = ttk.Combobox(
             toolbar,
             values=tuple(_RENDER_STYLE_LABELS),
@@ -1488,7 +1499,11 @@ class TerrainApp:
                         )
                     else:
                         drainage_status = "No potential sinks on the canonical grid."
-                    self.status_label.configure(text=f"Terrain ready. {drainage_status}")
+                    agreement = event.terrain.routing_agreement
+                    self.status_label.configure(text=(
+                        f"Terrain ready. {drainage_status} "
+                        f"Planned channels: {agreement.uphill_channel_edge_count:,} uphill edges."
+                    ))
                     peak = float(event.terrain.elevation_m[event.terrain.land_mask].max())
                     connected_percent = (
                         100.0
@@ -1589,6 +1604,18 @@ class TerrainApp:
                     width=1.5,
                     joinstyle="round",
                 )
+        if self._terrain is not None and self._show_drainage.get():
+            with (
+                render_drainage_overlay(self._terrain) as overlay,
+                overlay.resize((display_width, display_height),
+                               Image.Resampling.NEAREST) as display_overlay,
+            ):
+                self._drainage_photo = ImageTk.PhotoImage(display_overlay)
+            self.preview.create_image(left, top, image=self._drainage_photo, anchor="nw")
+            self.preview.create_text(
+                left + 8, top + 8, anchor="nw", fill="white",
+                text="Blue: planned channels. Red: uphill. Coarse-grid review only.",
+            )
         self._draw_drainage_candidates()
         for constraint in self._constraints:
             self._draw_constraint(constraint)

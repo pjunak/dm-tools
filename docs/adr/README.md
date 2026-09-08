@@ -45,3 +45,5 @@ supersedes their legacy compatibility commitments during early development.
 - [ADR-0026: Version named terrain stage seeds](0026-version-named-terrain-stage-seeds.md)
 - [ADR-0027: Develop current behavior without legacy support](0027-develop-current-behavior-without-legacy-support.md)
 - [ADR-0028: Export local-metric GeoTIFF](0028-export-local-metric-geotiff.md)
+
+- [ADR-0029: Route drainage over authored terrain](0029-route-drainage-over-authored-terrain.md)

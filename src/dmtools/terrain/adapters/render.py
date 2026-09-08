@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Literal
 
 import numpy as np
-from PIL import Image, PngImagePlugin
+from PIL import Image, ImageDraw, PngImagePlugin
 
 from dmtools.terrain.adapters.palettes import (
     CARTOGRAPHIC_RELIEF_MAX_ELEVATION_M,
@@ -18,6 +18,7 @@ from dmtools.terrain.adapters.palettes import (
 )
 from dmtools.terrain.domain import ElevationPoint, TerrainBrushStroke, TerrainConstraint
 from dmtools.terrain.pipeline import GeneratedTerrain
+from dmtools.terrain.pipeline.hydrology import channel_edge_rise
 
 type RenderStyle = Literal["cartographic", "scientific"]
 
@@ -182,3 +183,52 @@ def save_height_map(image: Image.Image, terrain: GeneratedTerrain, destination: 
         "Colour relief preview; the authoritative in-memory values are Float32 metres.",
     )
     image.save(destination, format="PNG", pnginfo=metadata)
+
+
+def render_drainage_review(terrain: GeneratedTerrain) -> Image.Image:
+    """Compare the planning surface with final-field channel conflicts."""
+    routing = terrain.routing
+    mask = terrain.routing_land_mask
+    width, height = terrain.routing_grid.width, terrain.routing_grid.height
+    scale = max(1, 640 // width)
+    panel_width, panel_height = width * scale, height * scale
+    image = Image.new("RGB", (panel_width * 2 + 24, panel_height + 80), "#18212b")
+    draw = ImageDraw.Draw(image)
+    draw.text((8, 8), "Authored routing surface", fill="white")
+    draw.text((panel_width + 16, 8), "Finished terrain: planned channels", fill="white")
+    rises = channel_edge_rise(routing, terrain.routing_final_elevation_m)
+    conflicts = rises > terrain.routing_agreement.elevation_tolerance_m
+    for index, field in enumerate((routing.source_elevation_m, terrain.routing_final_elevation_m)):
+        grey = np.rint(45 + 150 * np.clip(field / terrain.settings.maximum_elevation_m, 0, 1))
+        rgb = np.repeat(grey[..., None], 3, axis=2).astype(np.uint8)
+        rgb[~mask] = (24, 33, 43)
+        rgb[routing.channel_mask] = (45, 185, 255)
+        if index == 1:
+            rgb[conflicts] = (255, 95, 65)
+        with Image.fromarray(rgb) as panel:
+            resized = panel.resize((panel_width, panel_height), Image.Resampling.NEAREST)
+            image.paste(resized, (8 + index * (panel_width + 8), 28))
+            resized.close()
+    draw.text((8, panel_height + 36), "Blue: planned channels. Red: uphill on finished terrain.",
+              fill="white")
+    draw.text((8, panel_height + 54),
+              f"Canonical grid: {width} x {height}. Review guidance; not validated rivers.",
+              fill="white")
+    return image
+
+
+def render_drainage_overlay(terrain: GeneratedTerrain) -> Image.Image:
+    """Transparent planned D8 edges; red marks rises on the final field."""
+    grid = terrain.routing_grid
+    routing = terrain.routing
+    image = Image.new("RGBA", (grid.width, grid.height))
+    draw = ImageDraw.Draw(image)
+    rises = channel_edge_rise(routing, terrain.routing_final_elevation_m)
+    edges = routing.channel_mask & (routing.receivers >= 0)
+    for uphill in (False, True):
+        selected = edges & ((rises > terrain.routing_agreement.elevation_tolerance_m) == uphill)
+        for row, column in np.argwhere(selected):
+            target_row, target_column = divmod(int(routing.receivers[row, column]), grid.width)
+            draw.line((int(column), int(row), target_column, target_row),
+                      fill=(255, 95, 65, 255) if uphill else (45, 185, 255, 230))
+    return image

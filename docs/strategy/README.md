@@ -54,7 +54,26 @@ The authored inputs and generated DEM remain authoritative for terrain.
 Climate, ecological classifications, contours, drainage, and presentation
 layers are derived products that can be rebuilt and inspected independently.
 
-## Recommended execution order
+## Next implementation order
+
+Local numeric builds, seed/grid contracts and authored-macro drainage are now
+implemented. Focus the next iterations on visible terrain quality:
+
+1. Terrain-character regions: plains, rolling hills, plateaus and mountain
+   belts; broad height distribution and transitions before residual texture.
+2. Per-vertex ridge/valley profiles, explicit passes and asymmetric sides.
+3. Authored lakes/outlets and reviewable river networks using the retained
+   topology; reconcile meaningful planned/final conflicts.
+4. Selected-region refinement with explicit parent and halo contracts.
+
+R04/R05 provide the first drainage correctness slice and review products;
+[ADR-0029](../adr/0029-route-drainage-over-authored-terrain.md) records its limits.
+Measure representative fixtures with each feature. A solver replacement,
+Rust rewrite, additional export infrastructure or global climate model is not
+a prerequisite for these next landform improvements. World placement moves
+forward when integration or regional/climate coordinates require it.
+
+## Remaining work by dependency
 
 ### 1. Make terrain builds durable and reproducible
 

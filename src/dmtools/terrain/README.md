@@ -24,7 +24,7 @@ format is supported; older saves must be recreated.
 
 For saved projects, `dmtools terrain build PROJECT --output NEW_DIRECTORY`
 uses the same pipeline without opening the GUI. It saves the Float32 DEM,
-mask, coordinates, both PNG styles, diagnostics and a completion manifest.
+mask, coordinates, both PNG styles, inspectable drainage and a completion manifest.
 See the [numeric build guide](../../../docs/terrain-builds.md). The coordinate
 model remains the local SVG plane. Builds now include a
 [local-metric GeoTIFF](../../../docs/terrain-geotiff.md); world placement is still planned.
@@ -33,6 +33,13 @@ model remains the local SVG plane. Builds now include a
 is a small public project for trying the complete workflow; its referenced
 [`coastline.svg`](../../../examples/terrain/coastline.svg) can also be imported
 directly.
+
+Automatic drainage now plans its route over the authored broad terrain.
+Relative valley floors are prepared before generated incision. Exact point
+anchors retain their final authority. Use **Drainage review** to see planned
+channels in blue and segments that rise on the finished terrain in red.
+This is a canonical-grid review, not a guarantee of valid rivers. See
+[the stage decision](../../../docs/adr/0029-route-drainage-over-authored-terrain.md).
 
 ## Current input contract
 

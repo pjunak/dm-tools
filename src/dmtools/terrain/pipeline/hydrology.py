@@ -23,6 +23,10 @@ _NEIGHBOURS = (
 class DrainageIncision:
     """Canonical automatic-valley products derived from one routing surface."""
 
+    source_elevation_m: NDArray[np.float64]
+    routing_elevation_m: NDArray[np.float64]
+    receivers: NDArray[np.int64]
+    outlet_mask: NDArray[np.bool_]
     incision_m: NDArray[np.float64]
     accumulation_km2: NDArray[np.float64]
     detail_suppression: NDArray[np.float64]
@@ -34,6 +38,63 @@ class DrainageIncision:
     unresolved_uphill_channel_edge_count: int
     unresolved_steepening_edge_count: int
     maximum_downstream_steepening_ratio: float
+
+
+@dataclass(frozen=True, slots=True)
+class RoutingAgreement:
+    """Planned D8 channels checked against the finished field on the same grid."""
+
+    algorithm_id: str
+    elevation_tolerance_m: float
+    channel_edge_count: int
+    changed_channel_receiver_count: int
+    uphill_channel_edge_count: int
+    maximum_channel_rise_m: float
+
+
+def channel_edge_rise(
+    drainage: DrainageIncision,
+    final_elevation_m: NDArray[np.float64],
+) -> NDArray[np.float64]:
+    """Positive rise along each planned channel edge; zero at terminals and sea."""
+    edges = drainage.channel_mask & (drainage.receivers >= 0)
+    rise = np.zeros_like(final_elevation_m)
+    rise[edges] = np.maximum(
+        final_elevation_m.ravel()[drainage.receivers[edges]] - final_elevation_m[edges], 0.0,
+    )
+    return rise
+
+
+def compare_drainage_routing(
+    drainage: DrainageIncision,
+    final_elevation_m: NDArray[np.float64],
+    land_mask: NDArray[np.bool_],
+    *,
+    x_spacing_km: float,
+    y_spacing_km: float,
+) -> RoutingAgreement:
+    """Report disagreement without filling or carving the authoritative terrain.
+
+    Receiver changes use a Priority-Flood copy of the finished surface. Uphill
+    edges use the unfilled surface: a filled route is not proof of a real river.
+    """
+    final_routing = priority_flood_surface(final_elevation_m, land_mask)
+    final_receivers, _slope = steepest_flow_receivers(
+        final_routing, land_mask, x_spacing_km=x_spacing_km, y_spacing_km=y_spacing_km,
+    )
+    edges = drainage.channel_mask & (drainage.receivers >= 0)
+    rise = channel_edge_rise(drainage, final_elevation_m)
+    tolerance_m = 0.001
+    return RoutingAgreement(
+        algorithm_id="planned-final-d8-agreement@1",
+        elevation_tolerance_m=tolerance_m,
+        channel_edge_count=int(np.count_nonzero(edges)),
+        changed_channel_receiver_count=int(np.count_nonzero(
+            edges & (drainage.receivers != final_receivers),
+        )),
+        uphill_channel_edge_count=int(np.count_nonzero(rise > tolerance_m)),
+        maximum_channel_rise_m=float(np.max(rise, initial=0.0)),
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -1083,6 +1144,10 @@ def drainage_incision(
     )
     floor_correction_m += steepness_correction_m
     return DrainageIncision(
+        source_elevation_m=elevation_m.copy(),
+        routing_elevation_m=routing_surface,
+        receivers=receivers,
+        outlet_mask=land_mask & (receivers < 0),
         incision_m=np.where(land_mask, incision_m, 0.0),
         accumulation_km2=accumulation_km2,
         detail_suppression=np.where(land_mask, detail_suppression, 0.0),

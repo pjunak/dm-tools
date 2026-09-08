@@ -56,7 +56,7 @@ def test_headless_build_preserves_dem_and_has_repeatable_verified_products(
     build_module.build_terrain_project(project_path, second)
     document: dict[str, Any] = json.loads((first / "manifest.json").read_text())
     schema_dir = EXAMPLES.parents[1] / "schemas" / "terrain"
-    assert document["schema_version"] == 4
+    assert document["schema_version"] == 5
     assert document["inputs"]["project_schema_version"] == 3
     assert document["algorithms"]["seed_policy"] == SEED_POLICY_ID
     resolved_seed = stage_seed(loaded.project.settings.seed, RELIEF_STAGE_ID)
@@ -71,7 +71,7 @@ def test_headless_build_preserves_dem_and_has_repeatable_verified_products(
     )
     schema = next(
         item for item in schemas
-        if item["$id"] == "urn:dmtools:schema:terrain-build:4"
+        if item["$id"] == "urn:dmtools:schema:terrain-build:5"
     )
     validate(document, schema, cls=Draft202012Validator, registry=registry)
     invalid = {**document, "coordinates": {**document["coordinates"], "world_crs": "EPSG:4326"}}
@@ -124,6 +124,25 @@ def test_headless_build_preserves_dem_and_has_repeatable_verified_products(
     assert diagnostics["delivered_surface_quality"]["land_sample_count"] == int(
         expected.land_mask.sum()
     )
+    with np.load(first / "routing.npz", allow_pickle=False) as routing:
+        np.testing.assert_array_equal(routing["receivers"], expected.routing.receivers)
+        np.testing.assert_array_equal(routing["source_elevation_m"],
+                                      expected.routing.source_elevation_m)
+        np.testing.assert_array_equal(routing["final_elevation_m"],
+                                      expected.routing_final_elevation_m)
+        np.testing.assert_array_equal(routing["land_mask"], expected.routing_land_mask)
+        assert routing["x_km"].size == expected.routing_grid.width
+    assert diagnostics["routing_sha256"] == file_sha256(first / "routing.npz")
+    assert diagnostics["routing_agreement"]["algorithm_id"] == "planned-final-d8-agreement@1"
+    for missing_name in ("routing.npz", "drainage.png"):
+        incomplete = {**document, "outputs": {
+            key: value for key, value in document["outputs"].items() if key != missing_name
+        }}
+        with pytest.raises(ValidationError):
+            validate(incomplete, schema, cls=Draft202012Validator, registry=registry)
+    with Image.open(first / "drainage.png") as review:
+        assert review.width > 2 * expected.routing_grid.width
+        assert review.height > expected.routing_grid.height
     with Image.open(first / "scientific.png") as preview:
         assert preview.size == (expected.width, expected.height)
         assert preview.info["dmtools.render_style"] == "scientific"
