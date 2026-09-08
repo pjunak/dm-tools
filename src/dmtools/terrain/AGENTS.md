@@ -1,7 +1,8 @@
 # AGENTS.md — Terrain tool
 
-These instructions apply to `src/dmtools/terrain/` and its tests, schemas,
-examples, and documentation when they implement the terrain tool.
+These instructions govern `src/dmtools/terrain/`. The root `AGENTS.md` also
+explicitly routes terrain tests, schemas, examples, benchmarks and documentation
+here; they are not automatically discovered from this sibling directory.
 
 ## Product contract
 

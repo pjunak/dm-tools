@@ -3,6 +3,32 @@
 Read this file before changing anything in this repository. More specific
 `AGENTS.md` files add constraints within their subtrees.
 
+## Read by task and validate
+
+For terrain changes anywhere in source, tests, schemas, examples, benchmarks or
+documentation, read [the terrain instructions](src/dmtools/terrain/AGENTS.md).
+This root routing rule covers paths outside that file's physical subtree.
+Use [the documentation index](docs/README.md) to find the current architecture,
+coordinate, seed and export contracts; [README](README.md) owns setup.
+
+After installing the existing development extras when missing or stale, run
+these checks using the active Python 3.14 environment from the repository root:
+
+~~~text
+python -m pytest
+python -m ruff check .
+python -m pyright
+~~~
+
+Use focused tests during development. Run the three checks for Python or public
+schema behavior changes; inspect the changed workbench flow for visible UI work.
+For numeric algorithms, add the relevant reproducibility/invariant or benchmark
+evidence without turning performance measurements into fragile timing assertions.
+For prose or agent-guidance-only changes, review the diff, check local links,
+and verify changed commands or contract claims. Runtime builds and operational
+acceptance are required only for the affected behavior below. Reuse successful
+checks on unchanged inputs; preserve complete CI and release gates.
+
 ## Purpose
 
 DM Tools is a local-first collection of reusable worldbuilding and tabletop
@@ -68,16 +94,13 @@ requirement justifies one.
 
 ## Reproducibility
 
-A numeric seed alone is not a reproducibility contract. Every completed build
-must eventually record:
-
-- schema and generator versions;
-- master seed and named per-stage derived seeds;
-- hashes of all authored inputs and profiles;
-- coordinate reference system, extent, resolution, units, and nodata policy;
-- algorithm identifiers and effective parameters;
-- dependency and runtime versions; and
-- hashes of authoritative outputs.
+A numeric seed alone is not a reproducibility contract. Completed builds must
+satisfy the current build schema linked from [the schema index](schemas/README.md)
+and [the headless build contract](docs/terrain-builds.md). Preserve authored-input
+and profile identity, named stage seeds, coordinate/units/nodata policy,
+runtime and algorithm identity, and authoritative output hashes as required by
+that contract. Record unimplemented extensions in the existing TODO instead of
+describing them as completed provenance. Keep version values in their owner.
 
 Changing the order of unrelated pipeline stages must not perturb existing
 random streams. Derive stage seeds from stable stage identifiers rather than
