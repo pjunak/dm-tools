@@ -61,12 +61,16 @@ implemented. Focus the next iterations on visible terrain quality:
 
 The first [landform region slice](../terrain-regions.md) is implemented, including
 polygon authoring, shared routing input, four recipes and smooth transitions.
+Regional automatic incision now follows relief budgets; corrections and numeric
+exports carry their limits ([ADR-0031](../adr/0031-bound-incision-by-regional-relief.md)).
 
-1. Per-vertex ridge/valley profiles, explicit passes and asymmetric sides.
-2. Regional hydrology tuning and planned/final conflict reconciliation; avoid
-   carving plains and plateau interiors with one global valley-depth recipe.
-3. Authored lakes/outlets and reviewable river networks using retained topology.
-4. Selected-region refinement with explicit parent and halo contracts.
+1. Classify planned/final drainage conflicts, especially basins and region
+   transitions where the regional incision limit prevents a downhill route.
+2. Authored lakes/outlets and reviewable river networks using retained topology;
+   reconcile constrained channels without erasing low-relief landforms.
+3. Per-vertex ridge/valley profiles, explicit passes and asymmetric sides.
+4. Regional drainage-density/runoff controls, followed by selected-region
+   refinement with explicit parent and halo contracts.
 
 R04/R05 provide the first drainage correctness slice and review products;
 [ADR-0029](../adr/0029-route-drainage-over-authored-terrain.md) records its limits.

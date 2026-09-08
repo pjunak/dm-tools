@@ -77,9 +77,18 @@ preview, and PNG export. Those are not repeated below as unfinished work.
   plain/hills/plateau/mountain recipes, base height, local relief, feature size,
   orientation and inward transitions now feed both terrain and routing.
   See [the region guide](docs/terrain-regions.md) and ADR-0030.
-- [ ] **P1 — Add regional process controls.** Tune channel incision, drainage
-  density and erosion resistance by landform without overwriting authored
-  anchors; preserve measurable low relief in plains and plateau interiors.
+- [x] **P1 — Bound automatic incision by regional relief.** Plains and
+  plateau interiors now receive smaller budgets with the same regional
+  transitions. Floor/steepness corrections respect those limits; numeric builds
+  retain the effective limits and exact authored anchors remain authoritative.
+  See [ADR-0031](docs/adr/0031-bound-incision-by-regional-relief.md).
+- [ ] **P1 — Reconcile channels blocked by regional cutting limits.** The
+  seed-42 square plain fixture has 253 uphill edges versus 44 with global
+  cutting. Classify basin interiors, boundary transitions and constrained
+  reaches; support reviewable lake/outlet or rerouting decisions without
+  automatically removing the intended low relief.
+- [ ] **P1 — Extend regional process controls.** Add drainage density,
+  runoff and erosion resistance with measurable effects and authored authority.
 - [x] **P1 — Render drainage review at display size.** Thin canonical D8
   segments replace enlarged cell blocks. Routing accuracy is unchanged;
   gridded/coast-parallel paths still need hydrology and river-geometry work.

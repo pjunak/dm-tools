@@ -28,6 +28,7 @@ class DrainageIncision:
     receivers: NDArray[np.int64]
     outlet_mask: NDArray[np.bool_]
     incision_m: NDArray[np.float64]
+    incision_limit_m: NDArray[np.float64]
     accumulation_km2: NDArray[np.float64]
     detail_suppression: NDArray[np.float64]
     channel_mask: NDArray[np.bool_]
@@ -953,6 +954,11 @@ def condition_downstream_channel_steepness(
     )
 
 
+def automatic_incision_budget(maximum_elevation_m: float, variability: float) -> float:
+    """Global depth plus downstream correction reserve, in metres."""
+    return maximum_elevation_m * (0.035 + 0.085 * variability) + 0.02 * maximum_elevation_m
+
+
 def drainage_incision(
     elevation_m: NDArray[np.float64],
     land_mask: NDArray[np.bool_],
@@ -963,9 +969,20 @@ def drainage_incision(
     maximum_elevation_m: float,
     variability: float,
     residual_detail_m: NDArray[np.float64] | None = None,
+    incision_budget_m: NDArray[np.float64] | None = None,
 ) -> DrainageIncision:
     """Derive broad valley incision and contributing area from a terrain surface."""
 
+    global_budget_m = automatic_incision_budget(maximum_elevation_m, variability)
+    if incision_budget_m is None:
+        budget_m = np.full_like(elevation_m, global_budget_m)
+    else:
+        if incision_budget_m.shape != elevation_m.shape:
+            raise ValueError("Incision budget must share the elevation grid shape.")
+        if np.any(land_mask & (~np.isfinite(incision_budget_m) | (incision_budget_m < 0))):
+            raise ValueError("Land incision budget must be finite and non-negative.")
+        budget_m = np.where(land_mask, np.minimum(incision_budget_m, global_budget_m), 0.0)
+    budget_scale = budget_m / global_budget_m
     if residual_detail_m is not None:
         if residual_detail_m.shape != elevation_m.shape:
             raise ValueError("Residual detail must share the elevation grid shape.")
@@ -1085,7 +1102,7 @@ def drainage_incision(
         1.0,
     )
     maximum_depth_m = maximum_elevation_m * (0.035 + 0.085 * variability)
-    incision_m = maximum_depth_m * valley_shape
+    incision_m = maximum_depth_m * budget_scale * valley_shape
     coastal_gate = np.clip(
         distance_to_coast_km / max(2.0 * max(x_spacing_km, y_spacing_km), 1e-9),
         0.0,
@@ -1116,6 +1133,8 @@ def drainage_incision(
             incision_m + 0.02 * maximum_elevation_m,
         ),
     )
+    # Corrections can use the remaining local budget, but cannot exceed it.
+    maximum_incision_m = np.minimum(maximum_incision_m, budget_m)
     incision_m, floor_correction_m, unresolved_uphill_edges = (
         _condition_downstream_channel_floors(
             source_elevation_m,
@@ -1149,6 +1168,7 @@ def drainage_incision(
         receivers=receivers,
         outlet_mask=land_mask & (receivers < 0),
         incision_m=np.where(land_mask, incision_m, 0.0),
+        incision_limit_m=np.where(land_mask, maximum_incision_m, 0.0),
         accumulation_km2=accumulation_km2,
         detail_suppression=np.where(land_mask, detail_suppression, 0.0),
         channel_mask=channel,

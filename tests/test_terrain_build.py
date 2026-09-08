@@ -134,6 +134,9 @@ def test_headless_build_preserves_dem_and_has_repeatable_verified_products(
         np.testing.assert_array_equal(routing["final_elevation_m"],
                                       expected.routing_final_elevation_m)
         np.testing.assert_array_equal(routing["land_mask"], expected.routing_land_mask)
+        np.testing.assert_array_equal(routing["incision_limit_m"],
+                                      expected.routing.incision_limit_m)
+        assert np.all(routing["incision_m"] <= routing["incision_limit_m"])
         assert routing["x_km"].size == expected.routing_grid.width
     assert diagnostics["routing_sha256"] == file_sha256(first / "routing.npz")
     assert diagnostics["routing_agreement"]["algorithm_id"] == "planned-final-d8-agreement@1"

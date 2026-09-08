@@ -29,6 +29,7 @@ from dmtools.terrain.pipeline.hydrology import (
     DrainageDiagnostics,
     DrainageIncision,
     RoutingAgreement,
+    automatic_incision_budget,
     compare_drainage_routing,
     drainage_diagnostics,
     drainage_incision,
@@ -37,14 +38,15 @@ from dmtools.terrain.pipeline.landforms import (
     MetricRegion,
     prepare_regions,
     regional_elevation_fields,
+    regional_incision_budget,
 )
 from dmtools.terrain.pipeline.noise import fractal_value_noise
 from dmtools.terrain.pipeline.profile import shape_preserving_profile
 
 type ProgressCallback = Callable[[float, str], None]
 
-GENERATOR_ALGORITHM_ID = "coastline-constraint-terrain@3"
-AUTOMATIC_VALLEY_ALGORITHM_ID = "authored-macro-mfd-d8-valleys@2"
+GENERATOR_ALGORITHM_ID = "coastline-constraint-terrain@4"
+AUTOMATIC_VALLEY_ALGORITHM_ID = "regional-budget-mfd-d8-valleys@3"
 NOISE_ALGORITHM_ID = "coordinate-value-noise-normalized@1"
 
 
@@ -892,6 +894,11 @@ def _prepare_automatic_valley_field(
         maximum_elevation_m=settings.maximum_elevation_m,
         variability=settings.variability,
         residual_detail_m=(full_elevation - macro_elevation) * (1.0 - constraint_influence),
+        incision_budget_m=regional_incision_budget(
+            x_grid, y_grid,
+            automatic_incision_budget(settings.maximum_elevation_m, settings.variability),
+            regions,
+        ),
     )
     return _AutomaticValleyField(
         x_km=x_km,

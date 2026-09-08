@@ -1,6 +1,7 @@
 # pyright: reportUnknownMemberType=false
 """Regional macro composition before authored constraints and drainage planning."""
 
+from collections.abc import Iterator
 from dataclasses import astuple, dataclass
 from typing import Any, cast
 
@@ -47,23 +48,13 @@ def regional_elevation_fields(
 ) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
     if not regions:
         return full, macro
-    points: Any = shapely.points(x, y)
     total = np.zeros_like(full)
     target_macro = np.zeros_like(full)
     target_full = np.zeros_like(full)
     seed = stage_seed(settings.seed, LANDFORM_STAGE_ID)
     coastal_gate = -np.expm1(-coast_distance / settings.coastal_rise_km)
-    for region in regions:
+    for region, inside, weight in _regional_weights(x, y, regions):
         controls = region.source.settings
-        inside = np.asarray(shapely.intersects_xy(region.geometry, x, y), dtype=np.bool_)
-        if not inside.any():
-            continue
-        distance = cast(NDArray[np.float64], np.asarray(
-            cast(Any, shapely.distance(points[inside], region.geometry.boundary)),
-            dtype=np.float64,
-        ))
-        fade = np.clip(distance / controls.transition_km, 0, 1)
-        weight = fade * fade * (3 - 2 * fade)
         angle = np.deg2rad(controls.orientation_deg)
         u = np.cos(angle) * x[inside] + np.sin(angle) * y[inside]
         v = -np.sin(angle) * x[inside] + np.cos(angle) * y[inside]
@@ -101,3 +92,41 @@ def regional_elevation_fields(
         full * (1 - influence) + target_full / denominator * influence,
         macro * (1 - influence) + target_macro / denominator * influence,
     )
+
+
+def _regional_weights(
+    x: NDArray[np.float64], y: NDArray[np.float64], regions: tuple[MetricRegion, ...],
+) -> Iterator[tuple[MetricRegion, NDArray[np.bool_], NDArray[np.float64]]]:
+    """Share the inward transition between landform shape and process budgets."""
+    if not regions:
+        return
+    points: Any = shapely.points(x, y)
+    for region in regions:
+        inside = np.asarray(shapely.intersects_xy(region.geometry, x, y), dtype=np.bool_)
+        if not inside.any():
+            continue
+        distance = cast(NDArray[np.float64], np.asarray(
+            cast(Any, shapely.distance(points[inside], region.geometry.boundary)),
+            dtype=np.float64,
+        ))
+        fade = np.clip(distance / region.source.settings.transition_km, 0, 1)
+        yield region, inside, fade * fade * (3 - 2 * fade)
+
+
+def regional_incision_budget(
+    x: NDArray[np.float64], y: NDArray[np.float64], background_budget_m: float,
+    regions: tuple[MetricRegion, ...],
+) -> NDArray[np.float64]:
+    """Blend heuristic automatic-cut limits; authored valleys are separate."""
+    relief_fraction = {"plain": 0.15, "hills": 0.40, "plateau": 0.25, "mountains": 0.25}
+    total = np.zeros_like(x)
+    target = np.zeros_like(x)
+    for region, inside, weight in _regional_weights(x, y, regions):
+        controls = region.source.settings
+        local_budget = min(background_budget_m,
+                           relief_fraction[controls.character] * controls.relief_m)
+        target[inside] += weight * local_budget
+        total[inside] += weight
+    influence = np.minimum(total, 1)
+    denominator = np.maximum(total, np.finfo(np.float64).tiny)
+    return background_budget_m * (1 - influence) + target / denominator * influence

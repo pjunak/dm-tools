@@ -27,7 +27,11 @@ from dmtools.terrain.domain import (
     landform_preset,
 )
 from dmtools.terrain.pipeline.generate import generate_terrain
-from dmtools.terrain.pipeline.landforms import prepare_regions, regional_elevation_fields
+from dmtools.terrain.pipeline.landforms import (
+    prepare_regions,
+    regional_elevation_fields,
+    regional_incision_budget,
+)
 
 COAST = Coastline(((0, 0), (1, 0), (1, 1), (0, 1), (0, 0)), "regions")
 RING = ((0.05, 0.05), (0.95, 0.05), (0.95, 0.95), (0.05, 0.95), (0.05, 0.05))
@@ -44,6 +48,10 @@ def test_regional_recipes_have_distinct_elevations_and_local_relief() -> None:
         assert np.isfinite(terrain.elevation_m).all()
         assert np.max(terrain.elevation_m) <= SETTINGS.maximum_elevation_m
         np.testing.assert_array_equal(terrain.elevation_m[0], 0)
+        cap = {"plain": 15, "hills": 360, "plateau": 50, "mountains": 875}[kind]
+        assert np.max(terrain.routing.incision_m[64:193, 64:193]) <= cap
+        assert np.all(terrain.routing.incision_m <= terrain.routing.incision_limit_m)
+        assert np.all(terrain.routing.incision_limit_m[~terrain.routing_land_mask] == 0)
     assert fields["plain"].std() < fields["hills"].std() < fields["mountains"].std()
     assert fields["plain"].mean() < 350
     assert fields["plateau"].mean() > 2000
@@ -62,6 +70,8 @@ def test_regions_preserve_anchors_order_and_shared_samples() -> None:
     assert first.elevation_m[32, 32] == 1800
     assert first.constraints == (*regions, anchor)
     assert first.routing_agreement == second.routing_agreement
+    np.testing.assert_array_equal(first.routing.incision_limit_m,
+                                  second.routing.incision_limit_m)
 
 
 def test_regional_boundaries_are_continuous_and_do_not_change_distant_samples() -> None:
@@ -128,3 +138,32 @@ def test_regional_seed_changes_the_numeric_surface(kind: LandformKind) -> None:
 def test_invalid_regional_parameters_are_rejected(changes: dict[str, float]) -> None:
     with pytest.raises(ValueError):
         replace(LandformSettings(), **changes)
+
+
+def test_regional_incision_budget_blends_boundaries_and_overlaps() -> None:
+    land = Polygon(((0, 0), (1000, 0), (1000, 1000), (0, 1000)))
+    plain = TerrainRegion(RING, landform_preset("plain"))
+    plateau = TerrainRegion(RING, replace(landform_preset("plateau"), transition_km=50))
+    regions = prepare_regions((plain, plateau), 1000, 1000, land, 6000)
+    x = np.array([0., 50., 50.000001, 50.001, 75., 500.])
+    y = np.full_like(x, 500)
+    budget = regional_incision_budget(x, y, 600, regions)
+    np.testing.assert_array_equal(budget[:2], [600., 600.])
+    assert abs(budget[2] - 600) < 1e-8
+    assert abs(budget[3] - 600) < 1e-5
+    # Both half-strength regions sum to full influence at 75 km.
+    np.testing.assert_allclose(budget[4:], [32.5, 32.5])
+    np.testing.assert_array_equal(
+        budget, regional_incision_budget(x, y, 600,
+            prepare_regions((plateau, plain), 1000, 1000, land, 6000)),
+    )
+    np.testing.assert_array_equal(regional_incision_budget(x, y, 600, ()), 600)
+
+
+def test_zero_relief_region_disables_automatic_cutting_but_preserves_anchor() -> None:
+    region = TerrainRegion(RING, replace(landform_preset("plateau"), relief_m=0))
+    terrain = generate_terrain(COAST, SETTINGS,
+                               constraints=(region, ElevationPoint((0.5, 0.5), 1800, 35)))
+    np.testing.assert_array_equal(terrain.routing.incision_m[64:193, 64:193], 0)
+    np.testing.assert_array_equal(terrain.routing.incision_limit_m[64:193, 64:193], 0)
+    assert terrain.elevation_m[32, 32] == 1800

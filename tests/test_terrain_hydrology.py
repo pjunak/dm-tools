@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from dmtools.terrain.pipeline.hydrology import (
     condition_downstream_channel_steepness,
@@ -452,3 +453,40 @@ def test_mfd_valley_shoulders_do_not_blur_across_a_drainage_divide() -> None:
     assert drainage.incision_m[42, 40] > 15.0
     assert drainage.incision_m[30, 40] == 0.0
     assert drainage.detail_suppression[30, 40] == 0.0
+
+
+def test_spatial_incision_budget_bounds_channel_corrections() -> None:
+    y, x = np.mgrid[:41, :41].astype(np.float64)
+    elevation = 100 + (x - 20) ** 2 + (y - 20) ** 2
+    land = np.ones(elevation.shape, dtype=np.bool_)
+    coast_distance = np.minimum.reduce([x, y, 40 - x, 40 - y])
+    budget = np.where(x < 20, 0., 3.)
+    original = budget.copy()
+    result = drainage_incision(elevation, land, coast_distance,
+        x_spacing_km=1, y_spacing_km=1, maximum_elevation_m=2000, variability=0.5,
+        incision_budget_m=budget)
+    assert np.any(result.floor_correction_m > 0)
+    assert result.unresolved_uphill_channel_edge_count > 0
+    assert np.all(result.incision_m <= result.incision_limit_m)
+    assert np.all(result.incision_limit_m <= budget)
+    np.testing.assert_array_equal(result.incision_m[x < 20], 0)
+    np.testing.assert_array_equal(budget, original)
+
+
+@pytest.mark.parametrize("invalid", [-1., np.nan, np.inf])
+def test_incision_budget_rejects_invalid_land_values(invalid: float) -> None:
+    elevation = np.ones((5, 5), dtype=np.float64)
+    budget = elevation.copy()
+    budget[2, 2] = invalid
+    with pytest.raises(ValueError, match="finite and non-negative"):
+        drainage_incision(elevation, elevation.astype(np.bool_), elevation,
+            x_spacing_km=1, y_spacing_km=1, maximum_elevation_m=1000, variability=0.5,
+            incision_budget_m=budget)
+
+
+def test_incision_budget_rejects_wrong_grid_shape() -> None:
+    elevation = np.ones((5, 5), dtype=np.float64)
+    with pytest.raises(ValueError, match="grid shape"):
+        drainage_incision(elevation, elevation.astype(np.bool_), elevation,
+            x_spacing_km=1, y_spacing_km=1, maximum_elevation_m=1000, variability=0.5,
+            incision_budget_m=np.ones((2, 2), dtype=np.float64))

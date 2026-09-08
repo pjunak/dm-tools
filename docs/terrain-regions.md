@@ -64,10 +64,32 @@ thin D8 segments at display size rather than enlarging canonical raster cells;
 its topology and uphill-conflict meaning are unchanged. Straight/grid-aligned
 routes are still present and should not be mistaken for finished river geometry.
 
+## Regional automatic valleys
+
+Automatic valley depth now follows regional relief. At full regional influence,
+its total cutting budget is 15% of relief for plains, 40% for hills, and 25%
+for plateaus and mountains. Default plains therefore allow at most 15 m and
+plateaus at most 50 m. These are procedural safeguards, not measured erosion
+rates or a simulation of rock resistance.
+
+Budgets use the same inward transition and overlap weights as landform shape.
+They cannot exceed the global automatic-cut budget. Zero relief at full
+influence disables automatic cutting. The initial valley shape is scaled to
+this budget; downstream floor and steepness corrections must respect it too.
+Authored height points and valleys retain their authority. These limits bound
+automatic incision, not the combined effect of authored features, coastal
+conditioning and residual-detail suppression.
+
+Shallower cuts can leave more uphill edges in the planned channel graph. The
+Drainage review continues to flag these conflicts; increasing cuts until every
+filled route is downhill would erase the intended landform. Lake/outlet and
+routing reconciliation are still needed. See
+[ADR-0031](adr/0031-bound-incision-by-regional-relief.md) for fixture results.
+
 ## Current limits
 
-Automatic incision still has global tuning; there are no regional sediment,
-rock-resistance or runoff controls. Lowland-fraction and peak-density targets,
+There are no regional sediment, rock-resistance, runoff or drainage-density
+controls yet. Lowland-fraction and peak-density targets,
 asymmetric escarpments, connected mountain spurs and explicit lakes remain in
 [TODO](../TODO.md). Use Drainage review to inspect remaining uphill conflicts.
 

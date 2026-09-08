@@ -21,7 +21,7 @@ the workbench. No input file or generator setting is changed.
 | `x-km.npy`, `y-km.npy` | Authoritative Float64 coordinate vectors in kilometres |
 | `inputs.json` | Effective input snapshot including dissolved geometry, settings, constraints and authoring state |
 | `cartographic.png`, `scientific.png` | The two existing display styles derived from this DEM |
-| `routing.npz` | Canonical planning and final-field elevations, mask, coordinates, receivers, contributing area, channels, heads, orders, outlets and incision |
+| `routing.npz` | Canonical planning and final-field elevations, mask, coordinates, receivers, contributing area, channels, heads, orders, outlets, incision and its effective limit |
 | `drainage.png` | Planning/final comparison; blue planned channels, red uphill segments |
 | `diagnostics.json` | Delivered-surface quality measurements and separately labelled canonical drainage diagnostics |
 | `manifest.json` | Completion record, input/runtime identities, coordinates, output sizes and SHA-256 hashes |
@@ -98,6 +98,15 @@ apply the archive's `land_mask`, not an elevation threshold.
 `outlet_mask` identifies terminal land nodes on the filled routing graph.
 `accumulation_km2` is MFD contributing area; channels and Strahler order follow
 the distinct D8 tree. It is not a calibrated water discharge or a watershed ID.
+
+`incision_m` includes the automatic floor and steepness corrections.
+`incision_limit_m` records their effective upper bound on each routing node,
+combining available elevation, the global correction reserve and the regional
+relief budget. Both arrays are zero outside land, and incision must not exceed
+its limit. The limit does not bound authored valleys or residual-detail
+suppression. Its semantics are identified by the automatic-valley algorithm in
+the manifest; this adds a derived array without changing project or manifest
+structure.
 
 `routing_agreement` in diagnostics compares planned channel receivers against
 Priority-Flood routing of the finished field. It also counts edges rising more

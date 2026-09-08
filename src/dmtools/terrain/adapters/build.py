@@ -129,6 +129,7 @@ def write_build_products(
             stream_order=routing.stream_order,
             outlet_mask=routing.outlet_mask,
             incision_m=routing.incision_m,
+            incision_limit_m=routing.incision_limit_m,
         )
         stream.flush()
         os.fsync(stream.fileno())
