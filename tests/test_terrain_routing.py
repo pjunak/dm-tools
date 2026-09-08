@@ -112,3 +112,14 @@ def test_workbench_overlay_is_transparent_away_from_channels(baseline: Generated
         assert np.count_nonzero(rgba[..., 3] == 0) > 0
         visible = rgba[rgba[..., 3] > 0]
         assert np.all(np.isin(visible[:, 0], [45, 255]))
+
+
+def test_display_resolution_overlay_keeps_thin_lines(baseline: GeneratedTerrain) -> None:
+    with render_drainage_overlay(baseline) as native:
+        native_count = np.count_nonzero(np.asarray(native)[..., 3])
+    size = (4 * (baseline.routing_grid.width - 1) + 1,
+            4 * (baseline.routing_grid.height - 1) + 1)
+    with render_drainage_overlay(baseline, size) as enlarged:
+        assert enlarged.size == size
+        # Line length grows with scale; raster cell blocks would grow with area.
+        assert np.count_nonzero(np.asarray(enlarged)[..., 3]) < 6 * native_count

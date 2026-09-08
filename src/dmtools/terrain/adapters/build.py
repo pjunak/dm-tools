@@ -25,16 +25,22 @@ from dmtools.terrain.adapters.render import (
     save_height_map,
 )
 from dmtools.terrain.domain import LocalMetricFrame, TerrainProject
-from dmtools.terrain.domain.seeds import RELIEF_STAGE_ID, SEED_POLICY_ID, stage_seed
+from dmtools.terrain.domain.seeds import (
+    LANDFORM_STAGE_ID,
+    RELIEF_STAGE_ID,
+    SEED_POLICY_ID,
+    stage_seed,
+)
 from dmtools.terrain.pipeline.generate import (
     AUTOMATIC_VALLEY_ALGORITHM_ID,
     GENERATOR_ALGORITHM_ID,
     NOISE_ALGORITHM_ID,
     GeneratedTerrain,
 )
+from dmtools.terrain.pipeline.landforms import LANDFORM_ALGORITHM_ID
 from dmtools.terrain.pipeline.quality import TerrainQuality
 
-BUILD_SCHEMA_VERSION = 5
+BUILD_SCHEMA_VERSION = 6
 
 
 def file_sha256(path: Path) -> str:
@@ -179,7 +185,9 @@ def publish_build_manifest(
         "noise": NOISE_ALGORITHM_ID,
         "drainage_diagnostics": terrain.drainage.algorithm_id,
         "seed_policy": SEED_POLICY_ID,
-        "stage_seeds": {RELIEF_STAGE_ID: relief_seed},
+        "landforms": LANDFORM_ALGORITHM_ID,
+        "stage_seeds": {RELIEF_STAGE_ID: relief_seed,
+                        LANDFORM_STAGE_ID: stage_seed(settings.seed, LANDFORM_STAGE_ID)},
     }
     warnings = [
         "Local SVG plane only; world georeferencing and planetary scale are unspecified.",

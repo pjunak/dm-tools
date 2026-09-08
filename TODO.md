@@ -32,7 +32,7 @@ preview, and PNG export. Those are not repeated below as unfinished work.
   hashes, generator and schema versions, master and stage seeds, effective
   parameters, working extent and units, runtime/dependency versions, warnings,
   and authoritative output hashes.
-  Current version-5 builds record named stage seeds, numeric product hashes,
+  Current version-6 builds record named stage seeds, numeric product hashes,
   and explicit local-only NPY/GeoTIFF coordinates. World placement remains open.
 - [x] **P0 â€” Export the authoritative Float32 DEM as local-metric GeoTIFF.**
   Implemented point registration, metre units, NaN nodata, embedded masks,
@@ -73,10 +73,16 @@ preview, and PNG export. Those are not repeated below as unfinished work.
 - [ ] **P1 â€” Add divides, rivers, faults, escarpments, and general breaklines.**
   Define the semantics of each constraint before extending the project schema;
   a drawn line must not imply more geological certainty than the user supplied.
-- [ ] **P1 â€” Add terrain-character regions.** A vector region should select a
-  named profile controlling broad relief, roughness, drainage density, erosion
-  resistance, and transition distance without baking those properties into a
-  raster paint mask.
+- [x] **P1 — Add first terrain-character regions.** Polygon authoring,
+  plain/hills/plateau/mountain recipes, base height, local relief, feature size,
+  orientation and inward transitions now feed both terrain and routing.
+  See [the region guide](docs/terrain-regions.md) and ADR-0030.
+- [ ] **P1 — Add regional process controls.** Tune channel incision, drainage
+  density and erosion resistance by landform without overwriting authored
+  anchors; preserve measurable low relief in plains and plateau interiors.
+- [x] **P1 — Render drainage review at display size.** Thin canonical D8
+  segments replace enlarged cell blocks. Routing accuracy is unchanged;
+  gridded/coast-parallel paths still need hydrology and river-geometry work.
 - [x] **P1 â€” Support adjacent mainland sections and disconnected islands.** SVG
   land objects are dissolved into one polygonal mask, sub-sampling border
   slivers are repaired, and all components share one metric field and seed.

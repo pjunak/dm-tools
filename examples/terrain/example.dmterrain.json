@@ -22,6 +22,14 @@
         "elevation_m": 700.0,
         "elevation_mode": "relative",
         "radius_km": 90.0
+      },
+      "region": {
+        "character": "plain",
+        "elevation_m": 250.0,
+        "relief_m": 100.0,
+        "feature_size_km": 150.0,
+        "transition_km": 50.0,
+        "orientation_deg": 0.0
       }
     }
   },
@@ -31,7 +39,7 @@
   },
   "constraints": [],
   "schema": "dmtools.terrain-project",
-  "schema_version": 3,
+  "schema_version": 4,
   "settings": {
     "coastal_rise_km": 180.0,
     "detail_levels": 6,

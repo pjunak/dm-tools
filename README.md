@@ -85,7 +85,7 @@ limits, diagnostics and completion checks. Builds include lossless NPY arrays
 and [Float32 GeoTIFF](docs/terrain-geotiff.md) in an explicit local metric frame.
 World placement remains planned.
 
-The current [project schema](schemas/terrain/project-v3.schema.json) and
+The current [project schema](schemas/terrain/project-v4.schema.json) and
 [named stage seed algorithm](docs/terrain-seeds.md) describe implemented behavior.
 This project is in early development: obsolete features and old saves are not
 supported. Current correctness and useful improvements take priority.

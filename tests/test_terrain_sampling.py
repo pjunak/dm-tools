@@ -11,7 +11,7 @@ from numpy.typing import NDArray
 from shapely.geometry import Polygon
 
 from benchmarks.terrain import fixture
-from dmtools.terrain.domain import Coastline, TerrainSettings, TerrainStructure
+from dmtools.terrain.domain import Coastline, TerrainRegion, TerrainSettings, TerrainStructure
 from dmtools.terrain.pipeline import generate as generation
 
 
@@ -23,14 +23,17 @@ def _dense_samples(
     settings: TerrainSettings,
     constraints: Any,
     valleys: Any,
+    regions: Any = (),
 ) -> tuple[NDArray[np.float64], NDArray[np.bool_]]:
     mask = np.asarray(shapely.intersects_xy(polygon, x, y), dtype=np.bool_)
-    elevation = generation._evaluate_land_samples(x, y, boundary, settings, constraints, valleys)
+    elevation = generation._evaluate_land_samples(
+        x, y, boundary, settings, constraints, valleys, regions,
+    )
     return np.where(mask, elevation, 0.0), mask
 
 
 @pytest.mark.parametrize(
-    "case", ["example", "archipelago", "archipelago-authored", "authored", "square"]
+    "case", ["example", "archipelago", "archipelago-authored", "authored", "square", "regions"]
 )
 @pytest.mark.parametrize("seed", [42, 20260902])
 def test_selective_generation_matches_dense_reference(
@@ -38,12 +41,16 @@ def test_selective_generation_matches_dense_reference(
     case: str,
     seed: int,
 ) -> None:
-    coast, settings, constraints = fixture(case.removesuffix("-authored"), 65, seed)
+    coast, settings, constraints = fixture(
+        "archipelago" if case == "regions" else case.removesuffix("-authored"), 65, seed,
+    )
     if case == "archipelago-authored":
         constraints = (
             TerrainStructure("ridge", ((0.25, 0.25), (0.45, 0.25)), 1800.0, 100.0),
             TerrainStructure("valley", ((0.25, 0.7), (0.4, 0.8)), 300.0, 80.0, "relative"),
         )
+    if case == "regions":
+        constraints = (TerrainRegion(((0., 0.), (1., 0.), (1., 1.), (0., 1.), (0., 0.))),)
     selective = generation.generate_terrain(coast, settings, constraints=constraints)
     monkeypatch.setattr(generation, "_evaluate_elevation_samples", _dense_samples)
     dense = generation.generate_terrain(coast, settings, constraints=constraints)

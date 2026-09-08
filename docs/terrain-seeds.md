@@ -5,7 +5,7 @@ numeric master Seed; there is no seed-policy selector or direct-master mode.
 The public [example](../examples/terrain/example.dmterrain.json) uses the same
 implementation as programmatic calls and headless builds.
 
-Only current project format 3 and build format 4 are supported. Older saves
+Only the current formats in the [schema index](../schemas/README.md) are supported. Older saves
 are rejected and must be recreated. Current settings store the master seed;
 the build records the seed algorithm and resolved stage seeds. Future changes
 may replace this behavior without compatibility modes or migrations.
@@ -16,11 +16,15 @@ from `dmtools.terrain.domain.seeds`.
 
 ## Stable stage identity
 
-There is currently one stochastic stage, `terrain.relief`. Its full-detail
+The base stochastic stage is `terrain.relief`. Its full-detail
 and coarse evaluations use the same resolved seed because they are two views
 of one field. Splitting them into unrelated fields would change the meaning
 of the restored residual detail. Routing and constraint conditioning are
 currently deterministic and do not need artificial random streams.
+
+Regional recipes use `terrain.landforms`, a separate stream shared by all
+regions. Geometry and settings determine the regional field; list order does
+not seed it. Both streams are recorded in builds, even when no regions are used.
 
 Future stochastic processes must use distinct stable names. Derivation takes
 no stage index, execution order, resolution, mutable random generator, time or
@@ -58,7 +62,7 @@ These reference values were independently calculated with .NET SHA256:
 
 The current build records the master in `settings.seed`, the derivation ID in
 `algorithms.seed_policy`, and resolved values in `algorithms.stage_seeds`,
-currently containing only `terrain.relief`. Schemas validate structure;
+containing `terrain.relief` and `terrain.landforms`. Schemas validate structure;
 consumers checking provenance must also verify that derived values match the
 recorded master and algorithm.
 

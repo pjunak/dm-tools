@@ -38,7 +38,8 @@ The current implemented path is:
    closed land geometry.
 2. Project normalized authored constraints into one metric working grid shared
    by mainland sections and islands.
-3. Prepare valley profiles against a stable pre-incision reference and construct
+3. Compose soft regional full/macro fields for plains, hills, plateaus and
+   mountain belts. Prepare valley profiles against a stable pre-incision reference and construct
    the broad routing surface with authored constraints. Route automatic valleys
    on its canonical grid and retain the drainage topology.
 4. Apply authored brush, point, ridge, and valley semantics and restore

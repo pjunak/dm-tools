@@ -5,6 +5,7 @@ from hashlib import sha256
 
 SEED_POLICY_ID = "named-stage-sha256@1"
 RELIEF_STAGE_ID = "terrain.relief"
+LANDFORM_STAGE_ID = "terrain.landforms"
 _SEED_DOMAIN = b"dmtools.terrain-stage-seed@1\x00"
 _STAGE_NAME = re.compile(r"[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*", re.ASCII)
 

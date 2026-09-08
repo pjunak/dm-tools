@@ -120,8 +120,8 @@ project, SVG and installed Python package files are fingerprinted; runtime and
 dependency versions are recorded. No network service is needed to build.
 
 Consumers must validate the manifest and verify product hashes. Register the
-[current build schema](../schemas/terrain/build-v5.schema.json) and
-[current project schema](../schemas/terrain/project-v3.schema.json) locally by
+[current build schema](../schemas/terrain/build-v6.schema.json) and
+[current project schema](../schemas/terrain/project-v4.schema.json) locally by
 `$id` for offline validation. Older formats are unsupported. The
 [seed contract](terrain-seeds.md) describes the single named-stage algorithm.
 

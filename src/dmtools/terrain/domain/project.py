@@ -7,11 +7,12 @@ from typing import Literal
 from dmtools.terrain.domain.models import (
     Coastline,
     ElevationMode,
+    LandformSettings,
     TerrainConstraint,
     TerrainSettings,
 )
 
-type AuthoringTool = Literal["brush", "height", "ridge", "valley"]
+type AuthoringTool = Literal["brush", "height", "ridge", "valley", "region"]
 
 
 def _validate_tool_value(
@@ -72,6 +73,7 @@ def _default_valley_tool() -> FeatureToolSettings:
 class TerrainAuthoringState:
     """User-facing tool defaults that should survive closing the workbench."""
 
+    region: LandformSettings = field(default_factory=LandformSettings)
     active_tool: AuthoringTool = "brush"
     brush: BrushToolSettings = field(default_factory=BrushToolSettings)
     height: FeatureToolSettings = field(default_factory=_default_height_tool)
@@ -79,7 +81,7 @@ class TerrainAuthoringState:
     valley: FeatureToolSettings = field(default_factory=_default_valley_tool)
 
     def __post_init__(self) -> None:
-        if self.active_tool not in ("brush", "height", "ridge", "valley"):
+        if self.active_tool not in ("brush", "height", "ridge", "valley", "region"):
             raise ValueError("Active authoring tool is not supported.")
         for name, settings in (("ridge", self.ridge), ("valley", self.valley)):
             if settings.elevation_mode == "relative" and settings.elevation_m < 0:

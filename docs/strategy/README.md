@@ -59,11 +59,13 @@ layers are derived products that can be rebuilt and inspected independently.
 Local numeric builds, seed/grid contracts and authored-macro drainage are now
 implemented. Focus the next iterations on visible terrain quality:
 
-1. Terrain-character regions: plains, rolling hills, plateaus and mountain
-   belts; broad height distribution and transitions before residual texture.
-2. Per-vertex ridge/valley profiles, explicit passes and asymmetric sides.
-3. Authored lakes/outlets and reviewable river networks using the retained
-   topology; reconcile meaningful planned/final conflicts.
+The first [landform region slice](../terrain-regions.md) is implemented, including
+polygon authoring, shared routing input, four recipes and smooth transitions.
+
+1. Per-vertex ridge/valley profiles, explicit passes and asymmetric sides.
+2. Regional hydrology tuning and planned/final conflict reconciliation; avoid
+   carving plains and plateau interiors with one global valley-depth recipe.
+3. Authored lakes/outlets and reviewable river networks using retained topology.
 4. Selected-region refinement with explicit parent and halo contracts.
 
 R04/R05 provide the first drainage correctness slice and review products;

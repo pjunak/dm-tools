@@ -16,7 +16,12 @@ from dmtools.terrain.adapters.palettes import (
     OLERON_LAND_RGB,
     SCIENTIFIC_ELEVATION_PALETTE_ID,
 )
-from dmtools.terrain.domain import ElevationPoint, TerrainBrushStroke, TerrainConstraint
+from dmtools.terrain.domain import (
+    ElevationPoint,
+    TerrainBrushStroke,
+    TerrainConstraint,
+    TerrainRegion,
+)
 from dmtools.terrain.pipeline import GeneratedTerrain
 from dmtools.terrain.pipeline.hydrology import channel_edge_rise
 
@@ -139,6 +144,8 @@ def _constraint_payload(constraint: TerrainConstraint) -> dict[str, object]:
         payload["type"] = "elevation_point"
     elif isinstance(constraint, TerrainBrushStroke):
         payload["type"] = "terrain_brush"
+    elif isinstance(constraint, TerrainRegion):
+        payload["type"] = "terrain_region"
     else:
         payload["type"] = constraint.kind
     return payload
@@ -217,18 +224,24 @@ def render_drainage_review(terrain: GeneratedTerrain) -> Image.Image:
     return image
 
 
-def render_drainage_overlay(terrain: GeneratedTerrain) -> Image.Image:
+def render_drainage_overlay(
+    terrain: GeneratedTerrain, size: tuple[int, int] | None = None,
+) -> Image.Image:
     """Transparent planned D8 edges; red marks rises on the final field."""
     grid = terrain.routing_grid
     routing = terrain.routing
-    image = Image.new("RGBA", (grid.width, grid.height))
+    width, height = size or (grid.width, grid.height)
+    image = Image.new("RGBA", (width, height))
     draw = ImageDraw.Draw(image)
+    x_scale, y_scale = (width - 1) / (grid.width - 1), (height - 1) / (grid.height - 1)
     rises = channel_edge_rise(routing, terrain.routing_final_elevation_m)
     edges = routing.channel_mask & (routing.receivers >= 0)
     for uphill in (False, True):
         selected = edges & ((rises > terrain.routing_agreement.elevation_tolerance_m) == uphill)
         for row, column in np.argwhere(selected):
             target_row, target_column = divmod(int(routing.receivers[row, column]), grid.width)
-            draw.line((int(column), int(row), target_column, target_row),
+            draw.line((int(column) * x_scale, int(row) * y_scale,
+                       target_column * x_scale, target_row * y_scale),
+                      width=1,
                       fill=(255, 95, 65, 255) if uphill else (45, 185, 255, 230))
     return image

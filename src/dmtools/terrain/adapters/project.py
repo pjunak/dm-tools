@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import os
 import tempfile
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from math import isfinite
 from pathlib import Path
 from typing import cast
@@ -21,16 +21,18 @@ from dmtools.terrain.domain import (
     ElevationMode,
     ElevationPoint,
     FeatureToolSettings,
+    LandformSettings,
     TerrainAuthoringState,
     TerrainBrushStroke,
     TerrainConstraint,
     TerrainProject,
+    TerrainRegion,
     TerrainSettings,
     TerrainStructure,
 )
 
 PROJECT_SCHEMA = "dmtools.terrain-project"
-PROJECT_SCHEMA_VERSION = 3
+PROJECT_SCHEMA_VERSION = 4
 PROJECT_EXTENSION = ".dmterrain.json"
 _MAX_PROJECT_BYTES = 16 * 1024 * 1024
 
@@ -162,10 +164,10 @@ def _authoring_from_json(value: object) -> TerrainAuthoringState:
     data = _mapping(value, "authoring")
     _require_keys(data, {"active_tool", "tools"}, "authoring")
     active_tool_value = _string(data["active_tool"], "authoring.active_tool")
-    if active_tool_value not in ("brush", "height", "ridge", "valley"):
+    if active_tool_value not in ("brush", "height", "ridge", "valley", "region"):
         raise TerrainProjectInputError("authoring.active_tool is not supported.")
     tools = _mapping(data["tools"], "authoring.tools")
-    _require_keys(tools, {"brush", "height", "ridge", "valley"}, "authoring.tools")
+    _require_keys(tools, {"brush", "height", "ridge", "valley", "region"}, "authoring.tools")
     brush = _mapping(tools["brush"], "authoring.tools.brush")
     _require_keys(
         brush,
@@ -175,6 +177,7 @@ def _authoring_from_json(value: object) -> TerrainAuthoringState:
     try:
         return TerrainAuthoringState(
             active_tool=active_tool_value,
+            region=_landform_settings_from_json(tools["region"]),
             brush=BrushToolSettings(
                 elevation_mode=_elevation_mode(
                     brush["elevation_mode"], "authoring.tools.brush.elevation_mode"
@@ -193,12 +196,32 @@ def _authoring_from_json(value: object) -> TerrainAuthoringState:
         raise TerrainProjectInputError(f"Invalid authoring settings: {error}") from error
 
 
+def _landform_settings_from_json(value: object) -> LandformSettings:
+    data = _mapping(value, "landform settings")
+    _require_keys(data, {"character", "elevation_m", "relief_m", "feature_size_km",
+                         "transition_km", "orientation_deg"}, "landform settings")
+    character = _string(data["character"], "landform character")
+    if character not in ("plain", "hills", "plateau", "mountains"):
+        raise TerrainProjectInputError("Unknown landform character.")
+    return LandformSettings(
+        character=character, elevation_m=_number(data["elevation_m"], "region elevation"),
+        relief_m=_number(data["relief_m"], "region relief"),
+        feature_size_km=_number(data["feature_size_km"], "region feature size"),
+        transition_km=_number(data["transition_km"], "region transition"),
+        orientation_deg=_number(data["orientation_deg"], "region orientation"),
+    )
+
+
 def _constraint_from_json(value: object, index: int) -> TerrainConstraint:
     context = f"constraints[{index}]"
     data = _mapping(value, context)
     kind = _string(data.get("type"), f"{context}.type")
     common = {"type", "elevation_mode", "elevation_m", "influence_radius_km"}
     try:
+        if kind == "terrain_region":
+            _require_keys(data, {"type", "points", "settings"}, context)
+            return TerrainRegion(_points(data["points"], f"{context}.points"),
+                                 _landform_settings_from_json(data["settings"]))
         elevation_mode = _elevation_mode(data.get("elevation_mode"), f"{context}.elevation_mode")
         elevation_m = _number(data.get("elevation_m"), f"{context}.elevation_m")
         radius_km = _number(
@@ -261,6 +284,7 @@ def _authoring_to_json(authoring: TerrainAuthoringState) -> dict[str, object]:
     return {
         "active_tool": authoring.active_tool,
         "tools": {
+            "region": asdict(authoring.region),
             "brush": {
                 "elevation_mode": authoring.brush.elevation_mode,
                 "elevation_m": authoring.brush.elevation_m,
@@ -275,6 +299,9 @@ def _authoring_to_json(authoring: TerrainAuthoringState) -> dict[str, object]:
 
 
 def _constraint_to_json(constraint: TerrainConstraint) -> dict[str, object]:
+    if isinstance(constraint, TerrainRegion):
+        return {"type": "terrain_region", "points": [list(p) for p in constraint.points],
+                "settings": asdict(constraint.settings)}
     data: dict[str, object] = {
         "elevation_mode": constraint.elevation_mode,
         "elevation_m": constraint.elevation_m,

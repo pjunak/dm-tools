@@ -56,11 +56,14 @@ def test_headless_build_preserves_dem_and_has_repeatable_verified_products(
     build_module.build_terrain_project(project_path, second)
     document: dict[str, Any] = json.loads((first / "manifest.json").read_text())
     schema_dir = EXAMPLES.parents[1] / "schemas" / "terrain"
-    assert document["schema_version"] == 5
-    assert document["inputs"]["project_schema_version"] == 3
+    assert document["schema_version"] == 6
+    assert document["inputs"]["project_schema_version"] == 4
     assert document["algorithms"]["seed_policy"] == SEED_POLICY_ID
     resolved_seed = stage_seed(loaded.project.settings.seed, RELIEF_STAGE_ID)
-    assert document["algorithms"]["stage_seeds"] == {RELIEF_STAGE_ID: resolved_seed}
+    assert document["algorithms"]["stage_seeds"] == {
+        RELIEF_STAGE_ID: resolved_seed,
+        "terrain.landforms": stage_seed(loaded.project.settings.seed, "terrain.landforms"),
+    }
     schemas: list[dict[str, Any]] = [
         json.loads(path.read_text()) for path in sorted(schema_dir.glob("*.schema.json"))
     ]
@@ -71,7 +74,7 @@ def test_headless_build_preserves_dem_and_has_repeatable_verified_products(
     )
     schema = next(
         item for item in schemas
-        if item["$id"] == "urn:dmtools:schema:terrain-build:5"
+        if item["$id"] == "urn:dmtools:schema:terrain-build:6"
     )
     validate(document, schema, cls=Draft202012Validator, registry=registry)
     invalid = {**document, "coordinates": {**document["coordinates"], "world_crs": "EPSG:4326"}}

@@ -173,7 +173,60 @@ class TerrainBrushStroke:
             raise ValueError("Terrain brush intensity must be greater than 0 and at most 1.")
 
 
-type TerrainConstraint = ElevationPoint | TerrainStructure | TerrainBrushStroke
+type LandformKind = Literal["plain", "hills", "plateau", "mountains"]
+
+
+@dataclass(frozen=True, slots=True)
+class LandformSettings:
+    """Soft regional composition controls in physical units."""
+
+    character: LandformKind = "plain"
+    elevation_m: float = 250.0
+    relief_m: float = 100.0
+    feature_size_km: float = 150.0
+    transition_km: float = 50.0
+    orientation_deg: float = 0.0
+
+    def __post_init__(self) -> None:
+        if self.character not in ("plain", "hills", "plateau", "mountains"):
+            raise ValueError("Unknown landform character.")
+        for value in (self.elevation_m, self.relief_m):
+            if not isfinite(value) or value < 0:
+                raise ValueError("Regional elevation and relief must be finite and nonnegative.")
+        for value in (self.feature_size_km, self.transition_km):
+            if not isfinite(value) or value <= 0:
+                raise ValueError("Regional size and transition must be positive and finite.")
+        if not isfinite(self.orientation_deg) or not 0 <= self.orientation_deg < 180:
+            raise ValueError("Regional orientation must be from 0 up to 180 degrees.")
+
+
+def landform_preset(character: LandformKind) -> LandformSettings:
+    """Starting points for editing, not biome or geological classifications."""
+    values = {
+        "plain": (250., 100., 150., 50.),
+        "hills": (700., 900., 100., 70.),
+        "plateau": (2200., 200., 200., 40.),
+        "mountains": (1000., 3500., 120., 100.),
+    }
+    return LandformSettings(character, *values[character])
+
+
+@dataclass(frozen=True, slots=True)
+class TerrainRegion:
+    """Closed normalized polygon selecting a soft regional terrain recipe."""
+
+    points: tuple[Point2D, ...]
+    settings: LandformSettings = LandformSettings()
+
+    def __post_init__(self) -> None:
+        _validate_ring(self.points, "Terrain region")
+        for point in self.points:
+            _validate_normalized_point(point)
+        if len(set(self.points[:-1])) < 3:
+            raise ValueError("Terrain region needs three distinct vertices.")
+
+
+type TerrainConstraint = ElevationPoint | TerrainStructure | TerrainBrushStroke | TerrainRegion
 
 
 @dataclass(frozen=True, slots=True)

@@ -82,8 +82,8 @@ def test_project_round_trip_preserves_authored_state_and_relative_svg_path(
     authoring = cast("dict[str, object]", serialized["authoring"])
     tools = cast("dict[str, dict[str, object]]", authoring["tools"])
     assert serialized["schema"] == "dmtools.terrain-project"
-    assert serialized["schema_version"] == 3
-    schema_path = EXAMPLES.parents[1] / "schemas" / "terrain" / "project-v3.schema.json"
+    assert serialized["schema_version"] == 4
+    schema_path = EXAMPLES.parents[1] / "schemas" / "terrain" / "project-v4.schema.json"
     schema: dict[str, Any] = json.loads(schema_path.read_text(encoding="utf-8"))
     Draft202012Validator.check_schema(schema)
     validate(serialized, schema, cls=Draft202012Validator)

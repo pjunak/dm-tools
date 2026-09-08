@@ -41,6 +41,10 @@ channels in blue and segments that rise on the finished terrain in red.
 This is a canonical-grid review, not a guarantee of valid rivers. See
 [the stage decision](../../../docs/adr/0029-route-drainage-over-authored-terrain.md).
 
+Use **Landform region** to draw plains, hills, plateaus and mountain belts.
+The [region guide](../../../docs/terrain-regions.md) explains controls, overlap,
+transitions and the [public example](../../../examples/terrain/landform-regions.dmterrain.json).
+
 ## Current input contract
 
 - The file must be SVG.
@@ -164,7 +168,7 @@ are not embedded. Saves use a temporary file followed by atomic replacement so
 an interrupted write does not leave a partially written project. The current format is
 strict: unknown fields or unsupported versions are rejected rather than
 guessed. The public contract is
-[`schemas/terrain/project-v3.schema.json`](../../../schemas/terrain/project-v3.schema.json)
+[`schemas/terrain/project-v4.schema.json`](../../../schemas/terrain/project-v4.schema.json)
 and its rationale is recorded in
 [ADR-0006](../../../docs/adr/0006-versioned-terrain-project.md).
 

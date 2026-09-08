@@ -47,3 +47,5 @@ supersedes their legacy compatibility commitments during early development.
 - [ADR-0028: Export local-metric GeoTIFF](0028-export-local-metric-geotiff.md)
 
 - [ADR-0029: Route drainage over authored terrain](0029-route-drainage-over-authored-terrain.md)
+
+- [ADR-0030: Author regional landforms](0030-author-regional-landforms.md)

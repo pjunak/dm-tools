@@ -36,12 +36,15 @@ from dmtools.terrain.domain import (
     ElevationMode,
     ElevationPoint,
     FeatureToolSettings,
+    LandformSettings,
     TerrainAuthoringState,
     TerrainBrushStroke,
     TerrainConstraint,
     TerrainProject,
+    TerrainRegion,
     TerrainSettings,
     TerrainStructure,
+    landform_preset,
 )
 from dmtools.terrain.pipeline import GeneratedTerrain, generate_terrain
 
@@ -58,6 +61,7 @@ _HEIGHT_COLOUR = "#f2c14e"
 _RIDGE_COLOUR = "#e47b58"
 _VALLEY_COLOUR = "#54a6c2"
 _BRUSH_COLOUR = "#9fbe72"
+_REGION_COLOUR = "#c5b6f5"
 
 _RENDER_STYLE_LABELS: dict[str, RenderStyle] = {
     "Cartographic relief": "cartographic",
@@ -180,6 +184,12 @@ class TerrainApp:
         self._brush_intensity_percent = tk.DoubleVar(
             value=authoring_defaults.brush.intensity * 100.0
         )
+        self._region_character = tk.StringVar(value="plain")
+        self._region_values = {
+            name: tk.DoubleVar(value=float(getattr(authoring_defaults.region, name)))
+            for name in ("elevation_m", "relief_m", "feature_size_km", "transition_km",
+                         "orientation_deg")
+        }
         self._render_style_label = tk.StringVar(value="Cartographic relief")
         self._show_drainage = tk.BooleanVar(value=False)
         self._drainage_photo: ImageTk.PhotoImage | None = None
@@ -419,6 +429,7 @@ class TerrainApp:
                 ("height", "Height point"),
                 ("ridge", "Ridge line"),
                 ("valley", "Valley line"),
+                ("region", "Landform region"),
             ),
             start=1,
         ):
@@ -481,6 +492,7 @@ class TerrainApp:
         )
 
         parameters = tk.Frame(authoring, background="#203033")
+        self._feature_parameters = parameters
         parameters.grid(row=1, column=0, columnspan=7, sticky="w", pady=(7, 0))
         tk.Label(
             parameters,
@@ -580,6 +592,33 @@ class TerrainApp:
             font=("Segoe UI", 8),
         ).pack(side="left", padx=(3, 0))
 
+        self._region_parameters = tk.Frame(authoring, background="#203033")
+        self._region_parameters.grid(row=1, column=0, columnspan=7, sticky="w", pady=(7, 0))
+        self._region_character_input = ttk.Combobox(
+            self._region_parameters, textvariable=self._region_character,
+            values=("plain", "hills", "plateau", "mountains"), width=12, state="readonly",
+        )
+        self._region_character_input.grid(row=0, column=0, padx=(0, 8))
+        self._region_character_input.bind("<<ComboboxSelected>>", self._on_region_character)
+        for index, (key, label, upper) in enumerate((
+            ("elevation_m", "Base height m", 10000),
+            ("relief_m", "Relief m", 10000),
+            ("feature_size_km", "Feature size km", 4000),
+            ("transition_km", "Transition km", 2000),
+            ("orientation_deg", "Direction deg", 179),
+        )):
+            row, column = divmod(index, 3)
+            frame = tk.Frame(self._region_parameters, background="#203033")
+            frame.grid(row=row, column=column + 1, padx=6, pady=3, sticky="w")
+            tk.Label(frame, text=label, background="#203033", foreground="#a9bab7",
+                     font=("Segoe UI", 8)).pack(side="left", padx=(0, 4))
+            entry = tk.Spinbox(frame, textvariable=self._region_values[key], width=6,
+                               from_=1 if key.endswith("_km") else 0, to=upper,
+                               increment=1 if key == "orientation_deg" else 10)
+            entry.pack(side="left")
+            self._authoring_widgets.append(entry)
+        self._region_parameters.grid_remove()
+
         self.authoring_hint = tk.Label(
             authoring,
             text="Import land geometry to start drawing.",
@@ -668,7 +707,7 @@ class TerrainApp:
         self._refresh_authoring_controls()
 
     def _set_authoring_tool(self, tool: str) -> None:
-        if tool not in ("brush", "height", "ridge", "valley"):
+        if tool not in ("brush", "height", "ridge", "valley", "region"):
             raise ValueError(f"Unknown authoring tool: {tool}")
         if self._draft_points and self._authoring_tool.get() != tool:
             self._draft_points.clear()
@@ -691,12 +730,12 @@ class TerrainApp:
 
     def _refresh_authoring_controls(self) -> None:
         selected = self._authoring_tool.get()
-        elevation_mode = self._selected_elevation_mode(selected)
         colours = {
             "brush": _BRUSH_COLOUR,
             "height": _HEIGHT_COLOUR,
             "ridge": _RIDGE_COLOUR,
             "valley": _VALLEY_COLOUR,
+            "region": _REGION_COLOUR,
         }
         for tool, button in self._tool_buttons.items():
             active = tool == selected
@@ -708,7 +747,10 @@ class TerrainApp:
                 disabledforeground="#71817e",
             )
 
-        line_ready = selected in ("ridge", "valley") and len(self._draft_points) >= 2
+        line_ready = ((selected in ("ridge", "valley") and len(self._draft_points) >= 2)
+                      or (selected == "region" and len(self._draft_points) >= 3))
+        self.finish_line_button.configure(
+            text="Finish region" if selected == "region" else "Finish line")
         self.finish_line_button.configure(
             state="normal" if self._authoring_enabled and line_ready else "disabled"
         )
@@ -719,6 +761,19 @@ class TerrainApp:
         self.clear_constraints_button.configure(
             state="normal" if self._authoring_enabled and has_authored_work else "disabled"
         )
+        self._region_character_input.configure(
+            state="readonly" if self._authoring_enabled else "disabled")
+        if selected == "region":
+            self._feature_parameters.grid_remove()
+            self._region_parameters.grid()
+            self.authoring_hint.configure(text=(
+                "Click 3+ corners, then Finish region. Regions affect land only."
+                if self._authoring_enabled else "Import land geometry to start drawing."
+            ))
+            return
+        self._region_parameters.grid_remove()
+        self._feature_parameters.grid()
+        elevation_mode = self._selected_elevation_mode(selected)
         self.mode_input.configure(
             textvariable=self._tool_modes[selected],
             state="readonly" if self._authoring_enabled else "disabled",
@@ -994,7 +1049,8 @@ class TerrainApp:
         if position is None:
             return
         source_point = self._normalized_to_source(position)
-        if not self._coast_polygon.covers(Point(source_point)):
+        if (self._authoring_tool.get() != "region"
+                and not self._coast_polygon.covers(Point(source_point))):
             self.root.bell()
             self.status_label.configure(text="Place authored features on a land component.")
             return
@@ -1022,7 +1078,7 @@ class TerrainApp:
                         source_point,
                     ]
                 )
-                if not self._coast_polygon.covers(segment):
+                if tool != "region" and not self._coast_polygon.covers(segment):
                     self.root.bell()
                     self.status_label.configure(
                         text="That segment leaves the coastline; choose a different point."
@@ -1037,6 +1093,9 @@ class TerrainApp:
 
     def _finish_structure(self) -> None:
         tool = self._authoring_tool.get()
+        if tool == "region":
+            self._finish_region()
+            return
         if tool not in ("ridge", "valley") or len(self._draft_points) < 2:
             return
         values = self._read_constraint_values()
@@ -1055,6 +1114,45 @@ class TerrainApp:
         self._draft_points.clear()
         self._invalidate_generated_terrain(f"{tool.capitalize()} added. Generate to apply it.")
 
+    def _read_region_settings(self) -> LandformSettings:
+        character = self._region_character.get()
+        if character not in ("plain", "hills", "plateau", "mountains"):
+            raise ValueError("Unknown landform character.")
+        return LandformSettings(
+            character=character,
+            **{key: float(value.get()) for key, value in self._region_values.items()},
+        )
+
+    def _on_region_character(self, _event: tk.Event[tk.Misc]) -> None:
+        character = self._region_character.get()
+        if character not in ("plain", "hills", "plateau", "mountains"):
+            return
+        preset = landform_preset(character)
+        for key, value in self._region_values.items():
+            value.set(float(getattr(preset, key)))
+
+    def _finish_region(self) -> None:
+        if len(self._draft_points) < 3:
+            return
+        points = tuple(self._draft_points)
+        if points[0] != points[-1]:
+            points += (points[0],)
+        try:
+            region = TerrainRegion(points, self._read_region_settings())
+            geometry = Polygon([self._normalized_to_source(point) for point in points])
+            if not geometry.is_valid or geometry.area <= 0:
+                raise ValueError("Use a simple polygon without crossing edges.")
+            if self._coast_polygon is None or geometry.intersection(self._coast_polygon).area <= 0:
+                raise ValueError("The region must cover some land.")
+            if region.settings.elevation_m > float(self._variables["maximum_elevation_m"].get()):
+                raise ValueError("Regional base height exceeds the elevation ceiling.")
+        except (ValueError, tk.TclError) as error:
+            messagebox.showerror("Invalid landform region", str(error), parent=self.root)
+            return
+        self._constraints.append(region)
+        self._draft_points.clear()
+        self._invalidate_generated_terrain("Landform region added. Generate to apply it.")
+
     def _undo_constraint(self) -> None:
         if self._draft_points:
             self._draft_points.pop()
@@ -1072,7 +1170,7 @@ class TerrainApp:
         if self._constraints and not messagebox.askyesno(
             "Clear authored topography?",
             "Remove every terrain brush stroke, height point, ridge, and valley "
-            "from this coastline?",
+            "and landform regions from this coastline?",
             parent=self.root,
         ):
             return
@@ -1351,7 +1449,7 @@ class TerrainApp:
 
     def _read_authoring_state(self) -> TerrainAuthoringState:
         active_tool = self._authoring_tool.get()
-        if active_tool not in ("brush", "height", "ridge", "valley"):
+        if active_tool not in ("brush", "height", "ridge", "valley", "region"):
             raise ValueError(f"Unknown authoring tool: {active_tool}")
 
         def feature(tool: str) -> FeatureToolSettings:
@@ -1363,6 +1461,7 @@ class TerrainApp:
 
         return TerrainAuthoringState(
             active_tool=active_tool,
+            region=self._read_region_settings(),
             brush=BrushToolSettings(
                 elevation_mode=self._selected_elevation_mode("brush"),
                 elevation_m=float(self._tool_elevations["brush"].get()),
@@ -1376,6 +1475,9 @@ class TerrainApp:
 
     def _apply_authoring_state(self, authoring: TerrainAuthoringState) -> None:
         self._authoring_tool.set(authoring.active_tool)
+        self._region_character.set(authoring.region.character)
+        for key, value in self._region_values.items():
+            value.set(float(getattr(authoring.region, key)))
         self._tool_modes["brush"].set(authoring.brush.elevation_mode.title())
         self._tool_elevations["brush"].set(authoring.brush.elevation_m)
         self._tool_sizes["brush"].set(authoring.brush.width_km)
@@ -1605,12 +1707,8 @@ class TerrainApp:
                     joinstyle="round",
                 )
         if self._terrain is not None and self._show_drainage.get():
-            with (
-                render_drainage_overlay(self._terrain) as overlay,
-                overlay.resize((display_width, display_height),
-                               Image.Resampling.NEAREST) as display_overlay,
-            ):
-                self._drainage_photo = ImageTk.PhotoImage(display_overlay)
+            with render_drainage_overlay(self._terrain, (display_width, display_height)) as overlay:
+                self._drainage_photo = ImageTk.PhotoImage(overlay)
             self.preview.create_image(left, top, image=self._drainage_photo, anchor="nw")
             self.preview.create_text(
                 left + 8, top + 8, anchor="nw", fill="white",
@@ -1710,6 +1808,15 @@ class TerrainApp:
         return influence_radius_km / object_scale_km * max(right - left, bottom - top)
 
     def _draw_constraint(self, constraint: TerrainConstraint) -> None:
+        if isinstance(constraint, TerrainRegion):
+            coordinates = [value for point in constraint.points
+                           for value in self._normalized_to_canvas(point)]
+            self.preview.create_polygon(coordinates, fill="", outline=_REGION_COLOUR,
+                                        width=2, dash=(6, 3))
+            self.preview.create_text(coordinates[0] + 6, coordinates[1] - 6,
+                                     text=constraint.settings.character, anchor="sw",
+                                     fill=_REGION_COLOUR)
+            return
         if isinstance(constraint, TerrainBrushStroke):
             canvas_points = [self._normalized_to_canvas(point) for point in constraint.points]
             radius = max(2.0, self._influence_radius_pixels(constraint.influence_radius_km))
@@ -1861,7 +1968,8 @@ class TerrainApp:
         if not self._draft_points:
             return
         tool = self._authoring_tool.get()
-        colour = _RIDGE_COLOUR if tool == "ridge" else _VALLEY_COLOUR
+        colour = {"ridge": _RIDGE_COLOUR, "valley": _VALLEY_COLOUR,
+                  "region": _REGION_COLOUR}.get(tool, _REGION_COLOUR)
         coordinates: list[float] = []
         canvas_points: list[tuple[float, float]] = []
         for point in self._draft_points:
@@ -1869,7 +1977,12 @@ class TerrainApp:
             canvas_points.append(canvas_point)
             coordinates.extend(canvas_point)
         if len(canvas_points) >= 2:
-            if tool == "valley":
+            if tool == "region":
+                self.preview.create_line(coordinates, fill=colour, width=2, dash=(6, 4))
+                if len(canvas_points) >= 3:
+                    self.preview.create_line(*canvas_points[-1], *canvas_points[0],
+                                             fill=colour, width=1, dash=(2, 4))
+            elif tool == "valley":
                 self.preview.create_line(
                     coordinates,
                     fill=colour,

@@ -44,3 +44,6 @@ was already known.
 
 For numeric GIS exchange and its local-coordinate limits, read the
 [GeoTIFF export guide](terrain-geotiff.md).
+
+For regional terrain authoring and its first four recipes, read the
+[landform region guide](terrain-regions.md).
