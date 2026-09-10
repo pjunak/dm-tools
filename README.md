@@ -49,6 +49,11 @@ Then open the terrain workbench and run the tests:
 .\.venv\Scripts\python.exe -m pytest
 ```
 
+GitHub CI uses Windows and Python 3.14 to run the complete pytest suite, Ruff,
+and strict Pyright checks, including the display-free Tcl settings tests.
+Pytest reports are retained for 14 days. Secret scanning runs separately with
+the complete Git history available.
+
 Open the public
 [`example.dmterrain.json`](examples/terrain/example.dmterrain.json) project or
 import its [`coastline.svg`](examples/terrain/coastline.svg) directly for a first
