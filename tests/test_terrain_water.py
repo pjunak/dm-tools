@@ -40,11 +40,9 @@ def _review(
     x, y = np.meshgrid(np.arange(7, dtype=np.float64), np.arange(7, dtype=np.float64))
     ids = basin_intent_ids(x, y, basins)
     routing = drainage_incision(surface, np.ones_like(surface, bool), np.ones_like(surface),
-        x_spacing_km=1, y_spacing_km=1, maximum_elevation_m=100, variability=.5)
-    receivers = np.full(surface.shape, -1, dtype=np.int64)
-    receivers[3, 4] = 3 * 7 + 5
-    routing = replace(routing, receivers=receivers, channel_mask=receivers >= 0)
-    return review_water(basins, ids, surface, routing, anchors, (outlet_height,))
+        x_spacing_km=1, y_spacing_km=1, maximum_elevation_m=100, variability=.5,
+        retention_terminal_mask=ids > 0)
+    return review_water(basins, ids, surface, routing, anchors, (outlet_height,), (None,))
 
 
 def _bowl() -> NDArray[np.float64]:
@@ -53,7 +51,7 @@ def _bowl() -> NDArray[np.float64]:
     return surface
 
 
-def test_lake_water_is_separate_from_bathymetry_and_closed_outflow_is_reported() -> None:
+def test_lake_water_is_separate_from_bathymetry_and_closed_flow_is_retained() -> None:
     surface = _bowl()
     original = surface.copy()
     basin = TerrainBasin(POINTS, "lake", 10)
@@ -62,8 +60,9 @@ def test_lake_water_is_separate_from_bathymetry_and_closed_outflow_is_reported()
     assert record.wet_cell_count == 9
     assert record.wet_component_count == 1
     assert record.low_boundary_cell_count == record.dry_cell_count == 0
-    assert record.planned_exit_edge_count == 1
-    assert record.issues == ("planned_outflow_from_closed_basin",)
+    assert record.planned_exit_edge_count == 0
+    assert record.retained_contributing_area_km2 >= 9
+    assert record.issues == ()
     axis = np.arange(7, dtype=np.float64)
     basins = prepare_basins((basin,), 6, 6, LAND, 100)
     products = water_products(surface.astype(np.float32), axis, axis, basins,
@@ -86,15 +85,17 @@ def test_review_distinguishes_low_boundary_exposed_anchors_and_high_outlet() -> 
     assert record.exposed_height_anchor_count == 1
     assert record.dry_cell_count == 1
     assert set(record.issues) == {
-        "low_boundary", "exposed_height_anchor", "outlet_above_water", "outlet_route_unvalidated",
+        "low_boundary", "exposed_height_anchor", "outlet_above_water", "outlet_connection_pending",
     }
 
 
-def test_dry_basin_has_no_water_and_reports_planned_exits() -> None:
+def test_dry_basin_has_no_water_and_retains_planned_flow() -> None:
     record = _review(_bowl(), TerrainBasin(POINTS, "dry_basin")).basins[0]
     assert record.wet_cell_count == 0
     assert record.dry_cell_count == 9
-    assert record.issues == ("planned_outflow_from_closed_basin",)
+    assert record.planned_exit_edge_count == 0
+    assert record.retained_contributing_area_km2 >= 9
+    assert record.issues == ()
 
 
 def test_no_water_and_disconnected_pools_remain_explicit() -> None:
@@ -145,6 +146,13 @@ def test_retention_excludes_automatic_cut_preserves_anchors_and_nested_samples()
                               constraints=(anchor, lake))
     retained = first.water.routing_intent_ids > 0
     assert retained.any()
+    np.testing.assert_array_equal(first.routing.retention_terminal_mask, retained)
+    np.testing.assert_array_equal(first.routing.receivers[retained], -1)
+    np.testing.assert_array_equal(first.routing.detail_suppression[retained], 0)
+    area = first.routing_grid.x_spacing_km * first.routing_grid.y_spacing_km
+    assert first.routing.accumulation_km2[first.routing.outlet_mask].sum() == pytest.approx(
+        first.routing_land_mask.sum() * area)
+    assert all(record.planned_exit_edge_count == 0 for record in first.water.review.basins)
     np.testing.assert_array_equal(first.routing.incision_limit_m[retained], 0)
     np.testing.assert_array_equal(first.routing.incision_m[retained], 0)
     assert first.elevation_m[32, 32] == second.elevation_m[64, 64] == 300
@@ -152,6 +160,12 @@ def test_retention_excludes_automatic_cut_preserves_anchors_and_nested_samples()
     np.testing.assert_array_equal(first.water.surface_m, second.water.surface_m[::2, ::2])
     np.testing.assert_array_equal(first.water.intent_ids, second.water.intent_ids[::2, ::2])
     assert first.water.review == second.water.review
+    outlet_variant = generate_terrain(
+        coast, settings, constraints=(replace(lake, outlet=(.8, .5)), anchor))
+    np.testing.assert_array_equal(first.elevation_m, outlet_variant.elevation_m)
+    np.testing.assert_array_equal(first.routing.receivers, outlet_variant.routing.receivers)
+    assert outlet_variant.water.review.basins[0].outlet_route is not None
+    assert "outlet_connection_pending" in outlet_variant.water.review.basins[0].issues
     changed = generate_terrain(
         coast, settings, constraints=(replace(lake, water_level_m=1500), anchor))
     np.testing.assert_array_equal(first.elevation_m, changed.elevation_m)

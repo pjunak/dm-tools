@@ -10,8 +10,9 @@ from shapely.geometry import MultiPolygon, Point, Polygon
 from dmtools.terrain.domain import ElevationPoint, TerrainBasin, TerrainConstraint
 from dmtools.terrain.pipeline.basins import connected_components
 from dmtools.terrain.pipeline.hydrology import D8_NEIGHBOURS, DrainageIncision
+from dmtools.terrain.pipeline.outlets import OutletRouteReview
 
-WATER_ALGORITHM_ID = "authored-basin-water-review@1"
+WATER_ALGORITHM_ID = "authored-basin-water-review@2"
 
 
 @dataclass(frozen=True, slots=True)
@@ -71,6 +72,8 @@ class BasinIntentReview:
     planned_exit_edge_count: int
     exposed_height_anchor_count: int
     outlet_elevation_m: float | None
+    retained_contributing_area_km2: float
+    outlet_route: OutletRouteReview | None
     issues: tuple[str, ...]
 
 
@@ -95,13 +98,14 @@ def review_water(
     basins: tuple[MetricBasin, ...], intent_ids: NDArray[np.uint32],
     elevation_m: NDArray[np.float64], routing: DrainageIncision,
     constraints: tuple[TerrainConstraint, ...], outlet_elevations_m: tuple[float | None, ...],
+    outlet_routes: tuple[OutletRouteReview | None, ...],
 ) -> WaterReview:
     """Report sampled shoreline and planned-flow conflicts without inventing repairs."""
     records: list[BasinIntentReview] = []
     tolerance = .01
     height, width = elevation_m.shape
-    for basin_id, (basin, outlet_elevation) in enumerate(
-        zip(basins, outlet_elevations_m, strict=True), start=1,
+    for basin_id, (basin, outlet_elevation, outlet_route) in enumerate(
+        zip(basins, outlet_elevations_m, outlet_routes, strict=True), start=1,
     ):
         source = basin.source
         inside = intent_ids == basin_id
@@ -145,12 +149,14 @@ def review_water(
             if outlet_elevation is not None and outlet_elevation > source.water_level_m + tolerance:
                 issues.append("outlet_above_water")
             if source.outlet is not None:
-                issues.append("outlet_route_unvalidated")
-        if exit_count and source.outlet is None:
-            issues.append("planned_outflow_from_closed_basin")
+                issues.append("outlet_connection_pending")
+        if exit_count:
+            issues.append("unexpected_planned_basin_exit")
         records.append(BasinIntentReview(
             basin_id, source, count, wet_count, count - wet_count, components,
-            low_count, exit_count, exposed, outlet_elevation, tuple(issues),
+            low_count, exit_count, exposed, outlet_elevation,
+            float(np.sum(routing.accumulation_km2[inside & routing.retention_terminal_mask])),
+            outlet_route, tuple(issues),
         ))
     return WaterReview(WATER_ALGORITHM_ID, width, height, tolerance, tuple(records))
 

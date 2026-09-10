@@ -27,6 +27,7 @@ class DrainageIncision:
     routing_elevation_m: NDArray[np.float64]
     receivers: NDArray[np.int64]
     outlet_mask: NDArray[np.bool_]
+    retention_terminal_mask: NDArray[np.bool_]
     incision_m: NDArray[np.float64]
     incision_limit_m: NDArray[np.float64]
     accumulation_km2: NDArray[np.float64]
@@ -54,11 +55,23 @@ def land_outlet_mask(land_mask: NDArray[np.bool_]) -> NDArray[np.bool_]:
     return land_mask & ~surrounded_by_land
 
 
+def _terminal_cells(
+    land_mask: NDArray[np.bool_], terminal_mask: NDArray[np.bool_] | None,
+) -> NDArray[np.bool_]:
+    if terminal_mask is None:
+        return np.zeros_like(land_mask)
+    if terminal_mask.shape != land_mask.shape or np.any(terminal_mask & ~land_mask):
+        raise ValueError("Retention terminals must share the grid and lie on land.")
+    return terminal_mask
+
+
 def priority_flood_surface(
     elevation_m: NDArray[np.float64],
     land_mask: NDArray[np.bool_],
+    *,
+    terminal_mask: NDArray[np.bool_] | None = None,
 ) -> NDArray[np.float64]:
-    """Return a routing surface on which every land cell can reach a coast.
+    """Return a routing surface reaching a coast or an authored retention terminal.
 
     The returned surface is a temporary hydrology product. It fills accidental
     depressions but never replaces the authored/generated elevation surface.
@@ -76,7 +89,8 @@ def priority_flood_surface(
     visited = np.zeros_like(land_mask)
     queue: list[tuple[float, int, int]] = []
 
-    for row, column in np.argwhere(land_outlet_mask(land_mask)):
+    terminals = _terminal_cells(land_mask, terminal_mask)
+    for row, column in np.argwhere(land_outlet_mask(land_mask) | terminals):
         visited[row, column] = True
         heappush(queue, (float(filled[row, column]), int(row), int(column)))
 
@@ -116,6 +130,7 @@ def multiple_flow_accumulation(
     x_spacing_km: float,
     y_spacing_km: float,
     exponent: float = 1.1,
+    terminal_mask: NDArray[np.bool_] | None = None,
 ) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
     """Return MFD contributing area in km2 and maximum local downslope grade.
 
@@ -138,7 +153,10 @@ def multiple_flow_accumulation(
         np.argsort(-routing_elevation_m.ravel()[flat_indices], kind="stable")
     ]
 
+    terminals = _terminal_cells(land_mask, terminal_mask).ravel()
     for flat_index in order:
+        if terminals[flat_index]:
+            continue
         row, column = divmod(int(flat_index), width)
         current_height = float(routing_elevation_m[row, column])
         recipients: list[tuple[int, int, float, float, float]] = []
@@ -188,6 +206,7 @@ def steepest_flow_accumulation(
     *,
     x_spacing_km: float,
     y_spacing_km: float,
+    terminal_mask: NDArray[np.bool_] | None = None,
 ) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
     """Return D8 contributing area and receiver slope for a unique flow tree."""
 
@@ -196,6 +215,7 @@ def steepest_flow_accumulation(
         land_mask,
         x_spacing_km=x_spacing_km,
         y_spacing_km=y_spacing_km,
+        terminal_mask=terminal_mask,
     )
 
     accumulation = _accumulate_steepest_receivers(
@@ -236,6 +256,7 @@ def steepest_flow_receivers(
     *,
     x_spacing_km: float,
     y_spacing_km: float,
+    terminal_mask: NDArray[np.bool_] | None = None,
 ) -> tuple[NDArray[np.int64], NDArray[np.float64]]:
     """Return each cell's steepest lower D8 receiver and corresponding slope."""
 
@@ -247,7 +268,8 @@ def steepest_flow_receivers(
     height, width = routing_elevation_m.shape
     receivers = np.full(routing_elevation_m.shape, -1, dtype=np.int64)
     receiver_slope = np.zeros_like(routing_elevation_m)
-    flat_indices = np.flatnonzero(land_mask)
+    terminals = _terminal_cells(land_mask, terminal_mask)
+    flat_indices = np.flatnonzero(land_mask & ~terminals)
 
     for flat_index in flat_indices:
         row, column = divmod(int(flat_index), width)
@@ -706,6 +728,7 @@ def drainage_incision(
     variability: float,
     residual_detail_m: NDArray[np.float64] | None = None,
     incision_budget_m: NDArray[np.float64] | None = None,
+    retention_terminal_mask: NDArray[np.bool_] | None = None,
 ) -> DrainageIncision:
     """Derive broad valley incision and contributing area from a terrain surface."""
 
@@ -718,24 +741,28 @@ def drainage_incision(
         if np.any(land_mask & (~np.isfinite(incision_budget_m) | (incision_budget_m < 0))):
             raise ValueError("Land incision budget must be finite and non-negative.")
         budget_m = np.where(land_mask, np.minimum(incision_budget_m, global_budget_m), 0.0)
+    terminals = _terminal_cells(land_mask, retention_terminal_mask)
+    budget_m = np.where(terminals, 0.0, budget_m)
     budget_scale = budget_m / global_budget_m
     if residual_detail_m is not None:
         if residual_detail_m.shape != elevation_m.shape:
             raise ValueError("Residual detail must share the elevation grid shape.")
         if np.any(land_mask & ~np.isfinite(residual_detail_m)):
             raise ValueError("Land residual detail must be finite.")
-    routing_surface = priority_flood_surface(elevation_m, land_mask)
+    routing_surface = priority_flood_surface(elevation_m, land_mask, terminal_mask=terminals)
     accumulation_km2, _mfd_slope = multiple_flow_accumulation(
         routing_surface,
         land_mask,
         x_spacing_km=x_spacing_km,
         y_spacing_km=y_spacing_km,
+        terminal_mask=terminals,
     )
     receivers, slope = steepest_flow_receivers(
         routing_surface,
         land_mask,
         x_spacing_km=x_spacing_km,
         y_spacing_km=y_spacing_km,
+        terminal_mask=terminals,
     )
     cell_area_km2 = x_spacing_km * y_spacing_km
     tree_accumulation_km2 = _accumulate_steepest_receivers(
@@ -749,7 +776,7 @@ def drainage_incision(
     minimum_source_area_km2 = max(4.0 * cell_area_km2, 0.00025 * land_area_km2)
     initiation_slope = _masked_smooth(slope, land_mask, iterations=1)
     initiation_sample = (
-        land_mask
+        land_mask & ~terminals
         & (tree_accumulation_km2 >= minimum_source_area_km2)
         & (initiation_slope > 0.0)
     )
@@ -856,6 +883,7 @@ def drainage_incision(
         0.92,
     )
     detail_suppression *= coastal_gate
+    detail_suppression[terminals] = 0.0
     retained_detail_m = (
         np.zeros_like(elevation_m)
         if residual_detail_m is None
@@ -903,6 +931,7 @@ def drainage_incision(
         routing_elevation_m=routing_surface,
         receivers=receivers,
         outlet_mask=land_mask & (receivers < 0),
+        retention_terminal_mask=terminals.copy(),
         incision_m=np.where(land_mask, incision_m, 0.0),
         incision_limit_m=np.where(land_mask, maximum_incision_m, 0.0),
         accumulation_km2=accumulation_km2,

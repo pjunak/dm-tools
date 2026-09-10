@@ -32,7 +32,7 @@ preview, and PNG export. Those are not repeated below as unfinished work.
   hashes, generator and schema versions, master and stage seeds, effective
   parameters, working extent and units, runtime/dependency versions, warnings,
   and authoritative output hashes.
-  Current version-6 builds record named stage seeds, numeric product hashes,
+  Current version-8 builds record named stage seeds, numeric product hashes,
   and explicit local-only NPY/GeoTIFF coordinates. World placement remains open.
 - [x] **P0 — Export the authoritative Float32 DEM as local-metric GeoTIFF.**
   Implemented point registration, metre units, NaN nodata, embedded masks,
@@ -96,12 +96,26 @@ preview, and PNG export. Those are not repeated below as unfinished work.
   authoring, saved lake controls, automatic-cut retention, separate water/ground
   exports and shoreline/anchor/outflow review are implemented. See
   [ADR-0034](docs/adr/0034-author-lakes-and-dry-basins.md).
+- [x] **P1 — Terminate planned flow inside authored basin footprints.**
+  Canonical footprint nodes now absorb both D8 and MFD flow; contributing area
+  is conserved and exported per intent. Declared outlets remain pending. See
+  [ADR-0035](docs/adr/0035-retain-basin-flow-and-assess-outlets.md).
+- [x] **P1 — Assess candidate downstream lake outlets on finished ground.**
+  Review nearest outward attachments, whole candidate paths, uphill steps,
+  basin re-entry, vector coastline gaps, cycles and terminal boundary context.
+  Export sampled path evidence; a clear result does not activate flow.
+- [ ] **P1 — Connect eligible lake outlets and transfer retained area.**
+  Reconcile wet components, shoreline containment and basin terminal area into
+  an explicit outlet connection. Keep closed dry basins terminal, reject cycles
+  between basins, revalidate on the finished terrain, and preserve cut budgets.
+  Define water-head versus ground-channel behavior without inventing runoff.
 - [ ] **P1 — Reconcile blocked channels through explicit water/outlet choices.**
   The plain fixture has 253 uphill edges; all exceed remaining receiver cut
   and 234 touch depressions. Spill candidates and exterior/enclosed raster
   boundaries are mapped, and lake/dry-basin intent now protects authored areas.
-  Reconcile closed-basin exits, validate full outlet routes and classify ocean
-  boundaries before proposing constrained breaches or rerouting. Measure full route depth/length,
+  Closed-basin exits now stop and candidate outlet paths have sampled review.
+  Connect eligible outlets and classify ocean boundaries before applying
+  constrained breaches or rerouting. Measure full route depth/length,
   anchor preservation and downstream closure; never silently expand budgets.
 - [ ] **P1 — Extend regional process controls.** Add drainage density,
   runoff and erosion resistance with measurable effects and authored authority.
@@ -121,6 +135,8 @@ preview, and PNG export. Those are not repeated below as unfinished work.
   slopes where automatic incision resumes outside protected areas; soften the
   exterior transition if needed while preserving zero cuts inside. Derive
   vector shorelines and higher-resolution containment checks from numeric water.
+  Test narrow footprint fingers and crossings between canonical nodes; sampled
+  retention alone cannot resolve every authored polygon feature.
 - [ ] **P2 — Add reusable terrain profiles/presets.** Profiles should be
   versioned authored inputs with their own content hashes and should expose the
   effective values used by a build.

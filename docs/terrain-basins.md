@@ -69,7 +69,9 @@ Non-land classification uses eight-neighbour raster connectivity: exterior means
 connected to a raster edge. Flags may overlap. Narrow inlets or small holes can
 vanish or change connectivity at this resolution; classification does not assert
 SVG topology, ocean salinity, an ocean level or authored lake intent. Existing
-routing still accepts all three boundary kinds at their terrain elevations.
+diagnostic routing still accepts all three boundary kinds at their terrain
+elevations. Planning additionally terminates at authored retention nodes; its
+receiver graph is distinct from this diagnostic copy.
 
 ## Display and next authoring contract
 

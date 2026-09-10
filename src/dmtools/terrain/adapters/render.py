@@ -288,6 +288,13 @@ def render_drainage_review(terrain: GeneratedTerrain) -> Image.Image:
             resized = panel.resize((map_width, map_height), Image.Resampling.NEAREST)
             image.paste(resized, (left, top + 28))
             resized.close()
+        if index < 3:
+            for basin in terrain.water.review.basins:
+                points = [(left + x * (map_width - 1), top + 28 + y * (map_height - 1))
+                          for x, y in basin.source.points]
+                colour = "#7cddd2" if basin.source.kind == "lake" else "#d3b17d"
+                draw.line(points, fill=colour, width=1)
+                draw.text(points[0], f"A{basin.intent_id}", fill=colour)
         if index == 3:
             with render_basin_overlay(terrain, (map_width, map_height)) as overlay:
                 image.paste(overlay, (left, top + 28), overlay)
@@ -299,10 +306,10 @@ def render_drainage_review(terrain: GeneratedTerrain) -> Image.Image:
         f"{summary.final_adjustment_edge_count} final adjustment, "
         f"{summary.region_transition_edge_count} transition, "
         f"{summary.depression_edge_count} depression; {summary.unclassified_edge_count} other.",
-        "Basins: purple extents; white deepest nodes; yellow routes and spill diamonds (top 8). "
-        "IDs match diagnostics.json.",
-        f"Shared review grid: {width} x {height}. Conditioned escape routes are candidates; "
-        "water levels and authored lakes are not assigned.",
+        "A: cyan lake / tan dry-basin retention. B: purple depressions, white deepest nodes, "
+        "yellow candidate exits.",
+        f"Shared review grid: {width} x {height}. Natural-basin escape candidates ignore "
+        "authored retention; declared outlet connections remain pending.",
     )
     for row, line in enumerate(lines):
         draw.text((8, panel_height * 2 + 10 + 21 * row), line, fill="white")

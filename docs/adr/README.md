@@ -56,3 +56,5 @@ supersedes their legacy compatibility commitments during early development.
 - [ADR-0033: Map basin spill candidates](0033-map-basin-spill-candidates.md)
 
 - [ADR-0034: Author lakes and dry basins](0034-author-lakes-and-dry-basins.md)
+
+- [ADR-0035: Retain basin flow and assess outlets](0035-retain-basin-flow-and-assess-outlets.md)

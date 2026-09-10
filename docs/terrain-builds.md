@@ -81,8 +81,8 @@ request cannot measure 25 km structure on a grid spaced 60 km apart. These
 raw axis measurements distinguish orientation and spatial disorder; they are
 not a complete landform classifier or a realism score.
 
-`canonical_drainage` evaluates the separate existing diagnostic grid. Its
-dimensions and spacing are recorded, as is the automatic routing grid in the
+`canonical_drainage` evaluates a separate diagnostic surface on the same
+257-longest-side grid as planning. Dimensions and spacing are recorded in the
 manifest. Neither becomes finer merely because output resolution increases.
 
 ## Inspect planned drainage
@@ -97,6 +97,10 @@ apply the archive's `land_mask`, not an elevation threshold.
 
 `receivers` contains row-major flat D8 indices, with -1 for terminals and sea.
 `outlet_mask` identifies terminal land nodes on the filled routing graph.
+Build v8 adds `retention_terminal_mask`, identifying absorbing authored basin
+nodes among those terminals. Their D8 receiver is -1 and MFD area stays there;
+other nodes can deliver incoming area to them. Declared lake outlets also remain
+closed pending an explicit validated connection.
 `accumulation_km2` is MFD contributing area; channels and Strahler order follow
 the distinct D8 tree. It is not a calibrated water discharge or a watershed ID.
 
@@ -130,7 +134,7 @@ project, SVG and installed Python package files are fingerprinted; runtime and
 dependency versions are recorded. No network service is needed to build.
 
 Consumers must validate the manifest and verify product hashes. Register the
-[current build schema](../schemas/terrain/build-v7.schema.json) and
+[current build schema](../schemas/terrain/build-v8.schema.json) and
 [current project schema](../schemas/terrain/project-v5.schema.json) locally by
 `$id` for offline validation. Older formats are unsupported. The
 [seed contract](terrain-seeds.md) describes the single named-stage algorithm.
@@ -177,7 +181,7 @@ They do not assign lake levels, classify authored dry basins or modify terrain.
 
 ## Authored water products
 
-Build v7 adds `water.npz` with delivered-grid Float32 water surfaces/depths and
+Build v8 includes `water.npz` with delivered-grid Float32 water surfaces/depths and
 UInt32 footprint IDs. `routing.npz` adds canonical `basin_intent_ids`;
 `diagnostics.json` records `authored_water` and `water_sha256`. Ground elevations
 remain in the DEM and GeoTIFF. Cartographic relief shows wet lake samples, while

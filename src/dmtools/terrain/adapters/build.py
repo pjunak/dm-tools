@@ -40,7 +40,7 @@ from dmtools.terrain.pipeline.generate import (
 from dmtools.terrain.pipeline.landforms import LANDFORM_ALGORITHM_ID
 from dmtools.terrain.pipeline.quality import TerrainQuality
 
-BUILD_SCHEMA_VERSION = 7
+BUILD_SCHEMA_VERSION = 8
 
 
 def file_sha256(path: Path) -> str:
@@ -128,6 +128,7 @@ def write_build_products(
             channel_head_mask=routing.channel_head_mask,
             stream_order=routing.stream_order,
             outlet_mask=routing.outlet_mask,
+            retention_terminal_mask=routing.retention_terminal_mask,
             incision_m=routing.incision_m,
             incision_limit_m=routing.incision_limit_m,
             channel_conflict_flags=terrain.routing_conflicts.flags,

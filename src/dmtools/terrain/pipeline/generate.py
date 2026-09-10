@@ -45,6 +45,7 @@ from dmtools.terrain.pipeline.landforms import (
     regional_transition_mask,
 )
 from dmtools.terrain.pipeline.noise import fractal_value_noise
+from dmtools.terrain.pipeline.outlets import review_outlet_routes
 from dmtools.terrain.pipeline.profile import shape_preserving_profile
 from dmtools.terrain.pipeline.water import (
     MetricBasin,
@@ -57,8 +58,8 @@ from dmtools.terrain.pipeline.water import (
 
 type ProgressCallback = Callable[[float, str], None]
 
-GENERATOR_ALGORITHM_ID = "coastline-constraint-terrain@6"
-AUTOMATIC_VALLEY_ALGORITHM_ID = "regional-budget-mfd-d8-valleys@5"
+GENERATOR_ALGORITHM_ID = "coastline-constraint-terrain@7"
+AUTOMATIC_VALLEY_ALGORITHM_ID = "regional-budget-mfd-d8-valleys@6"
 NOISE_ALGORITHM_ID = "coordinate-value-noise-normalized@1"
 
 
@@ -905,7 +906,8 @@ def _prepare_automatic_valley_field(
         x_grid, y_grid,
         automatic_incision_budget(settings.maximum_elevation_m, settings.variability), regions,
     )
-    budget[basin_intent_ids(x_grid, y_grid, basins) > 0] = 0
+    retention_terminals = basin_intent_ids(x_grid, y_grid, basins) > 0
+    budget[retention_terminals] = 0
     drainage = drainage_incision(
         routing_elevation,
         land_mask,
@@ -916,6 +918,7 @@ def _prepare_automatic_valley_field(
         variability=settings.variability,
         residual_detail_m=(full_elevation - macro_elevation) * (1.0 - constraint_influence),
         incision_budget_m=budget,
+        retention_terminal_mask=retention_terminals,
     )
     return _AutomaticValleyField(
         x_km=x_km,
@@ -1268,9 +1271,14 @@ def generate_terrain(
                 settings, metric_constraints, automatic_valleys, regions=regions,
             )
             outlet_heights.append(float(np.float32(values[0])))
+    outlet_routes = review_outlet_routes(
+        basins, routing_basin_ids, routing_final, automatic_valleys.land_mask,
+        review.drainage.receivers, review.drainage.boundary_flags,
+        automatic_valleys.x_km, automatic_valleys.y_km, polygon, tuple(outlet_heights),
+    )
     water_review = review_water(
         basins, routing_basin_ids, routing_final, automatic_valleys.drainage,
-        authored_constraints, tuple(outlet_heights),
+        authored_constraints, tuple(outlet_heights), outlet_routes,
     )
     water = water_products(elevation, x_km, y_km, basins, routing_basin_ids, water_review)
 

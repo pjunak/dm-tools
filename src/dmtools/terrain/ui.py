@@ -1759,9 +1759,8 @@ class TerrainApp:
             "low_boundary": "Water reaches low ground beyond the drawn area; review its boundary.",
             "exposed_height_anchor": "An authored height point remains above the lake level.",
             "outlet_above_water": "The outlet terrain is above the water level.",
-            "outlet_route_unvalidated": "The downstream outlet route still needs validation.",
-            "planned_outflow_from_closed_basin": (
-                "Planned channels leave this closed basin; repair is pending."),
+            "outlet_connection_pending": "The declared outlet remains closed in planned flow.",
+            "unexpected_planned_basin_exit": "Unexpected planned basin exit; inspect routing.",
         }
         sections: list[str] = []
         for record in records[:20]:
@@ -1772,6 +1771,29 @@ class TerrainApp:
             findings = [descriptions[issue] for issue in record.issues]
             if not findings:
                 findings = ["No sampled conflict found. This is not a river-flow certification."]
+            findings.append(
+                f"Retained contributing area: {record.retained_contributing_area_km2:,.1f} km².")
+            route = record.outlet_route
+            if route is not None:
+                findings.append(f"Outlet candidate: {route.length_km:,.1f} km reviewed; "
+                                f"{route.uphill_edge_count} uphill steps, "
+                                f"largest rise {route.maximum_rise_m:,.2f} m.")
+                route_descriptions = {
+                    "outlet_above_water": "The outlet terrain is above the water level.",
+                    "outlet_without_sampled_water": "No sampled water connects to the outlet.",
+                    "outlet_attachment_unresolved": "No nearby outward attachment was resolved.",
+                    "outlet_route_cycle": "The candidate route contains a loop.",
+                    "outlet_route_invalid_receiver": "The candidate route has an invalid step.",
+                    "outlet_route_enters_basin": "The candidate route enters an authored basin.",
+                    "outlet_route_crosses_nonland": "The candidate route crosses a coastline gap.",
+                    "outlet_route_interior_terminal": "The candidate route stops inland.",
+                    "outlet_route_uphill": "The candidate route climbs on the finished ground.",
+                    "outlet_terminal_level_unknown": "The terminal water level is unknown.",
+                }
+                findings.extend(route_descriptions[issue] for issue in route.issues)
+                if route.status == "sampled_clear":
+                    findings.append(
+                        "No sampled obstruction found; outlet connection is pending.")
             sections.append(title + "\n" + "\n".join(findings))
         if len(records) > 20:
             sections.append(f"Showing 20 of {len(records)} areas.")

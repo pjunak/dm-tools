@@ -73,8 +73,13 @@ The separate coarse inventory is removed. Authored lakes and dry-basin areas
 now protect terrain from automatic cuts and export separate water surfaces
 ([ADR-0034](../adr/0034-author-lakes-and-dry-basins.md)).
 
-1. Reconcile planned exits with authored closed/dry basins and lake outlets;
-   validate downstream outlet paths and shoreline containment before applying repair.
+Authored footprint nodes now absorb D8/MFD flow, with conserved area and
+finished-ground candidate outlet review
+([ADR-0035](../adr/0035-retain-basin-flow-and-assess-outlets.md)).
+
+1. Connect eligible declared lake outlets with basin-area transfer, shoreline
+   checks and finished-field revalidation. Closed dry basins remain terminal;
+   candidate review alone does not enable lake outflow.
 2. Compare retention, constrained breach and reroute proposals using full paths,
    cut depth/length and preserved anchors, then expose reviewable river networks.
 3. Per-vertex ridge/valley profiles, explicit passes and asymmetric sides.

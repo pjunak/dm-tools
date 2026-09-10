@@ -178,6 +178,8 @@ def probe(case: str, resolution: int, seed: int) -> dict[str, Any]:
             ("x_km", terrain.x_km),
             ("y_km", terrain.y_km),
             ("routing_receivers", terrain.routing.receivers),
+            ("routing_accumulation", terrain.routing.accumulation_km2),
+            ("retention_terminals", terrain.routing.retention_terminal_mask),
             ("routing_channels", terrain.routing.channel_mask),
             ("routing_incision", terrain.routing.incision_m),
             ("routing_incision_limit", terrain.routing.incision_limit_m),

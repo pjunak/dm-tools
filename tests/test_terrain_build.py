@@ -56,7 +56,7 @@ def test_headless_build_preserves_dem_and_has_repeatable_verified_products(
     build_module.build_terrain_project(project_path, second)
     document: dict[str, Any] = json.loads((first / "manifest.json").read_text())
     schema_dir = EXAMPLES.parents[1] / "schemas" / "terrain"
-    assert document["schema_version"] == 7
+    assert document["schema_version"] == 8
     assert document["inputs"]["project_schema_version"] == 5
     assert document["algorithms"]["seed_policy"] == SEED_POLICY_ID
     resolved_seed = stage_seed(loaded.project.settings.seed, RELIEF_STAGE_ID)
@@ -74,7 +74,7 @@ def test_headless_build_preserves_dem_and_has_repeatable_verified_products(
     )
     schema = next(
         item for item in schemas
-        if item["$id"] == "urn:dmtools:schema:terrain-build:7"
+        if item["$id"] == "urn:dmtools:schema:terrain-build:8"
     )
     validate(document, schema, cls=Draft202012Validator, registry=registry)
     invalid = {**document, "coordinates": {**document["coordinates"], "world_crs": "EPSG:4326"}}
@@ -337,5 +337,9 @@ def test_authored_water_build_keeps_ground_and_water_separate_and_repeatable(
     with np.load(first / "routing.npz", allow_pickle=False) as routing:
         retained = routing["basin_intent_ids"] > 0
         assert retained.any()
+        np.testing.assert_array_equal(routing["retention_terminal_mask"], retained)
+        np.testing.assert_array_equal(routing["receivers"][retained], -1)
+        assert all(record["planned_exit_edge_count"] == 0 for record in records)
+        assert all(record["retained_contributing_area_km2"] > 0 for record in records)
         np.testing.assert_array_equal(routing["incision_m"][retained], 0)
         np.testing.assert_array_equal(routing["incision_limit_m"][retained], 0)

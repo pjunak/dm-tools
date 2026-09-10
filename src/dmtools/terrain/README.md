@@ -58,7 +58,7 @@ transitions and the [public example](../../../examples/terrain/landform-regions.
 - Disconnected polygons become islands or other separate land components in one
   shared generation. Larger enclosed gaps remain water; sub-sampling slivers at
   separately drawn borders are repaired.
-- Explicit compound-path holes and semantic lake levels are not yet supported.
+- SVG water gaps remain non-land; authored lake levels use separate basin constraints.
 
 The combined land geometry's **longest bounding-box dimension** is the object
 scale in kilometres. The shorter dimension keeps the SVG aspect ratio. This
@@ -141,8 +141,8 @@ valley through a high plateau high while still making its route drain toward
 the authored outlet. Absolute floor anchors must already be non-rising in the
 authored direction and are rejected if they conflict. Relative depth remains a
 preferred minimum incision: the downstream correction may deepen it where that
-is necessary to avoid an uphill floor. Authored lakes and endorheic exceptions
-are not yet supported.
+is necessary to avoid an uphill floor. Authored lake/dry-basin retention applies to automatic channels; this explicit
+valley profile remains authoritative inside those areas.
 
 Constraints use normalized coastline-bounds coordinates while being authored
 and are converted to explicit metric coordinates during generation. They are
@@ -249,7 +249,8 @@ This removes extreme numerical knickpoints without flattening ordinary profile
 variation or modifying authored features.
 The model still does **not** simulate plate tectonics, rock type, sediment,
 climate or geological time. Authored lake/dry-basin areas now exclude automatic
-cutting, but endorheic flow and outlet reconciliation remain incomplete. The drainage
+cutting and absorb planned flow. Candidate downstream outlets are reviewed,
+while actual outlet connection remains pending. The drainage
 field is exported for review but is not certified as a river network.
 
 Every result includes a canonical broad-scale drainage check on the same
@@ -349,7 +350,9 @@ Use **Lake** or **Dry basin** to draw a closed area and choose **Finish area**.
 Lake controls set a water level and optional first-vertex outlet. Generated cuts
 are excluded inside either footprint; authored height and structure constraints
 still apply. Cartographic relief displays water over its preserved ground DEM.
-**Basin details** explains sampled shoreline, outlet and planned-flow conflicts.
+**Basin details** explains shoreline conflicts, retained contributing area and
+sampled downstream outlet evidence. All footprint nodes terminate planned flow;
+a declared outlet remains pending until area transfer and connection are implemented.
 See the [water guide](../../../docs/terrain-water.md) and public
 [example](../../../examples/terrain/basin-water.dmterrain.json). The current
 formats are project v5 and build v7; previous formats are unsupported.
