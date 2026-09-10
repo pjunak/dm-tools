@@ -97,8 +97,8 @@ layer or path boundaries.
 
 - World-georeferenced build contracts and explicit source placement
 - Elevation profiles and asymmetric side slopes along structural lines
-- Basin-to-outlet area transfer, constrained repair and nested depression policy
-  (authored water levels, retention terminals and candidate outlet review are implemented)
+- Inter-lake transfer, constrained repair and nested depression policy
+  (lake levels, retention, outlet checks and conservative area transfer are implemented)
 - Public drainage/catchment products and external hydrology validation boundary
 - Multiresolution storage and refinement strategy
 - Global climate-field and ecological-classification contracts

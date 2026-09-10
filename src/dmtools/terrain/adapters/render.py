@@ -295,6 +295,9 @@ def render_drainage_review(terrain: GeneratedTerrain) -> Image.Image:
                 colour = "#7cddd2" if basin.source.kind == "lake" else "#d3b17d"
                 draw.line(points, fill=colour, width=1)
                 draw.text(points[0], f"A{basin.intent_id}", fill=colour)
+        if index in (1, 2):
+            with render_basin_outflow_overlay(terrain, (map_width, map_height)) as overlay:
+                image.paste(overlay, (left, top + 28), overlay)
         if index == 3:
             with render_basin_overlay(terrain, (map_width, map_height)) as overlay:
                 image.paste(overlay, (left, top + 28), overlay)
@@ -307,12 +310,33 @@ def render_drainage_review(terrain: GeneratedTerrain) -> Image.Image:
         f"{summary.region_transition_edge_count} transition, "
         f"{summary.depression_edge_count} depression; {summary.unclassified_edge_count} other.",
         "A: cyan lake / tan dry-basin retention. B: purple depressions, white deepest nodes, "
-        "yellow candidate exits.",
+        "yellow candidate exits. Teal: connected lake outflow.",
         f"Shared review grid: {width} x {height}. Natural-basin escape candidates ignore "
-        "authored retention; declared outlet connections remain pending.",
+        "authored retention. Connected outflows use sampled finished terrain.",
     )
     for row, line in enumerate(lines):
         draw.text((8, panel_height * 2 + 10 + 21 * row), line, fill="white")
+    return image
+
+
+def render_basin_outflow_overlay(
+    terrain: GeneratedTerrain, size: tuple[int, int],
+) -> Image.Image:
+    width, height = size
+    image = Image.new("RGBA", size)
+    draw = ImageDraw.Draw(image)
+    grid = terrain.routing_grid
+    for record in terrain.water.review.basins:
+        if record.outlet_connection != "connected":
+            continue
+        assert record.outlet_route is not None and record.source.outlet is not None
+        x, y = record.source.outlet
+        points = [(x * (width - 1), y * (height - 1))]
+        for node in record.outlet_route.path_flat_indices:
+            row, column = divmod(node, grid.width)
+            points.append((column * (width - 1) / (grid.width - 1),
+                           row * (height - 1) / (grid.height - 1)))
+        draw.line(points, fill=(65, 235, 195, 255), width=2)
     return image
 
 
@@ -336,4 +360,6 @@ def render_drainage_overlay(
                        target_column * x_scale, target_row * y_scale),
                       width=1,
                       fill=(255, 95, 65, 255) if uphill else (45, 185, 255, 230))
+    with render_basin_outflow_overlay(terrain, (width, height)) as outflow:
+        image.alpha_composite(outflow)
     return image

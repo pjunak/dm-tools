@@ -1759,7 +1759,10 @@ class TerrainApp:
             "low_boundary": "Water reaches low ground beyond the drawn area; review its boundary.",
             "exposed_height_anchor": "An authored height point remains above the lake level.",
             "outlet_above_water": "The outlet terrain is above the water level.",
-            "outlet_connection_pending": "The declared outlet remains closed in planned flow.",
+            "outlet_route_blocked": "The declared outlet has no clear downstream route.",
+            "outlet_shoreline_uncontained": "A low shoreline opening lies away from the outlet.",
+            "outlet_water_disconnected": "Water is separated by the drawn basin boundary.",
+            "outlet_partial_catchment": "Isolated dry ground stays retained.",
             "unexpected_planned_basin_exit": "Unexpected planned basin exit; inspect routing.",
         }
         sections: list[str] = []
@@ -1773,6 +1776,11 @@ class TerrainApp:
                 findings = ["No sampled conflict found. This is not a river-flow certification."]
             findings.append(
                 f"Retained contributing area: {record.retained_contributing_area_km2:,.1f} km².")
+            if record.outlet_connection == "connected":
+                findings.append(f"Connected outlet: {record.outlet_contributing_area_km2:,.1f} km² "
+                                "of contributing area reaches the downstream boundary.")
+            elif record.outlet_connection == "blocked":
+                findings.append("Outlet connection blocked; contributing area stays retained.")
             route = record.outlet_route
             if route is not None:
                 findings.append(f"Outlet candidate: {route.length_km:,.1f} km reviewed; "
@@ -1791,9 +1799,8 @@ class TerrainApp:
                     "outlet_terminal_level_unknown": "The terminal water level is unknown.",
                 }
                 findings.extend(route_descriptions[issue] for issue in route.issues)
-                if route.status == "sampled_clear":
-                    findings.append(
-                        "No sampled obstruction found; outlet connection is pending.")
+                if route.status == "sampled_clear" and record.outlet_connection != "connected":
+                    findings.append("Downstream path is clear; review the lake findings above.")
             sections.append(title + "\n" + "\n".join(findings))
         if len(records) > 20:
             sections.append(f"Showing 20 of {len(records)} areas.")

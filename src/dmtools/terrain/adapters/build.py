@@ -40,7 +40,7 @@ from dmtools.terrain.pipeline.generate import (
 from dmtools.terrain.pipeline.landforms import LANDFORM_ALGORITHM_ID
 from dmtools.terrain.pipeline.quality import TerrainQuality
 
-BUILD_SCHEMA_VERSION = 8
+BUILD_SCHEMA_VERSION = 9
 
 
 def file_sha256(path: Path) -> str:
@@ -155,6 +155,13 @@ def write_build_products(
         stream.flush()
         os.fsync(stream.fileno())
     paths.append(("water.npz", "derived"))
+    with (destination / "basin-flow.npz").open("xb") as stream:
+        np.savez_compressed(stream, source_km2=terrain.basin_outflow.source_km2,
+                            throughput_km2=terrain.basin_outflow.throughput_km2,
+                            terminal_km2=terrain.basin_outflow.terminal_km2)
+        stream.flush()
+        os.fsync(stream.fileno())
+    paths.append(("basin-flow.npz", "derived"))
     with render_drainage_review(terrain) as review:
         review.save(destination / "drainage.png")
     paths.append(("drainage.png", "derived"))
@@ -168,6 +175,8 @@ def write_build_products(
             "routing_agreement": asdict(terrain.routing_agreement),
             "channel_conflicts": asdict(terrain.routing_conflicts.summary),
             "authored_water": asdict(terrain.water.review),
+            "basin_outflow": asdict(terrain.basin_outflow.summary),
+            "basin_flow_sha256": file_sha256(destination / "basin-flow.npz"),
             "water_sha256": file_sha256(destination / "water.npz"),
             "routing_sha256": file_sha256(destination / "routing.npz"),
             "elevation_sha256": file_sha256(destination / "elevation.npy"),

@@ -31,7 +31,7 @@ from dmtools.terrain.pipeline.generate import generate_terrain
 from dmtools.terrain.pipeline.quality import measure_terrain_quality
 
 ROOT = Path(__file__).resolve().parents[1]
-CASES = ("example", "square", "archipelago", "authored", "regional", "water")
+CASES = ("example", "square", "archipelago", "authored", "regional", "water", "outlet")
 
 
 def _ring(x: float, y: float, rx: float, ry: float, count: int) -> tuple[tuple[float, float], ...]:
@@ -52,8 +52,9 @@ def fixture(
     """Public or synthetic inputs only; no private map or authored file changes."""
     settings = TerrainSettings(resolution_px=resolution, seed=seed)
     constraints: tuple[TerrainConstraint, ...] = ()
-    if case in ("example", "regional", "water"):
-        name = {"example": "example", "regional": "landform-regions", "water": "basin-water"}[case]
+    if case in ("example", "regional", "water", "outlet"):
+        name = {"example": "example", "regional": "landform-regions",
+                "water": "basin-water", "outlet": "connected-outlet"}[case]
         project = load_terrain_project(ROOT / f"examples/terrain/{name}.dmterrain.json").project
         return (
             project.coastline,
@@ -187,6 +188,9 @@ def probe(case: str, resolution: int, seed: int) -> dict[str, Any]:
             ("channel_conflicts", terrain.routing_conflicts.flags),
             ("basin_labels", terrain.drainage.basin_labels),
             ("water_surface", terrain.water.surface_m),
+            ("outflow_sources", terrain.basin_outflow.source_km2),
+            ("outflow_throughput", terrain.basin_outflow.throughput_km2),
+            ("outflow_terminals", terrain.basin_outflow.terminal_km2),
             ("water_intent_ids", terrain.water.intent_ids),
             ("routing_intent_ids", terrain.water.routing_intent_ids),
             ("conditioned_final_receivers", terrain.drainage.receivers),
@@ -216,6 +220,7 @@ def probe(case: str, resolution: int, seed: int) -> dict[str, Any]:
         "routing_agreement": asdict(terrain.routing_agreement),
         "channel_conflicts": asdict(terrain.routing_conflicts.summary),
         "authored_water": asdict(terrain.water.review),
+        "basin_outflow": asdict(terrain.basin_outflow.summary),
         "quality": asdict(quality),
     }
 
@@ -280,7 +285,7 @@ def main() -> None:
                             run[key] != batch[0][key]
                             for key in ("input_sha256", "output_sha256", "drainage",
                                         "routing_agreement", "channel_conflicts",
-                                        "authored_water", "quality")
+                                        "authored_water", "basin_outflow", "quality")
                         ):
                             raise RuntimeError(
                                 "Identical benchmark inputs produced different results"

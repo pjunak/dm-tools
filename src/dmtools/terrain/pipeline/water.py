@@ -1,6 +1,7 @@
 """Authored retention footprints, water products and explicit terrain conflicts."""
 
 from dataclasses import dataclass
+from typing import Literal
 
 import numpy as np
 from numpy.typing import NDArray
@@ -12,7 +13,7 @@ from dmtools.terrain.pipeline.basins import connected_components
 from dmtools.terrain.pipeline.hydrology import D8_NEIGHBOURS, DrainageIncision
 from dmtools.terrain.pipeline.outlets import OutletRouteReview
 
-WATER_ALGORITHM_ID = "authored-basin-water-review@2"
+WATER_ALGORITHM_ID = "authored-basin-water-review@3"
 
 
 @dataclass(frozen=True, slots=True)
@@ -72,7 +73,11 @@ class BasinIntentReview:
     planned_exit_edge_count: int
     exposed_height_anchor_count: int
     outlet_elevation_m: float | None
+    captured_contributing_area_km2: float
     retained_contributing_area_km2: float
+    outlet_contributing_area_km2: float
+    outlet_connection: Literal["closed", "blocked", "connected"]
+    uncontrolled_low_boundary_cell_count: int
     outlet_route: OutletRouteReview | None
     issues: tuple[str, ...]
 
@@ -92,6 +97,28 @@ class WaterProducts:
     intent_ids: NDArray[np.uint32]
     routing_intent_ids: NDArray[np.uint32]
     review: WaterReview
+
+
+def low_boundary_cells(
+    inside: NDArray[np.bool_], wet: NDArray[np.bool_], below: NDArray[np.bool_],
+    allowed_opening: NDArray[np.bool_] | None = None,
+) -> NDArray[np.bool_]:
+    """Flag wet donors with low outside neighbours, except a bounded outlet opening."""
+    height, width = inside.shape
+    low_boundary = np.zeros_like(inside)
+    for dr, dc in D8_NEIGHBOURS:
+        rows = slice(max(0, -dr), min(height, height - dr))
+        columns = slice(max(0, -dc), min(width, width - dc))
+        neighbours = (slice(max(0, dr), min(height, height + dr)),
+                      slice(max(0, dc), min(width, width + dc)))
+        edges = wet[rows, columns] & ~inside[neighbours] & below[neighbours]
+        if allowed_opening is not None:
+            edges &= ~(allowed_opening[rows, columns] & allowed_opening[neighbours])
+        low_boundary[rows, columns] |= edges
+    # The raster crop itself cannot be an inferred authored opening.
+    low_boundary[[0, -1], :] |= wet[[0, -1], :]
+    low_boundary[:, [0, -1]] |= wet[:, [0, -1]]
+    return low_boundary
 
 
 def review_water(
@@ -122,18 +149,7 @@ def review_water(
             wet = inside & below
             wet_count = int(np.count_nonzero(wet))
             components = len(connected_components(wet))
-            low_boundary = np.zeros_like(inside)
-            for dr, dc in D8_NEIGHBOURS:
-                rows = slice(max(0, -dr), min(height, height - dr))
-                columns = slice(max(0, -dc), min(width, width - dc))
-                outside = ~inside[max(0, dr):min(height, height + dr),
-                                  max(0, dc):min(width, width + dc)]
-                low = below[max(0, dr):min(height, height + dr),
-                            max(0, dc):min(width, width + dc)]
-                low_boundary[rows, columns] |= wet[rows, columns] & outside & low
-            low_boundary[[0, -1], :] |= wet[[0, -1], :]
-            low_boundary[:, [0, -1]] |= wet[:, [0, -1]]
-            low_count = int(np.count_nonzero(low_boundary))
+            low_count = int(np.count_nonzero(low_boundary_cells(inside, wet, below)))
             normalized = Polygon(source.points)
             exposed = sum(isinstance(item, ElevationPoint) and item.elevation_mode == "absolute"
                           and item.elevation_m >= source.water_level_m - tolerance
@@ -148,15 +164,18 @@ def review_water(
                 issues.append("exposed_height_anchor")
             if outlet_elevation is not None and outlet_elevation > source.water_level_m + tolerance:
                 issues.append("outlet_above_water")
-            if source.outlet is not None:
-                issues.append("outlet_connection_pending")
+            if source.outlet is not None and (outlet_route is None
+                                              or outlet_route.status != "sampled_clear"):
+                issues.append("outlet_route_blocked")
         if exit_count:
             issues.append("unexpected_planned_basin_exit")
+        captured_area = float(np.sum(
+            routing.accumulation_km2[inside & routing.retention_terminal_mask]))
         records.append(BasinIntentReview(
             basin_id, source, count, wet_count, count - wet_count, components,
             low_count, exit_count, exposed, outlet_elevation,
-            float(np.sum(routing.accumulation_km2[inside & routing.retention_terminal_mask])),
-            outlet_route, tuple(issues),
+            captured_area, captured_area, 0., "closed" if source.outlet is None else "blocked",
+            low_count, outlet_route, tuple(issues),
         ))
     return WaterReview(WATER_ALGORITHM_ID, width, height, tolerance, tuple(records))
 

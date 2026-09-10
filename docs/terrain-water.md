@@ -52,7 +52,7 @@ The generation result retains water products and a review on the shared
 sorted by kind, level, outlet and points. They identify this result and can change
 when inputs change; they are distinct from derived depression candidate IDs.
 
-Build v8 includes `water.npz`, sharing the delivered DEM's grid and axes:
+Build v9 includes `water.npz`, sharing the delivered DEM's grid and axes:
 
 | Field | Meaning |
 |---|---|
@@ -65,7 +65,8 @@ canonical grid. All marked terminals have receiver -1.
 `diagnostics.json` adds `authored_water` and `water_sha256`; existing DEM/routing
 hashes and the completion manifest bind all products together. The water review
 contains each ID's authored record, counts/flags, retained contributing area and
-optional outlet-route evidence. No pickle loading is needed.
+outlet-route evidence, connection state, captured/retained/exported contributing
+area and uncontrolled shoreline counts. No pickle loading is needed.
 
 ## Planned retention and contributing area
 
@@ -76,7 +77,8 @@ area onward. Incoming planned channels end at their first footprint node.
 Each interior node retains its own local contribution; this does not invent
 an internal lake channel, a shared basin floor or overflow between pools.
 
-`retained_contributing_area_km2` sums the MFD area at that intent's terminals.
+`captured_contributing_area_km2` sums the MFD area at that intent's terminals.
+`retained_contributing_area_km2` is the portion left after any outlet transfer.
 Across all terminal land nodes, the sum equals land-node count times canonical
 x/y spacing, within floating-point tolerance. This is the existing equal-node
 contributing-area convention, not exact vector polygon area or water volume.
@@ -84,8 +86,10 @@ The review reports `unexpected_planned_basin_exit` if a channel violates the
 terminal contract. No footprint node may receive automatic cutting or detail
 suppression. Geometry smaller than the grid can resolve still needs refinement.
 
-A lake with a declared outlet also remains absorbing pending connection.
-Changing its level or outlet therefore leaves ground and planning unchanged.
+This automatic-incision graph continues to absorb lake area during terrain
+generation. The finished-ground outflow layer connects eligible declared
+outlets afterward. Changing a lake level or outlet leaves ground and the
+automatic-incision graph unchanged; its derived water connection can change.
 The separate `canonical_drainage` analysis still fills a diagnostic copy toward
 land boundaries to inventory natural depressions. Its conditioned receivers
 are candidate topology; they do not override authored retention.
@@ -116,10 +120,66 @@ terminals without exterior-water adjacency need an explicit boundary level.
 
 `outlet_route.status` is `sampled_clear`, `blocked` or `unresolved` (no eligible
 attachment). `sampled_clear` means this candidate has no detected obstruction
-at the sampled spacing. It does not check terrain between nodes, certify the
-shoreline, choose an ocean level, validate river gradients at finer scales or
-activate flow. Every declared outlet keeps `outlet_connection_pending` until
-basin-to-outlet routing and area transfer are implemented together.
+at the sampled spacing. It does not check terrain between nodes, choose an
+ocean level or validate river gradients at finer scales. Connection additionally
+requires the water and shoreline checks below. Every regeneration reassesses
+the route on the current finished field; no stale connected state is persisted.
+
+## Connecting an eligible outlet
+
+An outlet is `closed` when absent, `blocked` when its route or lake checks fail,
+and `connected` when its sampled path and water connection are usable. The
+explicit outlet is the authorization to derive this connection; the process
+adds no new authored geography and changes no ground height.
+
+A connected lake must have one wet component reaching the selected contact
+node, with vector-contained D8 links between water samples. All low shoreline
+edges outside the declared outlet opening block connection. The opening is
+bounded to one canonical grid diagonal from the exact outlet: both endpoints
+of an exempt low edge must be within that distance. Raster-edge leakage is
+never exempt. This is a coarse aperture, not a surveyed shoreline.
+
+Dry footprint nodes transfer their captured area only if their steepest D8
+route descends to the lake without leaving the polygon. Use lake surface
+height for wet receivers, not submerged bed depth. Dry pits and unresolved
+flats keep their area, even when another part of the lake connects. An exposed
+height anchor can remain an island and does not itself block outflow.
+
+The connected wet and dry nodes supply captured MFD area to the reviewed
+outlet path. Every path node receives that amount as additional throughput;
+its final boundary receives it once. Routes avoid all authored basins, so
+self-return and inter-basin cycles cannot be activated. Connections between
+lakes remain unsupported. Shared downstream segments add the contributions of
+independent outlets without adding local source area a second time.
+
+This is a derived transfer layer over the existing MFD capture model. It does
+not resize or cut the downstream channel, recompute all terrain runoff, or
+certify the other planned rivers. **Drainage review** shows connected outlet
+paths in teal; ordinary relief and the DEM remain ground/water-surface products.
+
+## Outflow products and conservation
+
+Build v9 adds `basin-flow.npz`, using the canonical axes in `routing.npz`:
+
+| Float64 array | Meaning |
+|---|---|
+| `source_km2` | Captured MFD area removed from eligible footprint terminals |
+| `throughput_km2` | Additional area carried along connected outlet paths; shared segments sum |
+| `terminal_km2` | Additional area delivered once at each downstream boundary terminal |
+
+`throughput_km2` is not total river discharge and must not be summed as a
+catchment area or added to every old terminal balance. Source and terminal
+sums must agree. Diagnostics include the outflow algorithm ID and accounting:
+
+`land-node source area = retained basin area + direct MFD boundary area + outlet boundary area`
+
+An imbalance outside the floating-point tolerance fails the build. Per-basin
+captured area equals retained area plus `outlet_contributing_area_km2`. The
+`basin_flow_sha256` and manifest bind the archive to the other products.
+
+The [connected-outlet example](../examples/terrain/connected-outlet.dmterrain.json)
+authors a narrow valley all the way to the public coast. Part of its captured
+area drains through the lake; isolated dry pockets remain retained.
 
 ## Shoreline findings and remaining work
 
@@ -131,13 +191,18 @@ basin-to-outlet routing and area transfer are implemented together.
 - `outlet_above_water`: the exact outlet ground is above the authored level.
 - `unresolved_footprint`, `no_water_at_level` and `disconnected_water`: the
   canonical grid resolves no area, no wet ground or multiple separate pools.
+- `outlet_shoreline_uncontained`, `outlet_water_disconnected` and
+  `outlet_route_blocked`: connection is blocked by extra shoreline openings,
+  water links crossing outside the footprint, or downstream route findings.
+- `outlet_partial_catchment`: the outlet connects, but dry ground that cannot
+  reach its water surface retains part of the captured contributing area.
 
 The water surface remains an authored, clipped level preview. No runoff,
 water budget, automatic spill, breach, sediment or nested depression hierarchy
-is simulated. Next, connect eligible outlets with explicit basin-area transfer,
-revalidate after terrain changes, and compare full constrained breach/reroute
-proposals while preserving regional budgets and authored anchors. See
-[ADR-0035](adr/0035-retain-basin-flow-and-assess-outlets.md).
+is simulated. Next, compare full constrained breach/reroute proposals, refine
+shoreline openings and internal flat routing, and define explicit inter-lake
+connections while preserving budgets and authored anchors. See
+[ADR-0036](adr/0036-connect-lake-outflow-with-area-transfer.md).
 
 For measured results and the prioritized next steps, read the
-[implementation rundown](research/2026-09-11-basin-retention-and-outlets.md).
+[implementation rundown](research/2026-09-11-connected-lake-outflow.md).

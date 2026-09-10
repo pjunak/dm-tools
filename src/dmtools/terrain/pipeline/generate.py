@@ -25,6 +25,7 @@ from dmtools.terrain.domain import (
     TerrainSettings,
 )
 from dmtools.terrain.domain.seeds import RELIEF_STAGE_ID, stage_seed
+from dmtools.terrain.pipeline.basin_flow import BasinOutflow, resolve_basin_outflow
 from dmtools.terrain.pipeline.diagnostics import (
     ChannelConflicts,
     DrainageAnalysis,
@@ -45,20 +46,18 @@ from dmtools.terrain.pipeline.landforms import (
     regional_transition_mask,
 )
 from dmtools.terrain.pipeline.noise import fractal_value_noise
-from dmtools.terrain.pipeline.outlets import review_outlet_routes
 from dmtools.terrain.pipeline.profile import shape_preserving_profile
 from dmtools.terrain.pipeline.water import (
     MetricBasin,
     WaterProducts,
     basin_intent_ids,
     prepare_basins,
-    review_water,
     water_products,
 )
 
 type ProgressCallback = Callable[[float, str], None]
 
-GENERATOR_ALGORITHM_ID = "coastline-constraint-terrain@7"
+GENERATOR_ALGORITHM_ID = "coastline-constraint-terrain@8"
 AUTOMATIC_VALLEY_ALGORITHM_ID = "regional-budget-mfd-d8-valleys@6"
 NOISE_ALGORITHM_ID = "coordinate-value-noise-normalized@1"
 
@@ -82,6 +81,7 @@ class GeneratedTerrain:
     routing_agreement: RoutingAgreement
     routing_conflicts: ChannelConflicts
     water: WaterProducts
+    basin_outflow: BasinOutflow
 
     @property
     def grid(self) -> EndpointGrid:
@@ -1271,14 +1271,11 @@ def generate_terrain(
                 settings, metric_constraints, automatic_valleys, regions=regions,
             )
             outlet_heights.append(float(np.float32(values[0])))
-    outlet_routes = review_outlet_routes(
-        basins, routing_basin_ids, routing_final, automatic_valleys.land_mask,
-        review.drainage.receivers, review.drainage.boundary_flags,
-        automatic_valleys.x_km, automatic_valleys.y_km, polygon, tuple(outlet_heights),
-    )
-    water_review = review_water(
+    water_review, basin_outflow = resolve_basin_outflow(
         basins, routing_basin_ids, routing_final, automatic_valleys.drainage,
-        authored_constraints, tuple(outlet_heights), outlet_routes,
+        automatic_valleys.land_mask, review.drainage.receivers, review.drainage.boundary_flags,
+        automatic_valleys.x_km, automatic_valleys.y_km, polygon, authored_constraints,
+        tuple(outlet_heights),
     )
     water = water_products(elevation, x_km, y_km, basins, routing_basin_ids, water_review)
 
@@ -1307,4 +1304,5 @@ def generate_terrain(
         routing_agreement=review.agreement,
         routing_conflicts=review.conflicts,
         water=water,
+        basin_outflow=basin_outflow,
     )

@@ -77,9 +77,11 @@ Authored footprint nodes now absorb D8/MFD flow, with conserved area and
 finished-ground candidate outlet review
 ([ADR-0035](../adr/0035-retain-basin-flow-and-assess-outlets.md)).
 
-1. Connect eligible declared lake outlets with basin-area transfer, shoreline
-   checks and finished-field revalidation. Closed dry basins remain terminal;
-   candidate review alone does not enable lake outflow.
+Eligible outlets now transfer captured area after shoreline and finished-field
+checks ([ADR-0036](../adr/0036-connect-lake-outflow-with-area-transfer.md)).
+
+1. Refine partial catchments, internal flats and outlet openings; support
+   explicit lake chains with compatible levels and acyclic dependencies.
 2. Compare retention, constrained breach and reroute proposals using full paths,
    cut depth/length and preserved anchors, then expose reviewable river networks.
 3. Per-vertex ridge/valley profiles, explicit passes and asymmetric sides.

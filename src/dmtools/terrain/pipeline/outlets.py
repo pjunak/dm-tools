@@ -18,6 +18,7 @@ if TYPE_CHECKING:
 class OutletRouteReview:
     status: Literal["sampled_clear", "blocked", "unresolved"]
     path_flat_indices: tuple[int, ...]
+    water_contact_flat_index: int | None
     length_km: float
     uphill_edge_count: int
     maximum_rise_m: float
@@ -79,7 +80,7 @@ def review_outlet_routes(
         row = int(np.argmin(np.abs(y_km - outlet[1])))
         column = int(np.argmin(np.abs(x_km - outlet[0])))
         candidates: list[tuple[float, int]] = []
-        water_contact = False
+        water_contacts: list[tuple[float, int]] = []
         for r in range(max(0, row - 1), min(height, row + 2)):
             for c in range(max(0, column - 1), min(width, column + 2)):
                 index = r * width + c
@@ -89,8 +90,8 @@ def review_outlet_routes(
                     continue
                 segment = LineString((outlet, point))
                 if (flat_ids[index] == basin_id and flat_elevation[index] < level - tolerance
-                        and basin.geometry.covers(segment)):
-                    water_contact = True
+                        and (distance <= geometry_tolerance or basin.geometry.covers(segment))):
+                    water_contacts.append((distance, index))
                 if flat_ids[index] != 0 or distance <= geometry_tolerance:
                     continue
                 if not land.covers(segment):
@@ -101,12 +102,14 @@ def review_outlet_routes(
                        for other in basins if other is not basin):
                     continue
                 candidates.append((distance, index))
-        if not water_contact:
+        contact = min(water_contacts)[1] if water_contacts else None
+        if contact is None:
             issues.append("outlet_without_sampled_water")
         if not candidates:
             issues.append("outlet_attachment_unresolved")
             results.append(OutletRouteReview(
-                "unresolved", (), 0., 0, 0., max(0., outlet_height - level), None, 0, tuple(issues),
+                "unresolved", (), contact, 0., 0, 0., max(0., outlet_height - level),
+                None, 0, tuple(issues),
             ))
             continue
         # Choose by geometric proximity before looking at downstream success.
@@ -168,6 +171,6 @@ def review_outlet_routes(
         if terminal is not None and (flags & 4 or not flags & 2):
             issues.append("outlet_terminal_level_unknown")
         status = "blocked" if issues else "sampled_clear"
-        results.append(OutletRouteReview(status, tuple(path), length, uphill, max_rise,
+        results.append(OutletRouteReview(status, tuple(path), contact, length, uphill, max_rise,
                                          max_above, terminal, flags, tuple(issues)))
     return tuple(results)

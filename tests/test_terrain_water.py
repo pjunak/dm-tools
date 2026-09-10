@@ -85,7 +85,7 @@ def test_review_distinguishes_low_boundary_exposed_anchors_and_high_outlet() -> 
     assert record.exposed_height_anchor_count == 1
     assert record.dry_cell_count == 1
     assert set(record.issues) == {
-        "low_boundary", "exposed_height_anchor", "outlet_above_water", "outlet_connection_pending",
+        "low_boundary", "exposed_height_anchor", "outlet_above_water", "outlet_route_blocked",
     }
 
 
@@ -165,7 +165,7 @@ def test_retention_excludes_automatic_cut_preserves_anchors_and_nested_samples()
     np.testing.assert_array_equal(first.elevation_m, outlet_variant.elevation_m)
     np.testing.assert_array_equal(first.routing.receivers, outlet_variant.routing.receivers)
     assert outlet_variant.water.review.basins[0].outlet_route is not None
-    assert "outlet_connection_pending" in outlet_variant.water.review.basins[0].issues
+    assert "outlet_route_blocked" in outlet_variant.water.review.basins[0].issues
     changed = generate_terrain(
         coast, settings, constraints=(replace(lake, water_level_m=1500), anchor))
     np.testing.assert_array_equal(first.elevation_m, changed.elevation_m)

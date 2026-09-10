@@ -249,8 +249,8 @@ This removes extreme numerical knickpoints without flattening ordinary profile
 variation or modifying authored features.
 The model still does **not** simulate plate tectonics, rock type, sediment,
 climate or geological time. Authored lake/dry-basin areas now exclude automatic
-cutting and absorb planned flow. Candidate downstream outlets are reviewed,
-while actual outlet connection remains pending. The drainage
+cutting and absorb planned flow. Eligible downstream outlets transfer captured area after finished-ground
+and shoreline checks; unresolved dry pockets remain retained. The drainage
 field is exported for review but is not certified as a river network.
 
 Every result includes a canonical broad-scale drainage check on the same
@@ -351,8 +351,9 @@ Lake controls set a water level and optional first-vertex outlet. Generated cuts
 are excluded inside either footprint; authored height and structure constraints
 still apply. Cartographic relief displays water over its preserved ground DEM.
 **Basin details** explains shoreline conflicts, retained contributing area and
-sampled downstream outlet evidence. All footprint nodes terminate planned flow;
-a declared outlet remains pending until area transfer and connection are implemented.
+sampled downstream outlet evidence. Footprint nodes capture planned area;
+eligible declared outlets transfer the portion that can reach the lake.
+Connected outlet paths appear in teal in drainage review.
 See the [water guide](../../../docs/terrain-water.md) and public
 [example](../../../examples/terrain/basin-water.dmterrain.json). The current
 formats are project v5 and build v7; previous formats are unsupported.

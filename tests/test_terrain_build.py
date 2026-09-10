@@ -56,7 +56,7 @@ def test_headless_build_preserves_dem_and_has_repeatable_verified_products(
     build_module.build_terrain_project(project_path, second)
     document: dict[str, Any] = json.loads((first / "manifest.json").read_text())
     schema_dir = EXAMPLES.parents[1] / "schemas" / "terrain"
-    assert document["schema_version"] == 8
+    assert document["schema_version"] == 9
     assert document["inputs"]["project_schema_version"] == 5
     assert document["algorithms"]["seed_policy"] == SEED_POLICY_ID
     resolved_seed = stage_seed(loaded.project.settings.seed, RELIEF_STAGE_ID)
@@ -74,7 +74,7 @@ def test_headless_build_preserves_dem_and_has_repeatable_verified_products(
     )
     schema = next(
         item for item in schemas
-        if item["$id"] == "urn:dmtools:schema:terrain-build:8"
+        if item["$id"] == "urn:dmtools:schema:terrain-build:9"
     )
     validate(document, schema, cls=Draft202012Validator, registry=registry)
     invalid = {**document, "coordinates": {**document["coordinates"], "world_crs": "EPSG:4326"}}
@@ -166,7 +166,7 @@ def test_headless_build_preserves_dem_and_has_repeatable_verified_products(
         assert record["outlet"]["spill_elevation_m"] == candidate.outlet.spill_elevation_m
     assert diagnostics["routing_sha256"] == file_sha256(first / "routing.npz")
     assert diagnostics["routing_agreement"]["algorithm_id"] == "planned-final-d8-agreement@2"
-    for missing_name in ("routing.npz", "drainage.png", "water.npz"):
+    for missing_name in ("routing.npz", "drainage.png", "water.npz", "basin-flow.npz"):
         incomplete = {**document, "outputs": {
             key: value for key, value in document["outputs"].items() if key != missing_name
         }}
@@ -332,6 +332,13 @@ def test_authored_water_build_keeps_ground_and_water_separate_and_repeatable(
         assert np.all(bed[wet] < 750)
     diagnostics = json.loads((first / "diagnostics.json").read_text(encoding="utf-8"))
     assert diagnostics["water_sha256"] == file_sha256(first / "water.npz")
+    assert diagnostics["basin_flow_sha256"] == file_sha256(first / "basin-flow.npz")
+    assert (first / "basin-flow.npz").read_bytes() == (second / "basin-flow.npz").read_bytes()
+    assert abs(diagnostics["basin_outflow"]["area_balance_error_km2"]) < 1e-6
+    with np.load(first / "basin-flow.npz", allow_pickle=False) as flow:
+        assert not flow["source_km2"].any()
+        assert not flow["throughput_km2"].any()
+        assert not flow["terminal_km2"].any()
     records = diagnostics["authored_water"]["basins"]
     assert len(records) == 2
     with np.load(first / "routing.npz", allow_pickle=False) as routing:
@@ -343,3 +350,26 @@ def test_authored_water_build_keeps_ground_and_water_separate_and_repeatable(
         assert all(record["retained_contributing_area_km2"] > 0 for record in records)
         np.testing.assert_array_equal(routing["incision_m"][retained], 0)
         np.testing.assert_array_equal(routing["incision_limit_m"][retained], 0)
+
+
+def test_connected_outlet_build_exports_conserved_source_and_terminal_area(tmp_path: Path) -> None:
+    loaded = load_terrain_project(EXAMPLES / "connected-outlet.dmterrain.json")
+    project = replace(loaded.project, settings=replace(loaded.project.settings, resolution_px=65))
+    path = tmp_path / "outlet.dmterrain.json"
+    save_terrain_project(project, loaded.coastline_source, path)
+    outputs = [tmp_path / "first", tmp_path / "second"]
+    for output in outputs:
+        build_module.build_terrain_project(path, output)
+    first, second = outputs
+    for name in ("manifest.json", "basin-flow.npz", "diagnostics.json"):
+        assert (first / name).read_bytes() == (second / name).read_bytes()
+    diagnostics = json.loads((first / "diagnostics.json").read_text(encoding="utf-8"))
+    assert diagnostics["basin_outflow"]["connected_outlet_count"] == 1
+    assert diagnostics["basin_flow_sha256"] == file_sha256(first / "basin-flow.npz")
+    with np.load(first / "basin-flow.npz", allow_pickle=False) as flow:
+        amount = flow["source_km2"].sum()
+        assert amount > 0
+        assert flow["terminal_km2"].sum() == pytest.approx(amount)
+        assert flow["source_km2"].dtype == np.float64
+        assert np.count_nonzero(flow["terminal_km2"]) == 1
+        assert np.count_nonzero(flow["throughput_km2"]) > 2

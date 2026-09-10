@@ -7,6 +7,8 @@ implemented with tests. Notes are listed newest first and package-support claims
 may become stale; use the
 [current development strategy](../strategy/README.md) for the active order.
 
+- [Connected lake outflow - 2026-09-11](2026-09-11-connected-lake-outflow.md)
+  records conservative outlet transfer, a real rejected route, validation and runtime.
 - [Basin retention and outlet assessment - 2026-09-11](2026-09-11-basin-retention-and-outlets.md)
   records conserved basin area, downstream evidence, validation and runtime.
 - [Authored water implementation - 2026-09-10](2026-09-10-authored-water.md)

@@ -24,4 +24,8 @@ soft polygon recipes to the public terrain coastline. See the
 
 The [authored-water example](terrain/basin-water.dmterrain.json) adds a lake and
 a dry-basin footprint, preserving their ground while exporting water separately.
-It demonstrates retention and review; downstream river repair remains pending.
+It demonstrates closed-basin retention and review.
+
+The [connected-outlet example](terrain/connected-outlet.dmterrain.json) adds an
+explicit valley reaching the coast. Its eligible lake outlet transfers captured
+area downstream while isolated dry pockets retain their contributions.
