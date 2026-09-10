@@ -79,6 +79,23 @@ Rust rewrite, additional export infrastructure or global climate model is not
 a prerequisite for these next landform improvements. World placement moves
 forward when integration or regional/climate coordinates require it.
 
+## Engineering checkpoint
+
+The [2026-09-10 sanity and performance review](../maintenance/2026-09-10-sanity-and-performance.md)
+found sound dependency direction, large orchestration/UI modules and a native
+geometry-distance bottleneck. Keep the product order above. Before adding basin
+classification, extract its diagnostics from hydrology behind typed inputs and
+outputs; separate structure-profile preparation when that authoring work starts.
+Split workbench controls and drawing interaction as those flows change.
+
+Benchmark boundary-distance alternatives separately on complex coasts; the
+[earlier STRtree probe](../research/2026-09-05-selective-terrain-sampling.md)
+was slower on the simple public coast. A new indexed approach must demonstrate
+its crossover before adoption. Require unchanged masks, Float32 terrain and
+routing products, or explicitly version and quantify a numerical change. Optimize repeated noise
+work only after measuring its share on regional scenes. Do not increase routing
+resolution or replace the Python runtime as part of this cleanup.
+
 ## Remaining work by dependency
 
 ### 1. Make terrain builds durable and reproducible
@@ -100,12 +117,10 @@ Future stochastic stages must get their own stable identifiers.
 - Define source-world origin, planetary model, working projection, raster
   registration and effective process spacing before freezing georeferenced
   outputs. The current longest-dimension local plane is not a world CRS contract.
-- Define the versioned build manifest and lock algorithm and stage identifiers.
 - Add world placement to the implemented local-metric Float32 GeoTIFF export.
-- Add the headless `terrain build` operation using the same project and pipeline
-  as the desktop workbench.
-- Record hashes, units, extent, sample spacing, effective settings, dependency
-  versions, diagnostics, and output provenance.
+- Extend the existing build manifest only when a new product needs additional
+  provenance. Local numeric export, headless builds, hashes, stage identities,
+  units and runtime recording are complete.
 
 Rasterio now writes the local GeoTIFF. Evaluate pyproj for source/world
 coordinate operations and GDAL command-line tools for additional interoperability
@@ -126,8 +141,8 @@ checks when declaring planetary placement.
 ### 3. Complete the authored-terrain contract
 
 - Separate hard equalities, soft guidance, and inequalities explicitly.
-- Add per-vertex structure profiles, passes, asymmetric sides, and
-  terrain-character regions.
+- Extend current point-anchored ridge/valley profiles to per-vertex authoring,
+  explicit passes and asymmetric sides. Terrain-character regions are complete.
 - Reproject hard constraints after every optional process stage and report soft
   residuals rather than silently changing authored intent.
 
@@ -194,7 +209,7 @@ mutually exclusive categories.
 | Area | Recommendation now | Evidence gate before adoption |
 |---|---|---|
 | Numeric core | Keep NumPy; spike SciPy locally | Fixture improvements and deterministic tolerances |
-| DEM exchange | Rasterio GeoTIFF; pyproj metadata | Round-trip tests and GDAL interoperability |
+| DEM exchange | Rasterio local GeoTIFF; defer pyproj to world placement | Round-trip tests and GDAL interoperability |
 | Hydrology comparison | Landlab, then external GRASS | Routing and basin fixture agreement |
 | Large multidimensional data | Defer xarray/Zarr | Measured climate or partial-I/O requirement |
 | Climate prototype | Transparent NumPy/SciPy fields | Earth analog fixtures and energy/water sanity checks |

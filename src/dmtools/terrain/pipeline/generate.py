@@ -1149,7 +1149,6 @@ def _evaluate_land_samples(
         )
         residual_detail = unconditioned_elevation - macro_elevation
         elevation = conditioned_elevation + residual_detail * (1.0 - constraint_influence)
-        elevation = np.clip(elevation, 0.0, settings.maximum_elevation_m)
     else:
         elevation = unconditioned_elevation
     return np.clip(elevation, 0.0, settings.maximum_elevation_m)
@@ -1228,6 +1227,7 @@ def generate_terrain(
         regions=regions,
     )
 
+    _report(progress, 0.08, "Building elevation field")
     chunk_rows = 128
     for start in range(0, height, chunk_rows):
         stop = min(start + chunk_rows, height)

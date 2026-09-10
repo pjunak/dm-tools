@@ -24,6 +24,7 @@ while measuring them, and avoid concurrent tests or other heavy workloads.
 | `square` | Four-edge land boundary; every grid sample is land |
 | `archipelago` | Synthetic irregular coast, three islands and inland water; 960 boundary vertices |
 | `authored` | Square land with a ridge, peak/pass anchors, relative valley and relative brush |
+| `regional` | Public four-region project, including regional relief and incision budgets |
 
 Select cases and multiple resolutions/seeds explicitly:
 
@@ -53,7 +54,10 @@ and rendering are measured afterward. Disk export, PNG encoding and publication
 are excluded; these results must not be called full-build timings. Report
 serialization and child-process communication are included only in worker wall
 time. Deterministic hashes identify elevations, masks and both coordinate axes;
-quality and drainage summaries are also retained.
+quality, drainage and planned/final routing agreement summaries are also retained.
+Hashes also cover receivers, channels, incision, incision limits and the finished
+field on routing nodes. Sampling now emits its label before the first chunk;
+older reports charged that first chunk to the preceding routing interval.
 
 Peak resident memory comes from the OS and includes native-library allocations.
 The generation measurement is the process high-water mark up to generation's
@@ -83,3 +87,6 @@ earlier exploratory repeated generations within one warmed Python process.
 The [language assessment](../docs/research/2026-09-05-language-and-performance.md)
 records why optimization begins in Python and the evidence required before a
 native-language migration.
+
+See the [2026-09-10 review](../docs/maintenance/2026-09-10-sanity-and-performance.md)
+for measured bottlenecks and the remaining workload/validation gaps.

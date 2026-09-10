@@ -7,24 +7,19 @@ operations later.
 ## System boundary
 
 ```text
-Tk UI / CLI now / HTTP later
-             |
-             v
-    application operations
-             |
-             v
-   deterministic tool pipelines
-             |
-      +------+-------+
-      |              |
-      v              v
- domain model    adapter ports
-                     |
-             +-------+--------+
-             |       |        |
-             v       v        v
-          files     GIS    optional engines
+Tk UI / CLI
+     |
+     +--> application build operation
+     |           |
+     +-----------+--> numeric generation pipeline --> domain values
+                 |
+                 +--> project / SVG / render / GeoTIFF / build adapters
 ```
+
+The workbench also calls generation and adapters directly. There is no generic
+adapter-port framework. Domain modules are dependency-light; numeric pipeline
+modules currently use NumPy and Shapely geometry. File formats, rendering and
+publication remain in adapters outside generation.
 
 The domain and pipeline must remain usable without a web server. Adapters may
 depend on Rasterio, GDAL, GeoPackage drivers, image renderers, or external

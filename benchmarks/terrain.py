@@ -31,7 +31,7 @@ from dmtools.terrain.pipeline.generate import generate_terrain
 from dmtools.terrain.pipeline.quality import measure_terrain_quality
 
 ROOT = Path(__file__).resolve().parents[1]
-CASES = ("example", "square", "archipelago", "authored")
+CASES = ("example", "square", "archipelago", "authored", "regional")
 
 
 def _ring(x: float, y: float, rx: float, ry: float, count: int) -> tuple[tuple[float, float], ...]:
@@ -52,8 +52,9 @@ def fixture(
     """Public or synthetic inputs only; no private map or authored file changes."""
     settings = TerrainSettings(resolution_px=resolution, seed=seed)
     constraints: tuple[TerrainConstraint, ...] = ()
-    if case == "example":
-        project = load_terrain_project(ROOT / "examples/terrain/example.dmterrain.json").project
+    if case in ("example", "regional"):
+        name = "landform-regions" if case == "regional" else "example"
+        project = load_terrain_project(ROOT / f"examples/terrain/{name}.dmterrain.json").project
         return (
             project.coastline,
             replace(project.settings, resolution_px=resolution, seed=seed),
@@ -176,6 +177,11 @@ def probe(case: str, resolution: int, seed: int) -> dict[str, Any]:
             ("land_mask", terrain.land_mask),
             ("x_km", terrain.x_km),
             ("y_km", terrain.y_km),
+            ("routing_receivers", terrain.routing.receivers),
+            ("routing_channels", terrain.routing.channel_mask),
+            ("routing_incision", terrain.routing.incision_m),
+            ("routing_incision_limit", terrain.routing.incision_limit_m),
+            ("routing_final_elevation", terrain.routing_final_elevation_m),
         )
     }
     return {
@@ -197,6 +203,7 @@ def probe(case: str, resolution: int, seed: int) -> dict[str, Any]:
         "generation_process_peak_bytes": generation_peak,
         "products_process_peak_bytes": products_peak,
         "drainage": asdict(terrain.drainage),
+        "routing_agreement": asdict(terrain.routing_agreement),
         "quality": asdict(quality),
     }
 
@@ -259,7 +266,8 @@ def main() -> None:
                         run["worker_wall_seconds"] = perf_counter() - start
                         if batch and any(
                             run[key] != batch[0][key]
-                            for key in ("input_sha256", "output_sha256", "drainage", "quality")
+                            for key in ("input_sha256", "output_sha256", "drainage",
+                                        "routing_agreement", "quality")
                         ):
                             raise RuntimeError(
                                 "Identical benchmark inputs produced different results"

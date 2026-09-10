@@ -73,23 +73,23 @@ preview, and PNG export. Those are not repeated below as unfinished work.
 - [ ] **P1 — Add divides, rivers, faults, escarpments, and general breaklines.**
   Define the semantics of each constraint before extending the project schema;
   a drawn line must not imply more geological certainty than the user supplied.
-- [x] **P1 � Add first terrain-character regions.** Polygon authoring,
+- [x] **P1 — Add first terrain-character regions.** Polygon authoring,
   plain/hills/plateau/mountain recipes, base height, local relief, feature size,
   orientation and inward transitions now feed both terrain and routing.
   See [the region guide](docs/terrain-regions.md) and ADR-0030.
-- [x] **P1 � Bound automatic incision by regional relief.** Plains and
+- [x] **P1 — Bound automatic incision by regional relief.** Plains and
   plateau interiors now receive smaller budgets with the same regional
   transitions. Floor/steepness corrections respect those limits; numeric builds
   retain the effective limits and exact authored anchors remain authoritative.
   See [ADR-0031](docs/adr/0031-bound-incision-by-regional-relief.md).
-- [ ] **P1 � Reconcile channels blocked by regional cutting limits.** The
+- [ ] **P1 — Reconcile channels blocked by regional cutting limits.** The
   seed-42 square plain fixture has 253 uphill edges versus 44 with global
   cutting. Classify basin interiors, boundary transitions and constrained
   reaches; support reviewable lake/outlet or rerouting decisions without
   automatically removing the intended low relief.
-- [ ] **P1 � Extend regional process controls.** Add drainage density,
+- [ ] **P1 — Extend regional process controls.** Add drainage density,
   runoff and erosion resistance with measurable effects and authored authority.
-- [x] **P1 � Render drainage review at display size.** Thin canonical D8
+- [x] **P1 — Render drainage review at display size.** Thin canonical D8
   segments replace enlarged cell blocks. Routing accuracy is unchanged;
   gridded/coast-parallel paths still need hydrology and river-geometry work.
 - [x] **P1 — Support adjacent mainland sections and disconnected islands.** SVG
@@ -312,7 +312,7 @@ landscape-process spikes. It is working research, not an accepted architecture.
   generator, noise, automatic-valley and diagnostic IDs plus source hashes.
   Deliberate improvements may change outputs; update identifiers and tests.
 - [x] **P0 — Derive stable named seeds.** All generation uses
-  `named-stage-sha256@1` and the `terrain.relief` stage. Macro/full detail stay
+  `named-stage-sha256@1` with `terrain.relief` and `terrain.landforms`. Macro/full detail stay
   views of one relief field. Portable reference values and current generation
   checks exercise the [seed contract](docs/terrain-seeds.md).
 - [x] **P0 — Remove early-development compatibility overhead.** Removed the
@@ -329,11 +329,26 @@ landscape-process spikes. It is working research, not an accepted architecture.
   Python loops. The first public-example timing/profile is recorded in the
   [language assessment](docs/research/2026-09-05-language-and-performance.md);
   it is not yet a representative benchmark suite or memory measurement.
-  A [repeatable harness](benchmarks/README.md) now covers four public/synthetic
+  A [repeatable harness](benchmarks/README.md) now covers five public/synthetic
   cases, selectable seeds/resolutions, generation stages, CPU time, quality,
   rendering, process peak memory and numerical hashes in isolated repetitions.
-  Export timing, detailed native/Python CPU profiles, regional-refinement cases
+  The [2026-09-10 review](docs/maintenance/2026-09-10-sanity-and-performance.md)
+  adds regional landforms, retained routing identities and CPU profiles.
+  Export timing, regional-refinement/4096 cases, many-constraint stress tests
   and agreed latency/memory budgets remain.
+- [ ] **P1 — Optimize measured boundary-distance cost.** Prototype indexed
+  coast-segment distance queries on complex coasts before a native rewrite;
+  the prior simple-coast STRtree probe was slower. Preserve exact masks,
+  shared samples, numeric hashes and routing products. Compare simple coasts,
+  islands, holes and many authored regions; retain peak memory evidence.
+- [ ] **P1 — Reduce preview peak memory.** Profile full-raster RGB and
+  hillshade temporaries, then compare tiled rendering with gradient halos and
+  identical pixels/alpha/metadata. Measure 4096 separately before assuming
+  full-resolution previews fit the intended desktop memory budget.
+- [ ] **P1 — Split growing modules along the next feature boundaries.** Extract
+  basin/conflict diagnostics from hydrology before expanding them; separate
+  structure-profile preparation from generation and workbench controls/drawing
+  as those features change. Keep typed values and one owner per operation.
 
 ### Realism research register — 2026-09-04
 
@@ -376,17 +391,17 @@ Priorities remain conditional on the current strategy's prerequisites.
   Endpoint registration, interval-based grid refinement, axis-specific spacing
   and current stage shape rounding now have a shared domain implementation and
   numerical tests. Cell averages, resampling and parent restriction remain open.
-- [x] **P0 � R04: Route on currently authored macro geography.** Brush, ridge,
+- [x] **P0 — R04: Route on currently authored macro geography.** Brush, ridge,
   point and prepared valley constraints now participate in canonical routing.
   Relative valley profiles use a stable pre-incision reference, with one
   planning pass and existing final constraint precedence. Explicit river/divide
   and water-level entities remain future work; see ADR-0029.
-- [x] **P1 � R05: Retain inspectable drainage topology.** Builds retain source
+- [x] **P1 — R05: Retain inspectable drainage topology.** Builds retain source
   and filled routing DEMs, final-field samples, D8 receivers, MFD accumulation,
   stream order, channels, heads and outlets with coordinates, mask and hashes.
   Same-grid receiver differences and uphill edges are reported; the workbench
   overlay and headless review image expose planned channel conflicts.
-- [ ] **P1 � Reconcile remaining planned/final channel conflicts.** Quantify
+- [ ] **P1 — Reconcile remaining planned/final channel conflicts.** Quantify
   hard-anchor conflicts separately from residual-detail and depression effects.
   Preserve authored intent; do not treat filled routes as validated rivers.
   The seed-42 authored benchmark currently reports 390 uphill edges among 2455

@@ -1,5 +1,6 @@
 import json
 from dataclasses import replace
+from itertools import pairwise
 from pathlib import Path
 from typing import Literal
 
@@ -919,3 +920,15 @@ def test_scientific_render_records_its_display_contract() -> None:
     assert image.info["dmtools.render_style"] == "scientific"
     assert image.info["dmtools.colour_palette"] == "oleron-land@scm-8.0"
     assert image.info["dmtools.colour_scale_maximum_m"] == "3000"
+
+
+def test_progress_announces_sampling_before_chunk_completion() -> None:
+    events: list[tuple[float, str]] = []
+    generate_terrain(_square(), _settings(),
+                     progress=lambda value, label: events.append((value, label)))
+    sampling = [value for value, label in events if label == "Building elevation field"]
+    assert sampling[0] == 0.08
+    assert len(sampling) >= 2
+    assert sampling[-1] == pytest.approx(0.90)
+    assert all(a[0] <= b[0] for a, b in pairwise(events))
+    assert events[-1] == (1.0, "Terrain ready")

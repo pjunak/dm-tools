@@ -11,6 +11,12 @@ type StructureKind = Literal["ridge", "valley"]
 type ElevationMode = Literal["absolute", "relative"]
 
 
+def _validate_count(value: object, minimum: int, maximum: int, label: str) -> None:
+    if (isinstance(value, bool) or not isinstance(value, int)
+            or not minimum <= value <= maximum):
+        raise ValueError(f"{label} must be an integer between {minimum:,} and {maximum:,}.")
+
+
 def _validate_ring(points: tuple[Point2D, ...], label: str) -> None:
     if len(points) < 4:
         raise ValueError(f"{label} needs at least three vertices and a closing vertex.")
@@ -245,19 +251,17 @@ class TerrainSettings:
 
     def __post_init__(self) -> None:
         validate_master_seed(self.seed)
-        if self.object_scale_km <= 0:
-            raise ValueError("Object scale must be positive.")
-        if not 64 <= self.resolution_px <= 4_096:
-            raise ValueError("Resolution must be between 64 and 4,096 pixels.")
-        if self.maximum_elevation_m <= 0:
-            raise ValueError("Maximum elevation must be positive.")
-        if self.largest_feature_km <= 0:
-            raise ValueError("Largest feature size must be positive.")
-        if not 1 <= self.detail_levels <= 12:
-            raise ValueError("Detail levels must be between 1 and 12.")
+        if not isfinite(self.object_scale_km) or self.object_scale_km <= 0:
+            raise ValueError("Object scale must be finite and positive.")
+        _validate_count(self.resolution_px, 64, 4_096, "Resolution")
+        if not isfinite(self.maximum_elevation_m) or self.maximum_elevation_m <= 0:
+            raise ValueError("Maximum elevation must be finite and positive.")
+        if not isfinite(self.largest_feature_km) or self.largest_feature_km <= 0:
+            raise ValueError("Largest feature size must be finite and positive.")
+        _validate_count(self.detail_levels, 1, 12, "Detail levels")
         if not 0 < self.roughness < 1:
             raise ValueError("Roughness must be greater than 0 and less than 1.")
-        if self.coastal_rise_km <= 0:
-            raise ValueError("Coastal rise distance must be positive.")
+        if not isfinite(self.coastal_rise_km) or self.coastal_rise_km <= 0:
+            raise ValueError("Coastal rise distance must be finite and positive.")
         if not 0 <= self.variability <= 1:
             raise ValueError("Variability must be between 0 and 1.")

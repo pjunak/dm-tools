@@ -17,6 +17,7 @@ def test_benchmark_report_is_repeatable_and_measures_native_process_memory(tmp_p
             "benchmarks.terrain",
             "--case",
             "archipelago",
+            "regional",
             "--resolution",
             "64",
             "--seed",
@@ -34,9 +35,13 @@ def test_benchmark_report_is_repeatable_and_measures_native_process_memory(tmp_p
     report = json.loads(output.read_text(encoding="utf-8"))
     assert report["complete"] is True
     assert report["method"]["fresh_process_per_run"] is True
-    first, second = report["runs"]
-    for key in ("input_sha256", "output_sha256", "drainage", "quality"):
-        assert first[key] == second[key]
+    first, second, regional_first, regional_second = report["runs"]
+    for a, b in ((first, second), (regional_first, regional_second)):
+        for key in ("input_sha256", "output_sha256", "drainage", "routing_agreement", "quality"):
+            assert a[key] == b[key]
+        assert "routing_incision_limit" in a["output_sha256"]
+    assert regional_first["case"] == "regional"
+    assert regional_first["constraint_count"] == 4
     assert first["boundary_vertices"] == 960
     assert 0.0 < first["land_fraction"] < 1.0
     assert first["generation_cpu_seconds"] > 0.0

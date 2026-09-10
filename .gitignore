@@ -11,6 +11,7 @@ dist/
 artifacts/
 .coverage
 coverage.xml
+test-results/
 
 # Local editor and operating-system state
 .idea/

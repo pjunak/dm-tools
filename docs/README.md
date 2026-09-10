@@ -47,3 +47,6 @@ For numeric GIS exchange and its local-coordinate limits, read the
 
 For regional terrain authoring and its first four recipes, read the
 [landform region guide](terrain-regions.md).
+
+For the latest structure, validation and bottleneck review, read the
+[2026-09-10 maintenance checkpoint](maintenance/2026-09-10-sanity-and-performance.md).

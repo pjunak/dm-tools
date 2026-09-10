@@ -1,8 +1,8 @@
 # Terrain pipeline
 
-This package will orchestrate explicit, named terrain stages. Each stage will
-receive typed inputs, effective configuration, and its own deterministically
-derived seed, then return typed outputs and diagnostics.
+This package orchestrates terrain generation using typed inputs and effective
+configuration. Stochastic stages use named deterministic seeds; generation
+returns numeric elevation, retained routing products and diagnostics.
 
 The implemented generator builds a coordinate-addressed relief field and a
 separate low-frequency macro surface. It routes MFD contributing area over a
@@ -46,7 +46,8 @@ is reused by every processing chunk.
 
 Automatic drainage is broad terrain structure, not a hydrologic certification.
 Its temporary filled surface is never substituted for the DEM, and it currently
-routes the generated macro surface before authored structures are reapplied.
+routes the authored macro surface before final constraint restoration. Regional
+relief limits automatic incision, including downstream corrections.
 It does not yet represent authored lakes, endorheic basins, sediment, lithology,
 climate, unique river trees, or river vector export.
 
@@ -55,15 +56,15 @@ tree supplies one generated valley centreline. A logarithmic contributing-area
 hierarchy blends narrow channel, near-shoulder, and broad trunk responses so
 larger downstream valleys widen at a fixed incision relief. The same canonical
 field suppresses fine residual noise most strongly on major floors and tapers
-that suppression across shoulders. D8 here is an internal shaping tree, not yet
-an exported or validated river product.
+that suppression across shoulders. D8 here is a shaping tree retained in the
+numeric routing archive; it is not a validated river product.
 
 The selected D8 tree also receives deterministic Horton-Strahler order. Channel
 heads have order one; equal highest-order tributaries increment the downstream
 order, while a smaller tributary joining a larger reach does not. The order
-raster is retained as typed internal topology, with zero outside the channel
-network. It does not currently modify elevation or width: direct order-based
-width and centreline-depth experiments regressed the synthetic width fixture or
+raster is retained and exported as numeric topology, with zero outside the
+channel network. It does not currently modify elevation or width: direct
+order-based width and centreline-depth experiments regressed the synthetic width fixture or
 the coarse Tharkeniss drainage diagnostic. Area and slope therefore remain the
 active shaping controls until valley character and confinement are explicit.
 
@@ -89,9 +90,11 @@ The generated floor is checked again after its permitted residual detail is
 restored. A stable upstream-to-downstream pass lowers a selected receiver only
 when its reconstructed floor would otherwise climb, enforcing a 0.01 m minimum
 drop. Correction is limited to 60% of reconstructed local elevation and an
-additional 2% of the generation ceiling; cap-limited edges remain explicit
-internal diagnostics. This is conservative generated-network conditioning, not
-final-DEM filling or authored stream burning.
+additional 2% of the generation ceiling, subject to the regional relief budget.
+Cap-limited edges remain explicit diagnostics. See the
+[region guide](../../../../docs/terrain-regions.md) for the effective limits.
+This is conservative generated-network conditioning, not final-DEM filling or
+authored stream burning.
 
 A second generated-only profile pass checks consecutive channel edges with
 normalized steepness `S * A^0.45`. A downstream reach may be up to eight times
