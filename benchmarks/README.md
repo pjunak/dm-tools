@@ -25,6 +25,7 @@ while measuring them, and avoid concurrent tests or other heavy workloads.
 | `archipelago` | Synthetic irregular coast, three islands and inland water; 960 boundary vertices |
 | `authored` | Square land with a ridge, peak/pass anchors, relative valley and relative brush |
 | `regional` | Public four-region project, including regional relief and incision budgets |
+| `water` | Authored lake/dry-basin footprints, cut protection and separate water products |
 
 Select cases and multiple resolutions/seeds explicitly:
 

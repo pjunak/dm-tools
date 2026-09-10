@@ -20,3 +20,8 @@ Update it with implementation changes; do not keep legacy variants.
 The [landform region example](terrain/landform-regions.dmterrain.json) adds four
 soft polygon recipes to the public terrain coastline. See the
 [region guide](../docs/terrain-regions.md) for controls and limitations.
+
+
+The [authored-water example](terrain/basin-water.dmterrain.json) adds a lake and
+a dry-basin footprint, preserving their ground while exporting water separately.
+It demonstrates retention and review; downstream river repair remains pending.

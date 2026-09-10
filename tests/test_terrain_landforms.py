@@ -116,7 +116,7 @@ def test_region_project_round_trip_and_invalid_geometry(tmp_path: Path) -> None:
     path = tmp_path / "regions.dmterrain.json"
     save_terrain_project(project, source, path)
     assert load_terrain_project(path).project == project
-    schema = Path(__file__).parents[1] / "schemas/terrain/project-v4.schema.json"
+    schema = Path(__file__).parents[1] / "schemas/terrain/project-v5.schema.json"
     validate(json.loads(path.read_text()), json.loads(schema.read_text()))
     crossed = TerrainRegion(((0, 0), (1, 1), (0, 1), (1, 0), (0, 0)))
     with pytest.raises(ValueError, match="simple polygon"):

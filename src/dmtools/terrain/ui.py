@@ -36,8 +36,10 @@ from dmtools.terrain.domain import (
     ElevationMode,
     ElevationPoint,
     FeatureToolSettings,
+    LakeToolSettings,
     LandformSettings,
     TerrainAuthoringState,
+    TerrainBasin,
     TerrainBrushStroke,
     TerrainConstraint,
     TerrainProject,
@@ -184,6 +186,8 @@ class TerrainApp:
         self._brush_intensity_percent = tk.DoubleVar(
             value=authoring_defaults.brush.intensity * 100.0
         )
+        self._lake_level = tk.DoubleVar(value=authoring_defaults.lake.water_level_m)
+        self._lake_outlet = tk.BooleanVar(value=authoring_defaults.lake.outlet_at_first_vertex)
         self._region_character = tk.StringVar(value="plain")
         self._region_values = {
             name: tk.DoubleVar(value=float(getattr(authoring_defaults.region, name)))
@@ -387,6 +391,8 @@ class TerrainApp:
             command=self._draw_preview, background=_PREVIEW, foreground="#dce8e3",
             selectcolor=_PREVIEW, activebackground=_PREVIEW, activeforeground="white",
         ).pack(side="left", padx=10)
+        tk.Button(toolbar, text="Basin details", command=self._show_basin_details,
+                  background="#2c3e40", foreground="#dce8e3", relief="flat").pack(side="left")
         self.preview_meta = tk.Label(
             toolbar_container,
             text="Awaiting land geometry",
@@ -426,11 +432,13 @@ class TerrainApp:
         ).grid(row=0, column=0, padx=(0, 7))
         for column, (tool, label) in enumerate(
             (
-                ("brush", "Terrain brush"),
-                ("height", "Height point"),
-                ("ridge", "Ridge line"),
-                ("valley", "Valley line"),
-                ("region", "Landform region"),
+                ("brush", "Brush"),
+                ("height", "Height"),
+                ("ridge", "Ridge"),
+                ("valley", "Valley"),
+                ("region", "Region"),
+                ("lake", "Lake"),
+                ("dry_basin", "Dry basin"),
             ),
             start=1,
         ):
@@ -450,7 +458,7 @@ class TerrainApp:
             self._authoring_widgets.append(button)
 
         actions = tk.Frame(authoring, background="#203033")
-        actions.grid(row=0, column=6, padx=(12, 0))
+        actions.grid(row=0, column=8, padx=(12, 0))
         self.finish_line_button = tk.Button(
             actions,
             text="Finish line",
@@ -494,7 +502,7 @@ class TerrainApp:
 
         parameters = tk.Frame(authoring, background="#203033")
         self._feature_parameters = parameters
-        parameters.grid(row=1, column=0, columnspan=7, sticky="w", pady=(7, 0))
+        parameters.grid(row=1, column=0, columnspan=9, sticky="w", pady=(7, 0))
         tk.Label(
             parameters,
             text="Mode",
@@ -594,7 +602,7 @@ class TerrainApp:
         ).pack(side="left", padx=(3, 0))
 
         self._region_parameters = tk.Frame(authoring, background="#203033")
-        self._region_parameters.grid(row=1, column=0, columnspan=7, sticky="w", pady=(7, 0))
+        self._region_parameters.grid(row=1, column=0, columnspan=9, sticky="w", pady=(7, 0))
         self._region_character_input = ttk.Combobox(
             self._region_parameters, textvariable=self._region_character,
             values=("plain", "hills", "plateau", "mountains"), width=12, state="readonly",
@@ -620,6 +628,21 @@ class TerrainApp:
             self._authoring_widgets.append(entry)
         self._region_parameters.grid_remove()
 
+        self._lake_parameters = tk.Frame(authoring, background="#203033")
+        self._lake_parameters.grid(row=1, column=0, columnspan=9, sticky="w", pady=(7, 0))
+        tk.Label(self._lake_parameters, text="Water level (m)", background="#203033",
+                 foreground="#a9bab7").pack(side="left", padx=(0, 6))
+        lake_level = tk.Spinbox(self._lake_parameters, textvariable=self._lake_level,
+                               from_=0, to=12000, increment=10, width=9)
+        lake_level.pack(side="left")
+        lake_outlet = tk.Checkbutton(
+            self._lake_parameters, text="Outlet at first vertex", variable=self._lake_outlet,
+            background="#203033", foreground="#d6e0dd", selectcolor="#142022",
+        )
+        lake_outlet.pack(side="left", padx=12)
+        self._authoring_widgets.extend((lake_level, lake_outlet))
+        self._lake_parameters.grid_remove()
+
         self.authoring_hint = tk.Label(
             authoring,
             text="Import land geometry to start drawing.",
@@ -627,7 +650,7 @@ class TerrainApp:
             foreground="#8fa5a1",
             font=("Segoe UI", 8),
         )
-        self.authoring_hint.grid(row=2, column=0, columnspan=7, sticky="w", pady=(6, 0))
+        self.authoring_hint.grid(row=2, column=0, columnspan=9, sticky="w", pady=(6, 0))
 
         content = tk.Frame(parent, background=_PREVIEW)
         content.grid(row=2, column=0, sticky="nsew", padx=(16, 12), pady=(0, 14))
@@ -708,7 +731,7 @@ class TerrainApp:
         self._refresh_authoring_controls()
 
     def _set_authoring_tool(self, tool: str) -> None:
-        if tool not in ("brush", "height", "ridge", "valley", "region"):
+        if tool not in ("brush", "height", "ridge", "valley", "region", "lake", "dry_basin"):
             raise ValueError(f"Unknown authoring tool: {tool}")
         if self._draft_points and self._authoring_tool.get() != tool:
             self._draft_points.clear()
@@ -737,6 +760,8 @@ class TerrainApp:
             "ridge": _RIDGE_COLOUR,
             "valley": _VALLEY_COLOUR,
             "region": _REGION_COLOUR,
+            "lake": "#65bada",
+            "dry_basin": "#d2b487",
         }
         for tool, button in self._tool_buttons.items():
             active = tool == selected
@@ -749,9 +774,10 @@ class TerrainApp:
             )
 
         line_ready = ((selected in ("ridge", "valley") and len(self._draft_points) >= 2)
-                      or (selected == "region" and len(self._draft_points) >= 3))
+                      or (selected in ("region", "lake", "dry_basin")
+                          and len(self._draft_points) >= 3))
         self.finish_line_button.configure(
-            text="Finish region" if selected == "region" else "Finish line")
+            text="Finish area" if selected in ("region", "lake", "dry_basin") else "Finish line")
         self.finish_line_button.configure(
             state="normal" if self._authoring_enabled and line_ready else "disabled"
         )
@@ -764,6 +790,18 @@ class TerrainApp:
         )
         self._region_character_input.configure(
             state="readonly" if self._authoring_enabled else "disabled")
+        self._lake_parameters.grid_remove()
+        if selected in ("lake", "dry_basin"):
+            self._feature_parameters.grid_remove()
+            self._region_parameters.grid_remove()
+            if selected == "lake":
+                self._lake_parameters.grid()
+            self.authoring_hint.configure(text=(
+                "Click 3+ corners, then Finish area. Lake outlet, if enabled, is the first corner."
+                if selected == "lake" else
+                "Draw a dry-basin area. Automatic cutting is excluded; planned exits are reviewed."
+            ))
+            return
         if selected == "region":
             self._feature_parameters.grid_remove()
             self._region_parameters.grid()
@@ -1094,6 +1132,9 @@ class TerrainApp:
 
     def _finish_structure(self) -> None:
         tool = self._authoring_tool.get()
+        if tool in ("lake", "dry_basin"):
+            self._finish_basin()
+            return
         if tool == "region":
             self._finish_region()
             return
@@ -1154,6 +1195,38 @@ class TerrainApp:
         self._draft_points.clear()
         self._invalidate_generated_terrain("Landform region added. Generate to apply it.")
 
+    def _finish_basin(self) -> None:
+        tool = self._authoring_tool.get()
+        if tool not in ("lake", "dry_basin") or len(self._draft_points) < 3:
+            return
+        points = tuple(self._draft_points)
+        if points[0] != points[-1]:
+            points += (points[0],)
+        try:
+            basin = TerrainBasin(
+                points, tool, float(self._lake_level.get()) if tool == "lake" else None,
+                points[0] if tool == "lake" and self._lake_outlet.get() else None,
+            )
+            geometry = Polygon([self._normalized_to_source(point) for point in points])
+            if not geometry.is_valid or geometry.area <= 0:
+                raise ValueError("Use a simple polygon without crossing edges.")
+            if self._coast_polygon is None or not self._coast_polygon.covers(geometry):
+                raise ValueError("Basin areas must stay on land and exclude SVG water holes.")
+            for other in self._constraints:
+                if isinstance(other, TerrainBasin) and geometry.intersects(Polygon([
+                    self._normalized_to_source(point) for point in other.points
+                ])):
+                    raise ValueError("Basin areas must not overlap or touch.")
+            if (basin.water_level_m is not None
+                    and basin.water_level_m > float(self._variables["maximum_elevation_m"].get())):
+                raise ValueError("Water level exceeds the elevation ceiling.")
+        except (ValueError, tk.TclError) as error:
+            messagebox.showerror("Invalid basin area", str(error), parent=self.root)
+            return
+        self._constraints.append(basin)
+        self._draft_points.clear()
+        self._invalidate_generated_terrain("Basin area added. Generate to protect and review it.")
+
     def _undo_constraint(self) -> None:
         if self._draft_points:
             self._draft_points.pop()
@@ -1171,7 +1244,7 @@ class TerrainApp:
         if self._constraints and not messagebox.askyesno(
             "Clear authored topography?",
             "Remove every terrain brush stroke, height point, ridge, and valley "
-            "and landform regions from this coastline?",
+            "landform regions, lakes and dry basins from this coastline?",
             parent=self.root,
         ):
             return
@@ -1450,7 +1523,7 @@ class TerrainApp:
 
     def _read_authoring_state(self) -> TerrainAuthoringState:
         active_tool = self._authoring_tool.get()
-        if active_tool not in ("brush", "height", "ridge", "valley", "region"):
+        if active_tool not in ("brush", "height", "ridge", "valley", "region", "lake", "dry_basin"):
             raise ValueError(f"Unknown authoring tool: {active_tool}")
 
         def feature(tool: str) -> FeatureToolSettings:
@@ -1463,6 +1536,7 @@ class TerrainApp:
         return TerrainAuthoringState(
             active_tool=active_tool,
             region=self._read_region_settings(),
+            lake=LakeToolSettings(float(self._lake_level.get()), bool(self._lake_outlet.get())),
             brush=BrushToolSettings(
                 elevation_mode=self._selected_elevation_mode("brush"),
                 elevation_m=float(self._tool_elevations["brush"].get()),
@@ -1476,6 +1550,8 @@ class TerrainApp:
 
     def _apply_authoring_state(self, authoring: TerrainAuthoringState) -> None:
         self._authoring_tool.set(authoring.active_tool)
+        self._lake_level.set(authoring.lake.water_level_m)
+        self._lake_outlet.set(authoring.lake.outlet_at_first_vertex)
         self._region_character.set(authoring.region.character)
         for key, value in self._region_values.items():
             value.set(float(getattr(authoring.region, key)))
@@ -1604,11 +1680,16 @@ class TerrainApp:
                         drainage_status = "No potential sinks on the canonical grid."
                     agreement = event.terrain.routing_agreement
                     conflicts = event.terrain.routing_conflicts.summary
+                    basin_issues = sum(
+                        bool(item.issues) for item in event.terrain.water.review.basins)
+                    water_status = (f" Basin review: {basin_issues} areas need attention."
+                                    if event.terrain.water.review.basins else "")
                     self.status_label.configure(text=(
                         f"Terrain ready. {drainage_status} "
                         f"Planned channels: {agreement.uphill_channel_edge_count:,} uphill edges; "
                         f"{conflicts.insufficient_cut_edge_count:,} exceed cut allowance, "
                         f"{conflicts.depression_edge_count:,} touch depressions (may overlap)."
+                        f"{water_status}"
                     ))
                     peak = float(event.terrain.elevation_m[event.terrain.land_mask].max())
                     connected_percent = (
@@ -1661,6 +1742,40 @@ class TerrainApp:
         except queue.Empty:
             pass
         self.root.after(80, self._poll_events)
+
+    def _show_basin_details(self) -> None:
+        if self._terrain is None:
+            self.status_label.configure(text="Generate terrain to review authored basin areas.")
+            return
+        records = self._terrain.water.review.basins
+        if not records:
+            self.status_label.configure(
+                text="Draw a lake or dry-basin area, then generate terrain.")
+            return
+        descriptions = {
+            "unresolved_footprint": "Area is smaller than the review grid can resolve.",
+            "no_water_at_level": "The water level does not cover any reviewed ground.",
+            "disconnected_water": "The water separates into multiple pools.",
+            "low_boundary": "Water reaches low ground beyond the drawn area; review its boundary.",
+            "exposed_height_anchor": "An authored height point remains above the lake level.",
+            "outlet_above_water": "The outlet terrain is above the water level.",
+            "outlet_route_unvalidated": "The downstream outlet route still needs validation.",
+            "planned_outflow_from_closed_basin": (
+                "Planned channels leave this closed basin; repair is pending."),
+        }
+        sections: list[str] = []
+        for record in records[:20]:
+            title = f"A{record.intent_id}. {record.source.kind.replace('_', ' ').title()}"
+            if record.source.water_level_m is not None:
+                title += f" at {record.source.water_level_m:,.1f} m"
+                title += f" ({record.wet_cell_count} wet / {record.dry_cell_count} dry samples)"
+            findings = [descriptions[issue] for issue in record.issues]
+            if not findings:
+                findings = ["No sampled conflict found. This is not a river-flow certification."]
+            sections.append(title + "\n" + "\n".join(findings))
+        if len(records) > 20:
+            sections.append(f"Showing 20 of {len(records)} areas.")
+        messagebox.showinfo("Authored basin review", "\n\n".join(sections), parent=self.root)
 
     def _draw_preview(self) -> None:
         self.preview.delete("all")
@@ -1769,6 +1884,26 @@ class TerrainApp:
         return influence_radius_km / object_scale_km * max(right - left, bottom - top)
 
     def _draw_constraint(self, constraint: TerrainConstraint) -> None:
+        if isinstance(constraint, TerrainBasin):
+            colour = "#65bada" if constraint.kind == "lake" else "#d2b487"
+            coordinates = [value for point in constraint.points
+                           for value in self._normalized_to_canvas(point)]
+            self.preview.create_line(coordinates, fill=colour, width=2, dash=(5, 3))
+            label = (f"Lake {constraint.water_level_m:,.0f} m"
+                     if constraint.water_level_m is not None else "Dry basin")
+            if self._terrain is not None:
+                intent_id = next((item.intent_id for item in self._terrain.water.review.basins
+                                  if item.source == constraint), None)
+                if intent_id is not None:
+                    label = f"A{intent_id}: {label}"
+            if constraint.outlet is not None:
+                x, y = self._normalized_to_canvas(constraint.outlet)
+                self.preview.create_polygon(x, y - 5, x + 5, y, x, y + 5, x - 5, y,
+                                            fill="#ffd85a", outline="")
+                label += " / outlet"
+            self.preview.create_text(coordinates[0] + 5, coordinates[1] - 5,
+                                     text=label, anchor="sw", fill=colour)
+            return
         if isinstance(constraint, TerrainRegion):
             coordinates = [value for point in constraint.points
                            for value in self._normalized_to_canvas(point)]
@@ -1930,7 +2065,8 @@ class TerrainApp:
             return
         tool = self._authoring_tool.get()
         colour = {"ridge": _RIDGE_COLOUR, "valley": _VALLEY_COLOUR,
-                  "region": _REGION_COLOUR}.get(tool, _REGION_COLOUR)
+                  "region": _REGION_COLOUR, "lake": "#65bada",
+                  "dry_basin": "#d2b487"}.get(tool, _REGION_COLOUR)
         coordinates: list[float] = []
         canvas_points: list[tuple[float, float]] = []
         for point in self._draft_points:
@@ -1938,7 +2074,7 @@ class TerrainApp:
             canvas_points.append(canvas_point)
             coordinates.extend(canvas_point)
         if len(canvas_points) >= 2:
-            if tool == "region":
+            if tool in ("region", "lake", "dry_basin"):
                 self.preview.create_line(coordinates, fill=colour, width=2, dash=(6, 4))
                 if len(canvas_points) >= 3:
                     self.preview.create_line(*canvas_points[-1], *canvas_points[0],

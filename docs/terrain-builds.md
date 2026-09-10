@@ -21,6 +21,7 @@ the workbench. No input file or generator setting is changed.
 | `x-km.npy`, `y-km.npy` | Authoritative Float64 coordinate vectors in kilometres |
 | `inputs.json` | Effective input snapshot including dissolved geometry, settings, constraints and authoring state |
 | `cartographic.png`, `scientific.png` | The two existing display styles derived from this DEM |
+| `water.npz` | Authored lake surface, depth and footprint IDs on the delivered grid |
 | `routing.npz` | Canonical planning and final-field elevations, mask, coordinates, receivers, contributing area, channels, heads, orders, outlets, incision and its effective limit |
 | `drainage.png` | Four-panel planning, uphill-channel, conflict-context and basin/spill review |
 | `diagnostics.json` | Delivered-surface quality measurements and separately labelled canonical drainage diagnostics |
@@ -129,8 +130,8 @@ project, SVG and installed Python package files are fingerprinted; runtime and
 dependency versions are recorded. No network service is needed to build.
 
 Consumers must validate the manifest and verify product hashes. Register the
-[current build schema](../schemas/terrain/build-v6.schema.json) and
-[current project schema](../schemas/terrain/project-v4.schema.json) locally by
+[current build schema](../schemas/terrain/build-v7.schema.json) and
+[current project schema](../schemas/terrain/project-v5.schema.json) locally by
 `$id` for offline validation. Older formats are unsupported. The
 [seed contract](terrain-seeds.md) describes the single named-stage algorithm.
 
@@ -172,3 +173,13 @@ The fourth review panel shows purple extents, white deepest nodes, and yellow
 routes/spill diamonds for the eight deepest candidates. The workbench's
 **Drainage review** toggle displays the same products alongside planned channels.
 They do not assign lake levels, classify authored dry basins or modify terrain.
+
+
+## Authored water products
+
+Build v7 adds `water.npz` with delivered-grid Float32 water surfaces/depths and
+UInt32 footprint IDs. `routing.npz` adds canonical `basin_intent_ids`;
+`diagnostics.json` records `authored_water` and `water_sha256`. Ground elevations
+remain in the DEM and GeoTIFF. Cartographic relief shows wet lake samples, while
+scientific elevation shows the ground beneath them. See the
+[water contract](terrain-water.md) for retention rules and unresolved flow conflicts.

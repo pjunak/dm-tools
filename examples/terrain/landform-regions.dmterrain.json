@@ -30,6 +30,10 @@
         "elevation_m": 700.0,
         "elevation_mode": "relative",
         "radius_km": 90.0
+      },
+      "lake": {
+        "water_level_m": 500.0,
+        "outlet_at_first_vertex": false
       }
     }
   },
@@ -208,7 +212,7 @@
     }
   ],
   "schema": "dmtools.terrain-project",
-  "schema_version": 4,
+  "schema_version": 5,
   "settings": {
     "coastal_rise_km": 180.0,
     "detail_levels": 6,

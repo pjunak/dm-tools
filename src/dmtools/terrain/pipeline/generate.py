@@ -18,6 +18,7 @@ from dmtools.terrain.domain import (
     ElevationPoint,
     EndpointGrid,
     LocalMetricFrame,
+    TerrainBasin,
     TerrainBrushStroke,
     TerrainConstraint,
     TerrainRegion,
@@ -45,11 +46,19 @@ from dmtools.terrain.pipeline.landforms import (
 )
 from dmtools.terrain.pipeline.noise import fractal_value_noise
 from dmtools.terrain.pipeline.profile import shape_preserving_profile
+from dmtools.terrain.pipeline.water import (
+    MetricBasin,
+    WaterProducts,
+    basin_intent_ids,
+    prepare_basins,
+    review_water,
+    water_products,
+)
 
 type ProgressCallback = Callable[[float, str], None]
 
-GENERATOR_ALGORITHM_ID = "coastline-constraint-terrain@5"
-AUTOMATIC_VALLEY_ALGORITHM_ID = "regional-budget-mfd-d8-valleys@4"
+GENERATOR_ALGORITHM_ID = "coastline-constraint-terrain@6"
+AUTOMATIC_VALLEY_ALGORITHM_ID = "regional-budget-mfd-d8-valleys@5"
 NOISE_ALGORITHM_ID = "coordinate-value-noise-normalized@1"
 
 
@@ -71,6 +80,7 @@ class GeneratedTerrain:
     routing_final_elevation_m: NDArray[np.float64]
     routing_agreement: RoutingAgreement
     routing_conflicts: ChannelConflicts
+    water: WaterProducts
 
     @property
     def grid(self) -> EndpointGrid:
@@ -104,6 +114,7 @@ class _AutomaticValleyField:
     detail_suppression: NDArray[np.float64]
     drainage: DrainageIncision
     land_mask: NDArray[np.bool_]
+    basins: tuple[MetricBasin, ...] = ()
 
     def _sample(
         self,
@@ -283,7 +294,7 @@ def _metric_constraints(
 ) -> tuple[_MetricConstraint, ...]:
     converted: list[_MetricConstraint] = []
     for constraint in constraints:
-        if isinstance(constraint, TerrainRegion):
+        if isinstance(constraint, (TerrainRegion, TerrainBasin)):
             continue
         if (
             constraint.elevation_mode == "absolute"
@@ -859,6 +870,7 @@ def _prepare_automatic_valley_field(
     settings: TerrainSettings,
     constraints: tuple[_MetricConstraint, ...],
     regions: tuple[MetricRegion, ...] = (),
+    basins: tuple[MetricBasin, ...] = (),
 ) -> _AutomaticValleyField:
     """Route broad drainage once on a canonical, output-resolution-free grid."""
 
@@ -889,6 +901,11 @@ def _prepare_automatic_valley_field(
     routing_elevation = np.where(
         land_mask, np.clip(conditioned_macro, 0.0, settings.maximum_elevation_m), 0.0,
     )
+    budget = regional_incision_budget(
+        x_grid, y_grid,
+        automatic_incision_budget(settings.maximum_elevation_m, settings.variability), regions,
+    )
+    budget[basin_intent_ids(x_grid, y_grid, basins) > 0] = 0
     drainage = drainage_incision(
         routing_elevation,
         land_mask,
@@ -898,11 +915,7 @@ def _prepare_automatic_valley_field(
         maximum_elevation_m=settings.maximum_elevation_m,
         variability=settings.variability,
         residual_detail_m=(full_elevation - macro_elevation) * (1.0 - constraint_influence),
-        incision_budget_m=regional_incision_budget(
-            x_grid, y_grid,
-            automatic_incision_budget(settings.maximum_elevation_m, settings.variability),
-            regions,
-        ),
+        incision_budget_m=budget,
     )
     return _AutomaticValleyField(
         x_km=x_km,
@@ -911,6 +924,7 @@ def _prepare_automatic_valley_field(
         detail_suppression=drainage.detail_suppression,
         drainage=drainage,
         land_mask=land_mask,
+        basins=basins,
     )
 
 
@@ -1135,6 +1149,10 @@ def _evaluate_land_samples(
         x_grid,
         y_grid,
     )
+    if automatic_valleys.basins:
+        retained = basin_intent_ids(x_grid, y_grid, automatic_valleys.basins) > 0
+        automatic_incision[retained] = 0
+        automatic_detail_suppression[retained] = 0
     residual_detail = unconditioned_elevation - macro_elevation
     macro_elevation = np.maximum(macro_elevation - automatic_incision, 0.0)
     unconditioned_elevation = np.maximum(
@@ -1170,6 +1188,9 @@ def generate_terrain(
     _report(progress, 0.02, "Preparing metric grid")
     polygon, width_km, height_km = _metric_polygon(coastline, settings.object_scale_km)
     authored_constraints = tuple(constraints)
+    basins = prepare_basins(
+        authored_constraints, width_km, height_km, polygon, settings.maximum_elevation_m,
+    )
     regions = prepare_regions(
         tuple(item for item in authored_constraints if isinstance(item, TerrainRegion)),
         width_km, height_km, polygon, settings.maximum_elevation_m,
@@ -1195,7 +1216,7 @@ def generate_terrain(
     _report(progress, 0.06, "Routing drainage over authored terrain")
     automatic_valleys = _prepare_automatic_valley_field(
         polygon, boundary, width_km, height_km, settings, metric_constraints,
-        regions=regions,
+        regions=regions, basins=basins,
     )
 
     _report(progress, 0.08, "Building elevation field")
@@ -1235,6 +1256,24 @@ def generate_terrain(
         region_transition_mask=regional_transition_mask(routing_x, routing_y, regions),
     )
 
+    routing_basin_ids = basin_intent_ids(routing_x, routing_y, basins)
+    outlet_heights: list[float | None] = []
+    for basin in basins:
+        if basin.outlet_km is None:
+            outlet_heights.append(None)
+        else:
+            outlet_x, outlet_y = basin.outlet_km
+            values, _ = _evaluate_elevation_samples(
+                np.asarray([outlet_x]), np.asarray([outlet_y]), polygon, boundary,
+                settings, metric_constraints, automatic_valleys, regions=regions,
+            )
+            outlet_heights.append(float(np.float32(values[0])))
+    water_review = review_water(
+        basins, routing_basin_ids, routing_final, automatic_valleys.drainage,
+        authored_constraints, tuple(outlet_heights),
+    )
+    water = water_products(elevation, x_km, y_km, basins, routing_basin_ids, water_review)
+
     _report(progress, 0.94, "Validating terrain")
     if not np.any(mask):
         raise ValueError("The coastline does not cover any output pixels.")
@@ -1259,4 +1298,5 @@ def generate_terrain(
         routing_final_elevation_m=routing_final,
         routing_agreement=review.agreement,
         routing_conflicts=review.conflicts,
+        water=water,
     )

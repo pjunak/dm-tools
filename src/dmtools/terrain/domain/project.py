@@ -12,7 +12,7 @@ from dmtools.terrain.domain.models import (
     TerrainSettings,
 )
 
-type AuthoringTool = Literal["brush", "height", "ridge", "valley", "region"]
+type AuthoringTool = Literal["brush", "height", "ridge", "valley", "region", "lake", "dry_basin"]
 
 
 def _validate_tool_value(
@@ -70,10 +70,24 @@ def _default_valley_tool() -> FeatureToolSettings:
 
 
 @dataclass(frozen=True, slots=True)
+class LakeToolSettings:
+    water_level_m: float = 500.0
+    outlet_at_first_vertex: bool = False
+
+    def __post_init__(self) -> None:
+        if (isinstance(self.water_level_m, bool) or not isfinite(self.water_level_m)
+                or self.water_level_m < 0):
+            raise ValueError("Lake water level must be finite and non-negative.")
+        if type(self.outlet_at_first_vertex) is not bool:
+            raise ValueError("Lake outlet selection must be boolean.")
+
+
+@dataclass(frozen=True, slots=True)
 class TerrainAuthoringState:
     """User-facing tool defaults that should survive closing the workbench."""
 
     region: LandformSettings = field(default_factory=LandformSettings)
+    lake: LakeToolSettings = field(default_factory=LakeToolSettings)
     active_tool: AuthoringTool = "brush"
     brush: BrushToolSettings = field(default_factory=BrushToolSettings)
     height: FeatureToolSettings = field(default_factory=_default_height_tool)
@@ -81,7 +95,9 @@ class TerrainAuthoringState:
     valley: FeatureToolSettings = field(default_factory=_default_valley_tool)
 
     def __post_init__(self) -> None:
-        if self.active_tool not in ("brush", "height", "ridge", "valley", "region"):
+        if self.active_tool not in (
+            "brush", "height", "ridge", "valley", "region", "lake", "dry_basin",
+        ):
             raise ValueError("Active authoring tool is not supported.")
         for name, settings in (("ridge", self.ridge), ("valley", self.valley)):
             if settings.elevation_mode == "relative" and settings.elevation_m < 0:

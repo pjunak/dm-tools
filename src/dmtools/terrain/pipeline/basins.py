@@ -51,7 +51,7 @@ class DrainageBasinCandidate:
     outlet: BasinOutlet
 
 
-def _components(mask: NDArray[np.bool_]) -> list[NDArray[np.int64]]:
+def connected_components(mask: NDArray[np.bool_]) -> list[NDArray[np.int64]]:
     height, width = mask.shape
     remaining = mask.copy()
     components: list[NDArray[np.int64]] = []
@@ -83,7 +83,7 @@ def boundary_context(
     edge[[0, -1], :] = True
     edge[:, [0, -1]] = True
     water = np.zeros(land_mask.shape, dtype=np.uint8)
-    for component in _components(~land_mask):
+    for component in connected_components(~land_mask):
         kind = EXTERIOR_WATER if np.any(edge.ravel()[component]) else ENCLOSED_WATER
         water.ravel()[component] = kind
     flags = np.where(edge & land_mask, GRID_EDGE, 0).astype(np.uint8)
@@ -134,7 +134,7 @@ def basin_candidates(
             if flat_elevation[peak] > flat_elevation[index]:
                 peaks[index] = peak
 
-    components = _components(significant_fill)
+    components = connected_components(significant_fill)
     ranked: list[tuple[float, float, int, NDArray[np.int64]]] = []
     for component in components:
         depths = flat_depth[component]

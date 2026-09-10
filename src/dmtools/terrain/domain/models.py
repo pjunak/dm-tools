@@ -232,7 +232,36 @@ class TerrainRegion:
             raise ValueError("Terrain region needs three distinct vertices.")
 
 
-type TerrainConstraint = ElevationPoint | TerrainStructure | TerrainBrushStroke | TerrainRegion
+@dataclass(frozen=True, slots=True)
+class TerrainBasin:
+    """Authored retention footprint; lake water is separate from its ground DEM."""
+
+    points: tuple[Point2D, ...]
+    kind: Literal["lake", "dry_basin"]
+    water_level_m: float | None = None
+    outlet: Point2D | None = None
+
+    def __post_init__(self) -> None:
+        _validate_ring(self.points, "Basin footprint")
+        for point in self.points:
+            _validate_normalized_point(point)
+        if len(set(self.points[:-1])) < 3:
+            raise ValueError("Basin footprint needs three distinct vertices.")
+        if self.kind not in ("lake", "dry_basin"):
+            raise ValueError("Basin kind must be lake or dry_basin.")
+        if self.kind == "lake":
+            if (self.water_level_m is None or isinstance(self.water_level_m, bool)
+                    or not isfinite(self.water_level_m) or self.water_level_m < 0):
+                raise ValueError("Lake water level must be finite and non-negative.")
+            if self.outlet is not None:
+                _validate_normalized_point(self.outlet)
+        elif self.water_level_m is not None or self.outlet is not None:
+            raise ValueError("A dry basin cannot have a water level or an outlet.")
+
+
+type TerrainConstraint = (
+    ElevationPoint | TerrainStructure | TerrainBrushStroke | TerrainRegion | TerrainBasin
+)
 
 
 @dataclass(frozen=True, slots=True)

@@ -54,3 +54,5 @@ supersedes their legacy compatibility commitments during early development.
 
 - [ADR-0032: Classify channel conflicts](0032-classify-channel-conflicts.md)
 - [ADR-0033: Map basin spill candidates](0033-map-basin-spill-candidates.md)
+
+- [ADR-0034: Author lakes and dry basins](0034-author-lakes-and-dry-basins.md)

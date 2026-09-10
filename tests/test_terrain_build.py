@@ -56,8 +56,8 @@ def test_headless_build_preserves_dem_and_has_repeatable_verified_products(
     build_module.build_terrain_project(project_path, second)
     document: dict[str, Any] = json.loads((first / "manifest.json").read_text())
     schema_dir = EXAMPLES.parents[1] / "schemas" / "terrain"
-    assert document["schema_version"] == 6
-    assert document["inputs"]["project_schema_version"] == 4
+    assert document["schema_version"] == 7
+    assert document["inputs"]["project_schema_version"] == 5
     assert document["algorithms"]["seed_policy"] == SEED_POLICY_ID
     resolved_seed = stage_seed(loaded.project.settings.seed, RELIEF_STAGE_ID)
     assert document["algorithms"]["stage_seeds"] == {
@@ -74,7 +74,7 @@ def test_headless_build_preserves_dem_and_has_repeatable_verified_products(
     )
     schema = next(
         item for item in schemas
-        if item["$id"] == "urn:dmtools:schema:terrain-build:6"
+        if item["$id"] == "urn:dmtools:schema:terrain-build:7"
     )
     validate(document, schema, cls=Draft202012Validator, registry=registry)
     invalid = {**document, "coordinates": {**document["coordinates"], "world_crs": "EPSG:4326"}}
@@ -166,7 +166,7 @@ def test_headless_build_preserves_dem_and_has_repeatable_verified_products(
         assert record["outlet"]["spill_elevation_m"] == candidate.outlet.spill_elevation_m
     assert diagnostics["routing_sha256"] == file_sha256(first / "routing.npz")
     assert diagnostics["routing_agreement"]["algorithm_id"] == "planned-final-d8-agreement@2"
-    for missing_name in ("routing.npz", "drainage.png"):
+    for missing_name in ("routing.npz", "drainage.png", "water.npz"):
         incomplete = {**document, "outputs": {
             key: value for key, value in document["outputs"].items() if key != missing_name
         }}
@@ -306,3 +306,36 @@ def test_geotiff_failure_cannot_publish_a_completed_build(
         build_module.build_terrain_project(project_path, output)
     assert (output / "elevation.npy").exists()
     assert not (output / "manifest.json").exists()
+
+
+def test_authored_water_build_keeps_ground_and_water_separate_and_repeatable(
+    tmp_path: Path,
+) -> None:
+    loaded = load_terrain_project(EXAMPLES / "basin-water.dmterrain.json")
+    project = replace(loaded.project, settings=replace(loaded.project.settings, resolution_px=65))
+    path = tmp_path / "water.dmterrain.json"
+    save_terrain_project(project, loaded.coastline_source, path)
+    outputs = [tmp_path / "first", tmp_path / "second"]
+    for output in outputs:
+        build_module.build_terrain_project(path, output)
+    first, second = outputs
+    assert (first / "water.npz").read_bytes() == (second / "water.npz").read_bytes()
+    assert (first / "manifest.json").read_bytes() == (second / "manifest.json").read_bytes()
+    bed = np.load(first / "elevation.npy", allow_pickle=False)
+    with np.load(first / "water.npz", allow_pickle=False) as water:
+        wet = np.isfinite(water["surface_m"])
+        assert wet.any()
+        np.testing.assert_array_equal(water["surface_m"][wet], 750)
+        np.testing.assert_array_equal(water["depth_m"][wet], 750 - bed[wet])
+        np.testing.assert_array_equal(water["depth_m"][~wet], 0)
+        assert np.all(water["intent_ids"][wet] > 0)
+        assert np.all(bed[wet] < 750)
+    diagnostics = json.loads((first / "diagnostics.json").read_text(encoding="utf-8"))
+    assert diagnostics["water_sha256"] == file_sha256(first / "water.npz")
+    records = diagnostics["authored_water"]["basins"]
+    assert len(records) == 2
+    with np.load(first / "routing.npz", allow_pickle=False) as routing:
+        retained = routing["basin_intent_ids"] > 0
+        assert retained.any()
+        np.testing.assert_array_equal(routing["incision_m"][retained], 0)
+        np.testing.assert_array_equal(routing["incision_limit_m"][retained], 0)

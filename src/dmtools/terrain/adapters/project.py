@@ -21,8 +21,10 @@ from dmtools.terrain.domain import (
     ElevationMode,
     ElevationPoint,
     FeatureToolSettings,
+    LakeToolSettings,
     LandformSettings,
     TerrainAuthoringState,
+    TerrainBasin,
     TerrainBrushStroke,
     TerrainConstraint,
     TerrainProject,
@@ -32,7 +34,7 @@ from dmtools.terrain.domain import (
 )
 
 PROJECT_SCHEMA = "dmtools.terrain-project"
-PROJECT_SCHEMA_VERSION = 4
+PROJECT_SCHEMA_VERSION = 5
 PROJECT_EXTENSION = ".dmterrain.json"
 _MAX_PROJECT_BYTES = 16 * 1024 * 1024
 
@@ -164,10 +166,17 @@ def _authoring_from_json(value: object) -> TerrainAuthoringState:
     data = _mapping(value, "authoring")
     _require_keys(data, {"active_tool", "tools"}, "authoring")
     active_tool_value = _string(data["active_tool"], "authoring.active_tool")
-    if active_tool_value not in ("brush", "height", "ridge", "valley", "region"):
+    if active_tool_value not in (
+        "brush", "height", "ridge", "valley", "region", "lake", "dry_basin",
+    ):
         raise TerrainProjectInputError("authoring.active_tool is not supported.")
     tools = _mapping(data["tools"], "authoring.tools")
-    _require_keys(tools, {"brush", "height", "ridge", "valley", "region"}, "authoring.tools")
+    _require_keys(tools, {"brush", "height", "ridge", "valley", "region", "lake"},
+                  "authoring.tools")
+    lake = _mapping(tools["lake"], "authoring.tools.lake")
+    _require_keys(lake, {"water_level_m", "outlet_at_first_vertex"}, "authoring.tools.lake")
+    if not isinstance(lake["outlet_at_first_vertex"], bool):
+        raise TerrainProjectInputError("Lake outlet selection must be boolean.")
     brush = _mapping(tools["brush"], "authoring.tools.brush")
     _require_keys(
         brush,
@@ -177,6 +186,8 @@ def _authoring_from_json(value: object) -> TerrainAuthoringState:
     try:
         return TerrainAuthoringState(
             active_tool=active_tool_value,
+            lake=LakeToolSettings(_number(lake["water_level_m"], "lake water level"),
+                                  lake["outlet_at_first_vertex"]),
             region=_landform_settings_from_json(tools["region"]),
             brush=BrushToolSettings(
                 elevation_mode=_elevation_mode(
@@ -218,6 +229,13 @@ def _constraint_from_json(value: object, index: int) -> TerrainConstraint:
     kind = _string(data.get("type"), f"{context}.type")
     common = {"type", "elevation_mode", "elevation_m", "influence_radius_km"}
     try:
+        if kind in ("lake", "dry_basin"):
+            _require_keys(data, {"type", "points", "water_level_m", "outlet"}, context)
+            return TerrainBasin(
+                _points(data["points"], f"{context}.points"), kind,
+                None if data["water_level_m"] is None else _number(data["water_level_m"], context),
+                None if data["outlet"] is None else _point(data["outlet"], context),
+            )
         if kind == "terrain_region":
             _require_keys(data, {"type", "points", "settings"}, context)
             return TerrainRegion(_points(data["points"], f"{context}.points"),
@@ -285,6 +303,7 @@ def _authoring_to_json(authoring: TerrainAuthoringState) -> dict[str, object]:
         "active_tool": authoring.active_tool,
         "tools": {
             "region": asdict(authoring.region),
+            "lake": asdict(authoring.lake),
             "brush": {
                 "elevation_mode": authoring.brush.elevation_mode,
                 "elevation_m": authoring.brush.elevation_m,
@@ -299,6 +318,10 @@ def _authoring_to_json(authoring: TerrainAuthoringState) -> dict[str, object]:
 
 
 def _constraint_to_json(constraint: TerrainConstraint) -> dict[str, object]:
+    if isinstance(constraint, TerrainBasin):
+        return {"type": constraint.kind, "points": [list(p) for p in constraint.points],
+                "water_level_m": constraint.water_level_m,
+                "outlet": None if constraint.outlet is None else list(constraint.outlet)}
     if isinstance(constraint, TerrainRegion):
         return {"type": "terrain_region", "points": [list(p) for p in constraint.points],
                 "settings": asdict(constraint.settings)}

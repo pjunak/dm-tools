@@ -40,7 +40,7 @@ from dmtools.terrain.pipeline.generate import (
 from dmtools.terrain.pipeline.landforms import LANDFORM_ALGORITHM_ID
 from dmtools.terrain.pipeline.quality import TerrainQuality
 
-BUILD_SCHEMA_VERSION = 6
+BUILD_SCHEMA_VERSION = 7
 
 
 def file_sha256(path: Path) -> str:
@@ -140,10 +140,20 @@ def write_build_products(
             basin_labels=terrain.drainage.basin_labels,
             nonland_class=terrain.drainage.nonland_class,
             boundary_flags=terrain.drainage.boundary_flags,
+            basin_intent_ids=terrain.water.routing_intent_ids,
         )
         stream.flush()
         os.fsync(stream.fileno())
     paths.append(("routing.npz", "derived"))
+    with (destination / "water.npz").open("xb") as stream:
+        np.savez_compressed(
+            stream, surface_m=terrain.water.surface_m, intent_ids=terrain.water.intent_ids,
+            depth_m=np.where(np.isfinite(terrain.water.surface_m),
+                             np.maximum(terrain.water.surface_m - terrain.elevation_m, 0), 0),
+        )
+        stream.flush()
+        os.fsync(stream.fileno())
+    paths.append(("water.npz", "derived"))
     with render_drainage_review(terrain) as review:
         review.save(destination / "drainage.png")
     paths.append(("drainage.png", "derived"))
@@ -156,6 +166,8 @@ def write_build_products(
             "canonical_drainage": asdict(terrain.drainage.summary),
             "routing_agreement": asdict(terrain.routing_agreement),
             "channel_conflicts": asdict(terrain.routing_conflicts.summary),
+            "authored_water": asdict(terrain.water.review),
+            "water_sha256": file_sha256(destination / "water.npz"),
             "routing_sha256": file_sha256(destination / "routing.npz"),
             "elevation_sha256": file_sha256(destination / "elevation.npy"),
         },

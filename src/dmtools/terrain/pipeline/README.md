@@ -135,3 +135,9 @@ Read-only review orchestration is owned by `diagnostics.py`, with basin geometry
 in `basins.py`; flow and incision primitives remain in `hydrology.py`. Conflict evidence and the
 near-zero flow correction are specified in
 [ADR-0032](../../../../docs/adr/0032-classify-channel-conflicts.md).
+
+Authored retention footprints and separate lake-water products live in
+`water.py`. Canonical incision budgets and continuous vector membership both
+exclude generated cutting inside lake/dry-basin areas. Finished-ground outlet
+samples and shared-grid shoreline/flow review remain separate from repair.
+See the [water contract](../../../../docs/terrain-water.md).

@@ -133,6 +133,8 @@ def render_height_map(
     rgb = elevation_palette_rgb(normalized, style=style) * 255.0
     rgb *= _hillshade(terrain, style)[..., np.newaxis]
     rgb_uint8 = np.clip(rgb, 0, 255).astype(np.uint8)
+    if style == "cartographic":
+        rgb_uint8[np.isfinite(terrain.water.surface_m)] = (49, 133, 175)
     alpha = np.where(terrain.land_mask, 255, 0).astype(np.uint8)
     rgba = np.dstack((rgb_uint8, alpha))
     image = Image.fromarray(rgba, mode="RGBA")

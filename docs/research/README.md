@@ -7,6 +7,8 @@ implemented with tests. Notes are listed newest first and package-support claims
 may become stale; use the
 [current development strategy](../strategy/README.md) for the active order.
 
+- [Authored water implementation - 2026-09-10](2026-09-10-authored-water.md)
+  records lake/dry-basin retention, validation and measured runtime limits.
 - [Basin extent and outlet topology - 2026-09-10](2026-09-10-basin-outlet-topology.md)
   unifies diagnostic grids and records explicit escape routes and water-boundary context.
 - [Depressions and channel conflicts - 2026-09-10](2026-09-10-depressions-and-channel-conflicts.md)

@@ -41,7 +41,7 @@ channels in blue and segments that rise on the finished terrain in red.
 This is a canonical-grid review, not a guarantee of valid rivers. See
 [the stage decision](../../../docs/adr/0029-route-drainage-over-authored-terrain.md).
 
-Use **Landform region** to draw plains, hills, plateaus and mountain belts.
+Use **Region** to draw plains, hills, plateaus and mountain belts.
 The [region guide](../../../docs/terrain-regions.md) explains controls, overlap,
 transitions and the [public example](../../../examples/terrain/landform-regions.dmterrain.json).
 
@@ -168,7 +168,7 @@ are not embedded. Saves use a temporary file followed by atomic replacement so
 an interrupted write does not leave a partially written project. The current format is
 strict: unknown fields or unsupported versions are rejected rather than
 guessed. The public contract is
-[`schemas/terrain/project-v4.schema.json`](../../../schemas/terrain/project-v4.schema.json)
+[`schemas/terrain/project-v5.schema.json`](../../../schemas/terrain/project-v5.schema.json)
 and its rationale is recorded in
 [ADR-0006](../../../docs/adr/0006-versioned-terrain-project.md).
 
@@ -248,7 +248,8 @@ using `S * A^0.45`; the middle cell is lowered under the same incision cap.
 This removes extreme numerical knickpoints without flattening ordinary profile
 variation or modifying authored features.
 The model still does **not** simulate plate tectonics, rock type, sediment,
-climate, geological time, authored lakes, or endorheic basins, and its drainage
+climate or geological time. Authored lake/dry-basin areas now exclude automatic
+cutting, but endorheic flow and outlet reconciliation remain incomplete. The drainage
 field is exported for review but is not certified as a river network.
 
 Every result includes a canonical broad-scale drainage check on the same
@@ -340,3 +341,15 @@ The next end-to-end work should deliberately remain staged:
 
 Process-informed erosion should follow only after the hard constraints,
 reproducibility, and multiresolution contracts are validated.
+
+
+## Authored lakes and dry basins
+
+Use **Lake** or **Dry basin** to draw a closed area and choose **Finish area**.
+Lake controls set a water level and optional first-vertex outlet. Generated cuts
+are excluded inside either footprint; authored height and structure constraints
+still apply. Cartographic relief displays water over its preserved ground DEM.
+**Basin details** explains sampled shoreline, outlet and planned-flow conflicts.
+See the [water guide](../../../docs/terrain-water.md) and public
+[example](../../../examples/terrain/basin-water.dmterrain.json). The current
+formats are project v5 and build v7; previous formats are unsupported.

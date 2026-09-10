@@ -1,8 +1,8 @@
 # Shape terrain with landform regions
 
-Select **Landform region** in the workbench. Choose plain, hills, plateau or
+Select **Region** in the workbench. Choose plain, hills, plateau or
 mountains, adjust its controls, click at least three polygon corners and choose
-**Finish region** (or right-click). Generate to apply it. Undo removes the last
+**Finish area** (or right-click). Generate to apply it. Undo removes the last
 corner while drawing, then the last committed feature. Region controls apply to
 the next polygon; existing regions are currently replaced through undo/redraw.
 
@@ -92,8 +92,9 @@ and numeric edge evidence ([ADR-0032](adr/0032-classify-channel-conflicts.md)). 
 
 There are no regional sediment, rock-resistance, runoff or drainage-density
 controls yet. Lowland-fraction and peak-density targets,
-asymmetric escarpments, connected mountain spurs and explicit lakes remain in
-[TODO](../TODO.md). Use Drainage review to inspect remaining uphill conflicts.
+asymmetric escarpments and connected mountain spurs remain in [TODO](../TODO.md).
+[Authored lakes and dry basins](terrain-water.md) now protect their footprints;
+river reconciliation remains incomplete. Use Drainage review to inspect remaining uphill conflicts.
 
 Only current project/build formats are supported; see the [schema index](../schemas/README.md).
 [ADR-0030](adr/0030-author-regional-landforms.md) records the implementation.

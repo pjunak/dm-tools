@@ -1,8 +1,9 @@
 # Basin and spill review
 
 **Implemented:** derived basin geometry and representative escape routes.
-**Not yet implemented:** authored water levels, retained lakes, dry-basin intent,
-nested depression hierarchy or automatic channel reconciliation.
+**Authored water:** lake levels, outlets and dry-basin footprints now have a
+[separate authoring contract](terrain-water.md). Nested depression hierarchy
+and automatic channel reconciliation remain unimplemented.
 
 ## One review grid
 
@@ -76,17 +77,20 @@ routing still accepts all three boundary kinds at their terrain elevations.
 workbench. Purple shows extents; white circles mark the eight deepest candidates;
 yellow lines and diamonds show their representative routes and spill points.
 IDs match the numeric records. `drainage.png` has four panels including the same
-basin overlay. Standard relief exports remain terrain-only derived views.
+basin overlay. Standard relief exports omit diagnostic overlays; cartographic relief also
+shows explicitly authored lake water.
 
-The next authoring slice should explicitly separate:
+The [authored-water slice](terrain-water.md) now implements lake levels, optional
+outlets and dry-basin footprints with automatic-cut protection. It keeps these
+concepts separate:
 
 - Exterior ocean/open boundaries, including declared levels where required.
 - Enclosed SVG gaps, which remain unspecified non-land until classified.
 - Authored lakes with a footprint, water level and explicit draining/closed mode.
 - Authored dry or endorheic basins whose retention intent prevents forced exits.
 
-This is a proposed authoring contract, not current saved-project fields. Review
-shoreline/anchor conflicts before adopting a lake or outlet. Retaining a basin,
-breaching and rerouting require separate choices and downstream validation.
+Lake and dry-basin constraints are current project fields. Ocean levels and
+classification of SVG gaps remain future work. Review shoreline/anchor conflicts
+before adopting an outlet; breaching and rerouting still need downstream validation.
 See [ADR-0033](adr/0033-map-basin-spill-candidates.md) and the
 [research](research/2026-09-10-basin-outlet-topology.md).

@@ -69,12 +69,14 @@ and fixes near-zero flow underflow ([ADR-0032](../adr/0032-classify-channel-conf
 
 Basin extents, representative spill routes and boundary context now share the
 257-node routing grid ([ADR-0033](../adr/0033-map-basin-spill-candidates.md)).
-The separate coarse inventory is removed; authored water semantics remain open.
+The separate coarse inventory is removed. Authored lakes and dry-basin areas
+now protect terrain from automatic cuts and export separate water surfaces
+([ADR-0034](../adr/0034-author-lakes-and-dry-basins.md)).
 
-1. Authored lakes/outlets and dry-basin intent, including level/shoreline/anchor
-   conflict checks, using the retained candidate geometry.
-2. Reviewable river networks and constrained channel reconciliation, with full
-   downstream paths and cut depth/length, preserving low-relief landforms.
+1. Reconcile planned exits with authored closed/dry basins and lake outlets;
+   validate downstream outlet paths and shoreline containment before applying repair.
+2. Compare retention, constrained breach and reroute proposals using full paths,
+   cut depth/length and preserved anchors, then expose reviewable river networks.
 3. Per-vertex ridge/valley profiles, explicit passes and asymmetric sides.
 4. Regional drainage-density/runoff controls, followed by selected-region
    refinement with explicit parent and halo contracts.

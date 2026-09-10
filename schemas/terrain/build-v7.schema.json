@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:dmtools:schema:terrain-build:6",
-  "title": "DM Tools terrain build version 6",
+  "$id": "urn:dmtools:schema:terrain-build:7",
+  "title": "DM Tools terrain build version 7",
   "description": "Completion manifest for local terrain and authored-macro drainage review products.",
   "type": "object",
   "additionalProperties": false,
@@ -25,7 +25,7 @@
       "const": "dmtools.terrain-build"
     },
     "schema_version": {
-      "const": 6
+      "const": 7
     },
     "status": {
       "const": "complete"
@@ -49,12 +49,12 @@
           "$ref": "#/$defs/hash"
         },
         "project_schema_version": {
-          "const": 4
+          "const": 5
         }
       }
     },
     "settings": {
-      "$ref": "urn:dmtools:schema:terrain-project:4#/$defs/generatorSettings"
+      "$ref": "urn:dmtools:schema:terrain-project:5#/$defs/generatorSettings"
     },
     "runtime": {
       "type": "object",
@@ -320,7 +320,8 @@
         "scientific.png",
         "elevation.tif",
         "routing.npz",
-        "drainage.png"
+        "drainage.png",
+        "water.npz"
       ],
       "properties": {
         "elevation.npy": {
@@ -354,6 +355,9 @@
           "$ref": "#/$defs/product"
         },
         "drainage.png": {
+          "$ref": "#/$defs/product"
+        },
+        "water.npz": {
           "$ref": "#/$defs/product"
         }
       }

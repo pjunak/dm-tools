@@ -92,11 +92,16 @@ preview, and PNG export. Those are not repeated below as unfinished work.
   labels, conditioned receivers, representative exit/spill/terminal records and
   exterior/enclosed boundary context support the workbench and four-panel review.
   See [ADR-0033](docs/adr/0033-map-basin-spill-candidates.md).
+- [x] **P1 — Author lake levels, outlets and dry-basin footprints.** Polygon
+  authoring, saved lake controls, automatic-cut retention, separate water/ground
+  exports and shoreline/anchor/outflow review are implemented. See
+  [ADR-0034](docs/adr/0034-author-lakes-and-dry-basins.md).
 - [ ] **P1 — Reconcile blocked channels through explicit water/outlet choices.**
   The plain fixture has 253 uphill edges; all exceed remaining receiver cut
   and 234 touch depressions. Spill candidates and exterior/enclosed raster
-  boundaries are now mapped; author ocean/lake levels and dry-basin intent before proposing retained
-  lakes, constrained breaches or rerouting. Measure full route depth/length,
+  boundaries are mapped, and lake/dry-basin intent now protects authored areas.
+  Reconcile closed-basin exits, validate full outlet routes and classify ocean
+  boundaries before proposing constrained breaches or rerouting. Measure full route depth/length,
   anchor preservation and downstream closure; never silently expand budgets.
 - [ ] **P1 — Extend regional process controls.** Add drainage density,
   runoff and erosion resistance with measurable effects and authored authority.
@@ -106,9 +111,16 @@ preview, and PNG export. Those are not repeated below as unfinished work.
 - [x] **P1 — Support adjacent mainland sections and disconnected islands.** SVG
   land objects are dissolved into one polygonal mask, sub-sampling border
   slivers are repaired, and all components share one metric field and seed.
-- [ ] **P1 — Add explicit lakes and authored water holes.** Define water levels,
-  outlets, endorheic status, and compound-path semantics rather than inferring
-  all enclosed gaps from filled land shapes.
+- [ ] **P1 — Classify SVG water holes and ocean boundaries.** Declare ocean
+  levels and enclosed-water semantics. Authored lake/dry-basin footprints are
+  implemented; an enclosed SVG gap still has no inferred lake level or intent.
+- [ ] **P2 — Edit basin vertices and outlets after drawing.** Add selection,
+  vertex movement and outlet relocation; current area authoring uses undo/redraw
+  and the first vertex as an optional outlet.
+- [ ] **P2 — Refine retention boundaries and shoreline products.** Measure
+  slopes where automatic incision resumes outside protected areas; soften the
+  exterior transition if needed while preserving zero cuts inside. Derive
+  vector shorelines and higher-resolution containment checks from numeric water.
 - [ ] **P2 — Add reusable terrain profiles/presets.** Profiles should be
   versioned authored inputs with their own content hashes and should expose the
   effective values used by a build.

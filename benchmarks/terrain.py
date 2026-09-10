@@ -31,7 +31,7 @@ from dmtools.terrain.pipeline.generate import generate_terrain
 from dmtools.terrain.pipeline.quality import measure_terrain_quality
 
 ROOT = Path(__file__).resolve().parents[1]
-CASES = ("example", "square", "archipelago", "authored", "regional")
+CASES = ("example", "square", "archipelago", "authored", "regional", "water")
 
 
 def _ring(x: float, y: float, rx: float, ry: float, count: int) -> tuple[tuple[float, float], ...]:
@@ -52,8 +52,8 @@ def fixture(
     """Public or synthetic inputs only; no private map or authored file changes."""
     settings = TerrainSettings(resolution_px=resolution, seed=seed)
     constraints: tuple[TerrainConstraint, ...] = ()
-    if case in ("example", "regional"):
-        name = "landform-regions" if case == "regional" else "example"
+    if case in ("example", "regional", "water"):
+        name = {"example": "example", "regional": "landform-regions", "water": "basin-water"}[case]
         project = load_terrain_project(ROOT / f"examples/terrain/{name}.dmterrain.json").project
         return (
             project.coastline,
@@ -184,6 +184,9 @@ def probe(case: str, resolution: int, seed: int) -> dict[str, Any]:
             ("routing_final_elevation", terrain.routing_final_elevation_m),
             ("channel_conflicts", terrain.routing_conflicts.flags),
             ("basin_labels", terrain.drainage.basin_labels),
+            ("water_surface", terrain.water.surface_m),
+            ("water_intent_ids", terrain.water.intent_ids),
+            ("routing_intent_ids", terrain.water.routing_intent_ids),
             ("conditioned_final_receivers", terrain.drainage.receivers),
             ("nonland_class", terrain.drainage.nonland_class),
             ("boundary_flags", terrain.drainage.boundary_flags),
@@ -210,6 +213,7 @@ def probe(case: str, resolution: int, seed: int) -> dict[str, Any]:
         "drainage": asdict(terrain.drainage.summary),
         "routing_agreement": asdict(terrain.routing_agreement),
         "channel_conflicts": asdict(terrain.routing_conflicts.summary),
+        "authored_water": asdict(terrain.water.review),
         "quality": asdict(quality),
     }
 
@@ -273,7 +277,8 @@ def main() -> None:
                         if batch and any(
                             run[key] != batch[0][key]
                             for key in ("input_sha256", "output_sha256", "drainage",
-                                        "routing_agreement", "channel_conflicts", "quality")
+                                        "routing_agreement", "channel_conflicts",
+                                        "authored_water", "quality")
                         ):
                             raise RuntimeError(
                                 "Identical benchmark inputs produced different results"
