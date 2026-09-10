@@ -129,7 +129,7 @@ def test_nested_resolution_preserves_existing_samples() -> None:
 
     np.testing.assert_array_equal(coarse.land_mask, fine.land_mask[::2, ::2])
     np.testing.assert_array_equal(coarse.elevation_m, fine.elevation_m[::2, ::2])
-    assert coarse.drainage == fine.drainage
+    assert coarse.drainage.summary == fine.drainage.summary
 
 
 def test_generates_mainland_and_island_in_one_shared_grid() -> None:
@@ -829,8 +829,8 @@ def test_render_is_transparent_outside_and_png_records_settings(tmp_path: Path) 
         assert exported.info["dmtools.colour_scale_maximum_m"] == "10000"
         assert '"seed": 42' in exported.info["dmtools.settings"]
         drainage = json.loads(exported.info["dmtools.drainage_diagnostics"])
-        assert drainage["algorithm_id"] == "canonical-d8-priority-flood-diagnostics@3"
-        assert drainage["grid_width"] == 129
+        assert drainage["algorithm_id"] == "canonical-d8-priority-flood-diagnostics@4"
+        assert drainage["grid_width"] == 257
         assert drainage["land_cell_count"] > 0
         assert drainage["basin_candidate_count"] == len(
             drainage["basin_candidates"]

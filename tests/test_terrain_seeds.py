@@ -88,7 +88,7 @@ def test_named_policy_preserves_nested_samples_and_determinism() -> None:
     repeated = generate_terrain(coast, settings, constraints=constraints)
     np.testing.assert_array_equal(coarse.elevation_m, fine.elevation_m[::2, ::2])
     assert coarse.elevation_m.tobytes() == repeated.elevation_m.tobytes()
-    assert coarse.drainage == fine.drainage == repeated.drainage
+    assert coarse.drainage.summary == fine.drainage.summary == repeated.drainage.summary
 
 
 def test_workbench_settings_round_trip(

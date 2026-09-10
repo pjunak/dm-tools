@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from dmtools.terrain.pipeline.diagnostics import (
-    drainage_diagnostics,
+    analyze_drainage,
 )
 from dmtools.terrain.pipeline.hydrology import (
     condition_downstream_channel_steepness,
@@ -116,12 +116,12 @@ def test_drainage_diagnostics_reports_a_fully_connected_planar_slope() -> None:
     elevation = np.broadcast_to(x, (11, 17)).copy()
     land = np.ones_like(elevation, dtype=np.bool_)
 
-    diagnostics = drainage_diagnostics(
+    diagnostics = analyze_drainage(
         elevation,
         land,
         x_spacing_km=2.0,
         y_spacing_km=2.0,
-    )
+    ).summary
 
     assert diagnostics.potential_sink_cell_count == 0
     assert diagnostics.directly_connected_land_cell_count == diagnostics.land_cell_count
@@ -144,12 +144,12 @@ def test_drainage_diagnostics_quantifies_an_inland_depression_without_mutating_i
     original = elevation.copy()
     land = np.ones_like(elevation, dtype=np.bool_)
 
-    diagnostics = drainage_diagnostics(
+    diagnostics = analyze_drainage(
         elevation,
         land,
         x_spacing_km=1.0,
         y_spacing_km=1.0,
-    )
+    ).summary
 
     np.testing.assert_array_equal(elevation, original)
     assert diagnostics.potential_sink_cell_count >= 1
@@ -165,7 +165,7 @@ def test_drainage_diagnostics_quantifies_an_inland_depression_without_mutating_i
     assert candidate.cell_count == 1
     assert candidate.area_km2 == 1.0
     assert candidate.floor_elevation_m == -10.0
-    assert candidate.spill_elevation_m == np.nextafter(5.0, np.inf)
+    assert candidate.outlet.spill_elevation_m == 5.0
     assert candidate.maximum_fill_depth_m >= 15.0
     assert candidate.fill_volume_km3 >= 0.015
     assert candidate.terminal_cell_count == 1
@@ -178,12 +178,12 @@ def test_drainage_diagnostics_orders_separate_basin_candidates_by_depth() -> Non
     elevation[3, 6] = -5.0
     land = np.ones_like(elevation, dtype=np.bool_)
 
-    diagnostics = drainage_diagnostics(
+    diagnostics = analyze_drainage(
         elevation,
         land,
         x_spacing_km=2.0,
         y_spacing_km=3.0,
-    )
+    ).summary
 
     assert diagnostics.basin_candidate_count == 2
     deeper, shallower = diagnostics.basin_candidates
@@ -503,7 +503,7 @@ def test_zero_height_plateau_routes_without_underflow_and_conserves_area() -> No
                                                 x_spacing_km=2, y_spacing_km=1)
         receivers, _ = steepest_flow_receivers(routing, land,
                                              x_spacing_km=2, y_spacing_km=1)
-        diagnostics = drainage_diagnostics(elevation, land, x_spacing_km=2, y_spacing_km=1)
+        diagnostics = analyze_drainage(elevation, land, x_spacing_km=2, y_spacing_km=1).summary
     assert np.isfinite(area).all() and np.isfinite(slope).all()
     assert np.all(receivers[1:-1, 1:-1] >= 0)
     edges = receivers >= 0

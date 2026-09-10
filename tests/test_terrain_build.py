@@ -143,6 +143,11 @@ def test_headless_build_preserves_dem_and_has_repeatable_verified_products(
             ("receiver_cut_deficit_m", expected.routing_conflicts.receiver_cut_deficit_m),
             ("final_adjustment_rise_m", expected.routing_conflicts.final_adjustment_rise_m),
             ("final_fill_depth_m", expected.routing_conflicts.final_fill_depth_m),
+            ("conditioned_final_elevation_m", expected.drainage.filled_elevation_m),
+            ("conditioned_final_receivers", expected.drainage.receivers),
+            ("basin_labels", expected.drainage.basin_labels),
+            ("nonland_class", expected.drainage.nonland_class),
+            ("boundary_flags", expected.drainage.boundary_flags),
         ):
             np.testing.assert_array_equal(routing[key], value)
         assert routing["x_km"].size == expected.routing_grid.width
@@ -150,6 +155,15 @@ def test_headless_build_preserves_dem_and_has_repeatable_verified_products(
     assert diagnostics["channel_conflicts"]["uphill_edge_count"] == (
         expected.routing_agreement.uphill_channel_edge_count
     )
+    canonical = diagnostics["canonical_drainage"]
+    assert canonical["algorithm_id"] == "canonical-d8-priority-flood-diagnostics@4"
+    assert canonical["grid_width"] == expected.routing_grid.width
+    assert canonical["grid_height"] == expected.routing_grid.height
+    for candidate, record in zip(expected.drainage.summary.basin_candidates,
+                                 canonical["basin_candidates"], strict=True):
+        assert record["basin_id"] == candidate.basin_id
+        assert record["outlet"]["spill_flat_index"] == candidate.outlet.spill_flat_index
+        assert record["outlet"]["spill_elevation_m"] == candidate.outlet.spill_elevation_m
     assert diagnostics["routing_sha256"] == file_sha256(first / "routing.npz")
     assert diagnostics["routing_agreement"]["algorithm_id"] == "planned-final-d8-agreement@2"
     for missing_name in ("routing.npz", "drainage.png"):

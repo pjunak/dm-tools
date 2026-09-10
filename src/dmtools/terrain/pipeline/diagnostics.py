@@ -6,12 +6,15 @@ from math import isfinite
 import numpy as np
 from numpy.typing import NDArray
 
+from dmtools.terrain.pipeline.basins import (
+    DrainageBasinCandidate,
+    basin_candidates,
+    boundary_context,
+)
 from dmtools.terrain.pipeline.hydrology import (
-    D8_NEIGHBOURS,
     DrainageIncision,
     land_outlet_mask,
     priority_flood_surface,
-    steepest_flow_accumulation,
     steepest_flow_receivers,
 )
 
@@ -83,7 +86,7 @@ def review_drainage_routing(
     x_spacing_km: float,
     y_spacing_km: float,
     region_transition_mask: NDArray[np.bool_] | None = None,
-) -> tuple[RoutingAgreement, ChannelConflicts]:
+) -> RoutingReview:
     """Inspect finished channels without modifying the DEM or planned receivers.
 
     Remaining automatic cut is an optimistic local allowance: an authored
@@ -113,17 +116,17 @@ def review_drainage_routing(
         region_transition_mask = np.zeros(shape, dtype=np.bool_)
     elif region_transition_mask.shape != shape:
         raise ValueError("Regional transitions must share the routing grid shape.")
-    final_routing = priority_flood_surface(final_elevation_m, land_mask)
-    final_receivers, _slope = steepest_flow_receivers(
-        final_routing, land_mask, x_spacing_km=x_spacing_km, y_spacing_km=y_spacing_km,
+    analysis = analyze_drainage(
+        final_elevation_m, land_mask, x_spacing_km=x_spacing_km, y_spacing_km=y_spacing_km,
     )
+    final_receivers = analysis.receivers
     edges = drainage.channel_mask & routed
     rise = channel_edge_rise(drainage, final_elevation_m)
     rise = np.where(edges, rise, 0.0)
     tolerance_m, depression_tolerance_m = 0.001, 0.01
     uphill = rise > tolerance_m
     targets = receivers[uphill]
-    fill_depth = np.where(land_mask, np.maximum(final_routing - final_elevation_m, 0), 0.0)
+    fill_depth = analysis.fill_depth_m
     depression = fill_depth > depression_tolerance_m
     flags = np.zeros(shape, dtype=np.uint8)
     flags[uphill] = UPHILL
@@ -165,7 +168,10 @@ def review_drainage_routing(
         unclassified_edge_count=int(np.count_nonzero(flags == UPHILL)),
         maximum_cut_deficit_m=float(np.max(deficit, initial=0.0)),
     )
-    return agreement, ChannelConflicts(summary, flags, rise, deficit, adjustment, fill_depth)
+    return RoutingReview(
+        agreement, ChannelConflicts(summary, flags, rise, deficit, adjustment, fill_depth),
+        analysis,
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -193,121 +199,41 @@ class DrainageDiagnostics:
 
 
 @dataclass(frozen=True, slots=True)
-class DrainageBasinCandidate:
-    """One coarse connected fill region that merits author review.
-
-    A candidate is derived from the canonical diagnostic grid. It is not an
-    authored lake, a watershed polygon, or a promise that the depression is
-    natural rather than a scale or generation artefact.
-    """
-
-    normalized_x: float
-    normalized_y: float
-    cell_count: int
-    area_km2: float
-    floor_elevation_m: float
-    spill_elevation_m: float
-    maximum_fill_depth_m: float
-    fill_volume_km3: float
-    terminal_cell_count: int
+class DrainageAnalysis:
+    summary: DrainageDiagnostics
+    filled_elevation_m: NDArray[np.float64]
+    receivers: NDArray[np.int64]
+    fill_depth_m: NDArray[np.float64]
+    basin_labels: NDArray[np.uint32]
+    nonland_class: NDArray[np.uint8]
+    boundary_flags: NDArray[np.uint8]
 
 
-
-def _basin_candidates(
-    elevation_m: NDArray[np.float64],
-    filled_elevation_m: NDArray[np.float64],
-    significant_fill: NDArray[np.bool_],
-    potential_sinks: NDArray[np.bool_],
-    *,
-    x_spacing_km: float,
-    y_spacing_km: float,
-) -> tuple[DrainageBasinCandidate, ...]:
-    """Group 8-connected significant fill cells into deterministic candidates."""
-
-    height, width = elevation_m.shape
-    remaining = significant_fill.copy()
-    fill_depth_m = np.maximum(filled_elevation_m - elevation_m, 0.0)
-    flat_depth = fill_depth_m.ravel()
-    flat_elevation = elevation_m.ravel()
-    flat_filled = filled_elevation_m.ravel()
-    flat_sinks = potential_sinks.ravel()
-    cell_area_km2 = x_spacing_km * y_spacing_km
-    candidates: list[DrainageBasinCandidate] = []
-
-    for starting_index_value in np.flatnonzero(remaining):
-        starting_index = int(starting_index_value)
-        starting_row, starting_column = divmod(starting_index, width)
-        if not remaining[starting_row, starting_column]:
-            continue
-        remaining[starting_row, starting_column] = False
-        stack = [starting_index]
-        component: list[int] = []
-        while stack:
-            flat_index = stack.pop()
-            component.append(flat_index)
-            row, column = divmod(flat_index, width)
-            for row_offset, column_offset in D8_NEIGHBOURS:
-                neighbour_row = row + row_offset
-                neighbour_column = column + column_offset
-                if not (
-                    0 <= neighbour_row < height
-                    and 0 <= neighbour_column < width
-                    and remaining[neighbour_row, neighbour_column]
-                ):
-                    continue
-                remaining[neighbour_row, neighbour_column] = False
-                stack.append(neighbour_row * width + neighbour_column)
-
-        component_indices = np.asarray(component, dtype=np.int64)
-        component_depths = flat_depth[component_indices]
-        maximum_depth_m = float(np.max(component_depths))
-        deepest_index = min(
-            int(index)
-            for index in component_indices[component_depths == maximum_depth_m]
-        )
-        deepest_row, deepest_column = divmod(deepest_index, width)
-        candidates.append(
-            DrainageBasinCandidate(
-                normalized_x=deepest_column / max(1, width - 1),
-                normalized_y=deepest_row / max(1, height - 1),
-                cell_count=len(component),
-                area_km2=len(component) * cell_area_km2,
-                floor_elevation_m=float(flat_elevation[deepest_index]),
-                spill_elevation_m=float(flat_filled[deepest_index]),
-                maximum_fill_depth_m=maximum_depth_m,
-                fill_volume_km3=(
-                    float(np.sum(component_depths)) * cell_area_km2 / 1_000.0
-                ),
-                terminal_cell_count=int(np.count_nonzero(flat_sinks[component_indices])),
-            )
-        )
-
-    candidates.sort(
-        key=lambda candidate: (
-            -candidate.maximum_fill_depth_m,
-            -candidate.fill_volume_km3,
-            candidate.normalized_y,
-            candidate.normalized_x,
-        )
-    )
-    return tuple(candidates)
+@dataclass(frozen=True, slots=True)
+class RoutingReview:
+    agreement: RoutingAgreement
+    conflicts: ChannelConflicts
+    drainage: DrainageAnalysis
 
 
-
-def drainage_diagnostics(
+def analyze_drainage(
     elevation_m: NDArray[np.float64],
     land_mask: NDArray[np.bool_],
     *,
     x_spacing_km: float,
     y_spacing_km: float,
     fill_tolerance_m: float = 0.01,
-) -> DrainageDiagnostics:
-    """Measure direct sea connectivity and required depression conditioning."""
+) -> DrainageAnalysis:
+    """Measure boundary connectivity and basin escape candidates on one shared grid."""
 
     if elevation_m.shape != land_mask.shape or elevation_m.ndim != 2:
         raise ValueError("Elevation and land mask must be equally shaped 2D arrays.")
-    if fill_tolerance_m < 0.0:
-        raise ValueError("Fill tolerance must not be negative.")
+    if not elevation_m.size:
+        raise ValueError("Drainage analysis requires a nonempty grid.")
+    if not isfinite(fill_tolerance_m) or fill_tolerance_m < 0.0:
+        raise ValueError("Fill tolerance must be finite and non-negative.")
+    if any(not isfinite(value) or value <= 0 for value in (x_spacing_km, y_spacing_km)):
+        raise ValueError("Drainage analysis spacing must be positive and finite.")
     if np.any(land_mask & ~np.isfinite(elevation_m)):
         raise ValueError("Land elevations must be finite before drainage analysis.")
 
@@ -335,14 +261,6 @@ def drainage_diagnostics(
     filled = priority_flood_surface(elevation_m, land_mask)
     fill_depth_m = np.where(land_mask, np.maximum(filled - elevation_m, 0.0), 0.0)
     significant_fill = fill_depth_m > fill_tolerance_m
-    basin_candidates = _basin_candidates(
-        elevation_m,
-        filled,
-        significant_fill,
-        potential_sinks,
-        x_spacing_km=x_spacing_km,
-        y_spacing_km=y_spacing_km,
-    )
     conditioned_receivers, _conditioned_slopes = steepest_flow_receivers(
         filled,
         land_mask,
@@ -361,16 +279,21 @@ def drainage_diagnostics(
     if np.any(land_mask.ravel() & ~conditioned_connected):
         raise RuntimeError("Conditioned diagnostic surface does not reach an outlet.")
 
-    conditioned_accumulation, _conditioned_slope = steepest_flow_accumulation(
-        filled,
-        land_mask,
-        x_spacing_km=x_spacing_km,
-        y_spacing_km=y_spacing_km,
-    )
     cell_area_km2 = x_spacing_km * y_spacing_km
+    accumulation = np.where(land_mask.ravel(), cell_area_km2, 0.0)
+    for flat_index in conditioned_ascending[::-1]:
+        receiver = int(flat_conditioned_receivers[flat_index])
+        if receiver >= 0:
+            accumulation[receiver] += accumulation[flat_index]
+    nonland_class, boundary_flags = boundary_context(land_mask)
+    candidates, labels = basin_candidates(
+        elevation_m, fill_depth_m, significant_fill, potential_sinks,
+        conditioned_receivers, conditioned_ascending, boundary_flags,
+        cell_area_km2=cell_area_km2,
+    )
     fill_volume_km3 = float(np.sum(fill_depth_m)) * cell_area_km2 / 1_000.0
-    return DrainageDiagnostics(
-        algorithm_id="canonical-d8-priority-flood-diagnostics@3",
+    summary = DrainageDiagnostics(
+        algorithm_id="canonical-d8-priority-flood-diagnostics@4",
         grid_width=elevation_m.shape[1],
         grid_height=elevation_m.shape[0],
         x_spacing_km=x_spacing_km,
@@ -381,14 +304,16 @@ def drainage_diagnostics(
         potential_sink_cell_count=int(np.count_nonzero(potential_sinks)),
         directly_connected_land_cell_count=int(np.count_nonzero(land_mask.ravel() & connected)),
         depression_cell_count=int(np.count_nonzero(significant_fill)),
-        basin_candidate_count=len(basin_candidates),
+        basin_candidate_count=len(candidates),
         flat_terminal_cell_count=int(
             np.count_nonzero(potential_sinks & ~significant_fill)
         ),
         maximum_fill_depth_m=float(np.max(fill_depth_m, initial=0.0)),
         depression_fill_volume_km3=fill_volume_km3,
         largest_outlet_catchment_km2=float(
-            np.max(conditioned_accumulation[outlets], initial=0.0)
+            np.max(accumulation[outlets.ravel()], initial=0.0)
         ),
-        basin_candidates=basin_candidates,
+        basin_candidates=candidates,
     )
+    return DrainageAnalysis(summary, filled, conditioned_receivers, fill_depth_m,
+                            labels, nonland_class, boundary_flags)

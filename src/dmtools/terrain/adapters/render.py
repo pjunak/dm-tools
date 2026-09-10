@@ -164,7 +164,7 @@ def save_height_map(image: Image.Image, terrain: GeneratedTerrain, destination: 
     metadata.add_text("dmtools.settings", json.dumps(asdict(terrain.settings), sort_keys=True))
     metadata.add_text(
         "dmtools.drainage_diagnostics",
-        json.dumps(asdict(terrain.drainage), sort_keys=True),
+        json.dumps(asdict(terrain.drainage.summary), sort_keys=True),
     )
     metadata.add_text(
         "dmtools.render_style",
@@ -197,29 +197,84 @@ def save_height_map(image: Image.Image, terrain: GeneratedTerrain, destination: 
     image.save(destination, format="PNG", pnginfo=metadata)
 
 
+def render_basin_overlay(
+    terrain: GeneratedTerrain, size: tuple[int, int] | None = None,
+) -> Image.Image:
+    """Tint depression extents and trace the top eight representative spill routes."""
+    analysis, grid = terrain.drainage, terrain.routing_grid
+    width, height = size or (grid.width, grid.height)
+    labels = analysis.basin_labels
+    rgba = np.zeros((*labels.shape, 4), dtype=np.uint8)
+    rgba[labels > 0] = (165, 112, 230, 65)
+    padded = np.pad(labels, 1)
+    edge = np.zeros(labels.shape, dtype=np.bool_)
+    for dr, dc in ((-1, 0), (1, 0), (0, -1), (0, 1)):
+        edge |= labels != padded[1 + dr:1 + dr + grid.height,
+                                 1 + dc:1 + dc + grid.width]
+    rgba[edge & (labels > 0)] = (200, 148, 255, 170)
+    with Image.fromarray(rgba) as source:
+        image = source.resize((width, height), Image.Resampling.NEAREST)
+    draw = ImageDraw.Draw(image)
+    x_scale = (width - 1) / max(1, grid.width - 1)
+    y_scale = (height - 1) / max(1, grid.height - 1)
+
+    def position(flat_index: int) -> tuple[float, float]:
+        row, column = divmod(flat_index, grid.width)
+        return column * x_scale, row * y_scale
+
+    for basin in analysis.summary.basin_candidates[:8]:
+        index = basin.deepest_flat_index
+        path = [position(index)]
+        while index != basin.outlet.spill_flat_index:
+            index = int(analysis.receivers.flat[index])
+            if index < 0:
+                raise RuntimeError("The basin spill must lie on its conditioned route.")
+            path.append(position(index))
+        if len(path) > 1:
+            draw.line(path, fill=(255, 216, 90, 240), width=1)
+        x, y = path[0]
+        draw.ellipse((x - 2, y - 2, x + 2, y + 2), outline="white", width=1)
+        x, y = path[-1]
+        draw.polygon(((x, y - 4), (x + 4, y), (x, y + 4), (x - 4, y)),
+                     outline=(255, 216, 90, 255))
+        text = f"B{basin.basin_id}"
+        box = draw.textbbox((0, 0), text)
+        label_width = box[2] - box[0]
+        label_height = box[3] - box[1]
+        tx = max(0., min(x + 6, width - label_width - 2))
+        ty = max(0., min(y - 12, height - label_height - 4))
+        draw.text((tx, ty), text, fill=(255, 234, 167, 255),
+                  stroke_width=1, stroke_fill=(24, 33, 43, 255))
+    return image
+
+
 def render_drainage_review(terrain: GeneratedTerrain) -> Image.Image:
-    """Show planning, finished conflicts and their overlapping measured context."""
+    """Show channel context and basin geometry on the same canonical nodes."""
     routing = terrain.routing
     mask = terrain.routing_land_mask
     width, height = terrain.routing_grid.width, terrain.routing_grid.height
-    scale = max(1, 640 // width)
-    panel_width, panel_height = width * scale, height * scale
-    image = Image.new("RGB", (panel_width * 3 + 32, panel_height + 112), "#18212b")
+    scale = max(1, 640 // max(width, height))
+    map_width, map_height = width * scale, height * scale
+    panel_width, panel_height = max(512, map_width), map_height + 32
+    image = Image.new("RGB", (panel_width * 2 + 24, panel_height * 2 + 108), "#18212b")
     draw = ImageDraw.Draw(image)
     context = terrain.routing_conflicts
     summary = context.summary
-    titles = ("Authored routing surface", "Finished terrain: uphill channels", "Conflict context")
+    titles = ("Authored routing surface", "Finished terrain: uphill channels", "Conflict context",
+              "Depression extents and spill candidates")
     fields = (routing.source_elevation_m, terrain.routing_final_elevation_m,
-              terrain.routing_final_elevation_m)
+              terrain.routing_final_elevation_m, terrain.routing_final_elevation_m)
     for index, field in enumerate(fields):
-        left = 8 + index * (panel_width + 8)
-        draw.text((left, 8), titles[index], fill="white")
+        left = 8 + (index % 2) * (panel_width + 8)
+        top = (index // 2) * panel_height
+        draw.text((left, top + 8), titles[index], fill="white")
         grey = np.rint(45 + 150 * np.clip(field / terrain.settings.maximum_elevation_m, 0, 1))
         rgb = np.repeat(grey[..., None], 3, axis=2).astype(np.uint8)
         rgb[~mask] = (24, 33, 43)
-        rgb[routing.channel_mask] = (45, 185, 255)
-        if index:
-            rgb[context.flags != 0] = (255, 95, 65)
+        if index < 3:
+            rgb[routing.channel_mask] = (45, 185, 255)
+            if index:
+                rgb[context.flags != 0] = (255, 95, 65)
         if index == 2:
             # Later colours win visually; the numeric archive retains every bit.
             for bit, colour in ((CUT_LIMIT, (240, 80, 190)),
@@ -228,21 +283,27 @@ def render_drainage_review(terrain: GeneratedTerrain) -> Image.Image:
                                 (REGION_TRANSITION, (255, 215, 80))):
                 rgb[(context.flags & bit) != 0] = colour
         with Image.fromarray(rgb) as panel:
-            resized = panel.resize((panel_width, panel_height), Image.Resampling.NEAREST)
-            image.paste(resized, (left, 28))
+            resized = panel.resize((map_width, map_height), Image.Resampling.NEAREST)
+            image.paste(resized, (left, top + 28))
             resized.close()
+        if index == 3:
+            with render_basin_overlay(terrain, (map_width, map_height)) as overlay:
+                image.paste(overlay, (left, top + 28), overlay)
     lines = (
-        "Blue: planned. Red: uphill. Context priority: yellow region transition > orange final "
+        "Blue: planned. Red: uphill. Context priority: yellow transition > orange final "
         "adjustment > purple depression > pink cut limit.",
-        f"{summary.uphill_edge_count} uphill edges; contexts overlap: "
-        f"{summary.insufficient_cut_edge_count} insufficient cut, "
+        f"{summary.uphill_edge_count} uphill edges; overlapping contexts: "
+        f"{summary.insufficient_cut_edge_count} cut limit, "
         f"{summary.final_adjustment_edge_count} final adjustment, "
         f"{summary.region_transition_edge_count} transition, "
         f"{summary.depression_edge_count} depression; {summary.unclassified_edge_count} other.",
-        f"Canonical grid: {width} x {height}. Context is evidence, not a cause or a lake decision.",
+        "Basins: purple extents; white deepest nodes; yellow routes and spill diamonds (top 8). "
+        "IDs match diagnostics.json.",
+        f"Shared review grid: {width} x {height}. Conditioned escape routes are candidates; "
+        "water levels and authored lakes are not assigned.",
     )
     for row, line in enumerate(lines):
-        draw.text((8, panel_height + 36 + 21 * row), line, fill="white")
+        draw.text((8, panel_height * 2 + 10 + 21 * row), line, fill="white")
     return image
 
 

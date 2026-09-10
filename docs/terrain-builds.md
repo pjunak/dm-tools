@@ -22,7 +22,7 @@ the workbench. No input file or generator setting is changed.
 | `inputs.json` | Effective input snapshot including dissolved geometry, settings, constraints and authoring state |
 | `cartographic.png`, `scientific.png` | The two existing display styles derived from this DEM |
 | `routing.npz` | Canonical planning and final-field elevations, mask, coordinates, receivers, contributing area, channels, heads, orders, outlets, incision and its effective limit |
-| `drainage.png` | Planning/final comparison; blue planned channels, red uphill segments |
+| `drainage.png` | Four-panel planning, uphill-channel, conflict-context and basin/spill review |
 | `diagnostics.json` | Delivered-surface quality measurements and separately labelled canonical drainage diagnostics |
 | `manifest.json` | Completion record, input/runtime identities, coordinates, output sizes and SHA-256 hashes |
 
@@ -34,7 +34,7 @@ down. Samples include both extent endpoints. World CRS and planetary radius
 are explicitly unspecified. Do not import these arrays as longitude/latitude
 or assume they already follow a campaign world's projection.
 The [coordinate contract](terrain-coordinates.md) explains the shared frame,
-endpoint registration and distinct output/routing/diagnostic spacings.
+endpoint registration and distinct output versus shared routing/diagnostic spacings.
 
 Example numeric inspection from the repository root:
 
@@ -154,6 +154,21 @@ identity plus overlapping context counts. `routing.npz` includes the UInt8
 `channel_conflict_flags` mask and metre arrays `channel_rise_m`,
 `receiver_cut_deficit_m`, `final_adjustment_rise_m` and `final_fill_depth_m`.
 See [ADR-0032](adr/0032-classify-channel-conflicts.md) for bit values and formulas.
-`drainage.png` shows planning, finished uphill channels and a context panel.
+`drainage.png` shows planning, finished uphill channels, conflict context and basin extents.
 Colours have a display priority; the archive retains every flag. These products
 support review and do not carve a breach or create a lake.
+
+
+## Inspect basin extents and spill candidates
+
+Canonical drainage now uses the same finished Float32 samples and routing grid
+as channel review. `basin_labels`, `conditioned_final_elevation_m`,
+`conditioned_final_receivers`, `nonland_class` and `boundary_flags` are retained
+in `routing.npz`. Candidate records in `canonical_drainage` contain extent IDs,
+the deepest/floor locations and a representative exit, spill and terminal.
+See the [complete basin contract](terrain-basins.md) for data types, ties and units.
+
+The fourth review panel shows purple extents, white deepest nodes, and yellow
+routes/spill diamonds for the eight deepest candidates. The workbench's
+**Drainage review** toggle displays the same products alongside planned channels.
+They do not assign lake levels, classify authored dry basins or modify terrain.

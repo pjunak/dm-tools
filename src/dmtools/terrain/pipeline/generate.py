@@ -26,9 +26,8 @@ from dmtools.terrain.domain import (
 from dmtools.terrain.domain.seeds import RELIEF_STAGE_ID, stage_seed
 from dmtools.terrain.pipeline.diagnostics import (
     ChannelConflicts,
-    DrainageDiagnostics,
+    DrainageAnalysis,
     RoutingAgreement,
-    drainage_diagnostics,
     review_drainage_routing,
 )
 from dmtools.terrain.pipeline.grid import grid_coordinates
@@ -65,7 +64,7 @@ class GeneratedTerrain:
     settings: TerrainSettings
     constraints: tuple[TerrainConstraint, ...]
     source_name: str
-    drainage: DrainageDiagnostics
+    drainage: DrainageAnalysis
     routing_grid_shape: tuple[int, int]
     routing: DrainageIncision
     routing_land_mask: NDArray[np.bool_]
@@ -1159,39 +1158,6 @@ def _evaluate_land_samples(
     return np.clip(elevation, 0.0, settings.maximum_elevation_m)
 
 
-def _prepare_drainage_diagnostics(
-    polygon: LandGeometry,
-    boundary: Any,
-    width_km: float,
-    height_km: float,
-    constraints: tuple[_MetricConstraint, ...],
-    automatic_valleys: _AutomaticValleyField,
-    settings: TerrainSettings,
-    regions: tuple[MetricRegion, ...] = (),
-) -> DrainageDiagnostics:
-    """Measure the completed terrain on a fixed resolution-independent grid."""
-
-    grid = EndpointGrid.for_extent((0.0, 0.0, width_km, height_km), 129, minimum_samples=3)
-    x_km, y_km = grid_coordinates(grid)
-    x_grid, y_grid = np.meshgrid(x_km, y_km)
-    elevation_m, land_mask = _evaluate_elevation_samples(
-        x_grid,
-        y_grid,
-        polygon,
-        boundary,
-        settings,
-        constraints,
-        automatic_valleys,
-        regions=regions,
-    )
-    return drainage_diagnostics(
-        elevation_m,
-        land_mask,
-        x_spacing_km=grid.x_spacing_km,
-        y_spacing_km=grid.y_spacing_km,
-    )
-
-
 def generate_terrain(
     coastline: Coastline,
     settings: TerrainSettings,
@@ -1255,17 +1221,6 @@ def generate_terrain(
         _report(progress, 0.08 + 0.82 * completed, "Building elevation field")
 
     _report(progress, 0.92, "Checking drainage connectivity")
-    drainage = _prepare_drainage_diagnostics(
-        polygon,
-        boundary,
-        width_km,
-        height_km,
-        metric_constraints,
-        automatic_valleys,
-        settings,
-        regions=regions,
-    )
-
     routing_x, routing_y = np.meshgrid(automatic_valleys.x_km, automatic_valleys.y_km)
     routing_final, _routing_mask = _evaluate_elevation_samples(
         routing_x, routing_y, polygon, boundary, settings, metric_constraints, automatic_valleys,
@@ -1273,7 +1228,7 @@ def generate_terrain(
     )
     # Match the authoritative Float32 field, sampled at canonical routing nodes.
     routing_final = routing_final.astype(np.float32).astype(np.float64)
-    routing_agreement, routing_conflicts = review_drainage_routing(
+    review = review_drainage_routing(
         automatic_valleys.drainage, routing_final, automatic_valleys.land_mask,
         x_spacing_km=float(automatic_valleys.x_km[1] - automatic_valleys.x_km[0]),
         y_spacing_km=float(automatic_valleys.y_km[1] - automatic_valleys.y_km[0]),
@@ -1297,11 +1252,11 @@ def generate_terrain(
         settings=settings,
         constraints=authored_constraints,
         source_name=coastline.source_name,
-        drainage=drainage,
+        drainage=review.drainage,
         routing_grid_shape=(automatic_valleys.y_km.size, automatic_valleys.x_km.size),
         routing=automatic_valleys.drainage,
         routing_land_mask=automatic_valleys.land_mask,
         routing_final_elevation_m=routing_final,
-        routing_agreement=routing_agreement,
-        routing_conflicts=routing_conflicts,
+        routing_agreement=review.agreement,
+        routing_conflicts=review.conflicts,
     )

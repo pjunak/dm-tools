@@ -249,19 +249,19 @@ This removes extreme numerical knickpoints without flattening ordinary profile
 variation or modifying authored features.
 The model still does **not** simulate plate tectonics, rock type, sediment,
 climate, geological time, authored lakes, or endorheic basins, and its drainage
-field is not yet exported or certified as a river network.
+field is exported for review but is not certified as a river network.
 
-Every result includes a canonical broad-scale drainage check. It reports direct
-coast connectivity, potential sink cells, and how much Priority-Flood filling a
-copied diagnostic surface would require. These findings are embedded in PNG
-metadata and shown in the workbench, but they do not change elevation.
-Eight-connected significant fill cells are grouped into ranked basin candidates
-with a deepest-point marker, coarse area, floor and spill estimates, fill depth,
-and fill volume. The twenty deepest candidates appear as purple review markers
-over the interactive preview; they are not baked into the exported relief.
-A candidate may contain nested depressions and may still represent an
-intentional lake or endorheic basin until those features have explicit authored
-semantics.
+Every result includes a canonical broad-scale drainage check on the same
+257-longest-side grid as channel review. It reports direct boundary connectivity,
+potential sinks and required filling of a copied surface. Significant fill
+regions have ranked IDs, extent labels, floor/depth/area/volume measurements,
+and a representative escape route with a concrete spill point and terminal.
+The **Drainage review** toggle shows purple extents plus yellow routes and spill
+diamonds for the eight deepest candidates. Exterior and enclosed non-land have
+separate diagnostic classes without changing existing routing boundaries.
+These findings do not alter elevation, assign lakes or model nested depressions.
+Read the [basin contract](../../../docs/terrain-basins.md) for numeric products
+and the remaining explicit-water authoring work.
 
 The generated elevation array is Float32 metres in memory. The PNG is a derived
 visual product with transparent ocean, elevation tint, hillshade, source name,

@@ -87,10 +87,15 @@ preview, and PNG export. Those are not repeated below as unfinished work.
   adjustment and regional transitions. Counts overlap; they are not causes.
   Read-only diagnostics now have their own module. See
   [ADR-0032](docs/adr/0032-classify-channel-conflicts.md).
+- [x] **P1 — Map depression extents and spill/outlet candidates.** A shared
+  257-node routing/review grid replaces the coarse separate inventory. Numeric
+  labels, conditioned receivers, representative exit/spill/terminal records and
+  exterior/enclosed boundary context support the workbench and four-panel review.
+  See [ADR-0033](docs/adr/0033-map-basin-spill-candidates.md).
 - [ ] **P1 — Reconcile blocked channels through explicit water/outlet choices.**
   The plain fixture has 253 uphill edges; all exceed remaining receiver cut
-  and 234 touch depressions. Map spill candidates and distinguish ocean,
-  enclosed SVG water, authored lakes and dry basins before proposing retained
+  and 234 touch depressions. Spill candidates and exterior/enclosed raster
+  boundaries are now mapped; author ocean/lake levels and dry-basin intent before proposing retained
   lakes, constrained breaches or rerouting. Measure full route depth/length,
   anchor preservation and downstream closure; never silently expand budgets.
 - [ ] **P1 — Extend regional process controls.** Add drainage density,
@@ -275,11 +280,10 @@ landscape-process spikes. It is working research, not an accepted architecture.
 - [ ] **P1 — Validate basins, outlets, and drainage connectivity.** Detect
   unintended inland sinks, uphill river segments, disconnected channels, and
   coastline outlets that fail to reach sea level. A resolution-independent
-  129-cell canonical check now reports strict-D8 direct connectivity, potential
-  sink cells, Priority-Flood depth/volume, outlets, and largest catchment without
-  mutating terrain. Significant fill components are now ranked as coarse basin
-  candidates and marked in the workbench with floor, spill, area, depth, and
-  volume metadata. Authored basin classification, a full nested depression
+  257-node shared routing/review grid reports strict-D8 boundary connectivity,
+  potential sinks, fill depth/volume and largest catchment without changing terrain.
+  Significant fill components now retain extent labels and representative
+  exit/spill/terminal routes, plus raster exterior/enclosed-water boundary context. Authored basin classification, a full nested depression
   hierarchy, river-segment checks, and local refinement diagnostics remain.
 - [ ] **Research — Compare a mature hydrology adapter with selected in-project
   primitives.** Candidates already considered include ANUDEM-style
@@ -382,7 +386,7 @@ Priorities remain conditional on the current strategy's prerequisites.
   source/local inverse conversion and explicit grid extents. World placement,
   planetary metadata and working-CRS declarations remain future project work.
 - [ ] **P0 — R02: Expose effective process and diagnostic spacing.** Record the
-  257-sample drainage and 129-sample diagnostic grids in the build report;
+  shared 257-sample routing/diagnostic grid in the build report;
   flag landforms too small to resolve. Define versioned process resolution
   independently of PNG pixels and test small-island/coastal-channel coverage.
   Local build manifests now expose actual routing, diagnostic and output grid

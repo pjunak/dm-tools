@@ -56,7 +56,7 @@ def test_selective_generation_matches_dense_reference(
     dense = generation.generate_terrain(coast, settings, constraints=constraints)
     assert selective.elevation_m.tobytes() == dense.elevation_m.tobytes()
     np.testing.assert_array_equal(selective.land_mask, dense.land_mask)
-    assert selective.drainage == dense.drainage
+    assert selective.drainage.summary == dense.drainage.summary
     assert selective.routing_grid_shape == dense.routing_grid_shape
     assert selective.constraints == constraints
 
@@ -95,4 +95,4 @@ def test_selective_samples_preserve_holes_and_nested_coordinates() -> None:
     np.testing.assert_array_equal(coarse.land_mask, fine.land_mask[::2, ::2])
     assert np.isnan(coarse.elevation_m[32, 32])
     assert coarse.elevation_m[16, 32] == 0.0
-    assert coarse.drainage == fine.drainage
+    assert coarse.drainage.summary == fine.drainage.summary

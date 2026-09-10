@@ -119,7 +119,7 @@ def test_source_translation_preserves_local_terrain_and_constraints() -> None:
     before = generate_terrain(source, settings, constraints=constraints)
     after = generate_terrain(moved, settings, constraints=constraints)
     assert before.elevation_m.tobytes() == after.elevation_m.tobytes()
-    assert before.drainage == after.drainage
+    assert before.drainage.summary == after.drainage.summary
     assert before.grid == after.grid
     assert before.routing_grid == after.routing_grid
 

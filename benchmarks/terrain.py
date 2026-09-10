@@ -183,6 +183,10 @@ def probe(case: str, resolution: int, seed: int) -> dict[str, Any]:
             ("routing_incision_limit", terrain.routing.incision_limit_m),
             ("routing_final_elevation", terrain.routing_final_elevation_m),
             ("channel_conflicts", terrain.routing_conflicts.flags),
+            ("basin_labels", terrain.drainage.basin_labels),
+            ("conditioned_final_receivers", terrain.drainage.receivers),
+            ("nonland_class", terrain.drainage.nonland_class),
+            ("boundary_flags", terrain.drainage.boundary_flags),
         )
     }
     return {
@@ -203,7 +207,7 @@ def probe(case: str, resolution: int, seed: int) -> dict[str, Any]:
         "render_seconds": render_seconds,
         "generation_process_peak_bytes": generation_peak,
         "products_process_peak_bytes": products_peak,
-        "drainage": asdict(terrain.drainage),
+        "drainage": asdict(terrain.drainage.summary),
         "routing_agreement": asdict(terrain.routing_agreement),
         "channel_conflicts": asdict(terrain.routing_conflicts.summary),
         "quality": asdict(quality),

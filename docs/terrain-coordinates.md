@@ -37,11 +37,10 @@ short-side rounding and minimum counts can make them different.
 | Grid | Longest-axis samples | Minimum per axis |
 |---|---:|---:|
 | Delivered terrain | Requested resolution | 2 |
-| Automatic routing | 257 | 3 |
-| Canonical diagnostics | 129 | 3 |
+| Routing and canonical diagnostics | 257 | 3 |
 
-All three use the same local extent. Increasing delivered resolution does not
-increase either process grid's resolution. Generator arrays, hillshade,
+Both use the same local extent. Increasing delivered resolution does not
+increase the shared process/review grid's resolution. Generator arrays, hillshade,
 quality measurements and exported metadata share the same grid description.
 
 ## World positioning remains explicit future work

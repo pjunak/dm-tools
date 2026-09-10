@@ -105,15 +105,17 @@ Ordinary slope variation remains, and bound-limited residuals are reported.
 This heuristic does not apply to authored terrain and does not infer uplift,
 lithology, waterfall status, erosion rate, or equilibrium.
 
-After all generated and authored shaping, the pipeline re-evaluates the complete
-surface on a fixed 129-cell-longest-side diagnostic grid. Strict downhill D8
-reports direct outlet connectivity and potential inland terminals. Priority-
-Flood runs only on a copy to quantify significant fill cells, maximum fill
-depth, estimated volume, and largest conditioned outlet catchment. The compact
-summary is resolution-independent and never repairs the authoritative DEM.
-Significant fill cells are grouped by 8-connectivity into deterministic coarse
-basin candidates. Candidate measurements and preview markers support review;
-they are not lake polygons, nested depression trees, or authored constraints.
+After all generated and authored shaping, the pipeline evaluates the finished
+Float32 field on the shared 257-longest-side routing/review grid. Strict downhill
+D8 reports direct boundary connectivity and potential inland terminals.
+Priority-Flood operates on a copy, and its conditioned receivers are reused for
+channel comparison, fill extents and deterministic escape candidates. The typed
+analysis retains labels, original-terrain spill points, terminals and raster
+exterior/enclosed-water boundary context. It never repairs the authoritative DEM.
+The separate 129-node diagnostic pass is removed; candidate IDs and numeric
+products are resolution-independent. See the
+[basin contract](../../../../docs/terrain-basins.md) for representative-route
+selection and the limits of connected components versus authored lakes.
 
 Free ridge and valley endpoints narrow gradually so authored structures do not
 end as blunt walls. When an endpoint meets another structure of the same kind
@@ -129,7 +131,7 @@ line.
 Stages must not depend on implicit process state such as the current directory,
 wall-clock time, ambient random generators, or undeclared environment settings.
 
-Read-only basin and channel review is owned by `diagnostics.py`; flow and
-incision primitives remain in `hydrology.py`. Conflict evidence and the
+Read-only review orchestration is owned by `diagnostics.py`, with basin geometry
+in `basins.py`; flow and incision primitives remain in `hydrology.py`. Conflict evidence and the
 near-zero flow correction are specified in
 [ADR-0032](../../../../docs/adr/0032-classify-channel-conflicts.md).

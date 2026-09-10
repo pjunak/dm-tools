@@ -102,8 +102,9 @@ def test_routing_review_reports_uphill_edges_without_changing_terrain() -> None:
     final = source.copy()
     final[1, 2] = 150
     original = final.copy()
-    agreement, _conflicts = review_drainage_routing(routing, final, land,
+    review = review_drainage_routing(routing, final, land,
                                         x_spacing_km=1, y_spacing_km=1)
+    (agreement, _conflicts) = review.agreement, review.conflicts
     assert agreement.channel_edge_count == 1
     assert agreement.uphill_channel_edge_count == 1
     assert agreement.changed_channel_receiver_count == 1

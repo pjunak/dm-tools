@@ -67,10 +67,14 @@ exports carry their limits ([ADR-0031](../adr/0031-bound-incision-by-regional-re
 Conflict classification is now implemented; it retains overlapping evidence
 and fixes near-zero flow underflow ([ADR-0032](../adr/0032-classify-channel-conflicts.md)).
 
-1. Map finished-grid depression extents and spill/outlet candidates; define
-   ocean, enclosed SVG water, authored lakes and dry-basin semantics.
-2. Authored lakes/outlets and reviewable river networks using retained topology;
-   reconcile constrained channels without erasing low-relief landforms.
+Basin extents, representative spill routes and boundary context now share the
+257-node routing grid ([ADR-0033](../adr/0033-map-basin-spill-candidates.md)).
+The separate coarse inventory is removed; authored water semantics remain open.
+
+1. Authored lakes/outlets and dry-basin intent, including level/shoreline/anchor
+   conflict checks, using the retained candidate geometry.
+2. Reviewable river networks and constrained channel reconciliation, with full
+   downstream paths and cut depth/length, preserving low-relief landforms.
 3. Per-vertex ridge/valley profiles, explicit passes and asymmetric sides.
 4. Regional drainage-density/runoff controls, followed by selected-region
    refinement with explicit parent and halo contracts.

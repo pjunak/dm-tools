@@ -135,6 +135,11 @@ def write_build_products(
             receiver_cut_deficit_m=terrain.routing_conflicts.receiver_cut_deficit_m,
             final_adjustment_rise_m=terrain.routing_conflicts.final_adjustment_rise_m,
             final_fill_depth_m=terrain.routing_conflicts.final_fill_depth_m,
+            conditioned_final_elevation_m=terrain.drainage.filled_elevation_m,
+            conditioned_final_receivers=terrain.drainage.receivers,
+            basin_labels=terrain.drainage.basin_labels,
+            nonland_class=terrain.drainage.nonland_class,
+            boundary_flags=terrain.drainage.boundary_flags,
         )
         stream.flush()
         os.fsync(stream.fileno())
@@ -148,7 +153,7 @@ def write_build_products(
         destination / "diagnostics.json",
         {
             "delivered_surface_quality": asdict(quality),
-            "canonical_drainage": asdict(terrain.drainage),
+            "canonical_drainage": asdict(terrain.drainage.summary),
             "routing_agreement": asdict(terrain.routing_agreement),
             "channel_conflicts": asdict(terrain.routing_conflicts.summary),
             "routing_sha256": file_sha256(destination / "routing.npz"),
@@ -190,7 +195,7 @@ def publish_build_manifest(
         "generator": GENERATOR_ALGORITHM_ID,
         "automatic_valleys": AUTOMATIC_VALLEY_ALGORITHM_ID,
         "noise": NOISE_ALGORITHM_ID,
-        "drainage_diagnostics": terrain.drainage.algorithm_id,
+        "drainage_diagnostics": terrain.drainage.summary.algorithm_id,
         "seed_policy": SEED_POLICY_ID,
         "landforms": LANDFORM_ALGORITHM_ID,
         "stage_seeds": {RELIEF_STAGE_ID: relief_seed,
