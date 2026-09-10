@@ -130,3 +130,13 @@ def regional_incision_budget(
     influence = np.minimum(total, 1)
     denominator = np.maximum(total, np.finfo(np.float64).tiny)
     return background_budget_m * (1 - influence) + target / denominator * influence
+
+
+def regional_transition_mask(
+    x: NDArray[np.float64], y: NDArray[np.float64], regions: tuple[MetricRegion, ...],
+) -> NDArray[np.bool_]:
+    """Nodes inside at least one region's inward boundary transition."""
+    transition = np.zeros(x.shape, dtype=np.bool_)
+    for _region, inside, weight in _regional_weights(x, y, regions):
+        transition[inside] |= weight < 1.0
+    return transition

@@ -1,9 +1,11 @@
 import numpy as np
 import pytest
 
+from dmtools.terrain.pipeline.diagnostics import (
+    drainage_diagnostics,
+)
 from dmtools.terrain.pipeline.hydrology import (
     condition_downstream_channel_steepness,
-    drainage_diagnostics,
     drainage_incision,
     multiple_flow_accumulation,
     priority_flood_surface,
@@ -490,3 +492,32 @@ def test_incision_budget_rejects_wrong_grid_shape() -> None:
         drainage_incision(elevation, elevation.astype(np.bool_), elevation,
             x_spacing_km=1, y_spacing_km=1, maximum_elevation_m=1000, variability=0.5,
             incision_budget_m=np.ones((2, 2), dtype=np.float64))
+
+
+def test_zero_height_plateau_routes_without_underflow_and_conserves_area() -> None:
+    elevation = np.zeros((7, 7), dtype=np.float64)
+    land = np.ones_like(elevation, dtype=np.bool_)
+    routing = priority_flood_surface(elevation, land)
+    with np.errstate(invalid="raise", divide="raise"):
+        area, slope = multiple_flow_accumulation(routing, land,
+                                                x_spacing_km=2, y_spacing_km=1)
+        receivers, _ = steepest_flow_receivers(routing, land,
+                                             x_spacing_km=2, y_spacing_km=1)
+        diagnostics = drainage_diagnostics(elevation, land, x_spacing_km=2, y_spacing_km=1)
+    assert np.isfinite(area).all() and np.isfinite(slope).all()
+    assert np.all(receivers[1:-1, 1:-1] >= 0)
+    edges = receivers >= 0
+    assert np.all(routing.ravel()[receivers[edges]] < routing[edges])
+    assert area[~edges].sum() == pytest.approx(98.0)
+    assert diagnostics.depression_cell_count == 0  # Epsilon steps are not lakes.
+    np.testing.assert_array_equal(elevation, 0)
+
+
+def test_mfd_rescaled_tiny_drops_preserve_normal_flow_proportions() -> None:
+    source = np.tile(np.arange(5, 0, -1, dtype=np.float64), (5, 1))
+    land = np.ones_like(source, dtype=np.bool_)
+    normal, _ = multiple_flow_accumulation(source, land, x_spacing_km=1, y_spacing_km=2)
+    with np.errstate(invalid="raise", divide="raise"):
+        tiny, _ = multiple_flow_accumulation(source * 1e-300, land,
+                                             x_spacing_km=1, y_spacing_km=2)
+    np.testing.assert_allclose(tiny, normal, rtol=1e-12)

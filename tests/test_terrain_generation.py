@@ -829,7 +829,7 @@ def test_render_is_transparent_outside_and_png_records_settings(tmp_path: Path) 
         assert exported.info["dmtools.colour_scale_maximum_m"] == "10000"
         assert '"seed": 42' in exported.info["dmtools.settings"]
         drainage = json.loads(exported.info["dmtools.drainage_diagnostics"])
-        assert drainage["algorithm_id"] == "canonical-d8-priority-flood-diagnostics@2"
+        assert drainage["algorithm_id"] == "canonical-d8-priority-flood-diagnostics@3"
         assert drainage["grid_width"] == 129
         assert drainage["land_cell_count"] > 0
         assert drainage["basin_candidate_count"] == len(

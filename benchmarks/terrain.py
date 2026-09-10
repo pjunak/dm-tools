@@ -182,6 +182,7 @@ def probe(case: str, resolution: int, seed: int) -> dict[str, Any]:
             ("routing_incision", terrain.routing.incision_m),
             ("routing_incision_limit", terrain.routing.incision_limit_m),
             ("routing_final_elevation", terrain.routing_final_elevation_m),
+            ("channel_conflicts", terrain.routing_conflicts.flags),
         )
     }
     return {
@@ -204,6 +205,7 @@ def probe(case: str, resolution: int, seed: int) -> dict[str, Any]:
         "products_process_peak_bytes": products_peak,
         "drainage": asdict(terrain.drainage),
         "routing_agreement": asdict(terrain.routing_agreement),
+        "channel_conflicts": asdict(terrain.routing_conflicts.summary),
         "quality": asdict(quality),
     }
 
@@ -267,7 +269,7 @@ def main() -> None:
                         if batch and any(
                             run[key] != batch[0][key]
                             for key in ("input_sha256", "output_sha256", "drainage",
-                                        "routing_agreement", "quality")
+                                        "routing_agreement", "channel_conflicts", "quality")
                         ):
                             raise RuntimeError(
                                 "Identical benchmark inputs produced different results"

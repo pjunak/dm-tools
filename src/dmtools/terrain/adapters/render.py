@@ -23,7 +23,12 @@ from dmtools.terrain.domain import (
     TerrainRegion,
 )
 from dmtools.terrain.pipeline import GeneratedTerrain
-from dmtools.terrain.pipeline.hydrology import channel_edge_rise
+from dmtools.terrain.pipeline.diagnostics import (
+    CUT_LIMIT,
+    DEPRESSION,
+    FINAL_ADJUSTMENT,
+    REGION_TRANSITION,
+)
 
 type RenderStyle = Literal["cartographic", "scientific"]
 
@@ -193,34 +198,51 @@ def save_height_map(image: Image.Image, terrain: GeneratedTerrain, destination: 
 
 
 def render_drainage_review(terrain: GeneratedTerrain) -> Image.Image:
-    """Compare the planning surface with final-field channel conflicts."""
+    """Show planning, finished conflicts and their overlapping measured context."""
     routing = terrain.routing
     mask = terrain.routing_land_mask
     width, height = terrain.routing_grid.width, terrain.routing_grid.height
     scale = max(1, 640 // width)
     panel_width, panel_height = width * scale, height * scale
-    image = Image.new("RGB", (panel_width * 2 + 24, panel_height + 80), "#18212b")
+    image = Image.new("RGB", (panel_width * 3 + 32, panel_height + 112), "#18212b")
     draw = ImageDraw.Draw(image)
-    draw.text((8, 8), "Authored routing surface", fill="white")
-    draw.text((panel_width + 16, 8), "Finished terrain: planned channels", fill="white")
-    rises = channel_edge_rise(routing, terrain.routing_final_elevation_m)
-    conflicts = rises > terrain.routing_agreement.elevation_tolerance_m
-    for index, field in enumerate((routing.source_elevation_m, terrain.routing_final_elevation_m)):
+    context = terrain.routing_conflicts
+    summary = context.summary
+    titles = ("Authored routing surface", "Finished terrain: uphill channels", "Conflict context")
+    fields = (routing.source_elevation_m, terrain.routing_final_elevation_m,
+              terrain.routing_final_elevation_m)
+    for index, field in enumerate(fields):
+        left = 8 + index * (panel_width + 8)
+        draw.text((left, 8), titles[index], fill="white")
         grey = np.rint(45 + 150 * np.clip(field / terrain.settings.maximum_elevation_m, 0, 1))
         rgb = np.repeat(grey[..., None], 3, axis=2).astype(np.uint8)
         rgb[~mask] = (24, 33, 43)
         rgb[routing.channel_mask] = (45, 185, 255)
-        if index == 1:
-            rgb[conflicts] = (255, 95, 65)
+        if index:
+            rgb[context.flags != 0] = (255, 95, 65)
+        if index == 2:
+            # Later colours win visually; the numeric archive retains every bit.
+            for bit, colour in ((CUT_LIMIT, (240, 80, 190)),
+                                (DEPRESSION, (170, 130, 255)),
+                                (FINAL_ADJUSTMENT, (255, 150, 65)),
+                                (REGION_TRANSITION, (255, 215, 80))):
+                rgb[(context.flags & bit) != 0] = colour
         with Image.fromarray(rgb) as panel:
             resized = panel.resize((panel_width, panel_height), Image.Resampling.NEAREST)
-            image.paste(resized, (8 + index * (panel_width + 8), 28))
+            image.paste(resized, (left, 28))
             resized.close()
-    draw.text((8, panel_height + 36), "Blue: planned channels. Red: uphill on finished terrain.",
-              fill="white")
-    draw.text((8, panel_height + 54),
-              f"Canonical grid: {width} x {height}. Review guidance; not validated rivers.",
-              fill="white")
+    lines = (
+        "Blue: planned. Red: uphill. Context priority: yellow region transition > orange final "
+        "adjustment > purple depression > pink cut limit.",
+        f"{summary.uphill_edge_count} uphill edges; contexts overlap: "
+        f"{summary.insufficient_cut_edge_count} insufficient cut, "
+        f"{summary.final_adjustment_edge_count} final adjustment, "
+        f"{summary.region_transition_edge_count} transition, "
+        f"{summary.depression_edge_count} depression; {summary.unclassified_edge_count} other.",
+        f"Canonical grid: {width} x {height}. Context is evidence, not a cause or a lake decision.",
+    )
+    for row, line in enumerate(lines):
+        draw.text((8, panel_height + 36 + 21 * row), line, fill="white")
     return image
 
 
@@ -234,7 +256,7 @@ def render_drainage_overlay(
     image = Image.new("RGBA", (width, height))
     draw = ImageDraw.Draw(image)
     x_scale, y_scale = (width - 1) / (grid.width - 1), (height - 1) / (grid.height - 1)
-    rises = channel_edge_rise(routing, terrain.routing_final_elevation_m)
+    rises = terrain.routing_conflicts.rise_m
     edges = routing.channel_mask & (routing.receivers >= 0)
     for uphill in (False, True):
         selected = edges & ((rises > terrain.routing_agreement.elevation_tolerance_m) == uphill)

@@ -14,8 +14,13 @@ from dmtools.terrain.domain import (
     TerrainSettings,
     TerrainStructure,
 )
+from dmtools.terrain.pipeline.diagnostics import (
+    review_drainage_routing,
+)
 from dmtools.terrain.pipeline.generate import GeneratedTerrain, generate_terrain
-from dmtools.terrain.pipeline.hydrology import compare_drainage_routing, drainage_incision
+from dmtools.terrain.pipeline.hydrology import (
+    drainage_incision,
+)
 
 COAST = Coastline(((0, 0), (1, 0), (1, 1), (0, 1), (0, 0)), "routing-square")
 SETTINGS = TerrainSettings(resolution_px=65, object_scale_km=1000, maximum_elevation_m=6000)
@@ -73,6 +78,10 @@ def test_routing_products_are_deterministic_and_independent_of_display_resolutio
         first.routing.source_elevation_m, second.routing.source_elevation_m,
     )
     assert first.routing_agreement == second.routing_agreement
+    assert first.routing_conflicts.summary == second.routing_conflicts.summary
+    np.testing.assert_array_equal(first.routing_conflicts.flags, second.routing_conflicts.flags)
+    np.testing.assert_array_equal(first.routing_conflicts.final_fill_depth_m,
+                                  second.routing_conflicts.final_fill_depth_m)
     receivers = first.routing.receivers
     edges = receivers >= 0
     filled = first.routing.routing_elevation_m
@@ -93,7 +102,7 @@ def test_routing_review_reports_uphill_edges_without_changing_terrain() -> None:
     final = source.copy()
     final[1, 2] = 150
     original = final.copy()
-    agreement = compare_drainage_routing(routing, final, land,
+    agreement, _conflicts = review_drainage_routing(routing, final, land,
                                         x_spacing_km=1, y_spacing_km=1)
     assert agreement.channel_edge_count == 1
     assert agreement.uphill_channel_edge_count == 1

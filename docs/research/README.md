@@ -7,6 +7,9 @@ implemented with tests. Notes are listed newest first and package-support claims
 may become stale; use the
 [current development strategy](../strategy/README.md) for the active order.
 
+- [Depressions and channel conflicts - 2026-09-10](2026-09-10-depressions-and-channel-conflicts.md)
+  compares retention, constrained breaching and outlet mapping, and records
+  overlapping conflict diagnostics and the zero-height flow fix.
 - [Selective terrain sampling — 2026-09-05](2026-09-05-selective-terrain-sampling.md)
   records the Python benchmark harness, exact-output optimization, timing/memory
   comparisons and rejected indexing probe for the first R45 slice.

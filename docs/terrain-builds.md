@@ -146,3 +146,14 @@ cross-platform bitwise equality or archive dependency binaries.
 See [ADR-0024](adr/0024-publish-local-numeric-terrain-builds.md) for the accepted
 scope and the [development strategy](strategy/README.md) for world placement
 and terrain-algorithm work that follows.
+
+## Channel conflict context
+
+`diagnostics.json` now includes `channel_conflicts`, with algorithm and tolerance
+identity plus overlapping context counts. `routing.npz` includes the UInt8
+`channel_conflict_flags` mask and metre arrays `channel_rise_m`,
+`receiver_cut_deficit_m`, `final_adjustment_rise_m` and `final_fill_depth_m`.
+See [ADR-0032](adr/0032-classify-channel-conflicts.md) for bit values and formulas.
+`drainage.png` shows planning, finished uphill channels and a context panel.
+Colours have a display priority; the archive retains every flag. These products
+support review and do not carve a breach or create a lake.

@@ -54,9 +54,10 @@ and rendering are measured afterward. Disk export, PNG encoding and publication
 are excluded; these results must not be called full-build timings. Report
 serialization and child-process communication are included only in worker wall
 time. Deterministic hashes identify elevations, masks and both coordinate axes;
-quality, drainage and planned/final routing agreement summaries are also retained.
-Hashes also cover receivers, channels, incision, incision limits and the finished
-field on routing nodes. Sampling now emits its label before the first chunk;
+quality, drainage, planned/final routing agreement and overlapping conflict
+context summaries are also retained.
+Hashes also cover receivers, channels, incision, incision limits, conflict flags
+and the finished field on routing nodes. Sampling now emits its label before the first chunk;
 older reports charged that first chunk to the preceding routing interval.
 
 Peak resident memory comes from the OS and includes native-library allocations.

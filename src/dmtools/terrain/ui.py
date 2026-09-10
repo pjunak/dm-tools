@@ -1602,9 +1602,12 @@ class TerrainApp:
                     else:
                         drainage_status = "No potential sinks on the canonical grid."
                     agreement = event.terrain.routing_agreement
+                    conflicts = event.terrain.routing_conflicts.summary
                     self.status_label.configure(text=(
                         f"Terrain ready. {drainage_status} "
-                        f"Planned channels: {agreement.uphill_channel_edge_count:,} uphill edges."
+                        f"Planned channels: {agreement.uphill_channel_edge_count:,} uphill edges; "
+                        f"{conflicts.insufficient_cut_edge_count:,} exceed cut allowance, "
+                        f"{conflicts.depression_edge_count:,} touch depressions (may overlap)."
                     ))
                     peak = float(event.terrain.elevation_m[event.terrain.land_mask].max())
                     connected_percent = (

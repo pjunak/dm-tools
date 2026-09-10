@@ -83,7 +83,9 @@ conditioning and residual-detail suppression.
 Shallower cuts can leave more uphill edges in the planned channel graph. The
 Drainage review continues to flag these conflicts; increasing cuts until every
 filled route is downhill would erase the intended landform. Lake/outlet and
-routing reconciliation are still needed. See
+routing reconciliation are still needed. Completion status now reports cut-limit
+and depression context counts; the headless build adds a coloured context panel
+and numeric edge evidence ([ADR-0032](adr/0032-classify-channel-conflicts.md)). See
 [ADR-0031](adr/0031-bound-incision-by-regional-relief.md) for fixture results.
 
 ## Current limits

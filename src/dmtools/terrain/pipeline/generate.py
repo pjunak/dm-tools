@@ -24,14 +24,17 @@ from dmtools.terrain.domain import (
     TerrainSettings,
 )
 from dmtools.terrain.domain.seeds import RELIEF_STAGE_ID, stage_seed
+from dmtools.terrain.pipeline.diagnostics import (
+    ChannelConflicts,
+    DrainageDiagnostics,
+    RoutingAgreement,
+    drainage_diagnostics,
+    review_drainage_routing,
+)
 from dmtools.terrain.pipeline.grid import grid_coordinates
 from dmtools.terrain.pipeline.hydrology import (
-    DrainageDiagnostics,
     DrainageIncision,
-    RoutingAgreement,
     automatic_incision_budget,
-    compare_drainage_routing,
-    drainage_diagnostics,
     drainage_incision,
 )
 from dmtools.terrain.pipeline.landforms import (
@@ -39,14 +42,15 @@ from dmtools.terrain.pipeline.landforms import (
     prepare_regions,
     regional_elevation_fields,
     regional_incision_budget,
+    regional_transition_mask,
 )
 from dmtools.terrain.pipeline.noise import fractal_value_noise
 from dmtools.terrain.pipeline.profile import shape_preserving_profile
 
 type ProgressCallback = Callable[[float, str], None]
 
-GENERATOR_ALGORITHM_ID = "coastline-constraint-terrain@4"
-AUTOMATIC_VALLEY_ALGORITHM_ID = "regional-budget-mfd-d8-valleys@3"
+GENERATOR_ALGORITHM_ID = "coastline-constraint-terrain@5"
+AUTOMATIC_VALLEY_ALGORITHM_ID = "regional-budget-mfd-d8-valleys@4"
 NOISE_ALGORITHM_ID = "coordinate-value-noise-normalized@1"
 
 
@@ -67,6 +71,7 @@ class GeneratedTerrain:
     routing_land_mask: NDArray[np.bool_]
     routing_final_elevation_m: NDArray[np.float64]
     routing_agreement: RoutingAgreement
+    routing_conflicts: ChannelConflicts
 
     @property
     def grid(self) -> EndpointGrid:
@@ -1268,10 +1273,11 @@ def generate_terrain(
     )
     # Match the authoritative Float32 field, sampled at canonical routing nodes.
     routing_final = routing_final.astype(np.float32).astype(np.float64)
-    routing_agreement = compare_drainage_routing(
+    routing_agreement, routing_conflicts = review_drainage_routing(
         automatic_valleys.drainage, routing_final, automatic_valleys.land_mask,
         x_spacing_km=float(automatic_valleys.x_km[1] - automatic_valleys.x_km[0]),
         y_spacing_km=float(automatic_valleys.y_km[1] - automatic_valleys.y_km[0]),
+        region_transition_mask=regional_transition_mask(routing_x, routing_y, regions),
     )
 
     _report(progress, 0.94, "Validating terrain")
@@ -1297,4 +1303,5 @@ def generate_terrain(
         routing_land_mask=automatic_valleys.land_mask,
         routing_final_elevation_m=routing_final,
         routing_agreement=routing_agreement,
+        routing_conflicts=routing_conflicts,
     )

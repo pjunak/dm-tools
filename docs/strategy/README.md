@@ -64,8 +64,11 @@ polygon authoring, shared routing input, four recipes and smooth transitions.
 Regional automatic incision now follows relief budgets; corrections and numeric
 exports carry their limits ([ADR-0031](../adr/0031-bound-incision-by-regional-relief.md)).
 
-1. Classify planned/final drainage conflicts, especially basins and region
-   transitions where the regional incision limit prevents a downhill route.
+Conflict classification is now implemented; it retains overlapping evidence
+and fixes near-zero flow underflow ([ADR-0032](../adr/0032-classify-channel-conflicts.md)).
+
+1. Map finished-grid depression extents and spill/outlet candidates; define
+   ocean, enclosed SVG water, authored lakes and dry-basin semantics.
 2. Authored lakes/outlets and reviewable river networks using retained topology;
    reconcile constrained channels without erasing low-relief landforms.
 3. Per-vertex ridge/valley profiles, explicit passes and asymmetric sides.
@@ -83,9 +86,9 @@ forward when integration or regional/climate coordinates require it.
 
 The [2026-09-10 sanity and performance review](../maintenance/2026-09-10-sanity-and-performance.md)
 found sound dependency direction, large orchestration/UI modules and a native
-geometry-distance bottleneck. Keep the product order above. Before adding basin
-classification, extract its diagnostics from hydrology behind typed inputs and
-outputs; separate structure-profile preparation when that authoring work starts.
+geometry-distance bottleneck. Keep the product order above. Basin and channel
+review now live in a separate diagnostics module; separate structure-profile
+preparation when that authoring work starts.
 Split workbench controls and drawing interaction as those flows change.
 
 Benchmark boundary-distance alternatives separately on complex coasts; the

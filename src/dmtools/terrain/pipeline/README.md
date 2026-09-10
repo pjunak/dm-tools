@@ -128,3 +128,8 @@ line.
 
 Stages must not depend on implicit process state such as the current directory,
 wall-clock time, ambient random generators, or undeclared environment settings.
+
+Read-only basin and channel review is owned by `diagnostics.py`; flow and
+incision primitives remain in `hydrology.py`. Conflict evidence and the
+near-zero flow correction are specified in
+[ADR-0032](../../../../docs/adr/0032-classify-channel-conflicts.md).

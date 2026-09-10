@@ -31,6 +31,7 @@ from dmtools.terrain.pipeline.landforms import (
     prepare_regions,
     regional_elevation_fields,
     regional_incision_budget,
+    regional_transition_mask,
 )
 
 COAST = Coastline(((0, 0), (1, 0), (1, 1), (0, 1), (0, 0)), "regions")
@@ -70,6 +71,8 @@ def test_regions_preserve_anchors_order_and_shared_samples() -> None:
     assert first.elevation_m[32, 32] == 1800
     assert first.constraints == (*regions, anchor)
     assert first.routing_agreement == second.routing_agreement
+    assert first.routing_conflicts.summary == second.routing_conflicts.summary
+    np.testing.assert_array_equal(first.routing_conflicts.flags, second.routing_conflicts.flags)
     np.testing.assert_array_equal(first.routing.incision_limit_m,
                                   second.routing.incision_limit_m)
 
@@ -158,6 +161,8 @@ def test_regional_incision_budget_blends_boundaries_and_overlaps() -> None:
             prepare_regions((plateau, plain), 1000, 1000, land, 6000)),
     )
     np.testing.assert_array_equal(regional_incision_budget(x, y, 600, ()), 600)
+    np.testing.assert_array_equal(regional_transition_mask(x, y, regions),
+                                  [False, True, True, True, True, False])
 
 
 def test_zero_relief_region_disables_automatic_cutting_but_preserves_anchor() -> None:

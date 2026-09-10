@@ -130,6 +130,11 @@ def write_build_products(
             outlet_mask=routing.outlet_mask,
             incision_m=routing.incision_m,
             incision_limit_m=routing.incision_limit_m,
+            channel_conflict_flags=terrain.routing_conflicts.flags,
+            channel_rise_m=terrain.routing_conflicts.rise_m,
+            receiver_cut_deficit_m=terrain.routing_conflicts.receiver_cut_deficit_m,
+            final_adjustment_rise_m=terrain.routing_conflicts.final_adjustment_rise_m,
+            final_fill_depth_m=terrain.routing_conflicts.final_fill_depth_m,
         )
         stream.flush()
         os.fsync(stream.fileno())
@@ -145,6 +150,7 @@ def write_build_products(
             "delivered_surface_quality": asdict(quality),
             "canonical_drainage": asdict(terrain.drainage),
             "routing_agreement": asdict(terrain.routing_agreement),
+            "channel_conflicts": asdict(terrain.routing_conflicts.summary),
             "routing_sha256": file_sha256(destination / "routing.npz"),
             "elevation_sha256": file_sha256(destination / "elevation.npy"),
         },

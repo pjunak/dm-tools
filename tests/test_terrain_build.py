@@ -137,9 +137,21 @@ def test_headless_build_preserves_dem_and_has_repeatable_verified_products(
         np.testing.assert_array_equal(routing["incision_limit_m"],
                                       expected.routing.incision_limit_m)
         assert np.all(routing["incision_m"] <= routing["incision_limit_m"])
+        for key, value in (
+            ("channel_conflict_flags", expected.routing_conflicts.flags),
+            ("channel_rise_m", expected.routing_conflicts.rise_m),
+            ("receiver_cut_deficit_m", expected.routing_conflicts.receiver_cut_deficit_m),
+            ("final_adjustment_rise_m", expected.routing_conflicts.final_adjustment_rise_m),
+            ("final_fill_depth_m", expected.routing_conflicts.final_fill_depth_m),
+        ):
+            np.testing.assert_array_equal(routing[key], value)
         assert routing["x_km"].size == expected.routing_grid.width
+    assert diagnostics["channel_conflicts"]["algorithm_id"] == "planned-channel-context@1"
+    assert diagnostics["channel_conflicts"]["uphill_edge_count"] == (
+        expected.routing_agreement.uphill_channel_edge_count
+    )
     assert diagnostics["routing_sha256"] == file_sha256(first / "routing.npz")
-    assert diagnostics["routing_agreement"]["algorithm_id"] == "planned-final-d8-agreement@1"
+    assert diagnostics["routing_agreement"]["algorithm_id"] == "planned-final-d8-agreement@2"
     for missing_name in ("routing.npz", "drainage.png"):
         incomplete = {**document, "outputs": {
             key: value for key, value in document["outputs"].items() if key != missing_name

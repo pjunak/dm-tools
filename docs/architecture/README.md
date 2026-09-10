@@ -42,6 +42,8 @@ The current implemented path is:
 5. Calculate finite-value, coastline, basin and drainage diagnostics. Compare
    planned channels against the finished field on matching routing nodes;
    preserve authoritative constraints and report unresolved uphill segments.
+   Read-only basin and channel-context work lives in `pipeline/diagnostics.py`,
+   separate from flow and incision primitives in `pipeline/hydrology.py`.
 6. Return the Float32 DEM in memory and derive the workbench colour preview and
    PNG export. The shared headless application operation also writes numeric
    NPY arrays, local-metric GeoTIFF, both preview styles, spatial measurements and a completion

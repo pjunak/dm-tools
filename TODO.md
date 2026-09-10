@@ -82,11 +82,17 @@ preview, and PNG export. Those are not repeated below as unfinished work.
   transitions. Floor/steepness corrections respect those limits; numeric builds
   retain the effective limits and exact authored anchors remain authoritative.
   See [ADR-0031](docs/adr/0031-bound-incision-by-regional-relief.md).
-- [ ] **P1 — Reconcile channels blocked by regional cutting limits.** The
-  seed-42 square plain fixture has 253 uphill edges versus 44 with global
-  cutting. Classify basin interiors, boundary transitions and constrained
-  reaches; support reviewable lake/outlet or rerouting decisions without
-  automatically removing the intended low relief.
+- [x] **P1 — Classify channels blocked by regional cutting limits.** Retained
+  edge evidence reports depression contact, remaining-cut deficits, final
+  adjustment and regional transitions. Counts overlap; they are not causes.
+  Read-only diagnostics now have their own module. See
+  [ADR-0032](docs/adr/0032-classify-channel-conflicts.md).
+- [ ] **P1 — Reconcile blocked channels through explicit water/outlet choices.**
+  The plain fixture has 253 uphill edges; all exceed remaining receiver cut
+  and 234 touch depressions. Map spill candidates and distinguish ocean,
+  enclosed SVG water, authored lakes and dry basins before proposing retained
+  lakes, constrained breaches or rerouting. Measure full route depth/length,
+  anchor preservation and downstream closure; never silently expand budgets.
 - [ ] **P1 — Extend regional process controls.** Add drainage density,
   runoff and erosion resistance with measurable effects and authored authority.
 - [x] **P1 — Render drainage review at display size.** Thin canonical D8
@@ -346,9 +352,9 @@ landscape-process spikes. It is working research, not an accepted architecture.
   identical pixels/alpha/metadata. Measure 4096 separately before assuming
   full-resolution previews fit the intended desktop memory budget.
 - [ ] **P1 — Split growing modules along the next feature boundaries.** Extract
-  basin/conflict diagnostics from hydrology before expanding them; separate
   structure-profile preparation from generation and workbench controls/drawing
-  as those features change. Keep typed values and one owner per operation.
+  as those features change. Basin/conflict diagnostics are now extracted;
+  keep typed values and one owner per operation.
 
 ### Realism research register — 2026-09-04
 

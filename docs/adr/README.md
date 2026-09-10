@@ -51,3 +51,5 @@ supersedes their legacy compatibility commitments during early development.
 - [ADR-0030: Author regional landforms](0030-author-regional-landforms.md)
 
 - [ADR-0031: Bound incision by regional relief](0031-bound-incision-by-regional-relief.md)
+
+- [ADR-0032: Classify channel conflicts](0032-classify-channel-conflicts.md)
