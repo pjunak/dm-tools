@@ -83,9 +83,11 @@ checks ([ADR-0036](../adr/0036-connect-lake-outflow-with-area-transfer.md)).
 Collected/retained footprint nodes and signed outlet-level differences are now
 visible and exported ([ADR-0037](../adr/0037-expose-basin-catchment-outcomes.md)).
 
-1. Route internal flats with known exits while retaining closed pits; refine
-   contact/shoreline sampling and controlling sills. Then support explicit lake
-   chains with compatible levels and acyclic dependencies.
+Exact internal flats now use integer ranks with contained links; closed pits
+remain retained ([ADR-0038](../adr/0038-route-basin-flats-with-integer-gradients.md)).
+
+1. Refine contact/shoreline sampling and controlling-sill evidence. Then support
+   explicit lake chains with compatible levels and acyclic dependencies.
 2. Compare retention, constrained breach and reroute proposals using full paths,
    cut depth/length and preserved anchors, then expose reviewable river networks.
 3. Per-vertex ridge/valley profiles, explicit passes and asymmetric sides.

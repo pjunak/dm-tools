@@ -21,7 +21,7 @@ the workbench. No input file or generator setting is changed.
 | `x-km.npy`, `y-km.npy` | Authoritative Float64 coordinate vectors in kilometres |
 | `inputs.json` | Effective input snapshot including dissolved geometry, settings, constraints and authoring state |
 | `cartographic.png`, `scientific.png` | The two existing display styles derived from this DEM |
-| `basin-flow.npz` | Captured source, downstream throughput and terminal delivery for connected lake outlets |
+| `basin-flow.npz` | Internal basin receivers/flat ranks, collected/retained nodes and contributing-area transfer |
 | `water.npz` | Authored lake surface, depth and footprint IDs on the delivered grid |
 | `routing.npz` | Canonical planning and final-field elevations, mask, coordinates, receivers, contributing area, channels, heads, orders, outlets, incision and its effective limit |
 | `drainage.png` | Four-panel planning, uphill-channel, conflict-context and basin/spill review |
@@ -98,7 +98,7 @@ apply the archive's `land_mask`, not an elevation threshold.
 
 `receivers` contains row-major flat D8 indices, with -1 for terminals and sea.
 `outlet_mask` identifies terminal land nodes on the filled routing graph.
-Build v10 includes `retention_terminal_mask`, identifying absorbing authored basin
+Build v11 includes `retention_terminal_mask`, identifying absorbing authored basin
 nodes among those terminals. Their D8 receiver is -1 and MFD area stays there;
 other nodes can deliver incoming area to them. Eligible lake outlets transfer
 captured area afterward in the separate `basin-flow.npz` product; this avoids
@@ -136,7 +136,7 @@ project, SVG and installed Python package files are fingerprinted; runtime and
 dependency versions are recorded. No network service is needed to build.
 
 Consumers must validate the manifest and verify product hashes. Register the
-[current build schema](../schemas/terrain/build-v10.schema.json) and
+[current build schema](../schemas/terrain/build-v11.schema.json) and
 [current project schema](../schemas/terrain/project-v5.schema.json) locally by
 `$id` for offline validation. Older formats are unsupported. The
 [seed contract](terrain-seeds.md) describes the single named-stage algorithm.
@@ -183,7 +183,7 @@ They do not assign lake levels, classify authored dry basins or modify terrain.
 
 ## Authored water products
 
-Build v10 includes `water.npz` with delivered-grid Float32 water surfaces/depths and
+Build v11 includes `water.npz` with delivered-grid Float32 water surfaces/depths and
 UInt32 footprint IDs. `routing.npz` adds canonical `basin_intent_ids`;
 `diagnostics.json` records `authored_water` and `water_sha256`. Ground elevations
 remain in the DEM and GeoTIFF. Cartographic relief shows wet lake samples, while
@@ -191,11 +191,12 @@ scientific elevation shows the ground beneath them. See the
 [water contract](terrain-water.md) for retention rules and unresolved flow conflicts.
 
 
-Build v10 requires `basin-flow.npz` on the canonical routing grid and records
-`basin_outflow` plus `basin_flow_sha256` in diagnostics. It adds a UInt8
-`catchment_class` and per-node Float64 `retained_km2` alongside source, throughput
-and terminal arrays. Diagnostics partition collected/retained sample counts and
-report the signed outlet-ground-minus-water difference. The finished-ground
+Build v11 requires `basin-flow.npz` on the canonical routing grid and records
+`basin_outflow` plus `basin_flow_sha256` in diagnostics. It includes Int64
+`internal_receivers` and UInt32 `flat_rank` alongside `catchment_class` and the
+retained, source, throughput and terminal area arrays. Diagnostics partition
+collected/retained samples, count resolved flat donors and report the signed
+outlet-ground-minus-water difference. The finished-ground
 review panel shows the basin classifications. These describe captured area and
 additional delivery from connected outlets, not total river flow.
 See [the water contract](terrain-water.md#outflow-products-and-conservation)

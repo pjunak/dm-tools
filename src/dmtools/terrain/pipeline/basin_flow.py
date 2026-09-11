@@ -6,14 +6,16 @@ from math import hypot
 
 import numpy as np
 from numpy.typing import NDArray
-from shapely.geometry import LineString, MultiPolygon, Polygon
+from shapely import covers, linestrings
+from shapely.geometry import MultiPolygon, Polygon
 
 from dmtools.terrain.domain import TerrainConstraint
-from dmtools.terrain.pipeline.hydrology import (
-    D8_NEIGHBOURS,
-    DrainageIncision,
-    steepest_flow_receivers,
+from dmtools.terrain.pipeline.flat_routing import (
+    FLAT_ROUTING_ALGORITHM_ID,
+    FlatRouting,
+    route_flats,
 )
+from dmtools.terrain.pipeline.hydrology import D8_NEIGHBOURS, DrainageIncision
 from dmtools.terrain.pipeline.outlets import review_outlet_routes
 from dmtools.terrain.pipeline.water import (
     MetricBasin,
@@ -35,6 +37,7 @@ class BasinCatchmentClass(IntEnum):
 @dataclass(frozen=True, slots=True)
 class BasinOutflowSummary:
     algorithm_id: str
+    flat_routing_algorithm_id: str
     connected_outlet_count: int
     source_area_km2: float
     retained_area_km2: float
@@ -45,6 +48,8 @@ class BasinOutflowSummary:
 
 @dataclass(frozen=True, slots=True)
 class BasinOutflow:
+    internal_receivers: NDArray[np.int64]
+    flat_rank: NDArray[np.uint32]
     catchment_class: NDArray[np.uint8]
     retained_km2: NDArray[np.float64]
     source_km2: NDArray[np.float64]
@@ -53,46 +58,75 @@ class BasinOutflow:
     summary: BasinOutflowSummary
 
 
-def _reaches_lake(
+def basin_neighbours(
+    basin: MetricBasin, inside: NDArray[np.bool_],
+    x_km: NDArray[np.float64], y_km: NDArray[np.float64],
+) -> tuple[NDArray[np.int64], NDArray[np.int64]]:
+    """Build each undirected vector-contained link once, in bulk."""
+    nodes = np.flatnonzero(inside).astype(np.int64)
+    height, width = inside.shape
+    rows, columns = nodes // width, nodes % width
+    local = np.full(inside.size, -1, dtype=np.int64)
+    local[nodes] = np.arange(nodes.size, dtype=np.int64)
+    neighbours = np.full((nodes.size, 8), -1, dtype=np.int64)
+    for direction, (dr, dc) in enumerate(D8_NEIGHBOURS):
+        if dr < 0 or (dr == 0 and dc < 0):
+            continue
+        target_rows, target_columns = rows + dr, columns + dc
+        valid = ((target_rows >= 0) & (target_rows < height)
+                 & (target_columns >= 0) & (target_columns < width))
+        sources = np.flatnonzero(valid)
+        targets = local[target_rows[valid] * width + target_columns[valid]]
+        present = targets >= 0
+        sources, targets = sources[present], targets[present]
+        if not sources.size:
+            continue
+        first = np.column_stack((x_km[columns[sources]], y_km[rows[sources]]))
+        second = np.column_stack((x_km[columns[targets]], y_km[rows[targets]]))
+        segments = linestrings(np.stack((first, second), axis=1))
+        allowed = np.asarray(covers(basin.geometry, segments), dtype=np.bool_)
+        sources, targets = sources[allowed], targets[allowed]
+        neighbours[sources, direction] = targets
+        neighbours[targets, 7 - direction] = sources
+    return nodes, neighbours
+
+
+@dataclass(frozen=True, slots=True)
+class _BasinCollection:
+    nodes: NDArray[np.int64]
+    connected: NDArray[np.bool_]
+    routing: FlatRouting
+
+
+def _collect_basin(
     basin: MetricBasin, inside: NDArray[np.bool_], wet: NDArray[np.bool_], contact: int,
     elevation_m: NDArray[np.float64], x_km: NDArray[np.float64], y_km: NDArray[np.float64],
-) -> NDArray[np.bool_]:
-    """Collect connected water, then only dry nodes that actually descend into it."""
-    height, width = inside.shape
-    reachable = np.zeros_like(inside)
-
-    def covered(first: int, second: int) -> bool:
-        r1, c1 = divmod(first, width)
-        r2, c2 = divmod(second, width)
-        return bool(basin.geometry.covers(LineString(((x_km[c1], y_km[r1]),
-                                                      (x_km[c2], y_km[r2])))))
-
-    queue = [contact]
-    reachable.ravel()[contact] = True
+) -> _BasinCollection | None:
+    nodes, neighbours = basin_neighbours(basin, inside, x_km, y_km)
+    local_wet = wet.ravel()[nodes]
+    connected = np.zeros(nodes.size, dtype=np.bool_)
+    queue = [int(np.searchsorted(nodes, contact))]
+    connected[queue[0]] = True
     while queue:
         node = queue.pop()
-        row, col = divmod(node, width)
-        for dr, dc in D8_NEIGHBOURS:
-            r, c = row + dr, col + dc
-            if (0 <= r < height and 0 <= c < width and wet[r, c] and not reachable[r, c]
-                    and covered(node, r * width + c)):
-                reachable[r, c] = True
-                queue.append(r * width + c)
-    if np.any(wet & ~reachable):
-        return reachable
-    # Dry ground drains toward the water surface, never toward submerged bed depths.
+        for neighbour in neighbours[node]:
+            target = int(neighbour)
+            if target >= 0 and local_wet[target] and not connected[target]:
+                connected[target] = True
+                queue.append(target)
+    if np.any(local_wet & ~connected):
+        return None
     assert basin.source.water_level_m is not None
-    head = np.where(wet, basin.source.water_level_m, elevation_m)
-    receivers, _ = steepest_flow_receivers(
-        head, inside, x_spacing_km=float(x_km[1] - x_km[0]),
-        y_spacing_km=float(y_km[1] - y_km[0]), terminal_mask=wet,
-    )
-    dry = np.flatnonzero(inside & ~wet)
-    for node in dry[np.argsort(elevation_m.ravel()[dry], kind="stable")]:
-        target = int(receivers.ravel()[node])
-        if target >= 0 and reachable.ravel()[target] and covered(int(node), target):
-            reachable.ravel()[node] = True
-    return reachable
+    head = np.where(local_wet, basin.source.water_level_m, elevation_m.ravel()[nodes])
+    routing = route_flats(head, neighbours, local_wet,
+        x_spacing_km=float(x_km[1] - x_km[0]), y_spacing_km=float(y_km[1] - y_km[0]))
+    # Real drops sort by height; equal-head steps sort by their decreasing integer rank.
+    order = np.lexsort((nodes, routing.flat_rank, head))
+    for node in order:
+        target = int(routing.receivers[node])
+        if target >= 0:
+            connected[node] = connected[target]
+    return _BasinCollection(nodes, connected, routing)
 
 
 def resolve_basin_outflow(
@@ -117,6 +151,8 @@ def resolve_basin_outflow(
                                 BasinCatchmentClass.OUTSIDE).astype(np.uint8)
     retained = np.where((intent_ids > 0) & routing.retention_terminal_mask,
                         routing.accumulation_km2, 0.)
+    internal_receivers = np.full(elevation_m.shape, -1, dtype=np.int64)
+    flat_rank = np.zeros(elevation_m.shape, dtype=np.uint32)
     source = np.zeros_like(elevation_m)
     throughput = np.zeros_like(elevation_m)
     terminal = np.zeros_like(elevation_m)
@@ -145,11 +181,17 @@ def resolve_basin_outflow(
             continue
         assert route.water_contact_flat_index is not None
         assert route.terminal_flat_index is not None
-        connected = _reaches_lake(basin, inside, wet, route.water_contact_flat_index,
-                                  elevation_m, x_km, y_km)
-        if np.any(wet & ~connected):
+        collection = _collect_basin(basin, inside, wet, route.water_contact_flat_index,
+                                    elevation_m, x_km, y_km)
+        if collection is None:
             records[index] = replace(records[index], issues=(*issues, "outlet_water_disconnected"))
             continue
+        nodes, internal = collection.nodes, collection.routing
+        has_receiver = internal.receivers >= 0
+        internal_receivers.ravel()[nodes[has_receiver]] = nodes[internal.receivers[has_receiver]]
+        flat_rank.ravel()[nodes] = internal.flat_rank
+        connected = np.zeros_like(inside)
+        connected.ravel()[nodes] = collection.connected
         captured = np.where(connected & routing.retention_terminal_mask,
                             routing.accumulation_km2, 0.)
         amount = float(np.sum(captured))
@@ -164,6 +206,9 @@ def resolve_basin_outflow(
             issues.append("outlet_partial_catchment")
         records[index] = replace(records[index], outlet_connection="connected",
             retained_contributing_area_km2=remaining, outlet_contributing_area_km2=amount,
+            flat_routed_cell_count=int(np.count_nonzero(internal.flat_rank)),
+            collected_flat_cell_count=int(np.count_nonzero(
+                (internal.flat_rank > 0) & collection.connected)),
             collected_wet_cell_count=int(np.count_nonzero(connected & wet)),
             collected_dry_cell_count=int(np.count_nonzero(connected & ~wet)),
             retained_cell_count=int(np.count_nonzero(inside & ~connected)),
@@ -175,8 +220,10 @@ def resolve_basin_outflow(
     error = source_area - (retained_area + direct_area + delivered_area)
     if not np.isclose(error, 0., rtol=0., atol=max(1e-8, source_area * 1e-10)):
         raise RuntimeError("Basin outlet transfer did not conserve contributing area.")
-    summary = BasinOutflowSummary("captured-mfd-reviewed-d8-outlets@2",
+    summary = BasinOutflowSummary("captured-mfd-reviewed-d8-outlets@3",
+        FLAT_ROUTING_ALGORITHM_ID,
         sum(record.outlet_connection == "connected" for record in records),
         source_area, retained_area, direct_area, delivered_area, error)
     return (replace(review, basins=tuple(records)),
-            BasinOutflow(catchment_class, retained, source, throughput, terminal, summary))
+            BasinOutflow(internal_receivers, flat_rank, catchment_class, retained,
+                         source, throughput, terminal, summary))

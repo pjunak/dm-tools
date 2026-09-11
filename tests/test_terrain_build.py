@@ -57,7 +57,7 @@ def test_headless_build_preserves_dem_and_has_repeatable_verified_products(
     build_module.build_terrain_project(project_path, second)
     document: dict[str, Any] = json.loads((first / "manifest.json").read_text())
     schema_dir = EXAMPLES.parents[1] / "schemas" / "terrain"
-    assert document["schema_version"] == 10
+    assert document["schema_version"] == 11
     assert document["inputs"]["project_schema_version"] == 5
     assert document["algorithms"]["seed_policy"] == SEED_POLICY_ID
     resolved_seed = stage_seed(loaded.project.settings.seed, RELIEF_STAGE_ID)
@@ -75,7 +75,7 @@ def test_headless_build_preserves_dem_and_has_repeatable_verified_products(
     )
     schema = next(
         item for item in schemas
-        if item["$id"] == "urn:dmtools:schema:terrain-build:10"
+        if item["$id"] == "urn:dmtools:schema:terrain-build:11"
     )
     validate(document, schema, cls=Draft202012Validator, registry=registry)
     invalid = {**document, "coordinates": {**document["coordinates"], "world_crs": "EPSG:4326"}}
@@ -340,6 +340,8 @@ def test_authored_water_build_keeps_ground_and_water_separate_and_repeatable(
         assert not flow["source_km2"].any()
         assert not flow["throughput_km2"].any()
         assert not flow["terminal_km2"].any()
+        assert not flow["flat_rank"].any()
+        np.testing.assert_array_equal(flow["internal_receivers"], -1)
         classes: NDArray[np.uint8] = flow["catchment_class"]
         assert classes.dtype == np.uint8
         assert set(np.unique(classes)) == {0, 1}
@@ -358,8 +360,11 @@ def test_authored_water_build_keeps_ground_and_water_separate_and_repeatable(
         np.testing.assert_array_equal(routing["incision_limit_m"][retained], 0)
 
 
-def test_connected_outlet_build_exports_conserved_source_and_terminal_area(tmp_path: Path) -> None:
-    loaded = load_terrain_project(EXAMPLES / "connected-outlet.dmterrain.json")
+@pytest.mark.parametrize("example", ["connected-outlet", "flat-outlet"])
+def test_connected_outlet_build_exports_conserved_source_and_terminal_area(
+    tmp_path: Path, example: str,
+) -> None:
+    loaded = load_terrain_project(EXAMPLES / f"{example}.dmterrain.json")
     project = replace(loaded.project, settings=replace(loaded.project.settings, resolution_px=65))
     path = tmp_path / "outlet.dmterrain.json"
     save_terrain_project(project, loaded.coastline_source, path)
@@ -379,8 +384,13 @@ def test_connected_outlet_build_exports_conserved_source_and_terminal_area(tmp_p
         assert flow["source_km2"].dtype == np.float64
         assert np.count_nonzero(flow["terminal_km2"]) == 1
         assert np.count_nonzero(flow["throughput_km2"]) > 2
-        assert set(flow.files) == {"catchment_class", "retained_km2", "source_km2",
-                                   "throughput_km2", "terminal_km2"}
+        assert set(flow.files) == {"internal_receivers", "flat_rank", "catchment_class",
+                                   "retained_km2", "source_km2", "throughput_km2", "terminal_km2"}
+        assert flow["internal_receivers"].dtype == np.int64
+        assert flow["flat_rank"].dtype == np.uint32
+        if example == "flat-outlet":
+            assert np.count_nonzero(flow["flat_rank"]) > 100
+        assert np.all(flow["internal_receivers"][flow["flat_rank"] > 0] >= 0)
         classes: NDArray[np.uint8] = flow["catchment_class"]
         assert classes.dtype == np.uint8
         assert set(np.unique(classes)) == {0, 1, 2, 3}

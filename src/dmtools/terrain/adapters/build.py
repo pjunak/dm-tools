@@ -40,7 +40,7 @@ from dmtools.terrain.pipeline.generate import (
 from dmtools.terrain.pipeline.landforms import LANDFORM_ALGORITHM_ID
 from dmtools.terrain.pipeline.quality import TerrainQuality
 
-BUILD_SCHEMA_VERSION = 10
+BUILD_SCHEMA_VERSION = 11
 
 
 def file_sha256(path: Path) -> str:
@@ -156,7 +156,9 @@ def write_build_products(
         os.fsync(stream.fileno())
     paths.append(("water.npz", "derived"))
     with (destination / "basin-flow.npz").open("xb") as stream:
-        np.savez_compressed(stream, catchment_class=terrain.basin_outflow.catchment_class,
+        np.savez_compressed(stream, internal_receivers=terrain.basin_outflow.internal_receivers,
+                            flat_rank=terrain.basin_outflow.flat_rank,
+                            catchment_class=terrain.basin_outflow.catchment_class,
                             retained_km2=terrain.basin_outflow.retained_km2,
                             source_km2=terrain.basin_outflow.source_km2,
                             throughput_km2=terrain.basin_outflow.throughput_km2,

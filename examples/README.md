@@ -29,3 +29,9 @@ It demonstrates closed-basin retention and review.
 The [connected-outlet example](terrain/connected-outlet.dmterrain.json) adds an
 explicit valley reaching the coast. Its eligible lake outlet transfers captured
 area downstream while isolated dry pockets retain their contributions.
+
+The [flat-outlet example](terrain/flat-outlet.dmterrain.json) uses a zero-relief
+plateau, shorter coastal transition and narrower height influences. Its exact
+Float32 flats exercise internal routing with exits, including paths to lower
+closed pits. Basin details separates resolved flat samples from those that
+reach connected water. This synthetic scene tests routing, not lake stability.

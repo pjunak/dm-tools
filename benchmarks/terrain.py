@@ -31,7 +31,7 @@ from dmtools.terrain.pipeline.generate import generate_terrain
 from dmtools.terrain.pipeline.quality import measure_terrain_quality
 
 ROOT = Path(__file__).resolve().parents[1]
-CASES = ("example", "square", "archipelago", "authored", "regional", "water", "outlet")
+CASES = ("example", "square", "archipelago", "authored", "regional", "water", "outlet", "flat")
 
 
 def _ring(x: float, y: float, rx: float, ry: float, count: int) -> tuple[tuple[float, float], ...]:
@@ -52,9 +52,9 @@ def fixture(
     """Public or synthetic inputs only; no private map or authored file changes."""
     settings = TerrainSettings(resolution_px=resolution, seed=seed)
     constraints: tuple[TerrainConstraint, ...] = ()
-    if case in ("example", "regional", "water", "outlet"):
+    if case in ("example", "regional", "water", "outlet", "flat"):
         name = {"example": "example", "regional": "landform-regions",
-                "water": "basin-water", "outlet": "connected-outlet"}[case]
+                "water": "basin-water", "outlet": "connected-outlet", "flat": "flat-outlet"}[case]
         project = load_terrain_project(ROOT / f"examples/terrain/{name}.dmterrain.json").project
         return (
             project.coastline,
@@ -188,6 +188,8 @@ def probe(case: str, resolution: int, seed: int) -> dict[str, Any]:
             ("channel_conflicts", terrain.routing_conflicts.flags),
             ("basin_labels", terrain.drainage.basin_labels),
             ("water_surface", terrain.water.surface_m),
+            ("basin_internal_receivers", terrain.basin_outflow.internal_receivers),
+            ("basin_flat_rank", terrain.basin_outflow.flat_rank),
             ("basin_catchment_class", terrain.basin_outflow.catchment_class),
             ("basin_retained_area", terrain.basin_outflow.retained_km2),
             ("outflow_sources", terrain.basin_outflow.source_km2),

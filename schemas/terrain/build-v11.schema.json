@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:dmtools:schema:terrain-build:10",
-  "title": "DM Tools terrain build version 10",
+  "$id": "urn:dmtools:schema:terrain-build:11",
+  "title": "DM Tools terrain build version 11",
   "description": "Completion manifest for local terrain and authored-macro drainage review products.",
   "type": "object",
   "additionalProperties": false,
@@ -25,7 +25,7 @@
       "const": "dmtools.terrain-build"
     },
     "schema_version": {
-      "const": 10
+      "const": 11
     },
     "status": {
       "const": "complete"
@@ -360,7 +360,7 @@
         },
         "basin-flow.npz": {
           "$ref": "#/$defs/product",
-          "description": "Canonical UInt8 catchment_class and Float64 retained_km2, source_km2, throughput_km2 and terminal_km2 arrays; see the water contract for class codes."
+          "description": "Canonical Int64 internal_receivers, UInt32 flat_rank, UInt8 catchment_class and Float64 retained_km2, source_km2, throughput_km2 and terminal_km2 arrays; see the water contract for routing and class semantics."
         },
         "water.npz": {
           "$ref": "#/$defs/product"

@@ -61,3 +61,4 @@ supersedes their legacy compatibility commitments during early development.
 
 - [ADR-0036: Connect lake outflow with area transfer](0036-connect-lake-outflow-with-area-transfer.md)
 - [ADR-0037: Expose basin catchment outcomes](0037-expose-basin-catchment-outcomes.md)
+- [ADR-0038: Route basin flats with integer gradients](0038-route-basin-flats-with-integer-gradients.md)

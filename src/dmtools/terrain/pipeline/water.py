@@ -13,7 +13,7 @@ from dmtools.terrain.pipeline.basins import connected_components
 from dmtools.terrain.pipeline.hydrology import D8_NEIGHBOURS, DrainageIncision
 from dmtools.terrain.pipeline.outlets import OutletRouteReview
 
-WATER_ALGORITHM_ID = "authored-basin-water-review@4"
+WATER_ALGORITHM_ID = "authored-basin-water-review@5"
 
 
 @dataclass(frozen=True, slots=True)
@@ -78,6 +78,8 @@ class BasinIntentReview:
     retained_contributing_area_km2: float
     outlet_contributing_area_km2: float
     outlet_connection: Literal["closed", "blocked", "connected"]
+    flat_routed_cell_count: int
+    collected_flat_cell_count: int
     collected_wet_cell_count: int
     collected_dry_cell_count: int
     retained_cell_count: int
@@ -189,6 +191,7 @@ def review_water(
             captured_contributing_area_km2=captured_area,
             retained_contributing_area_km2=captured_area, outlet_contributing_area_km2=0.,
             outlet_connection="closed" if source.outlet is None else "blocked",
+            flat_routed_cell_count=0, collected_flat_cell_count=0,
             collected_wet_cell_count=0, collected_dry_cell_count=0, retained_cell_count=count,
             uncontrolled_low_boundary_cell_count=low_count, outlet_route=outlet_route,
             issues=tuple(issues),

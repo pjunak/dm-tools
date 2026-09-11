@@ -32,7 +32,7 @@ preview, and PNG export. Those are not repeated below as unfinished work.
   hashes, generator and schema versions, master and stage seeds, effective
   parameters, working extent and units, runtime/dependency versions, warnings,
   and authoritative output hashes.
-  Current version-9 builds record named stage seeds, numeric product hashes,
+  Current version-11 builds record named stage seeds, numeric product hashes,
   and explicit local-only NPY/GeoTIFF coordinates. World placement remains open.
 - [x] **P0 — Export the authoritative Float32 DEM as local-metric GeoTIFF.**
   Implemented point registration, metre units, NaN nodata, embedded masks,
@@ -112,16 +112,19 @@ preview, and PNG export. Those are not repeated below as unfinished work.
   [ADR-0036](docs/adr/0036-connect-lake-outflow-with-area-transfer.md).
 - [x] **P1 — Show collected and retained basin nodes.** The workbench and
   finished-ground review now map collected water, collected dry ground and
-  retained nodes. Build v10 exports the classification and retained contribution
+  retained nodes. Build v11 exports the classification and retained contribution
   at each footprint node; sample counts and area accounting remain distinct.
   Exact outlet ground minus water level is reported, including submerged outlets,
   without treating a clear sampled route as proof of a stable lake level. See
   [ADR-0037](docs/adr/0037-expose-basin-catchment-outcomes.md).
-- [ ] **P1 — Resolve partial lake catchments and refine outlet openings.**
-  Define deterministic internal flat routing with known exits while retaining
-  closed pits. Prototype integer routing ranks from the
-  [Barnes/Lehman/Mulla flat-routing method](https://arxiv.org/abs/1511.04433), with
-  vector-contained links, multiple-exit tests, conserved area and unchanged DEM.
+- [x] **P1 — Route internal flats with known exits.** Integer ranks now route
+  exact flats without editing the DEM. Every link is vector-contained, real
+  downhill alternatives take precedence, and paths to closed pits stay retained.
+  Build v11 exports internal receivers and ranks; details separate resolved flat
+  donors from those reaching lake water. The public flat-outlet fixture covers
+  both outcomes. See [ADR-0038](docs/adr/0038-route-basin-flats-with-integer-gradients.md)
+  and the [measured rundown](docs/research/2026-09-11-basin-flat-routing.md).
+- [ ] **P1 — Refine outlet contact, openings and controlling-sill evidence.**
   Refine water/ground contact between nodes and validate finer
   shoreline apertures. The measured outlet/level difference is now visible;
   derive a controlling sill and define inflow/storage/boundary assumptions before

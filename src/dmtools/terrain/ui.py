@@ -1776,8 +1776,8 @@ class TerrainApp:
             "outlet_shoreline_uncontained": "A low shoreline opening lies away from the outlet.",
             "outlet_water_disconnected": "Water is separated by the drawn basin boundary.",
             "outlet_partial_catchment": (
-                "Amber dry samples have no descending route to connected water. "
-                "Pits, flats or links leaving the drawn area can retain them."),
+                "Amber dry samples have no downhill or resolved flat route to connected water. "
+                "Closed pits or links leaving the drawn area can retain them."),
             "unexpected_planned_basin_exit": "Unexpected planned basin exit; inspect routing.",
         }
         sections: list[str] = []
@@ -1795,6 +1795,9 @@ class TerrainApp:
                 f"Footprint samples: {record.collected_wet_cell_count} water + "
                 f"{record.collected_dry_cell_count} land feed the outlet; "
                 f"{record.retained_cell_count} retained.")
+            if record.flat_routed_cell_count:
+                findings.append(f"Flat paths: {record.flat_routed_cell_count} dry samples; "
+                                f"{record.collected_flat_cell_count} of them feed the outlet.")
             if record.outlet_ground_minus_water_m is not None:
                 assert record.outlet_elevation_m is not None
                 delta = record.outlet_ground_minus_water_m

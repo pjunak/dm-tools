@@ -10,10 +10,51 @@ from shapely.geometry import Polygon
 from dmtools.terrain.adapters import load_terrain_project
 from dmtools.terrain.adapters.render import render_basin_catchment_overlay
 from dmtools.terrain.domain import TerrainBasin, TerrainStructure
-from dmtools.terrain.pipeline import generate_terrain
+from dmtools.terrain.pipeline import GeneratedTerrain, generate_terrain
 from dmtools.terrain.pipeline.basin_flow import BasinCatchmentClass, resolve_basin_outflow
 from dmtools.terrain.pipeline.hydrology import drainage_incision
 from dmtools.terrain.pipeline.water import basin_intent_ids, prepare_basins
+
+
+def _check_internal_paths(terrain: GeneratedTerrain) -> float:
+    """Trace exported global indices independently and measure area needing a flat step."""
+    flow = terrain.basin_outflow
+    ids = terrain.water.routing_intent_ids.ravel()
+    classes = flow.catchment_class.ravel()
+    receivers, ranks = flow.internal_receivers.ravel(), flow.flat_rank.ravel()
+    heads = terrain.routing_final_elevation_m.ravel().astype(np.float64)
+    for basin in terrain.water.review.basins:
+        water = (ids == basin.intent_id) & (classes == BasinCatchmentClass.COLLECTED_WATER)
+        if water.any():
+            assert basin.source.water_level_m is not None
+            heads[water] = basin.source.water_level_m
+    dependent_area = 0.
+    for source in np.flatnonzero(ids):
+        node = int(source)
+        visited: set[int] = set()
+        uses_flat = False
+        while receivers[node] >= 0:
+            assert node not in visited
+            visited.add(node)
+            target = int(receivers[node])
+            assert ids[target] == ids[source]
+            assert classes[target] == classes[source] or (
+                classes[source] == BasinCatchmentClass.COLLECTED_DRY
+                and classes[target] == BasinCatchmentClass.COLLECTED_WATER)
+            assert heads[target] <= heads[node]
+            if heads[target] == heads[node]:
+                assert ranks[node] > ranks[target]
+                uses_flat = True
+            else:
+                assert ranks[node] == 0
+            node = target
+        if classes[source] >= BasinCatchmentClass.COLLECTED_WATER:
+            assert classes[node] == BasinCatchmentClass.COLLECTED_WATER
+            if uses_flat:
+                dependent_area += float(flow.source_km2.ravel()[source])
+        else:
+            assert classes[node] == BasinCatchmentClass.RETAINED
+    return dependent_area
 
 
 @pytest.mark.parametrize("case", ["connected", "closed", "dry", "uphill", "shoreline",
@@ -91,6 +132,9 @@ def test_basin_connection_and_conservation(case: str) -> None:
     assert record.collected_dry_cell_count == np.count_nonzero(
         classes == BasinCatchmentClass.COLLECTED_DRY)
     assert record.retained_cell_count == np.count_nonzero(classes == BasinCatchmentClass.RETAINED)
+    assert record.flat_routed_cell_count == np.count_nonzero(flow.flat_rank)
+    assert record.collected_flat_cell_count == np.count_nonzero(
+        (flow.flat_rank > 0) & (classes == BasinCatchmentClass.COLLECTED_DRY))
     assert record.footprint_cell_count == (record.collected_wet_cell_count
         + record.collected_dry_cell_count + record.retained_cell_count)
     if connected:
@@ -110,7 +154,9 @@ def test_basin_connection_and_conservation(case: str) -> None:
         assert classes[5, 6] == classes[5, 5] == BasinCatchmentClass.RETAINED
         assert classes[6, 7] == BasinCatchmentClass.COLLECTED_WATER
     if case == "contact_only":
-        assert classes[3, 3] == BasinCatchmentClass.RETAINED
+        assert classes[3, 3] == BasinCatchmentClass.COLLECTED_DRY
+        assert record.collected_flat_cell_count > 0
+        assert record.retained_cell_count == 0
         assert classes[6, 6] == BasinCatchmentClass.COLLECTED_DRY
     if case == "submerged_outlet":
         assert record.outlet_ground_minus_water_m == -8
@@ -125,6 +171,8 @@ def test_basin_connection_and_conservation(case: str) -> None:
     repeated, again = resolve_basin_outflow(basins, ids, ground, routing, land, receivers,
         flags, axis, axis, polygon, (lake,), (outlet_height,))
     assert repeated == review
+    np.testing.assert_array_equal(again.internal_receivers, flow.internal_receivers)
+    np.testing.assert_array_equal(again.flat_rank, flow.flat_rank)
     np.testing.assert_array_equal(again.catchment_class, flow.catchment_class)
     np.testing.assert_array_equal(again.retained_km2, flow.retained_km2)
     np.testing.assert_array_equal(again.source_km2, flow.source_km2)
@@ -169,9 +217,12 @@ def test_two_outlets_share_a_trunk_without_double_counting_or_order_dependence()
     np.testing.assert_array_equal(result.throughput_km2, flow.throughput_km2)
 
 
-def test_real_outlet_revalidates_and_preserves_ground_across_resolution_and_closure() -> None:
+@pytest.mark.parametrize("example", ["connected-outlet", "flat-outlet"])
+def test_real_outlet_revalidates_and_preserves_ground_across_resolution_and_closure(
+    example: str,
+) -> None:
     project = load_terrain_project(Path(__file__).parents[1] /
-                                  "examples/terrain/connected-outlet.dmterrain.json").project
+                                  f"examples/terrain/{example}.dmterrain.json").project
     settings = replace(project.settings, resolution_px=65)
     terrain = generate_terrain(project.coastline, settings, constraints=project.constraints)
     refined = generate_terrain(project.coastline, replace(settings, resolution_px=129),
@@ -187,6 +238,15 @@ def test_real_outlet_revalidates_and_preserves_ground_across_resolution_and_clos
         ) as enlarged:
             np.testing.assert_array_equal(np.asarray(enlarged)[::3, ::3], pixels)
     assert terrain.water.review == refined.water.review
+    area_needing_flat_routes = _check_internal_paths(terrain)
+    if example == "flat-outlet":
+        assert area_needing_flat_routes > 0
+        assert np.count_nonzero(terrain.basin_outflow.flat_rank) > 100
+        assert np.any((terrain.basin_outflow.flat_rank > 0)
+                      & (terrain.basin_outflow.catchment_class == BasinCatchmentClass.RETAINED))
+    np.testing.assert_array_equal(terrain.basin_outflow.internal_receivers,
+                                  refined.basin_outflow.internal_receivers)
+    np.testing.assert_array_equal(terrain.basin_outflow.flat_rank, refined.basin_outflow.flat_rank)
     np.testing.assert_array_equal(terrain.basin_outflow.catchment_class,
                                   refined.basin_outflow.catchment_class)
     np.testing.assert_array_equal(terrain.basin_outflow.retained_km2,

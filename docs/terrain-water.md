@@ -53,7 +53,7 @@ The generation result retains water products and a review on the shared
 sorted by kind, level, outlet and points. They identify this result and can change
 when inputs change; they are distinct from derived depression candidate IDs.
 
-Build v10 includes `water.npz`, sharing the delivered DEM's grid and axes:
+Build v11 includes `water.npz`, sharing the delivered DEM's grid and axes:
 
 | Field | Meaning |
 |---|---|
@@ -151,11 +151,24 @@ bounded to one canonical grid diagonal from the exact outlet: both endpoints
 of an exempt low edge must be within that distance. Raster-edge leakage is
 never exempt. This is a coarse aperture, not a surveyed shoreline.
 
-Dry footprint nodes transfer their captured area only if their steepest D8
-route descends to the lake without leaving the polygon. Use lake surface
-height for wet receivers, not submerged bed depth. Dry pits and unresolved
-flats keep their area, even when another part of the lake connects. An exposed
-height anchor can remain an island and does not itself block outflow.
+Dry footprint nodes transfer captured area only when their internal D8 path
+reaches connected lake water. Each link must stay entirely inside the authored
+polygon, including between samples. The steepest eligible downhill neighbour
+wins; slopes use metric axis spacing and fixed D8 order for ties. Wet receivers
+use lake surface height, not submerged bed depth.
+
+Exact equal-height areas with exits gain separate integer routing ranks toward
+lower ground and away from higher ground. A flat edge always decreases rank;
+a strict downhill edge always decreases head. Elevations are never nudged or
+filled. All downhill exits participate, including paths ending in lower closed
+pits. No exit is invented at the polygon or grid boundary, and nearly equal
+Float32 heights are not rounded together. Closed flats and dry pits retain
+their contributions. An exposed height anchor can remain an island.
+
+This bounded adaptation of the Barnes/Lehman/Mulla method is recorded in
+[ADR-0038](adr/0038-route-basin-flats-with-integer-gradients.md). Internal flat
+routing runs only after the declared outlet and connected water pass review;
+it cannot make a blocked outlet usable.
 
 The connected wet and dry nodes supply captured MFD area to the reviewed
 outlet path. Every path node receives that amount as additional throughput;
@@ -171,10 +184,12 @@ paths in teal; ordinary relief and the DEM remain ground/water-surface products.
 
 ## Outflow products and conservation
 
-Build v10 includes `basin-flow.npz`, using the canonical axes in `routing.npz`:
+Build v11 includes `basin-flow.npz`, using the canonical axes in `routing.npz`:
 
 | Array | Type | Meaning |
 |---|---|---|
+| `internal_receivers` | Int64 | Canonical row-major flat index of the internal receiver; -1 for terminals or no derived route |
+| `flat_rank` | UInt32 | Positive integer rank at resolved flat donors; zero for other nodes |
 | `catchment_class` | UInt8 | 0 outside footprints; 1 retained; 2 collected water; 3 collected dry ground |
 | `retained_km2` | Float64 | Captured MFD area still held at each footprint terminal; zero elsewhere |
 | `source_km2` | Float64 | Captured MFD area removed from eligible footprint terminals |
@@ -183,9 +198,17 @@ Build v10 includes `basin-flow.npz`, using the canonical axes in `routing.npz`:
 
 Every footprint node has exactly one class. Closed lakes, dry basins and blocked
 outlets retain all nodes. A connected lake collects its reachable wet and dry
-nodes; dry nodes without a descending, vector-contained path to the connected
-water stay retained. Their pits, unresolved flats or rejected boundary-crossing
-links are not automatically repaired or subdivided into invented catchments.
+nodes; dry nodes without a downhill or resolved-flat path to connected water
+stay retained. Internal receivers describe a separate graph, not the original
+MFD capture graph or the external outlet path. Water nodes are terminals in
+this internal graph. Closed/blocked basins have receivers -1 and ranks zero.
+A positive flat rank does not by itself imply collection: its path can still
+end in a closed pit.
+
+Per-basin diagnostics report `flat_routed_cell_count` for all resolved dry flat
+donors and `collected_flat_cell_count` for those reaching water. These count
+flat steps, not every upstream node benefiting from them. **Basin details**
+shows both. Diagnostics also record `flat_routing_algorithm_id`.
 
 `source_km2 + retained_km2` equals the original captured MFD area at each footprint
 terminal and is zero outside. The `retained_km2` sum matches the retained-area
@@ -207,7 +230,10 @@ captured area equals retained area plus `outlet_contributing_area_km2`. The
 
 The [connected-outlet example](../examples/terrain/connected-outlet.dmterrain.json)
 authors a narrow valley all the way to the public coast. Part of its captured
-area drains through the lake; isolated dry pockets remain retained.
+area drains through the lake; isolated dry pockets remain retained. The
+[flat-outlet example](../examples/terrain/flat-outlet.dmterrain.json) adds a
+zero-relief plateau and narrower height influences to exercise exact flat
+routing alongside retained pits.
 
 ## Shoreline findings and remaining work
 
@@ -229,10 +255,10 @@ area drains through the lake; isolated dry pockets remain retained.
 
 The water surface remains an authored, clipped level preview. No runoff,
 water budget, automatic spill, breach, sediment or nested depression hierarchy
-is simulated. Next, compare full constrained breach/reroute proposals, refine
-shoreline openings and internal flat routing, and define explicit inter-lake
-connections while preserving budgets and authored anchors. See
-[ADR-0036](adr/0036-connect-lake-outflow-with-area-transfer.md).
+is simulated. Next, refine contact/shoreline sampling and controlling-sill
+evidence, then define explicit inter-lake connections. Full constrained
+breach/reroute proposals must preserve budgets and authored anchors. See
+[ADR-0038](adr/0038-route-basin-flats-with-integer-gradients.md).
 
 For measured results and the prioritized next steps, read the
-[implementation rundown](research/2026-09-11-basin-catchment-review.md).
+[implementation rundown](research/2026-09-11-basin-flat-routing.md).

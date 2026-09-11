@@ -351,8 +351,13 @@ and the footprint nodes that remain retained. **Basin details** explains sample
 counts, contributing areas, shoreline findings and exact outlet ground versus
 water level. Footprint nodes capture planned area; eligible declared outlets
 transfer the portion that can reach the lake. Connected outlet paths appear in
-teal in either review overlay. Lake levels remain imposed previews.
+teal in either review overlay. Exact flat ground can feed a lake through
+resolved internal paths; closed flats and pits remain retained. **Basin details**
+reports how many flat samples gained routes and how many reach water.
+Lake levels remain imposed previews.
 See the [water guide](../../../docs/terrain-water.md), public
 [closed-water example](../../../examples/terrain/basin-water.dmterrain.json) and
 [connected-outlet example](../../../examples/terrain/connected-outlet.dmterrain.json).
+The [flat-outlet example](../../../examples/terrain/flat-outlet.dmterrain.json)
+exercises drainable plateau ground and retained pockets together.
 Supported formats are listed in the [schema index](../../../schemas/README.md).
