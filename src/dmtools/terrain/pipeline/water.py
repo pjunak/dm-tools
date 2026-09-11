@@ -13,7 +13,7 @@ from dmtools.terrain.pipeline.basins import connected_components
 from dmtools.terrain.pipeline.hydrology import D8_NEIGHBOURS, DrainageIncision
 from dmtools.terrain.pipeline.outlets import OutletRouteReview
 
-WATER_ALGORITHM_ID = "authored-basin-water-review@3"
+WATER_ALGORITHM_ID = "authored-basin-water-review@4"
 
 
 @dataclass(frozen=True, slots=True)
@@ -73,10 +73,14 @@ class BasinIntentReview:
     planned_exit_edge_count: int
     exposed_height_anchor_count: int
     outlet_elevation_m: float | None
+    outlet_ground_minus_water_m: float | None
     captured_contributing_area_km2: float
     retained_contributing_area_km2: float
     outlet_contributing_area_km2: float
     outlet_connection: Literal["closed", "blocked", "connected"]
+    collected_wet_cell_count: int
+    collected_dry_cell_count: int
+    retained_cell_count: int
     uncontrolled_low_boundary_cell_count: int
     outlet_route: OutletRouteReview | None
     issues: tuple[str, ...]
@@ -143,6 +147,7 @@ def review_water(
         if not count:
             issues.append("unresolved_footprint")
         wet_count = components = low_count = exposed = 0
+        outlet_delta = None
         if source.kind == "lake":
             assert source.water_level_m is not None
             below = elevation_m < source.water_level_m - tolerance
@@ -162,8 +167,12 @@ def review_water(
                 issues.append("low_boundary")
             if exposed:
                 issues.append("exposed_height_anchor")
-            if outlet_elevation is not None and outlet_elevation > source.water_level_m + tolerance:
-                issues.append("outlet_above_water")
+            if outlet_elevation is not None:
+                outlet_delta = outlet_elevation - source.water_level_m
+                if outlet_elevation > source.water_level_m + tolerance:
+                    issues.append("outlet_above_water")
+                elif outlet_elevation < source.water_level_m - tolerance:
+                    issues.append("outlet_below_water")
             if source.outlet is not None and (outlet_route is None
                                               or outlet_route.status != "sampled_clear"):
                 issues.append("outlet_route_blocked")
@@ -172,10 +181,17 @@ def review_water(
         captured_area = float(np.sum(
             routing.accumulation_km2[inside & routing.retention_terminal_mask]))
         records.append(BasinIntentReview(
-            basin_id, source, count, wet_count, count - wet_count, components,
-            low_count, exit_count, exposed, outlet_elevation,
-            captured_area, captured_area, 0., "closed" if source.outlet is None else "blocked",
-            low_count, outlet_route, tuple(issues),
+            intent_id=basin_id, source=source, footprint_cell_count=count,
+            wet_cell_count=wet_count, dry_cell_count=count - wet_count,
+            wet_component_count=components, low_boundary_cell_count=low_count,
+            planned_exit_edge_count=exit_count, exposed_height_anchor_count=exposed,
+            outlet_elevation_m=outlet_elevation, outlet_ground_minus_water_m=outlet_delta,
+            captured_contributing_area_km2=captured_area,
+            retained_contributing_area_km2=captured_area, outlet_contributing_area_km2=0.,
+            outlet_connection="closed" if source.outlet is None else "blocked",
+            collected_wet_cell_count=0, collected_dry_cell_count=0, retained_cell_count=count,
+            uncontrolled_low_boundary_cell_count=low_count, outlet_route=outlet_route,
+            issues=tuple(issues),
         ))
     return WaterReview(WATER_ALGORITHM_ID, width, height, tolerance, tuple(records))
 

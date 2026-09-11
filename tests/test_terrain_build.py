@@ -10,6 +10,7 @@ import numpy as np
 import pytest
 import rasterio
 from jsonschema import Draft202012Validator, ValidationError, validate
+from numpy.typing import NDArray
 from PIL import Image
 from referencing import Registry, Resource
 
@@ -56,7 +57,7 @@ def test_headless_build_preserves_dem_and_has_repeatable_verified_products(
     build_module.build_terrain_project(project_path, second)
     document: dict[str, Any] = json.loads((first / "manifest.json").read_text())
     schema_dir = EXAMPLES.parents[1] / "schemas" / "terrain"
-    assert document["schema_version"] == 9
+    assert document["schema_version"] == 10
     assert document["inputs"]["project_schema_version"] == 5
     assert document["algorithms"]["seed_policy"] == SEED_POLICY_ID
     resolved_seed = stage_seed(loaded.project.settings.seed, RELIEF_STAGE_ID)
@@ -74,7 +75,7 @@ def test_headless_build_preserves_dem_and_has_repeatable_verified_products(
     )
     schema = next(
         item for item in schemas
-        if item["$id"] == "urn:dmtools:schema:terrain-build:9"
+        if item["$id"] == "urn:dmtools:schema:terrain-build:10"
     )
     validate(document, schema, cls=Draft202012Validator, registry=registry)
     invalid = {**document, "coordinates": {**document["coordinates"], "world_crs": "EPSG:4326"}}
@@ -339,6 +340,11 @@ def test_authored_water_build_keeps_ground_and_water_separate_and_repeatable(
         assert not flow["source_km2"].any()
         assert not flow["throughput_km2"].any()
         assert not flow["terminal_km2"].any()
+        classes: NDArray[np.uint8] = flow["catchment_class"]
+        assert classes.dtype == np.uint8
+        assert set(np.unique(classes)) == {0, 1}
+        assert flow["retained_km2"].sum() == pytest.approx(
+            diagnostics["basin_outflow"]["retained_area_km2"])
     records = diagnostics["authored_water"]["basins"]
     assert len(records) == 2
     with np.load(first / "routing.npz", allow_pickle=False) as routing:
@@ -373,3 +379,23 @@ def test_connected_outlet_build_exports_conserved_source_and_terminal_area(tmp_p
         assert flow["source_km2"].dtype == np.float64
         assert np.count_nonzero(flow["terminal_km2"]) == 1
         assert np.count_nonzero(flow["throughput_km2"]) > 2
+        assert set(flow.files) == {"catchment_class", "retained_km2", "source_km2",
+                                   "throughput_km2", "terminal_km2"}
+        classes: NDArray[np.uint8] = flow["catchment_class"]
+        assert classes.dtype == np.uint8
+        assert set(np.unique(classes)) == {0, 1, 2, 3}
+        with np.load(first / "routing.npz", allow_pickle=False) as routing:
+            inside = routing["basin_intent_ids"] > 0
+            np.testing.assert_array_equal(classes > 0, inside)
+            np.testing.assert_array_equal(flow["retained_km2"] + flow["source_km2"],
+                np.where(inside, routing["accumulation_km2"], 0.))
+        np.testing.assert_array_equal(flow["source_km2"] > 0, classes >= 2)
+        np.testing.assert_array_equal(flow["retained_km2"] > 0, classes == 1)
+        assert flow["retained_km2"].sum() == pytest.approx(
+            diagnostics["basin_outflow"]["retained_area_km2"])
+    lake = next(record for record in diagnostics["authored_water"]["basins"]
+                if record["source"]["kind"] == "lake")
+    assert lake["outlet_ground_minus_water_m"] == pytest.approx(
+        lake["outlet_elevation_m"] - lake["source"]["water_level_m"])
+    assert lake["outlet_ground_minus_water_m"] < 0
+    assert "outlet_below_water" in lake["issues"]

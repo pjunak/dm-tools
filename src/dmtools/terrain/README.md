@@ -331,14 +331,10 @@ them only when an implemented behavior needs them.
 
 ## Next vertical slices
 
-The next end-to-end work should deliberately remain staged:
-
-1. Extend the implemented local build manifest with an accepted world-coordinate contract.
-2. Define elevation profiles and asymmetric side slopes along ridge and valley
-   structures.
-3. Add world placement to the implemented local-metric GeoTIFF.
-4. Add regional refinement requests in the same world-coordinate frame.
-5. Derive contours and validate hydrology.
+Follow the [current development strategy](../../../docs/strategy/README.md)
+for the implementation order and evidence gates. The
+[terrain roadmap](../../../TODO.md) tracks the wider backlog, including world
+placement, refinement and contour exports.
 
 Process-informed erosion should follow only after the hard constraints,
 reproducibility, and multiresolution contracts are validated.
@@ -350,10 +346,13 @@ Use **Lake** or **Dry basin** to draw a closed area and choose **Finish area**.
 Lake controls set a water level and optional first-vertex outlet. Generated cuts
 are excluded inside either footprint; authored height and structure constraints
 still apply. Cartographic relief displays water over its preserved ground DEM.
-**Basin details** explains shoreline conflicts, retained contributing area and
-sampled downstream outlet evidence. Footprint nodes capture planned area;
-eligible declared outlets transfer the portion that can reach the lake.
-Connected outlet paths appear in teal in drainage review.
-See the [water guide](../../../docs/terrain-water.md) and public
-[example](../../../examples/terrain/basin-water.dmterrain.json). The current
-formats are project v5 and build v7; previous formats are unsupported.
+**Basin catchments** colours water and dry ground that feed a connected outlet,
+and the footprint nodes that remain retained. **Basin details** explains sample
+counts, contributing areas, shoreline findings and exact outlet ground versus
+water level. Footprint nodes capture planned area; eligible declared outlets
+transfer the portion that can reach the lake. Connected outlet paths appear in
+teal in either review overlay. Lake levels remain imposed previews.
+See the [water guide](../../../docs/terrain-water.md), public
+[closed-water example](../../../examples/terrain/basin-water.dmterrain.json) and
+[connected-outlet example](../../../examples/terrain/connected-outlet.dmterrain.json).
+Supported formats are listed in the [schema index](../../../schemas/README.md).

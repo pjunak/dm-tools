@@ -23,6 +23,7 @@ from dmtools.terrain.domain import (
     TerrainRegion,
 )
 from dmtools.terrain.pipeline import GeneratedTerrain
+from dmtools.terrain.pipeline.basin_flow import BasinCatchmentClass
 from dmtools.terrain.pipeline.diagnostics import (
     CUT_LIMIT,
     DEPRESSION,
@@ -258,12 +259,12 @@ def render_drainage_review(terrain: GeneratedTerrain) -> Image.Image:
     scale = max(1, 640 // max(width, height))
     map_width, map_height = width * scale, height * scale
     panel_width, panel_height = max(512, map_width), map_height + 32
-    image = Image.new("RGB", (panel_width * 2 + 24, panel_height * 2 + 108), "#18212b")
+    image = Image.new("RGB", (panel_width * 2 + 24, panel_height * 2 + 129), "#18212b")
     draw = ImageDraw.Draw(image)
     context = terrain.routing_conflicts
     summary = context.summary
-    titles = ("Authored routing surface", "Finished terrain: uphill channels", "Conflict context",
-              "Depression extents and spill candidates")
+    titles = ("Authored routing surface", "Finished terrain: channels and basin catchments",
+              "Conflict context", "Depression extents and spill candidates")
     fields = (routing.source_elevation_m, terrain.routing_final_elevation_m,
               terrain.routing_final_elevation_m, terrain.routing_final_elevation_m)
     for index, field in enumerate(fields):
@@ -288,6 +289,9 @@ def render_drainage_review(terrain: GeneratedTerrain) -> Image.Image:
             resized = panel.resize((map_width, map_height), Image.Resampling.NEAREST)
             image.paste(resized, (left, top + 28))
             resized.close()
+        if index == 1:
+            with render_basin_catchment_overlay(terrain, (map_width, map_height)) as overlay:
+                image.paste(overlay, (left, top + 28), overlay)
         if index < 3:
             for basin in terrain.water.review.basins:
                 points = [(left + x * (map_width - 1), top + 28 + y * (map_height - 1))
@@ -311,12 +315,30 @@ def render_drainage_review(terrain: GeneratedTerrain) -> Image.Image:
         f"{summary.depression_edge_count} depression; {summary.unclassified_edge_count} other.",
         "A: cyan lake / tan dry-basin retention. B: purple depressions, white deepest nodes, "
         "yellow candidate exits. Teal: connected lake outflow.",
+        "Basin fills: cyan water / green land feed a connected outlet; amber stays retained. "
+        "Footprint nodes only, not full upstream catchments.",
         f"Shared review grid: {width} x {height}. Natural-basin escape candidates ignore "
         "authored retention. Connected outflows use sampled finished terrain.",
     )
     for row, line in enumerate(lines):
         draw.text((8, panel_height * 2 + 10 + 21 * row), line, fill="white")
     return image
+
+
+def render_basin_catchment_overlay(
+    terrain: GeneratedTerrain, size: tuple[int, int],
+) -> Image.Image:
+    """Colour canonical footprint nodes without interpolating categorical outcomes."""
+    classes = terrain.basin_outflow.catchment_class
+    palette = np.zeros((len(BasinCatchmentClass), 4), dtype=np.uint8)
+    palette[BasinCatchmentClass.RETAINED] = (239, 171, 87, 165)
+    palette[BasinCatchmentClass.COLLECTED_WATER] = (70, 182, 236, 200)
+    palette[BasinCatchmentClass.COLLECTED_DRY] = (132, 218, 128, 175)
+    width, height = size
+    # Both the review grid and authored overlays use endpoints, not pixel centres.
+    columns = np.rint(np.linspace(0, classes.shape[1] - 1, width, dtype=np.float64)).astype(np.intp)
+    rows = np.rint(np.linspace(0, classes.shape[0] - 1, height, dtype=np.float64)).astype(np.intp)
+    return Image.fromarray(palette[classes[rows[:, None], columns[None, :]]])
 
 
 def render_basin_outflow_overlay(

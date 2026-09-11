@@ -1,6 +1,7 @@
 """Conservative transfer of captured contributing area through authored lake outlets."""
 
 from dataclasses import dataclass, replace
+from enum import IntEnum
 from math import hypot
 
 import numpy as np
@@ -22,6 +23,15 @@ from dmtools.terrain.pipeline.water import (
 )
 
 
+class BasinCatchmentClass(IntEnum):
+    """Canonical footprint-node outcome, not an upstream watershed delineation."""
+
+    OUTSIDE = 0
+    RETAINED = 1
+    COLLECTED_WATER = 2
+    COLLECTED_DRY = 3
+
+
 @dataclass(frozen=True, slots=True)
 class BasinOutflowSummary:
     algorithm_id: str
@@ -35,6 +45,8 @@ class BasinOutflowSummary:
 
 @dataclass(frozen=True, slots=True)
 class BasinOutflow:
+    catchment_class: NDArray[np.uint8]
+    retained_km2: NDArray[np.float64]
     source_km2: NDArray[np.float64]
     throughput_km2: NDArray[np.float64]
     terminal_km2: NDArray[np.float64]
@@ -101,6 +113,10 @@ def resolve_basin_outflow(
                                   final_receivers, boundary_flags, x_km, y_km, land, outlet_heights)
     review = review_water(
         basins, intent_ids, elevation_m, routing, constraints, outlet_heights, routes)
+    catchment_class = np.where(intent_ids > 0, BasinCatchmentClass.RETAINED,
+                                BasinCatchmentClass.OUTSIDE).astype(np.uint8)
+    retained = np.where((intent_ids > 0) & routing.retention_terminal_mask,
+                        routing.accumulation_km2, 0.)
     source = np.zeros_like(elevation_m)
     throughput = np.zeros_like(elevation_m)
     terminal = np.zeros_like(elevation_m)
@@ -139,12 +155,18 @@ def resolve_basin_outflow(
         amount = float(np.sum(captured))
         remaining = max(0., record.captured_contributing_area_km2 - amount)
         source += captured
+        retained[connected] = 0.
+        catchment_class[connected & wet] = BasinCatchmentClass.COLLECTED_WATER
+        catchment_class[connected & ~wet] = BasinCatchmentClass.COLLECTED_DRY
         throughput.ravel()[np.asarray(route.path_flat_indices, dtype=np.int64)] += amount
         terminal.ravel()[route.terminal_flat_index] += amount
         if remaining > 1e-8:
             issues.append("outlet_partial_catchment")
         records[index] = replace(records[index], outlet_connection="connected",
             retained_contributing_area_km2=remaining, outlet_contributing_area_km2=amount,
+            collected_wet_cell_count=int(np.count_nonzero(connected & wet)),
+            collected_dry_cell_count=int(np.count_nonzero(connected & ~wet)),
+            retained_cell_count=int(np.count_nonzero(inside & ~connected)),
             issues=tuple(issues))
     source_area = float(np.count_nonzero(land_mask)) * dx * dy
     retained_area = sum(record.retained_contributing_area_km2 for record in records)
@@ -153,8 +175,8 @@ def resolve_basin_outflow(
     error = source_area - (retained_area + direct_area + delivered_area)
     if not np.isclose(error, 0., rtol=0., atol=max(1e-8, source_area * 1e-10)):
         raise RuntimeError("Basin outlet transfer did not conserve contributing area.")
-    summary = BasinOutflowSummary("captured-mfd-reviewed-d8-outlets@1",
+    summary = BasinOutflowSummary("captured-mfd-reviewed-d8-outlets@2",
         sum(record.outlet_connection == "connected" for record in records),
         source_area, retained_area, direct_area, delivered_area, error)
     return (replace(review, basins=tuple(records)),
-            BasinOutflow(source, throughput, terminal, summary))
+            BasinOutflow(catchment_class, retained, source, throughput, terminal, summary))

@@ -110,11 +110,23 @@ preview, and PNG export. Those are not repeated below as unfinished work.
   block connection; isolated pockets stay retained. Shared path segments add
   area once per source, and full terminal accounting is checked. See
   [ADR-0036](docs/adr/0036-connect-lake-outflow-with-area-transfer.md).
+- [x] **P1 — Show collected and retained basin nodes.** The workbench and
+  finished-ground review now map collected water, collected dry ground and
+  retained nodes. Build v10 exports the classification and retained contribution
+  at each footprint node; sample counts and area accounting remain distinct.
+  Exact outlet ground minus water level is reported, including submerged outlets,
+  without treating a clear sampled route as proof of a stable lake level. See
+  [ADR-0037](docs/adr/0037-expose-basin-catchment-outcomes.md).
 - [ ] **P1 — Resolve partial lake catchments and refine outlet openings.**
-  Show collected versus retained nodes. Define internal flat routing, refine
-  water/ground contact between nodes, validate finer shoreline apertures, and
-  review outlet sill/level agreement before claiming stable lake levels. Do not drain isolated pockets solely
-  because they lie inside the same authored polygon.
+  Define deterministic internal flat routing with known exits while retaining
+  closed pits. Prototype integer routing ranks from the
+  [Barnes/Lehman/Mulla flat-routing method](https://arxiv.org/abs/1511.04433), with
+  vector-contained links, multiple-exit tests, conserved area and unchanged DEM.
+  Refine water/ground contact between nodes and validate finer
+  shoreline apertures. The measured outlet/level difference is now visible;
+  derive a controlling sill and define inflow/storage/boundary assumptions before
+  claiming stable lake levels. Do not drain isolated pockets solely because they
+  lie inside the same authored polygon.
 - [ ] **P1 — Connect explicit lake chains.** Require compatible water levels,
   reviewed incoming/outgoing paths and acyclic basin dependencies; keep closed
   and dry basins terminal. Current outlet paths reject every intervening basin.

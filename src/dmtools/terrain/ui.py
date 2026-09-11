@@ -29,7 +29,12 @@ from dmtools.terrain.adapters import (
     save_height_map,
     save_terrain_project,
 )
-from dmtools.terrain.adapters.render import render_basin_overlay, render_drainage_overlay
+from dmtools.terrain.adapters.render import (
+    render_basin_catchment_overlay,
+    render_basin_outflow_overlay,
+    render_basin_overlay,
+    render_drainage_overlay,
+)
 from dmtools.terrain.domain import (
     BrushToolSettings,
     Coastline,
@@ -196,8 +201,8 @@ class TerrainApp:
         }
         self._render_style_label = tk.StringVar(value="Cartographic relief")
         self._show_drainage = tk.BooleanVar(value=False)
-        self._drainage_photo: ImageTk.PhotoImage | None = None
-        self._basin_photo: ImageTk.PhotoImage | None = None
+        self._show_catchments = tk.BooleanVar(value=False)
+        self._review_photo: ImageTk.PhotoImage | None = None
         self._legend_swatches: list[tk.Frame] = []
         self._brush_cursor: tuple[float, float] | None = None
         self._active_brush_values: tuple[float, float, float, ElevationMode] | None = None
@@ -386,12 +391,19 @@ class TerrainApp:
             foreground="#dce8e3",
             font=("Segoe UI", 9, "bold"),
         ).pack(side="left")
+        review_toolbar = tk.Frame(toolbar_container, background=_PREVIEW)
+        review_toolbar.pack(fill="x", pady=(6, 0))
         tk.Checkbutton(
-            toolbar, text="Drainage review", variable=self._show_drainage,
+            review_toolbar, text="Drainage review", variable=self._show_drainage,
             command=self._draw_preview, background=_PREVIEW, foreground="#dce8e3",
             selectcolor=_PREVIEW, activebackground=_PREVIEW, activeforeground="white",
         ).pack(side="left", padx=10)
-        tk.Button(toolbar, text="Basin details", command=self._show_basin_details,
+        tk.Checkbutton(
+            review_toolbar, text="Basin catchments", variable=self._show_catchments,
+            command=self._draw_preview, background=_PREVIEW, foreground="#dce8e3",
+            selectcolor=_PREVIEW, activebackground=_PREVIEW, activeforeground="white",
+        ).pack(side="left", padx=(0, 10))
+        tk.Button(review_toolbar, text="Basin details", command=self._show_basin_details,
                   background="#2c3e40", foreground="#dce8e3", relief="flat").pack(side="left")
         self.preview_meta = tk.Label(
             toolbar_container,
@@ -1759,10 +1771,13 @@ class TerrainApp:
             "low_boundary": "Water reaches low ground beyond the drawn area; review its boundary.",
             "exposed_height_anchor": "An authored height point remains above the lake level.",
             "outlet_above_water": "The outlet terrain is above the water level.",
+            "outlet_below_water": "The outlet is submerged at the authored water level.",
             "outlet_route_blocked": "The declared outlet has no clear downstream route.",
             "outlet_shoreline_uncontained": "A low shoreline opening lies away from the outlet.",
             "outlet_water_disconnected": "Water is separated by the drawn basin boundary.",
-            "outlet_partial_catchment": "Isolated dry ground stays retained.",
+            "outlet_partial_catchment": (
+                "Amber dry samples have no descending route to connected water. "
+                "Pits, flats or links leaving the drawn area can retain them."),
             "unexpected_planned_basin_exit": "Unexpected planned basin exit; inspect routing.",
         }
         sections: list[str] = []
@@ -1776,6 +1791,19 @@ class TerrainApp:
                 findings = ["No sampled conflict found. This is not a river-flow certification."]
             findings.append(
                 f"Retained contributing area: {record.retained_contributing_area_km2:,.1f} km².")
+            findings.append(
+                f"Footprint samples: {record.collected_wet_cell_count} water + "
+                f"{record.collected_dry_cell_count} land feed the outlet; "
+                f"{record.retained_cell_count} retained.")
+            if record.outlet_ground_minus_water_m is not None:
+                assert record.outlet_elevation_m is not None
+                delta = record.outlet_ground_minus_water_m
+                at_level = not ({"outlet_above_water", "outlet_below_water"} & set(record.issues))
+                comparison = ("within 0.01 m of water" if at_level else
+                              f"{abs(delta):,.2f} m {'above' if delta > 0 else 'below'} water")
+                findings.append(f"Outlet ground: {record.outlet_elevation_m:,.2f} m "
+                                f"({comparison}).")
+                findings.append("The water level is imposed; a stable spill level is not modeled.")
             if record.outlet_connection == "connected":
                 findings.append(f"Connected outlet: {record.outlet_contributing_area_km2:,.1f} km² "
                                 "of contributing area reaches the downstream boundary.")
@@ -1854,17 +1882,30 @@ class TerrainApp:
                     width=1.5,
                     joinstyle="round",
                 )
-        if self._terrain is not None and self._show_drainage.get():
-            with render_basin_overlay(self._terrain, (display_width, display_height)) as basins:
-                self._basin_photo = ImageTk.PhotoImage(basins)
-            self.preview.create_image(left, top, image=self._basin_photo, anchor="nw")
-            with render_drainage_overlay(self._terrain, (display_width, display_height)) as overlay:
-                self._drainage_photo = ImageTk.PhotoImage(overlay)
-            self.preview.create_image(left, top, image=self._drainage_photo, anchor="nw")
+        if self._terrain is not None and (self._show_drainage.get() or self._show_catchments.get()):
+            size = (display_width, display_height)
+            legends: list[str] = []
+            with Image.new("RGBA", size) as review:
+                if self._show_drainage.get():
+                    with render_basin_overlay(self._terrain, size) as basins:
+                        review.alpha_composite(basins)
+                    legends.append("Lines: blue planned / red uphill. Purple: depressions. "
+                                   "Yellow: spill candidates.")
+                if self._show_catchments.get():
+                    with render_basin_catchment_overlay(self._terrain, size) as catchments:
+                        review.alpha_composite(catchments)
+                    legends.append("Basin fills: cyan water / green land feed the outlet; "
+                                   "amber stays retained.")
+                renderer = (render_drainage_overlay if self._show_drainage.get()
+                            else render_basin_outflow_overlay)
+                with renderer(self._terrain, size) as paths:
+                    review.alpha_composite(paths)
+                self._review_photo = ImageTk.PhotoImage(review)
+            self.preview.create_image(left, top, image=self._review_photo, anchor="nw")
+            legends.append("Teal lines: connected lake outlets. Sampled review only.")
             self.preview.create_text(
                 left + 8, top + 8, anchor="nw", fill="white",
-                text=("Blue: planned channels. Red: uphill. Purple: basins. "
-                      "Yellow: spill candidates. Review only."),
+                text="\n".join(legends), width=max(1, display_width - 16),
             )
         for constraint in self._constraints:
             self._draw_constraint(constraint)

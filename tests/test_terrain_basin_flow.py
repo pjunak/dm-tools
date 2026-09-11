@@ -8,15 +8,17 @@ import pytest
 from shapely.geometry import Polygon
 
 from dmtools.terrain.adapters import load_terrain_project
+from dmtools.terrain.adapters.render import render_basin_catchment_overlay
 from dmtools.terrain.domain import TerrainBasin, TerrainStructure
 from dmtools.terrain.pipeline import generate_terrain
-from dmtools.terrain.pipeline.basin_flow import resolve_basin_outflow
+from dmtools.terrain.pipeline.basin_flow import BasinCatchmentClass, resolve_basin_outflow
 from dmtools.terrain.pipeline.hydrology import drainage_incision
 from dmtools.terrain.pipeline.water import basin_intent_ids, prepare_basins
 
 
 @pytest.mark.parametrize("case", ["connected", "closed", "dry", "uphill", "shoreline",
-                                  "split", "pocket", "reentry", "contact_only"])
+                                  "split", "pocket", "reentry", "contact_only",
+                                  "head_deep", "head_shallow", "submerged_outlet"])
 def test_basin_connection_and_conservation(case: str) -> None:
     axis = np.arange(13, dtype=np.float64)
     x, y = np.meshgrid(axis, axis)
@@ -48,17 +50,24 @@ def test_basin_connection_and_conservation(case: str) -> None:
         ground[6, 5] = 11
     elif case == "reentry":
         receivers[6, 8] = 85
-    elif case == "contact_only":
+    elif case in ("contact_only", "head_deep", "head_shallow"):
         ground[ids > 0] = 20
-        ground[6, 7] = 2
+        ground[6, 7] = 9.9 if case == "head_shallow" else 2
+        if case != "contact_only":
+            # Against water head 10, the axial dry pit is steeper than the diagonal lake.
+            # Using the deep bed instead would incorrectly collect this donor.
+            ground[5, 6] = 11
+            ground[5, 5] = 10.1
     original = ground.copy()
     routing = drainage_incision(ground, land, np.ones_like(ground), x_spacing_km=1,
         y_spacing_km=1, maximum_elevation_m=100, variability=.5, retention_terminal_mask=ids > 0)
     old_area = routing.accumulation_km2.copy()
+    outlet_height = 2. if case == "submerged_outlet" else 10. if lake.outlet is not None else None
     review, flow = resolve_basin_outflow(basins, ids, ground, routing, land, receivers,
-        flags, axis, axis, polygon, (lake,), (10. if lake.outlet is not None else None,))
+        flags, axis, axis, polygon, (lake,), (outlet_height,))
     record = review.basins[0]
-    connected = case in ("connected", "pocket", "contact_only")
+    connected = case in ("connected", "pocket", "contact_only", "head_deep", "head_shallow",
+                         "submerged_outlet")
     assert record.outlet_connection == ("connected" if connected else
                                         "closed" if case in ("closed", "dry") else "blocked")
     assert flow.summary.source_area_km2 == 121
@@ -68,6 +77,22 @@ def test_basin_connection_and_conservation(case: str) -> None:
         record.retained_contributing_area_km2 + record.outlet_contributing_area_km2)
     assert np.all(flow.source_km2[ids == 0] == 0)
     assert np.all(flow.throughput_km2[ids > 0] == 0)
+    classes = flow.catchment_class
+    assert classes.dtype == np.uint8
+    np.testing.assert_array_equal(classes != BasinCatchmentClass.OUTSIDE, ids > 0)
+    np.testing.assert_array_equal(flow.retained_km2 + flow.source_km2,
+                                  np.where(ids > 0, old_area, 0.))
+    np.testing.assert_array_equal(flow.retained_km2 > 0, classes == BasinCatchmentClass.RETAINED)
+    np.testing.assert_array_equal(flow.source_km2 > 0,
+                                  classes >= BasinCatchmentClass.COLLECTED_WATER)
+    assert flow.retained_km2.sum() == pytest.approx(record.retained_contributing_area_km2)
+    assert record.collected_wet_cell_count == np.count_nonzero(
+        classes == BasinCatchmentClass.COLLECTED_WATER)
+    assert record.collected_dry_cell_count == np.count_nonzero(
+        classes == BasinCatchmentClass.COLLECTED_DRY)
+    assert record.retained_cell_count == np.count_nonzero(classes == BasinCatchmentClass.RETAINED)
+    assert record.footprint_cell_count == (record.collected_wet_cell_count
+        + record.collected_dry_cell_count + record.retained_cell_count)
     if connected:
         amount = record.outlet_contributing_area_km2
         assert amount > 0
@@ -81,6 +106,15 @@ def test_basin_connection_and_conservation(case: str) -> None:
         assert record.retained_contributing_area_km2 > 0
         assert flow.source_km2[6, 5] == 0
         assert "outlet_partial_catchment" in record.issues
+    if case in ("head_deep", "head_shallow"):
+        assert classes[5, 6] == classes[5, 5] == BasinCatchmentClass.RETAINED
+        assert classes[6, 7] == BasinCatchmentClass.COLLECTED_WATER
+    if case == "contact_only":
+        assert classes[3, 3] == BasinCatchmentClass.RETAINED
+        assert classes[6, 6] == BasinCatchmentClass.COLLECTED_DRY
+    if case == "submerged_outlet":
+        assert record.outlet_ground_minus_water_m == -8
+        assert "outlet_below_water" in record.issues
     if case == "shoreline":
         assert "outlet_shoreline_uncontained" in record.issues
     if case == "connected":
@@ -89,8 +123,10 @@ def test_basin_connection_and_conservation(case: str) -> None:
     np.testing.assert_array_equal(ground, original)
     np.testing.assert_array_equal(routing.accumulation_km2, old_area)
     repeated, again = resolve_basin_outflow(basins, ids, ground, routing, land, receivers,
-        flags, axis, axis, polygon, (lake,), (10. if lake.outlet is not None else None,))
+        flags, axis, axis, polygon, (lake,), (outlet_height,))
     assert repeated == review
+    np.testing.assert_array_equal(again.catchment_class, flow.catchment_class)
+    np.testing.assert_array_equal(again.retained_km2, flow.retained_km2)
     np.testing.assert_array_equal(again.source_km2, flow.source_km2)
     np.testing.assert_array_equal(again.throughput_km2, flow.throughput_km2)
 
@@ -141,7 +177,20 @@ def test_real_outlet_revalidates_and_preserves_ground_across_resolution_and_clos
     refined = generate_terrain(project.coastline, replace(settings, resolution_px=129),
                                constraints=tuple(reversed(project.constraints)))
     assert terrain.basin_outflow.summary.connected_outlet_count == 1
+    grid = terrain.routing_grid
+    with render_basin_catchment_overlay(terrain, (grid.width, grid.height)) as native:
+        pixels = np.asarray(native)
+        np.testing.assert_array_equal(pixels[..., 3] > 0, terrain.water.routing_intent_ids > 0)
+        assert len(np.unique(pixels.reshape(-1, 4), axis=0)) == 4
+        with render_basin_catchment_overlay(
+            terrain, (3 * (grid.width - 1) + 1, 3 * (grid.height - 1) + 1),
+        ) as enlarged:
+            np.testing.assert_array_equal(np.asarray(enlarged)[::3, ::3], pixels)
     assert terrain.water.review == refined.water.review
+    np.testing.assert_array_equal(terrain.basin_outflow.catchment_class,
+                                  refined.basin_outflow.catchment_class)
+    np.testing.assert_array_equal(terrain.basin_outflow.retained_km2,
+                                  refined.basin_outflow.retained_km2)
     np.testing.assert_array_equal(terrain.basin_outflow.source_km2,
                                   refined.basin_outflow.source_km2)
     np.testing.assert_array_equal(terrain.basin_outflow.throughput_km2,

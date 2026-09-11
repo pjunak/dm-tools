@@ -89,6 +89,25 @@ def test_review_distinguishes_low_boundary_exposed_anchors_and_high_outlet() -> 
     }
 
 
+@pytest.mark.parametrize("level", [1., 10.])
+@pytest.mark.parametrize(("offset", "issue"), [
+    (.02, "outlet_above_water"), (-.02, "outlet_below_water"),
+    (0., None), (.005, None), (-.005, None), (.01, None), (-.01, None), (None, None),
+])
+def test_outlet_ground_difference_is_signed_and_uses_water_tolerance(
+    level: float, offset: float | None, issue: str | None,
+) -> None:
+    height = level + offset if offset is not None else None
+    record = _review(_bowl(), TerrainBasin(POINTS, "lake", level, POINTS[0]),
+                     outlet_height=height).basins[0]
+    if height is None:
+        assert record.outlet_ground_minus_water_m is None
+    else:
+        assert record.outlet_ground_minus_water_m == pytest.approx(height - level)
+    level_issues = {"outlet_above_water", "outlet_below_water"} & set(record.issues)
+    assert level_issues == ({issue} if issue is not None else set())
+
+
 def test_dry_basin_has_no_water_and_retains_planned_flow() -> None:
     record = _review(_bowl(), TerrainBasin(POINTS, "dry_basin")).basins[0]
     assert record.wet_cell_count == 0

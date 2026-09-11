@@ -6,9 +6,10 @@ first vertex** before finishing a draining lake; otherwise it has closed-basin
 intent. Its first corner becomes the explicit outlet marker. Undo removes the
 last area using the existing authoring workflow.
 
-Generate terrain to apply retention and inspect **Basin details**. This reports
-low boundary sections, disconnected pools, exposed height anchors, outlet
-height conflicts, retained contributing area and candidate downstream routes. The public
+Generate terrain to apply retention. Enable **Basin catchments** to locate
+retained areas and the water/land feeding an outlet; teal lines show its connected
+route. **Basin details** reports collected and retained sample counts, contributing
+areas, outlet ground versus water level, shoreline findings and downstream routes. The public
 [water example](../examples/terrain/basin-water.dmterrain.json) contains one lake
 and one dry basin on the synthetic public coastline.
 
@@ -52,7 +53,7 @@ The generation result retains water products and a review on the shared
 sorted by kind, level, outlet and points. They identify this result and can change
 when inputs change; they are distinct from derived depression candidate IDs.
 
-Build v9 includes `water.npz`, sharing the delivered DEM's grid and axes:
+Build v10 includes `water.npz`, sharing the delivered DEM's grid and axes:
 
 | Field | Meaning |
 |---|---|
@@ -66,7 +67,10 @@ canonical grid. All marked terminals have receiver -1.
 hashes and the completion manifest bind all products together. The water review
 contains each ID's authored record, counts/flags, retained contributing area and
 outlet-route evidence, connection state, captured/retained/exported contributing
-area and uncontrolled shoreline counts. No pickle loading is needed.
+area and uncontrolled shoreline counts. `collected_wet_cell_count`,
+`collected_dry_cell_count` and `retained_cell_count` partition each footprint's
+canonical samples. These counts are not contributing areas: a single sample can
+capture a large area from outside the footprint. No pickle loading is needed.
 
 ## Planned retention and contributing area
 
@@ -97,7 +101,15 @@ are candidate topology; they do not override authored retention.
 ## Candidate outlet review
 
 The exact authored outlet is evaluated on the finished field, rounded to
-Float32. Within one grid diagonal, the nearest outward land node supplies a
+Float32. `outlet_ground_minus_water_m` records ground elevation minus the authored
+water level: positive is above water, negative is below, null means no evaluated
+outlet. A difference within 0.01 m is treated as equal for review findings.
+`outlet_above_water` blocks connection; `outlet_below_water` is an informational
+finding and does not block it. Submerged ground does not establish a controlling
+sill or a stable water level. The tool never moves the outlet or changes the
+water level to erase this difference.
+
+Within one grid diagonal, the nearest outward land node supplies a
 candidate attachment; row-major order breaks distance ties. The attachment
 must stay on vector land, leave its own footprint, and avoid other footprints.
 Selection happens before downstream success is known, so an obstruction is not
@@ -159,13 +171,29 @@ paths in teal; ordinary relief and the DEM remain ground/water-surface products.
 
 ## Outflow products and conservation
 
-Build v9 adds `basin-flow.npz`, using the canonical axes in `routing.npz`:
+Build v10 includes `basin-flow.npz`, using the canonical axes in `routing.npz`:
 
-| Float64 array | Meaning |
-|---|---|
-| `source_km2` | Captured MFD area removed from eligible footprint terminals |
-| `throughput_km2` | Additional area carried along connected outlet paths; shared segments sum |
-| `terminal_km2` | Additional area delivered once at each downstream boundary terminal |
+| Array | Type | Meaning |
+|---|---|---|
+| `catchment_class` | UInt8 | 0 outside footprints; 1 retained; 2 collected water; 3 collected dry ground |
+| `retained_km2` | Float64 | Captured MFD area still held at each footprint terminal; zero elsewhere |
+| `source_km2` | Float64 | Captured MFD area removed from eligible footprint terminals |
+| `throughput_km2` | Float64 | Additional area carried along connected outlet paths; shared segments sum |
+| `terminal_km2` | Float64 | Additional area delivered once at each downstream boundary terminal |
+
+Every footprint node has exactly one class. Closed lakes, dry basins and blocked
+outlets retain all nodes. A connected lake collects its reachable wet and dry
+nodes; dry nodes without a descending, vector-contained path to the connected
+water stay retained. Their pits, unresolved flats or rejected boundary-crossing
+links are not automatically repaired or subdivided into invented catchments.
+
+`source_km2 + retained_km2` equals the original captured MFD area at each footprint
+terminal and is zero outside. The `retained_km2` sum matches the retained-area
+summary. The classification is a footprint review, not a delineation of the
+entire upstream watershed. **Basin catchments** uses cyan for collected water,
+green for collected land and amber for retained nodes. Colours use nearest
+canonical nodes and preserve endpoint alignment when resized. The finished-ground
+panel in `drainage.png` shows the same fills; they never recolour the ground DEM.
 
 `throughput_km2` is not total river discharge and must not be summed as a
 catchment area or added to every old terminal balance. Source and terminal
@@ -189,6 +217,8 @@ area drains through the lake; isolated dry pockets remain retained.
 - `exposed_height_anchor`: an absolute height point is at or above lake level
   within the polygon. It may be an intentional island; its height stays.
 - `outlet_above_water`: the exact outlet ground is above the authored level.
+- `outlet_below_water`: the exact outlet ground is below the authored level;
+  informational, with the measured signed difference. Sill stability is unmodeled.
 - `unresolved_footprint`, `no_water_at_level` and `disconnected_water`: the
   canonical grid resolves no area, no wet ground or multiple separate pools.
 - `outlet_shoreline_uncontained`, `outlet_water_disconnected` and
@@ -205,4 +235,4 @@ connections while preserving budgets and authored anchors. See
 [ADR-0036](adr/0036-connect-lake-outflow-with-area-transfer.md).
 
 For measured results and the prioritized next steps, read the
-[implementation rundown](research/2026-09-11-connected-lake-outflow.md).
+[implementation rundown](research/2026-09-11-basin-catchment-review.md).

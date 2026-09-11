@@ -188,6 +188,8 @@ def probe(case: str, resolution: int, seed: int) -> dict[str, Any]:
             ("channel_conflicts", terrain.routing_conflicts.flags),
             ("basin_labels", terrain.drainage.basin_labels),
             ("water_surface", terrain.water.surface_m),
+            ("basin_catchment_class", terrain.basin_outflow.catchment_class),
+            ("basin_retained_area", terrain.basin_outflow.retained_km2),
             ("outflow_sources", terrain.basin_outflow.source_km2),
             ("outflow_throughput", terrain.basin_outflow.throughput_km2),
             ("outflow_terminals", terrain.basin_outflow.terminal_km2),
