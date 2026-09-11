@@ -90,9 +90,10 @@ def _check_internal_paths(terrain: GeneratedTerrain) -> float:
             visited.add(node)
             target = int(receivers[node])
             assert ids[target] == ids[source]
-            assert classes[target] == classes[source] or (
+            assert flow.internal_path_uphill_m.ravel()[source] > .01 or (
+                classes[target] == classes[source] or (
                 classes[source] == BasinCatchmentClass.COLLECTED_DRY
-                and classes[target] == BasinCatchmentClass.COLLECTED_WATER)
+                and classes[target] == BasinCatchmentClass.COLLECTED_WATER))
             assert heads[target] <= heads[node]
             if heads[target] == heads[node]:
                 assert ranks[node] > ranks[target]
@@ -102,10 +103,12 @@ def _check_internal_paths(terrain: GeneratedTerrain) -> float:
             node = target
         if classes[source] >= BasinCatchmentClass.COLLECTED_WATER:
             assert classes[node] == BasinCatchmentClass.COLLECTED_WATER
+            assert flow.internal_path_uphill_m.ravel()[source] <= .01
             if uses_flat:
                 dependent_area += float(flow.source_km2.ravel()[source])
         else:
-            assert classes[node] == BasinCatchmentClass.RETAINED
+            assert (classes[node] == BasinCatchmentClass.RETAINED
+                    or flow.internal_path_uphill_m.ravel()[source] > .01)
     return dependent_area
 
 
@@ -325,7 +328,7 @@ def test_two_outlets_share_a_trunk_without_double_counting_or_order_dependence()
     np.testing.assert_array_equal(result.throughput_km2, flow.throughput_km2)
 
 
-@pytest.mark.parametrize("example", ["connected-outlet", "flat-outlet"])
+@pytest.mark.parametrize("example", ["connected-outlet", "flat-outlet", "dry-collection-barrier"])
 def test_real_outlet_revalidates_and_preserves_ground_across_resolution_and_closure(
     example: str,
 ) -> None:
@@ -525,3 +528,65 @@ def test_unresolved_wet_network_retains_captured_area(monkeypatch: pytest.Monkey
     assert "wet_link_sampling_unresolved" in lake.issues
     assert not terrain.basin_outflow.source_km2.any()
     assert lake.retained_contributing_area_km2 == lake.captured_contributing_area_km2
+
+
+def test_real_dry_barrier_reroutes_without_changing_the_field_or_capture() -> None:
+    project = load_terrain_project(Path(__file__).parents[1] /
+                                  "examples/terrain/dry-collection-barrier.dmterrain.json").project
+    settings = replace(project.settings, resolution_px=65)
+    def omit_new_core(
+        vertices: tuple[tuple[float, float], ...], spacing: float,
+        features: tuple[SamplingFeature, ...] = (),
+    ) -> GroundSamplingPlan:
+        return plan_ground_profile(vertices, spacing,
+                                   tuple(f for f in features if f.influence_radius_km != .1))
+    with patch("dmtools.terrain.pipeline.dry_links.plan_ground_profile", omit_new_core):
+        baseline = generate_terrain(project.coastline, settings, constraints=project.constraints)
+    terrain = generate_terrain(project.coastline, settings, constraints=project.constraints)
+    lake = next(b for b in terrain.water.review.basins if b.source.kind == "lake")
+    assert lake.dry_links is not None and lake.dry_links.status == "sampled"
+    source, target = 18589, 18845
+    link = next(link for link in lake.dry_links.links
+                if {link.source_flat_index, link.target_flat_index} == {source, target})
+    assert link.blocked and link.maximum_uphill_excursion_m > 130
+    assert link.feature_sample_count > 0 and link.feature_spacing_limit_km == .025
+    assert baseline.basin_outflow.internal_receivers.ravel()[source] == target
+    assert terrain.basin_outflow.internal_receivers.ravel()[source] == 18846
+    assert (terrain.basin_outflow.catchment_class.ravel()[source]
+            == BasinCatchmentClass.COLLECTED_DRY)
+    np.testing.assert_array_equal(baseline.elevation_m, terrain.elevation_m)
+    np.testing.assert_array_equal(baseline.routing_final_elevation_m,
+                                  terrain.routing_final_elevation_m)
+    np.testing.assert_array_equal(baseline.routing.accumulation_km2,
+                                  terrain.routing.accumulation_km2)
+    np.testing.assert_array_equal(baseline.routing.incision_m, terrain.routing.incision_m)
+    _check_internal_paths(terrain)
+    assert terrain.basin_outflow.summary.area_balance_error_km2 == pytest.approx(0, abs=1e-8)
+    with render_basin_outflow_overlay(terrain, (1200, 800)) as overlay:
+        pixels = np.asarray(overlay)
+        assert np.count_nonzero(np.all(pixels == (255, 95, 65, 255), axis=-1)) > 0
+
+
+def test_dry_budget_keeps_verified_water_and_retains_every_dry_donor(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = load_terrain_project(Path(__file__).parents[1] /
+                                  "examples/terrain/flat-outlet.dmterrain.json").project
+    monkeypatch.setattr("dmtools.terrain.pipeline.dry_links.MAX_DRY_LINK_SAMPLES", 1)
+    terrain = generate_terrain(project.coastline, replace(project.settings, resolution_px=65),
+                               constraints=project.constraints)
+    lake = next(b for b in terrain.water.review.basins if b.source.kind == "lake")
+    assert lake.dry_links is not None and lake.dry_links.status == "budget_exceeded"
+    assert lake.dry_links.links == () and lake.collected_dry_cell_count == 0
+    assert lake.outlet_connection == "connected"
+    assert lake.collected_wet_cell_count == lake.wet_cell_count
+    assert "dry_link_sampling_unresolved" in lake.issues
+    assert lake.retained_cell_count == lake.dry_cell_count
+    assert not terrain.basin_outflow.flat_rank.any()
+    assert np.all(terrain.basin_outflow.internal_receivers == -1)
+    assert not terrain.basin_outflow.internal_path_uphill_m.any()
+    wet = terrain.basin_outflow.catchment_class == BasinCatchmentClass.COLLECTED_WATER
+    expected = np.where(wet, terrain.routing.accumulation_km2, 0)
+    np.testing.assert_array_equal(terrain.basin_outflow.source_km2, expected)
+    assert terrain.basin_outflow.terminal_km2.sum() == pytest.approx(expected.sum())
+    assert terrain.basin_outflow.summary.area_balance_error_km2 == pytest.approx(0, abs=1e-8)

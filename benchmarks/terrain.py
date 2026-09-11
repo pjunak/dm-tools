@@ -32,7 +32,7 @@ from dmtools.terrain.pipeline.quality import measure_terrain_quality
 
 ROOT = Path(__file__).resolve().parents[1]
 CASES = ("example", "square", "archipelago", "authored", "regional", "water", "outlet",
-         "flat", "shoreline", "narrow", "downstream", "internal")
+         "flat", "shoreline", "narrow", "downstream", "internal", "dry")
 
 
 def _ring(x: float, y: float, rx: float, ry: float, count: int) -> tuple[tuple[float, float], ...]:
@@ -54,11 +54,12 @@ def fixture(
     settings = TerrainSettings(resolution_px=resolution, seed=seed)
     constraints: tuple[TerrainConstraint, ...] = ()
     if case in ("example", "regional", "water", "outlet", "flat", "shoreline", "narrow",
-                "downstream", "internal"):
+                "downstream", "internal", "dry"):
         name = {"example": "example", "regional": "landform-regions",
                 "water": "basin-water", "outlet": "connected-outlet", "flat": "flat-outlet",
                 "shoreline": "shoreline-gap", "narrow": "narrow-shoreline-gap",
-                "downstream": "downstream-barrier", "internal": "internal-water-barrier"}[case]
+                "downstream": "downstream-barrier", "internal": "internal-water-barrier",
+                "dry": "dry-collection-barrier"}[case]
         project = load_terrain_project(ROOT / f"examples/terrain/{name}.dmterrain.json").project
         return (
             project.coastline,
@@ -194,6 +195,7 @@ def probe(case: str, resolution: int, seed: int) -> dict[str, Any]:
             ("water_surface", terrain.water.surface_m),
             ("basin_internal_receivers", terrain.basin_outflow.internal_receivers),
             ("basin_flat_rank", terrain.basin_outflow.flat_rank),
+            ("basin_internal_path_uphill", terrain.basin_outflow.internal_path_uphill_m),
             ("basin_catchment_class", terrain.basin_outflow.catchment_class),
             ("basin_retained_area", terrain.basin_outflow.retained_km2),
             ("outflow_sources", terrain.basin_outflow.source_km2),

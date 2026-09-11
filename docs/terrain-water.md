@@ -53,7 +53,7 @@ The generation result retains water products and a review on the shared
 sorted by kind, level, outlet and points. They identify this result and can change
 when inputs change; they are distinct from derived depression candidate IDs.
 
-Build v15 includes `water.npz`, sharing the delivered DEM's grid and axes:
+Build v16 includes `water.npz`, sharing the delivered DEM's grid and axes:
 
 | Field | Meaning |
 |---|---|
@@ -251,7 +251,7 @@ paths in teal; ordinary relief and the DEM remain ground/water-surface products.
 
 ## Finer water evidence
 
-Build v15 stores the additional evidence in `diagnostics.json`, under
+Build v16 stores the additional evidence in `diagnostics.json`, under
 `authored_water`; numeric archives retain their existing layouts.
 `sampling_algorithm_id` identifies `feature-guided-float32-water-checks@2`.
 
@@ -331,7 +331,7 @@ markers. The complete evidence remains in the diagnostic file.
 
 ## Internal water-link evidence
 
-Build v15 adds `wet_links` to each basin diagnostic. It is null for closed/dry
+Build v16 includes `wet_links` to each basin diagnostic. It is null for closed/dry
 basins and when an earlier eligibility check prevented collection review. Null
 means unreviewed, not clear. Only vector-contained pairs whose endpoints are wet
 are candidates, recorded once with ascending canonical flat indices.
@@ -361,14 +361,68 @@ water nodes and requested probes, not pool area, barrier width or water volume.
 Red diamonds mark the high ground, including when alternate paths keep a lake
 connected. The clipped water surface and ground DEM remain unchanged by review.
 
+## Finer dry collection paths
+
+After water reaches the selected contact, review every vector-contained D8 link
+that could descend or cross an exact flat from dry ground. Wet nodes use the
+imposed water surface as head; other nodes use canonical Float32 ground. For a
+link ending at wet water, profile head is `max(ground, water level)`. A submerged
+bed rise therefore does not act as an exposed obstruction. Dry-to-dry profiles
+use ground even if intermediate samples fall below the lake level; this does
+not silently add an unreviewed wet connection.
+
+Unequal-head links are oriented downhill. Equal-head dry links must pass in
+both directions to preserve the symmetric graph used for flat routing. Remove
+both directions when a sampled rise from an earlier low exceeds 0.01 m. Route
+the remaining graph using the existing metric steepest-descent and integer-flat
+rules. Every eligible exit participates, including those ending in closed pits;
+removing a link can change flat ranks and redistribute both collected and retained
+area. Neither a lower closed pit nor an authored obstacle is filled away.
+
+Compose the selected profiles in reverse flow order to measure their complete
+uphill excursion. A low on one link may precede a crest many links later, even
+when each link passes separately. If the combined excursion exceeds 0.01 m,
+retain that donor and its upstream paths. Valid downstream donors can still
+collect. This last gate does not search other complete paths; local alternatives
+are chosen during the earlier link screening. The review is conservative terrain
+evidence, not a storage model or proof of hydraulic impossibility.
+
+Dry links share a separate 262,144-sample budget per eligible lake, including
+repeated endpoints. Baseline and feature refinement plans must all fit before
+any ground evaluation. Samples share batches of at most 4,096. Failed plans
+export no partial evidence or dry receivers and retain every dry donor; already
+verified water can still feed the outlet. Each profile retains the existing
+65,536-sample limit. Increasing delivered resolution does not increase any of
+these budgets or refine canonical routing topology.
+
+`dry_links` in each basin review is null when earlier outlet/water checks stop
+collection. Otherwise it records status, quarter-grid spacing, candidate count,
+requested samples (a lower bound after early budget failure), blocked count and
+`cumulative_uphill_cell_count`. Each sampled link records oriented canonical
+indices, sample/feature counts, finest feature spacing, maximum uphill excursion
+and the low/crest positions supporting it. For equal dry heads, the larger of
+both directions supplies the witness. Positions refer to the Float32-derived
+head profile; submerged values may have been clipped to water level.
+
+`path_barriers` records where a chosen path first exceeds the accumulated-rise
+limit while its downstream suffix still passes. The per-node excursion archive
+below includes upstream inheritance too. **Basin details** explains both stages
+and the budget result. The review draws up to 12 strongest dry-link/path crests
+per basin, at least 16 display pixels apart; every candidate remains in exported
+diagnostics. These markers report sampled evidence, not a complete ridge map.
+The [dry-barrier example](../examples/terrain/dry-collection-barrier.dmterrain.json)
+adds a relative +150 m point with 100 m influence radius. Finer probes expose a
+131.44 m climb and a clear alternative still carries the donor's contribution.
+
 ## Outflow products and conservation
 
-Build v15 includes `basin-flow.npz`, using the canonical axes in `routing.npz`:
+Build v16 includes `basin-flow.npz`, using the canonical axes in `routing.npz`:
 
 | Array | Type | Meaning |
 |---|---|---|
 | `internal_receivers` | Int64 | Canonical row-major flat index of the internal receiver; -1 for terminals or no derived route |
 | `flat_rank` | UInt32 | Positive integer rank at resolved flat donors; zero for other nodes |
+| `internal_path_uphill_m` | Float64 | Maximum rise from an earlier low over each selected complete internal head path; zero for terminals, outside or no derived route |
 | `catchment_class` | UInt8 | 0 outside footprints; 1 retained; 2 collected water; 3 collected dry ground |
 | `retained_km2` | Float64 | Captured MFD area still held at each footprint terminal; zero elsewhere |
 | `source_km2` | Float64 | Captured MFD area removed from eligible footprint terminals |
@@ -382,7 +436,9 @@ stay retained. Internal receivers describe a separate graph, not the original
 MFD capture graph or the external outlet path. Water nodes are terminals in
 this internal graph. Closed/blocked basins have receivers -1 and ranks zero.
 A positive flat rank does not by itself imply collection: its path can still
-end in a closed pit.
+end in a closed pit. A retained donor can also have a receiver path ending at
+water when its `internal_path_uphill_m` exceeds 0.01 m; valid suffix donors can
+still collect. A zero excursion alone does not imply a derived route or collection.
 
 Per-basin diagnostics report `flat_routed_cell_count` for all resolved dry flat
 donors and `collected_flat_cell_count` for those reaching water. These count
@@ -438,6 +494,12 @@ routing alongside retained pits.
 - `outlet_shoreline_uncontained`, `outlet_water_disconnected` and
   `outlet_route_blocked`: connection is blocked by extra shoreline openings,
   water separated by the footprint or sampled high ground, or downstream findings.
+- `dry_link_barrier`: fine head rises remove candidate dry links; clear
+  alternatives may still drain their donors.
+- `dry_link_sampling_unresolved`: all dry area stays retained after a whole-network
+  budget failure, while already verified water can still drain.
+- `dry_path_uphill`: some chosen dry paths exceed the cumulative 0.01 m rise
+  limit even though every selected link passes separately.
 - `wet_link_barrier`: above-water ground removes one or more internal water
   links; alternate clear paths may still connect all water to the contact.
 - `wet_link_sampling_unresolved`: the internal network exceeds its sample budget;
@@ -448,10 +510,10 @@ routing alongside retained pits.
 The water surface remains an authored, clipped level preview. No runoff,
 water budget, automatic spill, breach, sediment or nested depression hierarchy
 is simulated. Next, extend finer evidence beyond the targeted authored cores,
-check dry collection links, and define controlling-sill
+measure regional/procedural extrema and context tails, and define controlling-sill
 and storage assumptions before explicit lake chains. Full constrained
 breach/reroute proposals must preserve budgets and authored anchors. See
-[ADR-0042](adr/0042-review-internal-water-links.md).
+[ADR-0043](adr/0043-review-dry-collection-paths.md).
 
 For measured results and the prioritized next steps, read the
-[implementation rundown](research/2026-09-11-internal-water-links.md).
+[implementation rundown](research/2026-09-11-dry-collection-paths.md).

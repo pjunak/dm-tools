@@ -7,6 +7,8 @@ implemented with tests. Notes are listed newest first and package-support claims
 may become stale; use the
 [current development strategy](../strategy/README.md) for the active order.
 
+- [Dry collection paths - 2026-09-11](2026-09-11-dry-collection-paths.md)
+  records dry barriers, alternate routes, cumulative head checks and measured cost.
 - [Internal water links - 2026-09-11](2026-09-11-internal-water-links.md)
   records finer pool separation, alternate paths, batching and preserved ground.
 - [Complete downstream outlet profiles - 2026-09-11](2026-09-11-downstream-outlet-profiles.md)

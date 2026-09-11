@@ -59,3 +59,10 @@ adds a relative +1,500 m point with a 100 m influence radius inside the lake's
 narrow wet channel. Canonical wet nodes remain one component, but finer checks
 remove its single bridging link. All lake area stays retained; the selected
 contact is unchanged and a red diamond marks the separating ground.
+
+The [dry-collection barrier example](terrain/dry-collection-barrier.dmterrain.json)
+adds a relative +150 m point with 100 m influence radius on a dry descent inside
+the lake footprint. Feature-guided profiles expose a 131.44 m climb missed when
+only that point's refinement is omitted. The donor takes a clear neighbouring
+route and still contributes to the outlet. Both reviews use identical terrain
+and captured MFD area; the point itself remains authored ground.

@@ -366,7 +366,11 @@ Internal water links now receive batched checks too. Above-water ground removes
 a link, while clear alternate paths may still connect the pool. If water separates
 from the selected contact or the lake's total sample budget is exceeded, the
 whole outlet stays blocked. Details explains the reachable water count and red
-barrier markers. Dry collection links still use canonical ground endpoints.
+barrier markers. Dry collection links now receive finer checks before routing;
+clear alternate descents and flats remain available. Complete chosen paths also
+check accumulated rises. A dry-network sampling limit retains all dry donors
+while verified water still drains. Details explains the result; red markers
+show the strongest dry climbs and build diagnostics retain every candidate.
 Lake levels remain imposed previews.
 See the [water guide](../../../docs/terrain-water.md), public
 [closed-water example](../../../examples/terrain/basin-water.dmterrain.json) and
@@ -376,3 +380,6 @@ exercises drainable plateau ground and retained pockets together.
 The [shoreline-gap example](../../../examples/terrain/shoreline-gap.dmterrain.json)
 shows a narrow authored boundary opening that blocks an otherwise clear route.
 Supported formats are listed in the [schema index](../../../schemas/README.md).
+
+The [dry-collection barrier example](../../../examples/terrain/dry-collection-barrier.dmterrain.json)
+shows a narrow obstruction between dry nodes and a clear neighbouring route.

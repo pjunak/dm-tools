@@ -57,7 +57,7 @@ def test_headless_build_preserves_dem_and_has_repeatable_verified_products(
     build_module.build_terrain_project(project_path, second)
     document: dict[str, Any] = json.loads((first / "manifest.json").read_text())
     schema_dir = EXAMPLES.parents[1] / "schemas" / "terrain"
-    assert document["schema_version"] == 15
+    assert document["schema_version"] == 16
     assert document["inputs"]["project_schema_version"] == 5
     assert document["algorithms"]["seed_policy"] == SEED_POLICY_ID
     resolved_seed = stage_seed(loaded.project.settings.seed, RELIEF_STAGE_ID)
@@ -75,7 +75,7 @@ def test_headless_build_preserves_dem_and_has_repeatable_verified_products(
     )
     schema = next(
         item for item in schemas
-        if item["$id"] == "urn:dmtools:schema:terrain-build:15"
+        if item["$id"] == "urn:dmtools:schema:terrain-build:16"
     )
     validate(document, schema, cls=Draft202012Validator, registry=registry)
     invalid = {**document, "coordinates": {**document["coordinates"], "world_crs": "EPSG:4326"}}
@@ -384,10 +384,14 @@ def test_connected_outlet_build_exports_conserved_source_and_terminal_area(
         assert flow["source_km2"].dtype == np.float64
         assert np.count_nonzero(flow["terminal_km2"]) == 1
         assert np.count_nonzero(flow["throughput_km2"]) > 2
-        assert set(flow.files) == {"internal_receivers", "flat_rank", "catchment_class",
+        assert set(flow.files) == {"internal_receivers", "flat_rank", "internal_path_uphill_m",
+                                   "catchment_class",
                                    "retained_km2", "source_km2", "throughput_km2", "terminal_km2"}
         assert flow["internal_receivers"].dtype == np.int64
         assert flow["flat_rank"].dtype == np.uint32
+        assert flow["internal_path_uphill_m"].dtype == np.float64
+        assert np.isfinite(flow["internal_path_uphill_m"]).all()
+        assert np.all(flow["internal_path_uphill_m"][flow["catchment_class"] >= 2] <= .01)
         if example == "flat-outlet":
             assert np.count_nonzero(flow["flat_rank"]) > 100
         assert np.all(flow["internal_receivers"][flow["flat_rank"] > 0] >= 0)
@@ -452,3 +456,15 @@ def test_connected_outlet_build_exports_conserved_source_and_terminal_area(
             for node in (link["first_flat_index"], link["second_flat_index"]):
                 assert routing["basin_intent_ids"].ravel()[node] == lake["intent_id"]
                 assert routing["final_elevation_m"].ravel()[node] < lake["source"]["water_level_m"]
+
+    dry = lake["dry_links"]
+    assert dry["status"] == "sampled"
+    assert dry["candidate_link_count"] == len(dry["links"]) > 1000
+    assert dry["requested_sample_count"] == sum(link["sample_count"] for link in dry["links"])
+    assert dry["blocked_link_count"] == sum(link["blocked"] for link in dry["links"]) > 0
+    with np.load(first / "basin-flow.npz", allow_pickle=False) as flow:
+        selected = flow["internal_receivers"].ravel()
+        for link in dry["links"]:
+            a, b = link["source_flat_index"], link["target_flat_index"]
+            if link["blocked"]:
+                assert selected[a] != b and selected[b] != a

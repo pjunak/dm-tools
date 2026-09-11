@@ -317,7 +317,7 @@ def render_drainage_review(terrain: GeneratedTerrain) -> Image.Image:
         "yellow candidate exits. Teal: connected lake outflow.",
         "Basin fills: cyan water / green land feed a connected outlet; amber stays retained. "
         "Footprint nodes only, not full upstream catchments.",
-        "Orange dots: fine boundary openings. Red diamonds: water barriers or downstream climbs. "
+        "Orange dots: fine boundary openings. Red diamonds: water barriers or ground climbs. "
         "Sampled evidence; stable lake levels are not modeled.",
         f"Shared review grid: {width} x {height}. Natural-basin escape candidates ignore "
         "authored retention. Connected outflows use sampled finished terrain.",
@@ -366,6 +366,22 @@ def render_basin_outflow_overlay(
         route = record.outlet_route
         barriers = ([link.maximum_position_km for link in record.wet_links.links if link.blocked]
                     if record.wet_links is not None else [])
+        if record.dry_links is not None:
+            candidates = [(link.maximum_uphill_excursion_m, link.crest_position_km)
+                          for link in record.dry_links.links if link.blocked]
+            candidates.extend((path.maximum_uphill_excursion_m, path.crest_position_km)
+                              for path in record.dry_links.path_barriers)
+            selected: list[tuple[float, float]] = []
+            # Thousands of rejected candidates can exist; show the strongest
+            # spatially separated witnesses and retain every one in diagnostics.
+            for _rise, position in sorted(candidates, key=lambda item: -item[0]):
+                px, py = pixel(position)
+                if any((px-x)**2 + (py-y)**2 < 16**2 for x, y in selected):
+                    continue
+                selected.append((px, py))
+                barriers.append(position)
+                if len(selected) == 12:
+                    break
         if route is not None and "outlet_connection_above_water" in route.issues:
             assert route.connection_profile is not None
             assert route.connection_profile.maximum_position_km is not None

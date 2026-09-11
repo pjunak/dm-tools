@@ -21,7 +21,7 @@ the workbench. No input file or generator setting is changed.
 | `x-km.npy`, `y-km.npy` | Authoritative Float64 coordinate vectors in kilometres |
 | `inputs.json` | Effective input snapshot including dissolved geometry, settings, constraints and authoring state |
 | `cartographic.png`, `scientific.png` | The two existing display styles derived from this DEM |
-| `basin-flow.npz` | Internal basin receivers/flat ranks, collected/retained nodes and contributing-area transfer |
+| `basin-flow.npz` | Internal basin receivers/flat ranks/path climbs, collected/retained nodes and contributing-area transfer |
 | `water.npz` | Authored lake surface, depth and footprint IDs on the delivered grid |
 | `routing.npz` | Canonical planning and final-field elevations, mask, coordinates, receivers, contributing area, channels, heads, orders, outlets, incision and its effective limit |
 | `drainage.png` | Four-panel planning, uphill-channel, conflict-context and basin/spill review |
@@ -98,7 +98,7 @@ apply the archive's `land_mask`, not an elevation threshold.
 
 `receivers` contains row-major flat D8 indices, with -1 for terminals and sea.
 `outlet_mask` identifies terminal land nodes on the filled routing graph.
-Build v15 includes `retention_terminal_mask`, identifying absorbing authored basin
+Build v16 includes `retention_terminal_mask`, identifying absorbing authored basin
 nodes among those terminals. Their D8 receiver is -1 and MFD area stays there;
 other nodes can deliver incoming area to them. Eligible lake outlets transfer
 captured area afterward in the separate `basin-flow.npz` product; this avoids
@@ -136,7 +136,7 @@ project, SVG and installed Python package files are fingerprinted; runtime and
 dependency versions are recorded. No network service is needed to build.
 
 Consumers must validate the manifest and verify product hashes. Register the
-[current build schema](../schemas/terrain/build-v15.schema.json) and
+[current build schema](../schemas/terrain/build-v16.schema.json) and
 [current project schema](../schemas/terrain/project-v5.schema.json) locally by
 `$id` for offline validation. Older formats are unsupported. The
 [seed contract](terrain-seeds.md) describes the single named-stage algorithm.
@@ -183,7 +183,7 @@ They do not assign lake levels, classify authored dry basins or modify terrain.
 
 ## Authored water products
 
-Build v15 includes `water.npz` with delivered-grid Float32 water surfaces/depths and
+Build v16 includes `water.npz` with delivered-grid Float32 water surfaces/depths and
 UInt32 footprint IDs. `routing.npz` adds canonical `basin_intent_ids`;
 `diagnostics.json` records `authored_water` and `water_sha256`. Ground elevations
 remain in the DEM and GeoTIFF. Cartographic relief shows wet lake samples, while
@@ -191,9 +191,10 @@ scientific elevation shows the ground beneath them. See the
 [water contract](terrain-water.md) for retention rules and unresolved flow conflicts.
 
 
-Build v15 requires `basin-flow.npz` on the canonical routing grid and records
+Build v16 requires `basin-flow.npz` on the canonical routing grid and records
 `basin_outflow` plus `basin_flow_sha256` in diagnostics. It includes Int64
-`internal_receivers` and UInt32 `flat_rank` alongside `catchment_class` and the
+`internal_receivers`, UInt32 `flat_rank` and Float64 `internal_path_uphill_m`
+alongside `catchment_class` and the
 retained, source, throughput and terminal area arrays. Diagnostics partition
 collected/retained samples, count resolved flat donors and report the signed
 outlet-ground-minus-water difference. The finished-ground
@@ -202,18 +203,29 @@ additional delivery from connected outlets, not total river flow.
 See [the water contract](terrain-water.md#outflow-products-and-conservation)
 for field definitions and the conservation equation.
 
-Build v15 includes shoreline, short water/outlet-attachment and complete
+Build v16 includes shoreline, short water/outlet-attachment and complete
 inspected downstream profiles in `diagnostics.json`. Each records metric positions,
 Float32 heights, baseline spacing, added feature-sample count, smallest local
 refinement spacing and completeness. Downstream evidence maps canonical vertices
 into its profile, separates terminal reach from ground availability and reports
 the largest climb from an earlier low. Low-boundary indices and crest positions
-support review markers. Numeric archive layouts remain unchanged. See the
+support review markers. See the
 [finer water evidence contract](terrain-water.md#finer-water-evidence).
 
-Build v15 adds internal `wet_links` review to each basin diagnostic. Per-link
+Build v16 includes internal `wet_links` review to each basin diagnostic. Per-link
 maxima, locations, sample counts and refinement limits show which contained
 water links passed or were removed. The network records the number reaching the
 selected contact and whether its shared sample budget was resolved. Earlier
 ineligible basins have null evidence; excessive networks have no accepted prefix.
 See the [internal water evidence](terrain-water.md#internal-water-link-evidence).
+
+Build v16 adds `dry_links` evidence and Float64 `internal_path_uphill_m` in
+`basin-flow.npz`. Candidate dry descents and exact flats receive bounded finer
+profiles before selection. Complete selected paths must also pass the cumulative
+0.01 m head-rise gate before collecting area. A dry-network budget failure retains
+all dry area while verified water can still drain. Read the
+[water contract](terrain-water.md#finer-dry-collection-paths) for orientation,
+water-head, witness, alternative-path and retained-suffix semantics. Current
+review identities are `authored-basin-water-review@10` and
+`captured-mfd-reviewed-d8-outlets@8`; project v5 and the terrain generator are
+unchanged. The obsolete build v15 schema is removed.

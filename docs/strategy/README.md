@@ -101,7 +101,12 @@ Internal water links now receive bounded batched checks, preserving the selected
 contact and clear alternate wet paths. Separated pools retain their captured area
 ([ADR-0042](../adr/0042-review-internal-water-links.md)).
 
-1. Complete finer dry-collection links and broader sampling convergence;
+Dry collection now checks every candidate descent/flat and complete chosen
+paths; sampled barriers permit clear local alternatives and unresolved dry area
+stays retained ([ADR-0043](../adr/0043-review-dry-collection-paths.md)).
+
+1. Measure broader sampling convergence, including procedural relief, regional
+   transitions and feature context tails. Profile the enlarged dry network and
    define controlling-sill and storage assumptions. Then support
    explicit lake chains with compatible levels and acyclic dependencies.
 2. Compare retention, constrained breach and reroute proposals using full paths,

@@ -10,10 +10,10 @@ from shapely import covers, linestrings
 from shapely.geometry import MultiPolygon, Polygon
 
 from dmtools.terrain.domain import TerrainConstraint
+from dmtools.terrain.pipeline.dry_links import HEAD_TOLERANCE_M, DryLinkReview, route_dry_links
 from dmtools.terrain.pipeline.flat_routing import (
     FLAT_ROUTING_ALGORITHM_ID,
     FlatRouting,
-    route_flats,
 )
 from dmtools.terrain.pipeline.hydrology import D8_NEIGHBOURS, DrainageIncision
 from dmtools.terrain.pipeline.outlets import review_outlet_routes
@@ -56,6 +56,7 @@ class BasinOutflowSummary:
 class BasinOutflow:
     internal_receivers: NDArray[np.int64]
     flat_rank: NDArray[np.uint32]
+    internal_path_uphill_m: NDArray[np.float64]
     catchment_class: NDArray[np.uint8]
     retained_km2: NDArray[np.float64]
     source_km2: NDArray[np.float64]
@@ -103,6 +104,8 @@ class _BasinCollection:
     connected: NDArray[np.bool_]
     routing: FlatRouting | None
     wet_links: WetLinkReview
+    dry_links: DryLinkReview | None
+    path_uphill_m: NDArray[np.float64]
 
 
 def _collect_basin(
@@ -116,17 +119,19 @@ def _collect_basin(
     wet_links, connected = review_wet_links(nodes, neighbours, local_wet, contact,
         elevation_m, x_km, y_km, basin.source.water_level_m, sample_ground, features)
     if wet_links.status != "sampled" or np.any(local_wet & ~connected):
-        return _BasinCollection(nodes, connected, None, wet_links)
+        return _BasinCollection(nodes, connected, None, wet_links, None,
+                                np.zeros(nodes.size, dtype=np.float64))
     head = np.where(local_wet, basin.source.water_level_m, elevation_m.ravel()[nodes])
-    routing = route_flats(head, neighbours, local_wet,
-        x_spacing_km=float(x_km[1] - x_km[0]), y_spacing_km=float(y_km[1] - y_km[0]))
+    dry = route_dry_links(nodes, neighbours, local_wet, elevation_m, x_km, y_km,
+                          basin.source.water_level_m, sample_ground, features)
+    routing = dry.routing
     # Real drops sort by height; equal-head steps sort by their decreasing integer rank.
     order = np.lexsort((nodes, routing.flat_rank, head))
     for node in order:
         target = int(routing.receivers[node])
         if target >= 0:
-            connected[node] = connected[target]
-    return _BasinCollection(nodes, connected, routing, wet_links)
+            connected[node] = connected[target] and dry.path_uphill_m[node] <= HEAD_TOLERANCE_M
+    return _BasinCollection(nodes, connected, routing, wet_links, dry.review, dry.path_uphill_m)
 
 
 def resolve_basin_outflow(
@@ -157,6 +162,7 @@ def resolve_basin_outflow(
                         routing.accumulation_km2, 0.)
     internal_receivers = np.full(elevation_m.shape, -1, dtype=np.int64)
     flat_rank = np.zeros(elevation_m.shape, dtype=np.uint32)
+    internal_path_uphill = np.zeros_like(elevation_m)
     source = np.zeros_like(elevation_m)
     throughput = np.zeros_like(elevation_m)
     terminal = np.zeros_like(elevation_m)
@@ -193,7 +199,16 @@ def resolve_basin_outflow(
             issues.append("wet_link_sampling_unresolved")
         elif links.blocked_link_count:
             issues.append("wet_link_barrier")
-        records[index] = replace(records[index], wet_links=links, issues=tuple(issues))
+        dry = collection.dry_links
+        if dry is not None:
+            if dry.status != "sampled":
+                issues.append("dry_link_sampling_unresolved")
+            elif dry.blocked_link_count:
+                issues.append("dry_link_barrier")
+            if dry.cumulative_uphill_cell_count:
+                issues.append("dry_path_uphill")
+        records[index] = replace(records[index], wet_links=links, dry_links=dry,
+                                  issues=tuple(issues))
         if collection.routing is None:
             if links.status == "sampled":
                 records[index] = replace(records[index],
@@ -203,6 +218,7 @@ def resolve_basin_outflow(
         has_receiver = internal.receivers >= 0
         internal_receivers.ravel()[nodes[has_receiver]] = nodes[internal.receivers[has_receiver]]
         flat_rank.ravel()[nodes] = internal.flat_rank
+        internal_path_uphill.ravel()[nodes] = collection.path_uphill_m
         connected = np.zeros_like(inside)
         connected.ravel()[nodes] = collection.connected
         captured = np.where(connected & routing.retention_terminal_mask,
@@ -233,10 +249,10 @@ def resolve_basin_outflow(
     error = source_area - (retained_area + direct_area + delivered_area)
     if not np.isclose(error, 0., rtol=0., atol=max(1e-8, source_area * 1e-10)):
         raise RuntimeError("Basin outlet transfer did not conserve contributing area.")
-    summary = BasinOutflowSummary("captured-mfd-reviewed-d8-outlets@7",
+    summary = BasinOutflowSummary("captured-mfd-reviewed-d8-outlets@8",
         FLAT_ROUTING_ALGORITHM_ID,
         sum(record.outlet_connection == "connected" for record in records),
         source_area, retained_area, direct_area, delivered_area, error)
     return (replace(review, basins=tuple(records)),
-            BasinOutflow(internal_receivers, flat_rank, catchment_class, retained,
-                         source, throughput, terminal, summary))
+            BasinOutflow(internal_receivers, flat_rank, internal_path_uphill, catchment_class,
+                         retained, source, throughput, terminal, summary))

@@ -1778,13 +1778,16 @@ class TerrainApp:
             "shoreline_sampling_unresolved": (
                 "The fine shoreline check could not cover this whole boundary."),
             "outlet_shoreline_uncontained": "A low shoreline opening lies away from the outlet.",
+            "dry_link_barrier": "Finer ground rises block some dry collection links.",
+            "dry_link_sampling_unresolved": "Dry collection exceeded its sample budget.",
+            "dry_path_uphill": "Small rises combine into larger climbs along some dry paths.",
             "wet_link_barrier": "High ground blocks some internal water links.",
             "wet_link_sampling_unresolved": "Internal water connectivity needs finer review.",
             "outlet_water_disconnected": (
                 "Not all water reaches the selected contact through clear internal links."),
             "outlet_partial_catchment": (
-                "Amber dry samples have no downhill or resolved flat route to connected water. "
-                "Closed pits or links leaving the drawn area can retain them."),
+                "Amber dry samples have no verified path to connected water. "
+                "Pits, ground rises, missing links or incomplete sampling can retain them."),
             "unexpected_planned_basin_exit": "Unexpected planned basin exit; inspect routing.",
         }
         sections: list[str] = []
@@ -1839,6 +1842,21 @@ class TerrainApp:
                     findings.append("Internal water links: sample budget exceeded; at least "
                                     f"{links.requested_sample_count:,} samples required. "
                                     "No partial network was accepted; area stays retained.")
+            dry = record.dry_links
+            if dry is not None:
+                if dry.status == "sampled":
+                    findings.append(f"Dry collection links: {dry.blocked_link_count} blocked of "
+                                    f"{dry.candidate_link_count} "
+                                    f"({dry.requested_sample_count:,} ground samples).")
+                    findings.append(f"Complete dry paths: {dry.cumulative_uphill_cell_count} "
+                                    "samples exceed the 0.01 m accumulated-climb limit.")
+                    if dry.blocked_link_count:
+                        findings.append("The largest dry-link climbs are marked in red. "
+                                        "Clear alternatives can still collect area.")
+                else:
+                    findings.append("Dry collection links: sample budget exceeded; at least "
+                                    f"{dry.requested_sample_count:,} samples required. "
+                                    "All dry area stays retained; verified water still drains.")
             route = record.outlet_route
             for label, profile in (("Boundary", shoreline.profile if shoreline else None),
                                    ("Connection", route.connection_profile if route else None),
@@ -1969,7 +1987,7 @@ class TerrainApp:
                 self._review_photo = ImageTk.PhotoImage(review)
             self.preview.create_image(left, top, image=self._review_photo, anchor="nw")
             legends.append("Teal lines: connected lake outlets. Orange dots: low boundary. "
-                           "Red diamonds: water barriers or downstream climbs. "
+                           "Red diamonds: water barriers or ground climbs. "
                            "Sampled review only.")
             self.preview.create_text(
                 left + 8, top + 8, anchor="nw", fill="white",

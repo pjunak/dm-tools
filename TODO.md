@@ -32,7 +32,7 @@ preview, and PNG export. Those are not repeated below as unfinished work.
   hashes, generator and schema versions, master and stage seeds, effective
   parameters, working extent and units, runtime/dependency versions, warnings,
   and authoritative output hashes.
-  Current version-15 builds record named stage seeds, numeric product hashes,
+  Current version-16 builds record named stage seeds, numeric product hashes,
   and explicit local-only NPY/GeoTIFF coordinates. World placement remains open.
 - [x] **P0 — Export the authoritative Float32 DEM as local-metric GeoTIFF.**
   Implemented point registration, metre units, NaN nodata, embedded masks,
@@ -112,7 +112,7 @@ preview, and PNG export. Those are not repeated below as unfinished work.
   [ADR-0036](docs/adr/0036-connect-lake-outflow-with-area-transfer.md).
 - [x] **P1 — Show collected and retained basin nodes.** The workbench and
   finished-ground review now map collected water, collected dry ground and
-  retained nodes. Build v15 exports the classification and retained contribution
+  retained nodes. Build v16 exports the classification and retained contribution
   at each footprint node; sample counts and area accounting remain distinct.
   Exact outlet ground minus water level is reported, including submerged outlets,
   without treating a clear sampled route as proof of a stable lake level. See
@@ -120,7 +120,7 @@ preview, and PNG export. Those are not repeated below as unfinished work.
 - [x] **P1 — Route internal flats with known exits.** Integer ranks now route
   exact flats without editing the DEM. Every link is vector-contained, real
   downhill alternatives take precedence, and paths to closed pits stay retained.
-  Build v15 exports internal receivers and ranks; details separate resolved flat
+  Build v16 exports internal receivers and ranks; details separate resolved flat
   donors from those reaching lake water. The public flat-outlet fixture covers
   both outcomes. See [ADR-0038](docs/adr/0038-route-basin-flats-with-integer-gradients.md)
   and the [measured rundown](docs/research/2026-09-11-basin-flat-routing.md).
@@ -152,10 +152,23 @@ preview, and PNG export. Those are not repeated below as unfinished work.
   candidate link's maximum, location and sample provenance; the review marks
   barriers. See [ADR-0042](docs/adr/0042-review-internal-water-links.md) and the
   [measured rundown](docs/research/2026-09-11-internal-water-links.md).
-- [ ] **P1 — Check dry collection links between canonical nodes.** Review
-  dry-to-dry and dry-to-water paths, including flat links, before collecting area.
-  Keep water-surface head, regional budgets, alternative-path choice and closed
-  pits explicit. Finer wet connectivity alone does not certify dry collection.
+- [x] **P1 — Check dry collection links between canonical nodes.** Batched
+  profiles now reject dry-to-dry, dry-to-water and exact-flat climbs before
+  routing; clear alternatives and lower closed pits remain eligible. Complete
+  chosen paths also check cumulative rises before collecting area. Build v16
+  exports per-link evidence and path excursions. A public narrow point catches
+  a 131.44 m climb and reroutes without changing ground. See
+  [ADR-0043](docs/adr/0043-review-dry-collection-paths.md) and the
+  [measured rundown](docs/research/2026-09-11-dry-collection-paths.md).
+- [ ] **Research — Compare path-aware alternatives after a cumulative rejection.**
+  Local blocked links already admit other descents and flat exits. A composed
+  path exceeding tolerance retains that donor and its upstream paths; it does
+  not search different downstream choices. Compare bounded state-aware methods
+  without favouring lake exits over closed pits or perturbing the DEM.
+- [ ] **P1 — Reduce repeated network profile planning and evidence overhead.**
+  Measure shared endpoint/interior evaluations, indexed feature candidates and
+  compact diagnostics before optimizing. Preserve Float32 identity, all required
+  probes, complete budget decisions and reviewable failed links.
 - [ ] **P1 — Measure broader feature and project-scale sampling limits.** Add
   regional transitions, procedural extrema and overlapping/context-tail cases;
   compare local extrema and decisions across refinement levels. Current core

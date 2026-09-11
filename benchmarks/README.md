@@ -32,6 +32,7 @@ while measuring them, and avoid concurrent tests or other heavy workloads.
 | `narrow` | 200 m boundary feature needing local refinement |
 | `downstream` | 100 m downstream height feature blocking a canonically clear route |
 | `internal` | 100 m internal height feature separating a canonically connected lake |
+| `dry` | 100 m dry height feature rejected before selecting a clear alternative |
 
 Select cases and multiple resolutions/seeds explicitly:
 
@@ -64,7 +65,8 @@ time. Deterministic hashes identify elevations, masks and both coordinate axes;
 quality, drainage, planned/final routing agreement and overlapping conflict
 context summaries are also retained.
 Hashes also cover receivers, channels, incision, incision limits, conflict flags
-and the finished field on routing nodes. Sampling now emits its label before the first chunk;
+and the finished field on routing nodes. Internal basin paths, flat ranks, full-path
+uphill excursions and area-transfer arrays are hashed too. Sampling now emits its label before the first chunk;
 older reports charged that first chunk to the preceding routing interval.
 
 Peak resident memory comes from the OS and includes native-library allocations.

@@ -193,3 +193,37 @@ def test_empty_graph_and_invalid_geometry_arrays() -> None:
     neighbours[0, 4] = -1
     with pytest.raises(ValueError, match='symmetric'):
         route_flats(head, neighbours, terminals, x_spacing_km=1., y_spacing_km=1.)
+
+
+@pytest.mark.parametrize("seed", [3, 17, 89])
+def test_sparse_symmetric_links_keep_exact_flats_acyclic(seed: int) -> None:
+    rng = np.random.default_rng(seed)
+    head = rng.integers(0, 3, (15, 15)).astype(np.float64)
+    graph = _graph(head.shape)
+    for node in range(head.size):
+        for d, target in enumerate(graph[node]):
+            if target > node and rng.random() < .45:
+                graph[node, d] = graph[target, 7-d] = -1
+    wet = np.zeros(head.size, dtype=np.bool_)
+    wet[-1] = True
+    result = route_flats(head.ravel(), graph, wet, x_spacing_km=1., y_spacing_km=2.)
+    _roots(result, head)
+    # Every component with a real exit resolves, including exits to closed pits.
+    seen: set[int] = set()
+    for start in range(head.size):
+        if start in seen:
+            continue
+        component = [start]
+        seen.add(start)
+        for node in component:
+            for target in graph[node]:
+                if (target >= 0 and target not in seen
+                        and head.ravel()[target] == head.ravel()[start]):
+                    component.append(int(target))
+                    seen.add(int(target))
+        has_exit = any(wet[n] or any(t >= 0 and head.ravel()[t] < head.ravel()[n]
+                                     for t in graph[n]) for n in component)
+        if has_exit:
+            assert all(wet[n] or result.receivers[n] >= 0 for n in component)
+        else:
+            assert all(result.receivers[n] == -1 for n in component)

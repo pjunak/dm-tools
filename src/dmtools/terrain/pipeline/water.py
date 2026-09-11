@@ -10,12 +10,13 @@ from shapely.geometry import MultiPolygon, Point, Polygon
 
 from dmtools.terrain.domain import ElevationPoint, TerrainBasin, TerrainConstraint
 from dmtools.terrain.pipeline.basins import connected_components
+from dmtools.terrain.pipeline.dry_links import DryLinkReview
 from dmtools.terrain.pipeline.hydrology import D8_NEIGHBOURS, DrainageIncision
 from dmtools.terrain.pipeline.outlets import OutletRouteReview
 from dmtools.terrain.pipeline.water_sampling import WATER_SAMPLING_ALGORITHM_ID, ShorelineReview
 from dmtools.terrain.pipeline.wet_links import WetLinkReview
 
-WATER_ALGORITHM_ID = "authored-basin-water-review@9"
+WATER_ALGORITHM_ID = "authored-basin-water-review@10"
 
 
 @dataclass(frozen=True, slots=True)
@@ -89,6 +90,7 @@ class BasinIntentReview:
     outlet_route: OutletRouteReview | None
     shoreline: ShorelineReview | None
     wet_links: WetLinkReview | None
+    dry_links: DryLinkReview | None
     issues: tuple[str, ...]
 
 
@@ -205,7 +207,7 @@ def review_water(
             flat_routed_cell_count=0, collected_flat_cell_count=0,
             collected_wet_cell_count=0, collected_dry_cell_count=0, retained_cell_count=count,
             uncontrolled_low_boundary_cell_count=low_count, outlet_route=outlet_route,
-            shoreline=shoreline, wet_links=None, issues=tuple(issues),
+            shoreline=shoreline, wet_links=None, dry_links=None, issues=tuple(issues),
         ))
     return WaterReview(WATER_ALGORITHM_ID, WATER_SAMPLING_ALGORITHM_ID,
                        width, height, tolerance, tuple(records))
