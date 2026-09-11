@@ -230,7 +230,7 @@ def resolve_basin_outflow(
     error = source_area - (retained_area + direct_area + delivered_area)
     if not np.isclose(error, 0., rtol=0., atol=max(1e-8, source_area * 1e-10)):
         raise RuntimeError("Basin outlet transfer did not conserve contributing area.")
-    summary = BasinOutflowSummary("captured-mfd-reviewed-d8-outlets@5",
+    summary = BasinOutflowSummary("captured-mfd-reviewed-d8-outlets@6",
         FLAT_ROUTING_ALGORITHM_ID,
         sum(record.outlet_connection == "connected" for record in records),
         source_area, retained_area, direct_area, delivered_area, error)

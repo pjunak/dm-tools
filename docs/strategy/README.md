@@ -93,7 +93,11 @@ Authored narrow cores and crossings now guide local profile refinement without
 changing ground or canonical topology
 ([ADR-0040](../adr/0040-refine-water-profiles-around-authored-features.md)).
 
-1. Complete internal/downstream path evidence and broader sampling convergence;
+Full external candidate routes now have bounded profiles, canonical vertex
+mapping and cumulative uphill checks
+([ADR-0041](../adr/0041-review-complete-downstream-outlet-profiles.md)).
+
+1. Complete internal wet-link evidence and broader sampling convergence;
    define controlling-sill and storage assumptions. Then support
    explicit lake chains with compatible levels and acyclic dependencies.
 2. Compare retention, constrained breach and reroute proposals using full paths,

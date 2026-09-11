@@ -46,3 +46,10 @@ The [narrow-shoreline-gap example](terrain/narrow-shoreline-gap.dmterrain.json)
 reduces that height point's influence radius to 200 m. Fixed quarter-grid probes
 miss the opening entirely; local feature-guided probes now detect it and retain
 the lake's captured area. It uses the same public coast and a 750 m imposed level.
+
+The [downstream-barrier example](terrain/downstream-barrier.dmterrain.json) adds
+an unattached relative height point (+50 m, 100 m influence radius) to the
+connected outlet's external valley. Canonical nodes still descend, but the full
+feature-guided profile finds a 43.85 m climb from an earlier low. Transfer stays
+blocked and a red diamond locates the crest. The entire path is below the imposed
+lake level; the example tests conservative ground review, not hydraulic flow.

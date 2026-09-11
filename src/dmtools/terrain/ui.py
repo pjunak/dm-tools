@@ -1823,7 +1823,9 @@ class TerrainApp:
                                 "the outlet opening.")
             route = record.outlet_route
             for label, profile in (("Boundary", shoreline.profile if shoreline else None),
-                                   ("Connection", route.connection_profile if route else None)):
+                                   ("Connection", route.connection_profile if route else None),
+                                   ("Downstream", route.downstream.profile
+                                    if route and route.downstream else None)):
                 if (profile is not None and profile.status == "sampled"
                         and profile.feature_sample_count and profile.feature_spacing_limit_km):
                     findings.append(f"{label} feature checks: {profile.feature_sample_count} extra "
@@ -1835,6 +1837,19 @@ class TerrainApp:
                     findings.append(f"Highest sampled connection ground: "
                                     f"{profile.maximum_ground_m:,.2f} m; spacing at most "
                                     f"{profile.spacing_limit_km:,.3f} km.")
+                downstream = route.downstream
+                if downstream is not None:
+                    scope = ("to the candidate terminal"
+                             if downstream.reaches_terminal else "prefix only")
+                    if downstream.maximum_uphill_excursion_m is None:
+                        findings.append("Downstream ground check: sample budget exceeded; "
+                                        f"at least {downstream.profile.requested_sample_count:,} "
+                                        f"samples required ({scope}).")
+                    else:
+                        findings.append(f"Downstream ground check: "
+                                        f"{len(downstream.profile.ground_m):,} samples ({scope}); "
+                                        "largest climb from an earlier low "
+                                        f"{downstream.maximum_uphill_excursion_m:,.2f} m.")
                 findings.append(f"Outlet candidate: {route.length_km:,.1f} km reviewed; "
                                 f"{route.uphill_edge_count} uphill steps, "
                                 f"largest rise {route.maximum_rise_m:,.2f} m.")
@@ -1845,6 +1860,11 @@ class TerrainApp:
                         "Ground along the water-to-outlet connection rises above the water level."),
                     "outlet_connection_unresolved": (
                         "The fine outlet-connection check is unresolved."),
+                    "outlet_downstream_uphill": (
+                        "Finer downstream samples climb after a low point; transfer is blocked. "
+                        "Flow through such a pool needs water-level and storage review."),
+                    "outlet_downstream_unresolved": (
+                        "The downstream profile exceeds its sample budget; transfer is blocked."),
                     "outlet_attachment_unresolved": "No nearby outward attachment was resolved.",
                     "outlet_route_cycle": "The candidate route contains a loop.",
                     "outlet_route_invalid_receiver": "The candidate route has an invalid step.",
@@ -1931,7 +1951,8 @@ class TerrainApp:
                 self._review_photo = ImageTk.PhotoImage(review)
             self.preview.create_image(left, top, image=self._review_photo, anchor="nw")
             legends.append("Teal lines: connected lake outlets. Orange dots: low boundary. "
-                           "Red diamonds: connection ground above water. Sampled review only.")
+                           "Red diamonds: outlet barriers or downstream climbs. "
+                           "Sampled review only.")
             self.preview.create_text(
                 left + 8, top + 8, anchor="nw", fill="white",
                 text="\n".join(legends), width=max(1, display_width - 16),

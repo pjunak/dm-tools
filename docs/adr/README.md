@@ -64,3 +64,4 @@ supersedes their legacy compatibility commitments during early development.
 - [ADR-0038: Route basin flats with integer gradients](0038-route-basin-flats-with-integer-gradients.md)
 - [ADR-0039: Sample shorelines and outlet connections](0039-sample-shorelines-and-outlet-connections.md)
 - [ADR-0040: Refine water profiles around authored features](0040-refine-water-profiles-around-authored-features.md)
+- [ADR-0041: Review complete downstream outlet profiles](0041-review-complete-downstream-outlet-profiles.md)

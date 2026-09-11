@@ -32,7 +32,7 @@ from dmtools.terrain.pipeline.quality import measure_terrain_quality
 
 ROOT = Path(__file__).resolve().parents[1]
 CASES = ("example", "square", "archipelago", "authored", "regional", "water", "outlet",
-         "flat", "shoreline", "narrow")
+         "flat", "shoreline", "narrow", "downstream")
 
 
 def _ring(x: float, y: float, rx: float, ry: float, count: int) -> tuple[tuple[float, float], ...]:
@@ -53,10 +53,12 @@ def fixture(
     """Public or synthetic inputs only; no private map or authored file changes."""
     settings = TerrainSettings(resolution_px=resolution, seed=seed)
     constraints: tuple[TerrainConstraint, ...] = ()
-    if case in ("example", "regional", "water", "outlet", "flat", "shoreline", "narrow"):
+    if case in ("example", "regional", "water", "outlet", "flat", "shoreline", "narrow",
+                "downstream"):
         name = {"example": "example", "regional": "landform-regions",
                 "water": "basin-water", "outlet": "connected-outlet", "flat": "flat-outlet",
-                "shoreline": "shoreline-gap", "narrow": "narrow-shoreline-gap"}[case]
+                "shoreline": "shoreline-gap", "narrow": "narrow-shoreline-gap",
+                "downstream": "downstream-barrier"}[case]
         project = load_terrain_project(ROOT / f"examples/terrain/{name}.dmterrain.json").project
         return (
             project.coastline,

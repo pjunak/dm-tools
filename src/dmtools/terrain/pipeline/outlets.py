@@ -10,6 +10,7 @@ import numpy as np
 from numpy.typing import NDArray
 from shapely.geometry import LineString, MultiPolygon, Polygon
 
+from dmtools.terrain.pipeline.outlet_profiles import DownstreamProfile, sample_downstream_profile
 from dmtools.terrain.pipeline.water_sampling import (
     GroundProfile,
     GroundSampler,
@@ -25,6 +26,7 @@ if TYPE_CHECKING:
 class OutletRouteReview:
     status: Literal["sampled_clear", "blocked", "unresolved"]
     connection_profile: GroundProfile | None
+    downstream: DownstreamProfile | None
     path_flat_indices: tuple[int, ...]
     water_contact_flat_index: int | None
     length_km: float
@@ -117,7 +119,7 @@ def review_outlet_routes(
         if not candidates:
             issues.append("outlet_attachment_unresolved")
             results.append(OutletRouteReview(
-                "unresolved", None, (), contact, 0., 0, 0., max(0., outlet_height - level),
+                "unresolved", None, None, (), contact, 0., 0, 0., max(0., outlet_height - level),
                 None, 0, tuple(issues),
             ))
             continue
@@ -191,8 +193,22 @@ def review_outlet_routes(
         # An enclosed SVG hole (or a raster crop alone) has no authored water level.
         if terminal is not None and (flags & 4 or not flags & 2):
             issues.append("outlet_terminal_level_unknown")
+        downstream = None
+        if path:
+            downstream = sample_downstream_profile(
+                tuple(coordinate(node) for node in path),
+                tuple(float(flat_elevation[node]) for node in path), terminal is not None,
+                min(dx, dy) / 4, sample_ground, features)
+            if downstream.profile.status != "sampled":
+                issues.append("outlet_downstream_unresolved")
+            else:
+                assert downstream.maximum_uphill_excursion_m is not None
+                assert downstream.profile.maximum_ground_m is not None
+                max_above = max(max_above, downstream.profile.maximum_ground_m - level)
+                if downstream.maximum_uphill_excursion_m > tolerance:
+                    issues.append("outlet_downstream_uphill")
         status = "blocked" if issues else "sampled_clear"
         results.append(OutletRouteReview(
-            status, connection, tuple(path), contact, length, uphill, max_rise,
+            status, connection, downstream, tuple(path), contact, length, uphill, max_rise,
             max_above, terminal, flags, tuple(issues)))
     return tuple(results)

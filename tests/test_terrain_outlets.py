@@ -17,6 +17,9 @@ from dmtools.terrain.pipeline.water import basin_intent_ids, prepare_basins
     ("offgrid", None),
     ("unresolved", "outlet_attachment_unresolved"),
     ("uphill", "outlet_route_uphill"),
+    ("cumulative", "outlet_downstream_uphill"),
+    ("tolerated", None),
+    ("downstream_budget", "outlet_downstream_unresolved"),
     ("high_outlet", "outlet_above_water"),
     ("no_water", "outlet_without_sampled_water"),
     ("reentry", "outlet_route_enters_basin"),
@@ -28,7 +31,11 @@ from dmtools.terrain.pipeline.water import basin_intent_ids, prepare_basins
     ("vector_hole", "outlet_route_crosses_nonland"),
     ("tiny_basin", "outlet_route_enters_basin"),
 ])
-def test_outlet_route_evidence(case: str, expected: str | None) -> None:
+def test_outlet_route_evidence(
+    case: str, expected: str | None, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    if case == "downstream_budget":
+        monkeypatch.setattr("dmtools.terrain.pipeline.water_sampling.MAX_PROFILE_SAMPLES", 8)
     axis = np.arange(9, dtype=np.float64)
     x, y = np.meshgrid(axis, axis)
     land_geometry = Polygon(((1, 1), (7, 1), (7, 7), (1, 7)))
@@ -59,6 +66,8 @@ def test_outlet_route_evidence(case: str, expected: str | None) -> None:
     outlet_height = 10.
     if case == "uphill":
         ground[4, 6] = 15
+    elif case in ("cumulative", "tolerated"):
+        ground[4, 6] = 8.008 if case == "cumulative" else 8.0045
     elif case == "high_outlet":
         outlet_height = 20
     elif case == "no_water":
@@ -74,8 +83,13 @@ def test_outlet_route_evidence(case: str, expected: str | None) -> None:
     elif case in ("hole_terminal", "raster_terminal"):
         flags[4, 7] = 4 if case == "hole_terminal" else 1
     def sample_ground(xx: NDArray[np.float64], yy: NDArray[np.float64]) -> NDArray[np.float32]:
-        # The analytic connection is submerged except at the explicit outlet point.
+        # Explicit continuous downstream ground agrees with its canonical samples.
         values = np.full(xx.shape, 2., dtype=np.float32)
+        downstream = (xx >= 5) & (yy == 4)
+        values[downstream] = np.interp(xx[downstream], axis[5:8], ground[4, 5:8])
+        if case in ("cumulative", "tolerated"):
+            peak = 8.016 if case == "cumulative" else 8.009
+            values[downstream] = np.interp(xx[downstream], (5., 5.5, 6.5, 7.), (9., 8., peak, 7.))
         assert basins[-1].outlet_km is not None
         ox, oy = basins[-1].outlet_km
         values[(xx == ox) & (yy == oy)] = outlet_height
@@ -102,6 +116,26 @@ def test_outlet_route_evidence(case: str, expected: str | None) -> None:
         assert result.maximum_rise_m == 6
         assert result.maximum_height_above_water_m == 5
         assert result.uphill_edge_count == 1
+    if result.downstream is not None:
+        evidence = result.downstream
+        assert evidence.reaches_terminal == (result.terminal_flat_index is not None)
+        if case == "downstream_budget":
+            assert result.connection_profile is not None
+            assert result.connection_profile.status == "sampled"
+            assert evidence.profile.status == "budget_exceeded"
+            assert evidence.profile.requested_sample_count == 9
+            assert evidence.profile.positions_km == evidence.path_vertex_sample_indices == ()
+            assert evidence.maximum_uphill_excursion_m is None
+        else:
+            assert evidence.profile.status == "sampled"
+        for node, sample in zip(result.path_flat_indices if case != "downstream_budget" else (),
+                                evidence.path_vertex_sample_indices, strict=True):
+            assert evidence.profile.ground_m[sample] == np.float32(ground.ravel()[node])
+    if case == "cumulative":
+        assert result.uphill_edge_count == 0
+        assert result.downstream is not None
+        assert result.downstream.maximum_uphill_excursion_m == pytest.approx(.016, abs=1e-6)
+        assert np.max(np.diff(result.downstream.profile.ground_m)) < .01
     np.testing.assert_array_equal(ground, original)
     assert results == review_outlet_routes(basins, ids, ground, land, receivers, flags,
                                            axis, axis, land_geometry, heights, sample_ground)

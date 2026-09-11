@@ -317,7 +317,7 @@ def render_drainage_review(terrain: GeneratedTerrain) -> Image.Image:
         "yellow candidate exits. Teal: connected lake outflow.",
         "Basin fills: cyan water / green land feed a connected outlet; amber stays retained. "
         "Footprint nodes only, not full upstream catchments.",
-        "Orange dots: fine boundary openings. Red diamonds: connection ground above water. "
+        "Orange dots: fine boundary openings. Red diamonds: outlet barriers or downstream climbs. "
         "Sampled evidence; stable lake levels are not modeled.",
         f"Shared review grid: {width} x {height}. Natural-basin escape candidates ignore "
         "authored retention. Connected outflows use sampled finished terrain.",
@@ -364,10 +364,18 @@ def render_basin_outflow_overlay(
                 draw.ellipse((px - 3, py - 3, px + 3, py + 3),
                              fill=(255, 160, 60, 255), outline=(24, 33, 43, 255))
         route = record.outlet_route
+        barriers: list[tuple[float, float]] = []
         if route is not None and "outlet_connection_above_water" in route.issues:
             assert route.connection_profile is not None
             assert route.connection_profile.maximum_position_km is not None
-            px, py = pixel(route.connection_profile.maximum_position_km)
+            barriers.append(route.connection_profile.maximum_position_km)
+        if route is not None and "outlet_downstream_uphill" in route.issues:
+            assert route.downstream is not None
+            assert route.downstream.rise_to_sample_index is not None
+            barriers.append(route.downstream.profile.positions_km[
+                route.downstream.rise_to_sample_index])
+        for position in barriers:
+            px, py = pixel(position)
             draw.polygon(((px, py - 4), (px + 4, py), (px, py + 4), (px - 4, py)),
                          fill=(255, 95, 65, 255), outline="white")
         if record.outlet_connection != "connected":

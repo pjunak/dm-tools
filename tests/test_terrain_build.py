@@ -57,7 +57,7 @@ def test_headless_build_preserves_dem_and_has_repeatable_verified_products(
     build_module.build_terrain_project(project_path, second)
     document: dict[str, Any] = json.loads((first / "manifest.json").read_text())
     schema_dir = EXAMPLES.parents[1] / "schemas" / "terrain"
-    assert document["schema_version"] == 13
+    assert document["schema_version"] == 14
     assert document["inputs"]["project_schema_version"] == 5
     assert document["algorithms"]["seed_policy"] == SEED_POLICY_ID
     resolved_seed = stage_seed(loaded.project.settings.seed, RELIEF_STAGE_ID)
@@ -75,7 +75,7 @@ def test_headless_build_preserves_dem_and_has_repeatable_verified_products(
     )
     schema = next(
         item for item in schemas
-        if item["$id"] == "urn:dmtools:schema:terrain-build:13"
+        if item["$id"] == "urn:dmtools:schema:terrain-build:14"
     )
     validate(document, schema, cls=Draft202012Validator, registry=registry)
     invalid = {**document, "coordinates": {**document["coordinates"], "world_crs": "EPSG:4326"}}
@@ -425,3 +425,19 @@ def test_connected_outlet_build_exports_conserved_source_and_terminal_area(
     assert connection["maximum_ground_m"] <= lake["source"]["water_level_m"] + .01
     maximum_index = connection["ground_m"].index(connection["maximum_ground_m"])
     assert connection["positions_km"][maximum_index] == connection["maximum_position_km"]
+    downstream = lake["outlet_route"]["downstream"]
+    assert downstream["reaches_terminal"]
+    assert downstream["maximum_uphill_excursion_m"] == 0
+    assert downstream["rise_from_sample_index"] is downstream["rise_to_sample_index"] is None
+    profile = downstream["profile"]
+    assert profile["status"] == "sampled"
+    nodes = lake["outlet_route"]["path_flat_indices"]
+    samples = downstream["path_vertex_sample_indices"]
+    assert len(profile["positions_km"]) > len(nodes) == len(samples)
+    with np.load(first / "routing.npz", allow_pickle=False) as routing:
+        width = routing["final_elevation_m"].shape[1]
+        for node, sample in zip(nodes, samples, strict=True):
+            row, column = divmod(node, width)
+            assert profile["positions_km"][sample] == [
+                routing["x_km"][column], routing["y_km"][row]]
+            assert profile["ground_m"][sample] == routing["final_elevation_m"][row, column]

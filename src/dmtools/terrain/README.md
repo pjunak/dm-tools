@@ -356,9 +356,12 @@ resolved internal paths; closed flats and pits remain retained. **Basin details*
 reports how many flat samples gained routes and how many reach water.
 Finer boundary and water/outlet checks can block a connection missed by the
 coarse grid. Orange dots mark low shoreline ground; red diamonds locate sampled
-connection ground above water. Extra probes follow narrow authored points, brush
-segments and smoothed ridge/valley crossings. Details reports heights, added
-sample counts and the smallest local spacing limit.
+connection ground above water or a downstream climb. Full external outlet
+paths now receive the same feature-guided checks, with exact routing-node
+height checks and one budget per path. Extra probes follow narrow authored
+points, brush segments and smoothed ridge/valley crossings. Details reports
+heights, the largest downstream climb, profile scope, added sample counts
+and the smallest local spacing limit.
 Lake levels remain imposed previews.
 See the [water guide](../../../docs/terrain-water.md), public
 [closed-water example](../../../examples/terrain/basin-water.dmterrain.json) and

@@ -26,6 +26,11 @@ while measuring them, and avoid concurrent tests or other heavy workloads.
 | `authored` | Square land with a ridge, peak/pass anchors, relative valley and relative brush |
 | `regional` | Public four-region project, including regional relief and incision budgets |
 | `water` | Authored lake/dry-basin footprints, cut protection and separate water products |
+| `outlet` | Connected public lake with a reviewed route to the coast |
+| `flat` | Exact internal flats, collected water and retained pits |
+| `shoreline` | Narrow boundary opening missed by the canonical wet nodes |
+| `narrow` | 200 m boundary feature needing local refinement |
+| `downstream` | 100 m downstream height feature blocking a canonically clear route |
 
 Select cases and multiple resolutions/seeds explicitly:
 

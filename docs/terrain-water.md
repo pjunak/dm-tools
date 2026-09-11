@@ -53,7 +53,7 @@ The generation result retains water products and a review on the shared
 sorted by kind, level, outlet and points. They identify this result and can change
 when inputs change; they are distinct from derived depression candidate IDs.
 
-Build v13 includes `water.npz`, sharing the delivered DEM's grid and axes:
+Build v14 includes `water.npz`, sharing the delivered DEM's grid and axes:
 
 | Field | Meaning |
 |---|---|
@@ -130,10 +130,28 @@ or the first invalid step. It inspects **unfilled** ground heights along the
 entire visited route, including the attachment from the lake's water level.
 It records canonical flat indices, reviewed length in kilometres, uphill step
 count, maximum rise, maximum height above lake level, terminal index and boundary
-flags. The maximum height above water includes the finer connection profile;
-uphill counts/rises still describe the coarse downstream steps. Downstream
-statistics cover the inspected prefix if geometry or a graph error blocks
-further tracing; they are not a complete breach estimate.
+flags. The maximum height above water includes the finer connection and
+external profiles; uphill counts and `maximum_rise_m` still describe adjacent
+coarse steps, starting from the lake level at the attachment. Statistics cover
+the inspected prefix if geometry or a graph error blocks further tracing;
+they are not a complete breach estimate.
+
+The full inspected external path, from the first outside attachment to its
+candidate terminal, receives one feature-guided ground profile with a shared
+65,536-sample budget. Every canonical vertex remains exact, and its sampled
+height must match the canonical Float32 ground or generation fails. Record the
+largest rise from any earlier sampled low: `max(h - cumulative_minimum(h))`.
+A rise above 0.01 m blocks transfer, even if each small step is below tolerance
+or the whole path stays below the lake level. Its crest index identifies
+the first maximum excursion; its low index identifies the first preceding minimum.
+
+This extends the conservative non-rising-ground review; it is not a hydraulic
+flow test. Flow across adverse bed slopes depends on water-surface, energy and
+storage assumptions that are not modeled. A blocked rise calls for explicit
+pool/level review, not automatic excavation or a claim that real flow is impossible.
+Early tracing failures mark the inspected prefix with `reaches_terminal=false`.
+A true value means the candidate graph reached a terminal; existing checks can
+still reject that terminal's geometry or unknown boundary level.
 
 Every segment is checked against vector land and every authored footprint, so
 a gap or protected area between raster nodes cannot be silently jumped. Re-entry,
@@ -143,10 +161,9 @@ terminals without exterior-water adjacency need an explicit boundary level.
 
 `outlet_route.status` is `sampled_clear`, `blocked` or `unresolved` (no eligible
 attachment). `sampled_clear` means this candidate has no detected obstruction
-at the sampled spacing. The short water/outlet attachment receives the finer
-check above; subsequent downstream edges still use canonical ground heights.
-Ocean levels and finer river gradients remain unresolved. Connection additionally
-requires the water and shoreline checks below. Every regeneration reassesses
+at the sampled spacing across both the short connection and inspected external
+path. Ocean levels and unsampled river gradients remain unresolved. Connection
+additionally requires the water and shoreline checks below. Every regeneration reassesses
 the route on the current finished field; no stale connected state is persisted.
 
 ## Connecting an eligible outlet
@@ -212,7 +229,7 @@ paths in teal; ordinary relief and the DEM remain ground/water-surface products.
 
 ## Finer water evidence
 
-Build v13 stores the additional evidence in `diagnostics.json`, under
+Build v14 stores the additional evidence in `diagnostics.json`, under
 `authored_water`; numeric archives retain their existing layouts.
 `sampling_algorithm_id` identifies `feature-guided-float32-water-checks@2`.
 
@@ -223,7 +240,7 @@ counts include its repeated closing endpoint. A dry basin has null shoreline.
 `outlet_route.connection_profile` is null without both a selected water contact
 and an outside attachment.
 
-Both profiles use the same fields:
+Boundary, connection and external downstream profiles use the same fields:
 
 | Field | Meaning |
 |---|---|
@@ -238,9 +255,25 @@ Both profiles use the same fields:
 | `maximum_position_km` | First position attaining the sampled maximum, or null |
 
 Unresolved profiles contain empty position/height lists. All evaluated values
-must be finite; an invalid sampler result fails generation. Boundary and short
-connection checks share the current final-field evaluator and preserve source
-constraints, ground arrays and the original capture graph.
+must be finite; an invalid sampler result fails generation. All profiles share
+the current final-field evaluator and preserve source constraints, ground arrays
+and the original capture graph.
+
+`outlet_route.downstream` is null when no external path node was inspected.
+Otherwise it contains:
+
+| Field | Meaning |
+|---|---|
+| `profile` | Full inspected path evidence, or empty over-budget evidence |
+| `reaches_terminal` | Candidate graph reached a terminal; does not certify its water level |
+| `path_vertex_sample_indices` | Profile index for each `path_flat_indices` entry, in order; empty over budget |
+| `maximum_uphill_excursion_m` | Largest sampled rise from any earlier low; zero for no rise, null unresolved |
+| `rise_from_sample_index`, `rise_to_sample_index` | Earlier low and later crest; null for zero rise or unresolved |
+
+A topologically incomplete path has `reaches_terminal=false` even if its prefix
+profile was fully sampled. An over-budget complete path can have a true value
+with no ground evidence. Neither state can clear a blocked route. The budget
+applies once to the whole inspected path, never independently to each edge.
 
 The baseline stations remain present. Each prepared point, brush segment or
 smoothed ridge/valley segment whose narrowest core radius divided by four is
@@ -265,15 +298,18 @@ partial ground evidence. The smallest local spacing is not a global uniform
 resolution or an accuracy guarantee; Gaussian context tails extend outside the
 chosen core corridors and interacting features can move extrema.
 
-**Basin details** reports boundary counts and the highest sampled connection
-ground, plus extra feature samples and the smallest local spacing limit. Orange
-dots mark low boundary samples outside the opening; red diamonds
-mark above-water connection ground. Both review toggles and the finished-terrain
-review show these markers. The complete evidence remains in the diagnostic file.
+**Basin details** reports boundary counts, the highest sampled connection
+ground and the largest downstream climb, plus extra feature samples and the
+smallest local spacing limit. It distinguishes a candidate-terminal profile from
+a prefix and reports exceeded budgets. Orange dots mark low boundary samples
+outside the opening; red diamonds mark above-water connection ground and the
+crest of a blocked downstream climb. The climb crest may differ from the path's
+global maximum. Both review toggles and the finished-terrain review show these
+markers. The complete evidence remains in the diagnostic file.
 
 ## Outflow products and conservation
 
-Build v13 includes `basin-flow.npz`, using the canonical axes in `routing.npz`:
+Build v14 includes `basin-flow.npz`, using the canonical axes in `routing.npz`:
 
 | Array | Type | Meaning |
 |---|---|---|
@@ -332,6 +368,9 @@ routing alongside retained pits.
 - `outlet_connection_above_water`: the short contact/outlet/attachment profile
   finds above-water ground; recorded on the candidate route.
 - `outlet_connection_unresolved`: the connection profile exceeds the sample budget.
+- `outlet_downstream_uphill`: the external profile climbs more than 0.01 m from
+  an earlier low, requiring pool/level assumptions before transfer.
+- `outlet_downstream_unresolved`: the whole external path exceeds the sample budget.
 - `low_boundary`: wet land borders below-level ground beyond its drawn polygon
   by D8, or reaches the raster edge. An intended outlet can explain part of
   this evidence; other shoreline sections still need review.
@@ -351,10 +390,10 @@ routing alongside retained pits.
 The water surface remains an authored, clipped level preview. No runoff,
 water budget, automatic spill, breach, sediment or nested depression hierarchy
 is simulated. Next, extend finer evidence beyond the targeted authored cores,
-check internal water links and downstream paths, and define controlling-sill
+check internal water links, and define controlling-sill
 and storage assumptions before explicit lake chains. Full constrained
 breach/reroute proposals must preserve budgets and authored anchors. See
-[ADR-0040](adr/0040-refine-water-profiles-around-authored-features.md).
+[ADR-0041](adr/0041-review-complete-downstream-outlet-profiles.md).
 
 For measured results and the prioritized next steps, read the
-[implementation rundown](research/2026-09-11-feature-guided-water-sampling.md).
+[implementation rundown](research/2026-09-11-downstream-outlet-profiles.md).
