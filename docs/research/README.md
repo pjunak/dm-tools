@@ -7,6 +7,8 @@ implemented with tests. Notes are listed newest first and package-support claims
 may become stale; use the
 [current development strategy](../strategy/README.md) for the active order.
 
+- [Internal water links - 2026-09-11](2026-09-11-internal-water-links.md)
+  records finer pool separation, alternate paths, batching and preserved ground.
 - [Complete downstream outlet profiles - 2026-09-11](2026-09-11-downstream-outlet-profiles.md)
   records a missed downstream climb, retained area, exported evidence and measured cost.
 - [Feature-guided water sampling - 2026-09-11](2026-09-11-feature-guided-water-sampling.md)

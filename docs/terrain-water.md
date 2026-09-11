@@ -53,7 +53,7 @@ The generation result retains water products and a review on the shared
 sorted by kind, level, outlet and points. They identify this result and can change
 when inputs change; they are distinct from derived depression candidate IDs.
 
-Build v14 includes `water.npz`, sharing the delivered DEM's grid and axes:
+Build v15 includes `water.npz`, sharing the delivered DEM's grid and axes:
 
 | Field | Meaning |
 |---|---|
@@ -174,7 +174,27 @@ explicit outlet is the authorization to derive this connection; the process
 adds no new authored geography and changes no ground height.
 
 A connected lake must have one wet component reaching the selected contact
-node, with vector-contained D8 links between water samples. All low shoreline
+node, with vector-contained D8 links between water samples. Eligible lakes now
+also check the finished ground between each pair of wet neighbours. A link whose
+sampled maximum exceeds water plus 0.01 m is removed in both directions. Submerged
+crests and changes within the tolerance remain passable. Clear alternate wet
+paths can keep the pool connected; a blocked link alone does not block its outlet.
+
+Keep the previously selected contact, chosen before finer internal success was
+known. If any wet node cannot reach that contact after rejected links are removed,
+the whole outlet stays blocked and all captured area stays retained. Do not
+choose a farther contact, drain just one newly separated pool or connect pools
+through dry nodes. This preserves the existing single-pool requirement.
+
+The network reuses feature-guided profile plans, with one 65,536-sample budget
+for all candidate links in a lake, including repeated endpoints. The baseline
+count is checked first, then refinement plans are added before any positions or
+ground are evaluated. An excessive plan returns no per-link evidence or reachable
+count and cannot activate partial transfer. Samples share batches of at most
+4,096 across links; each endpoint must match canonical Float32 ground exactly.
+A single wet contact with no wet links needs zero additional samples.
+
+All low shoreline
 edges outside the declared outlet opening block connection. The opening is
 bounded to one canonical grid diagonal from the exact outlet: both endpoints
 of an exempt low edge must be within that distance. Raster-edge leakage is
@@ -200,7 +220,9 @@ Dry footprint nodes transfer captured area only when their internal D8 path
 reaches connected lake water. Each link must stay entirely inside the authored
 polygon, including between samples. The steepest eligible downhill neighbour
 wins; slopes use metric axis spacing and fixed D8 order for ties. Wet receivers
-use lake surface height, not submerged bed depth.
+use lake surface height, not submerged bed depth. These dry-to-dry and
+dry-to-water ground checks still use canonical endpoints; the finer internal
+review applies only to links whose two endpoints are wet.
 
 Exact equal-height areas with exits gain separate integer routing ranks toward
 lower ground and away from higher ground. A flat edge always decreases rank;
@@ -229,7 +251,7 @@ paths in teal; ordinary relief and the DEM remain ground/water-surface products.
 
 ## Finer water evidence
 
-Build v14 stores the additional evidence in `diagnostics.json`, under
+Build v15 stores the additional evidence in `diagnostics.json`, under
 `authored_water`; numeric archives retain their existing layouts.
 `sampling_algorithm_id` identifies `feature-guided-float32-water-checks@2`.
 
@@ -307,9 +329,41 @@ crest of a blocked downstream climb. The climb crest may differ from the path's
 global maximum. Both review toggles and the finished-terrain review show these
 markers. The complete evidence remains in the diagnostic file.
 
+## Internal water-link evidence
+
+Build v15 adds `wet_links` to each basin diagnostic. It is null for closed/dry
+basins and when an earlier eligibility check prevented collection review. Null
+means unreviewed, not clear. Only vector-contained pairs whose endpoints are wet
+are candidates, recorded once with ascending canonical flat indices.
+
+| Field | Meaning |
+|---|---|
+| `status` | `sampled` or `budget_exceeded` |
+| `spacing_limit_km` | Quarter of the shorter canonical axis spacing |
+| `candidate_link_count` | Number of undirected wet links in this contained graph |
+| `requested_sample_count` | Exact evaluated count when sampled; required lower bound when unresolved |
+| `blocked_link_count` | Links with above-water ground, or null unresolved |
+| `contact_reachable_wet_cell_count` | Wet nodes reachable from the existing contact, or null unresolved |
+| `links` | Per-link evidence; empty for an excessive whole-network plan |
+
+Each link records `first_flat_index`, `second_flat_index`, `sample_count`,
+`feature_sample_count`, `feature_spacing_limit_km`, `maximum_ground_m`,
+`maximum_position_km` and `blocked`. The maximum position is the first sampled
+maximum from the lower flat index toward the higher one. This is undirected
+connectivity evidence, not a preferred water-flow direction. Complete profiles
+are not duplicated into JSON for every internal link; their decision maxima and
+sampling provenance are retained, including for clear links.
+
+`wet_component_count` remains the coarse raster-component count. The new reachable
+count can be smaller even when that coarse count is one. Counts measure canonical
+water nodes and requested probes, not pool area, barrier width or water volume.
+**Basin details** explains the blocked-link count, contact reach and budget status.
+Red diamonds mark the high ground, including when alternate paths keep a lake
+connected. The clipped water surface and ground DEM remain unchanged by review.
+
 ## Outflow products and conservation
 
-Build v14 includes `basin-flow.npz`, using the canonical axes in `routing.npz`:
+Build v15 includes `basin-flow.npz`, using the canonical axes in `routing.npz`:
 
 | Array | Type | Meaning |
 |---|---|---|
@@ -383,17 +437,21 @@ routing alongside retained pits.
   canonical grid resolves no area, no wet ground or multiple separate pools.
 - `outlet_shoreline_uncontained`, `outlet_water_disconnected` and
   `outlet_route_blocked`: connection is blocked by extra shoreline openings,
-  water links crossing outside the footprint, or downstream route findings.
+  water separated by the footprint or sampled high ground, or downstream findings.
+- `wet_link_barrier`: above-water ground removes one or more internal water
+  links; alternate clear paths may still connect all water to the contact.
+- `wet_link_sampling_unresolved`: the internal network exceeds its sample budget;
+  all captured area stays retained with no accepted partial network.
 - `outlet_partial_catchment`: the outlet connects, but dry ground that cannot
   reach its water surface retains part of the captured contributing area.
 
 The water surface remains an authored, clipped level preview. No runoff,
 water budget, automatic spill, breach, sediment or nested depression hierarchy
 is simulated. Next, extend finer evidence beyond the targeted authored cores,
-check internal water links, and define controlling-sill
+check dry collection links, and define controlling-sill
 and storage assumptions before explicit lake chains. Full constrained
 breach/reroute proposals must preserve budgets and authored anchors. See
-[ADR-0041](adr/0041-review-complete-downstream-outlet-profiles.md).
+[ADR-0042](adr/0042-review-internal-water-links.md).
 
 For measured results and the prioritized next steps, read the
-[implementation rundown](research/2026-09-11-downstream-outlet-profiles.md).
+[implementation rundown](research/2026-09-11-internal-water-links.md).

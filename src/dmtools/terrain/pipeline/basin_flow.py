@@ -28,6 +28,7 @@ from dmtools.terrain.pipeline.water_sampling import (
     SamplingFeature,
     review_shorelines,
 )
+from dmtools.terrain.pipeline.wet_links import WetLinkReview, review_wet_links
 
 
 class BasinCatchmentClass(IntEnum):
@@ -100,28 +101,22 @@ def basin_neighbours(
 class _BasinCollection:
     nodes: NDArray[np.int64]
     connected: NDArray[np.bool_]
-    routing: FlatRouting
+    routing: FlatRouting | None
+    wet_links: WetLinkReview
 
 
 def _collect_basin(
     basin: MetricBasin, inside: NDArray[np.bool_], wet: NDArray[np.bool_], contact: int,
     elevation_m: NDArray[np.float64], x_km: NDArray[np.float64], y_km: NDArray[np.float64],
-) -> _BasinCollection | None:
+    sample_ground: GroundSampler, features: tuple[SamplingFeature, ...],
+) -> _BasinCollection:
     nodes, neighbours = basin_neighbours(basin, inside, x_km, y_km)
     local_wet = wet.ravel()[nodes]
-    connected = np.zeros(nodes.size, dtype=np.bool_)
-    queue = [int(np.searchsorted(nodes, contact))]
-    connected[queue[0]] = True
-    while queue:
-        node = queue.pop()
-        for neighbour in neighbours[node]:
-            target = int(neighbour)
-            if target >= 0 and local_wet[target] and not connected[target]:
-                connected[target] = True
-                queue.append(target)
-    if np.any(local_wet & ~connected):
-        return None
     assert basin.source.water_level_m is not None
+    wet_links, connected = review_wet_links(nodes, neighbours, local_wet, contact,
+        elevation_m, x_km, y_km, basin.source.water_level_m, sample_ground, features)
+    if wet_links.status != "sampled" or np.any(local_wet & ~connected):
+        return _BasinCollection(nodes, connected, None, wet_links)
     head = np.where(local_wet, basin.source.water_level_m, elevation_m.ravel()[nodes])
     routing = route_flats(head, neighbours, local_wet,
         x_spacing_km=float(x_km[1] - x_km[0]), y_spacing_km=float(y_km[1] - y_km[0]))
@@ -131,7 +126,7 @@ def _collect_basin(
         target = int(routing.receivers[node])
         if target >= 0:
             connected[node] = connected[target]
-    return _BasinCollection(nodes, connected, routing)
+    return _BasinCollection(nodes, connected, routing, wet_links)
 
 
 def resolve_basin_outflow(
@@ -192,9 +187,17 @@ def resolve_basin_outflow(
         assert route.water_contact_flat_index is not None
         assert route.terminal_flat_index is not None
         collection = _collect_basin(basin, inside, wet, route.water_contact_flat_index,
-                                    elevation_m, x_km, y_km)
-        if collection is None:
-            records[index] = replace(records[index], issues=(*issues, "outlet_water_disconnected"))
+                                    elevation_m, x_km, y_km, sample_ground, features)
+        links = collection.wet_links
+        if links.status != "sampled":
+            issues.append("wet_link_sampling_unresolved")
+        elif links.blocked_link_count:
+            issues.append("wet_link_barrier")
+        records[index] = replace(records[index], wet_links=links, issues=tuple(issues))
+        if collection.routing is None:
+            if links.status == "sampled":
+                records[index] = replace(records[index],
+                                         issues=(*issues, "outlet_water_disconnected"))
             continue
         nodes, internal = collection.nodes, collection.routing
         has_receiver = internal.receivers >= 0
@@ -230,7 +233,7 @@ def resolve_basin_outflow(
     error = source_area - (retained_area + direct_area + delivered_area)
     if not np.isclose(error, 0., rtol=0., atol=max(1e-8, source_area * 1e-10)):
         raise RuntimeError("Basin outlet transfer did not conserve contributing area.")
-    summary = BasinOutflowSummary("captured-mfd-reviewed-d8-outlets@6",
+    summary = BasinOutflowSummary("captured-mfd-reviewed-d8-outlets@7",
         FLAT_ROUTING_ALGORITHM_ID,
         sum(record.outlet_connection == "connected" for record in records),
         source_area, retained_area, direct_area, delivered_area, error)

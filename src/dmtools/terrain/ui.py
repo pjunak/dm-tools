@@ -1778,7 +1778,10 @@ class TerrainApp:
             "shoreline_sampling_unresolved": (
                 "The fine shoreline check could not cover this whole boundary."),
             "outlet_shoreline_uncontained": "A low shoreline opening lies away from the outlet.",
-            "outlet_water_disconnected": "Water is separated by the drawn basin boundary.",
+            "wet_link_barrier": "High ground blocks some internal water links.",
+            "wet_link_sampling_unresolved": "Internal water connectivity needs finer review.",
+            "outlet_water_disconnected": (
+                "Not all water reaches the selected contact through clear internal links."),
             "outlet_partial_catchment": (
                 "Amber dry samples have no downhill or resolved flat route to connected water. "
                 "Closed pits or links leaving the drawn area can retain them."),
@@ -1821,6 +1824,21 @@ class TerrainApp:
                 findings.append(f"Boundary review: {len(shoreline.profile.ground_m)} samples; "
                                 f"{shoreline.uncontrolled_low_sample_count} below water outside "
                                 "the outlet opening.")
+            links = record.wet_links
+            if links is not None:
+                if links.status == "sampled":
+                    findings.append(f"Internal water links: {links.blocked_link_count} blocked of "
+                                    f"{links.candidate_link_count}; "
+                                    f"{links.contact_reachable_wet_cell_count} of "
+                                    f"{record.wet_cell_count} water samples reach the selected "
+                                    f"contact ({links.requested_sample_count:,} ground samples).")
+                    if links.blocked_link_count:
+                        findings.append("Red diamonds mark high ground on water links. "
+                                        "Clear alternate paths may still connect the pool.")
+                else:
+                    findings.append("Internal water links: sample budget exceeded; at least "
+                                    f"{links.requested_sample_count:,} samples required. "
+                                    "No partial network was accepted; area stays retained.")
             route = record.outlet_route
             for label, profile in (("Boundary", shoreline.profile if shoreline else None),
                                    ("Connection", route.connection_profile if route else None),
@@ -1951,7 +1969,7 @@ class TerrainApp:
                 self._review_photo = ImageTk.PhotoImage(review)
             self.preview.create_image(left, top, image=self._review_photo, anchor="nw")
             legends.append("Teal lines: connected lake outlets. Orange dots: low boundary. "
-                           "Red diamonds: outlet barriers or downstream climbs. "
+                           "Red diamonds: water barriers or downstream climbs. "
                            "Sampled review only.")
             self.preview.create_text(
                 left + 8, top + 8, anchor="nw", fill="white",

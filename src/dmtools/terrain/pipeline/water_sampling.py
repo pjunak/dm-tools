@@ -124,10 +124,21 @@ class GroundProfile:
     maximum_position_km: tuple[float, float] | None
 
 
-def sample_ground_profile(
+@dataclass(frozen=True, slots=True)
+class GroundSamplingPlan:
+    vertices_km: tuple[tuple[float, float], ...]
+    spacing_limit_km: float
+    baseline_sample_count: int
+    requested_sample_count: int
+    feature_spacing_limit_km: float | None
+    spans: tuple[tuple[tuple[float, float, int], ...], ...]
+    status: Literal["sampled", "budget_exceeded"]
+
+
+def plan_ground_profile(
     vertices_km: tuple[tuple[float, float], ...], spacing_limit_km: float,
-    sample_ground: GroundSampler, features: tuple[SamplingFeature, ...] = (),
-) -> GroundProfile:
+    features: tuple[SamplingFeature, ...] = (),
+) -> GroundSamplingPlan:
     """Include every vertex and bounded intervening samples; never silently coarsen.
 
     A closed polyline repeats its first point at the end. Duplicate consecutive
@@ -141,8 +152,8 @@ def sample_ground_profile(
     spans = tuple(max(2, ceil(length / spacing_limit_km)) if length else 0 for length in lengths)
     baseline_count = 1 + sum(spans)
     if baseline_count > MAX_PROFILE_SAMPLES:
-        return GroundProfile("budget_exceeded", spacing_limit_km, baseline_count,
-                             None, None, (), (), None, None, None)
+        return GroundSamplingPlan(vertices_km, spacing_limit_km, baseline_count,
+                                  baseline_count, None, (), "budget_exceeded")
     plans: list[list[tuple[float, float, int]]] = []
     feature_spacing: float | None = None
     for (a, b), steps, length in zip(pairwise(vertices_km), spans, lengths, strict=True):
@@ -157,25 +168,43 @@ def sample_ground_profile(
                      [(0., 1., steps)])
     count = 1 + sum(steps for plan in plans for _, _, steps in plan)
     if count > MAX_PROFILE_SAMPLES:
-        return GroundProfile("budget_exceeded", spacing_limit_km, count,
-                             None, feature_spacing, (), (), None, None, None)
+        return GroundSamplingPlan(vertices_km, spacing_limit_km, baseline_count, count,
+                                  feature_spacing, (), "budget_exceeded")
+    return GroundSamplingPlan(vertices_km, spacing_limit_km, baseline_count, count,
+                              feature_spacing, tuple(tuple(p) for p in plans), "sampled")
+
+
+def profile_positions(plan: GroundSamplingPlan) -> NDArray[np.float64]:
+    """Allocate stations only after the caller has accepted the complete budget."""
+    if plan.status != "sampled":
+        raise ValueError("Unresolved profiles have no sample positions.")
+    vertices_km, plans = plan.vertices_km, plan.spans
+    count = plan.requested_sample_count
     positions = np.empty((count, 2), dtype=np.float64)
     positions[0] = vertices_km[0]
     offset = 1
-    for (a, b), plan in zip(pairwise(vertices_km), plans, strict=True):
+    for (a, b), segment_plan in zip(pairwise(vertices_km), plans, strict=True):
         # Generate each segment as one vectorized block, including every original station.
         fractions = [np.asarray([end]) if steps == 1 else
                      start + (end - start) * np.arange(1, steps + 1, dtype=np.float64) / steps
-                     for start, end, steps in plan]
+                     for start, end, steps in segment_plan]
         if not fractions:
             continue
-        for fraction, (_, end, _) in zip(fractions, plan, strict=True):
+        for fraction, (_, end, _) in zip(fractions, segment_plan, strict=True):
             fraction[-1] = end
         combined = np.concatenate(fractions)
         positions[offset:offset + combined.size] = (np.asarray(a) + combined[:, None]
                                                    * (np.asarray(b) - a))
         positions[offset + combined.size - 1] = b
         offset += combined.size
+    return positions
+
+
+def sample_ground_positions(
+    positions: NDArray[np.float64], sample_ground: GroundSampler,
+) -> NDArray[np.float32]:
+    """Evaluate a bounded profile or a batch of independent links consistently."""
+    count = len(positions)
     ground = np.empty(count, dtype=np.float32)
     for start in range(0, count, SAMPLE_BATCH_SIZE):
         part = positions[start:start + SAMPLE_BATCH_SIZE]
@@ -185,9 +214,25 @@ def sample_ground_profile(
         ground[start:start + len(part)] = values
     if not np.all(np.isfinite(ground)):
         raise ValueError("Water sampling requires finite Float32 ground.")
+    return ground
+
+
+def sample_ground_profile(
+    vertices_km: tuple[tuple[float, float], ...], spacing_limit_km: float,
+    sample_ground: GroundSampler, features: tuple[SamplingFeature, ...] = (),
+) -> GroundProfile:
+    """Evaluate a complete planned profile; excessive budgets retain no prefix."""
+    plan = plan_ground_profile(vertices_km, spacing_limit_km, features)
+    count = plan.requested_sample_count
+    if plan.status != "sampled":
+        return GroundProfile("budget_exceeded", spacing_limit_km, count,
+                             None, plan.feature_spacing_limit_km, (), (), None, None, None)
+    positions = profile_positions(plan)
+    ground = sample_ground_positions(positions, sample_ground)
     maximum = int(np.argmax(ground))
     return GroundProfile(
-        "sampled", spacing_limit_km, count, count - baseline_count, feature_spacing,
+        "sampled", spacing_limit_km, count, count - plan.baseline_sample_count,
+        plan.feature_spacing_limit_km,
         tuple((float(x), float(y)) for x, y in positions), tuple(float(v) for v in ground),
         float(np.min(ground)), float(ground[maximum]),
         (float(positions[maximum, 0]), float(positions[maximum, 1])))

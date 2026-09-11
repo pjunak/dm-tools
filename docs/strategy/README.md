@@ -97,7 +97,11 @@ Full external candidate routes now have bounded profiles, canonical vertex
 mapping and cumulative uphill checks
 ([ADR-0041](../adr/0041-review-complete-downstream-outlet-profiles.md)).
 
-1. Complete internal wet-link evidence and broader sampling convergence;
+Internal water links now receive bounded batched checks, preserving the selected
+contact and clear alternate wet paths. Separated pools retain their captured area
+([ADR-0042](../adr/0042-review-internal-water-links.md)).
+
+1. Complete finer dry-collection links and broader sampling convergence;
    define controlling-sill and storage assumptions. Then support
    explicit lake chains with compatible levels and acyclic dependencies.
 2. Compare retention, constrained breach and reroute proposals using full paths,

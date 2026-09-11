@@ -57,7 +57,7 @@ def test_headless_build_preserves_dem_and_has_repeatable_verified_products(
     build_module.build_terrain_project(project_path, second)
     document: dict[str, Any] = json.loads((first / "manifest.json").read_text())
     schema_dir = EXAMPLES.parents[1] / "schemas" / "terrain"
-    assert document["schema_version"] == 14
+    assert document["schema_version"] == 15
     assert document["inputs"]["project_schema_version"] == 5
     assert document["algorithms"]["seed_policy"] == SEED_POLICY_ID
     resolved_seed = stage_seed(loaded.project.settings.seed, RELIEF_STAGE_ID)
@@ -75,7 +75,7 @@ def test_headless_build_preserves_dem_and_has_repeatable_verified_products(
     )
     schema = next(
         item for item in schemas
-        if item["$id"] == "urn:dmtools:schema:terrain-build:14"
+        if item["$id"] == "urn:dmtools:schema:terrain-build:15"
     )
     validate(document, schema, cls=Draft202012Validator, registry=registry)
     invalid = {**document, "coordinates": {**document["coordinates"], "world_crs": "EPSG:4326"}}
@@ -441,3 +441,14 @@ def test_connected_outlet_build_exports_conserved_source_and_terminal_area(
             assert profile["positions_km"][sample] == [
                 routing["x_km"][column], routing["y_km"][row]]
             assert profile["ground_m"][sample] == routing["final_elevation_m"][row, column]
+    links = lake["wet_links"]
+    assert links["status"] == "sampled"
+    assert links["contact_reachable_wet_cell_count"] == lake["wet_cell_count"]
+    assert links["candidate_link_count"] == len(links["links"]) > 0
+    assert links["requested_sample_count"] == sum(link["sample_count"] for link in links["links"])
+    with np.load(first / "routing.npz", allow_pickle=False) as routing:
+        for link in links["links"]:
+            assert link["first_flat_index"] < link["second_flat_index"]
+            for node in (link["first_flat_index"], link["second_flat_index"]):
+                assert routing["basin_intent_ids"].ravel()[node] == lake["intent_id"]
+                assert routing["final_elevation_m"].ravel()[node] < lake["source"]["water_level_m"]

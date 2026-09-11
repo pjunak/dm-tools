@@ -53,3 +53,9 @@ connected outlet's external valley. Canonical nodes still descend, but the full
 feature-guided profile finds a 43.85 m climb from an earlier low. Transfer stays
 blocked and a red diamond locates the crest. The entire path is below the imposed
 lake level; the example tests conservative ground review, not hydraulic flow.
+
+The [internal-water-barrier example](terrain/internal-water-barrier.dmterrain.json)
+adds a relative +1,500 m point with a 100 m influence radius inside the lake's
+narrow wet channel. Canonical wet nodes remain one component, but finer checks
+remove its single bridging link. All lake area stays retained; the selected
+contact is unchanged and a red diamond marks the separating ground.

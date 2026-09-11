@@ -362,6 +362,11 @@ height checks and one budget per path. Extra probes follow narrow authored
 points, brush segments and smoothed ridge/valley crossings. Details reports
 heights, the largest downstream climb, profile scope, added sample counts
 and the smallest local spacing limit.
+Internal water links now receive batched checks too. Above-water ground removes
+a link, while clear alternate paths may still connect the pool. If water separates
+from the selected contact or the lake's total sample budget is exceeded, the
+whole outlet stays blocked. Details explains the reachable water count and red
+barrier markers. Dry collection links still use canonical ground endpoints.
 Lake levels remain imposed previews.
 See the [water guide](../../../docs/terrain-water.md), public
 [closed-water example](../../../examples/terrain/basin-water.dmterrain.json) and

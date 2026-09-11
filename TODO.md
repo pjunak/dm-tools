@@ -32,7 +32,7 @@ preview, and PNG export. Those are not repeated below as unfinished work.
   hashes, generator and schema versions, master and stage seeds, effective
   parameters, working extent and units, runtime/dependency versions, warnings,
   and authoritative output hashes.
-  Current version-14 builds record named stage seeds, numeric product hashes,
+  Current version-15 builds record named stage seeds, numeric product hashes,
   and explicit local-only NPY/GeoTIFF coordinates. World placement remains open.
 - [x] **P0 — Export the authoritative Float32 DEM as local-metric GeoTIFF.**
   Implemented point registration, metre units, NaN nodata, embedded masks,
@@ -112,7 +112,7 @@ preview, and PNG export. Those are not repeated below as unfinished work.
   [ADR-0036](docs/adr/0036-connect-lake-outflow-with-area-transfer.md).
 - [x] **P1 — Show collected and retained basin nodes.** The workbench and
   finished-ground review now map collected water, collected dry ground and
-  retained nodes. Build v14 exports the classification and retained contribution
+  retained nodes. Build v15 exports the classification and retained contribution
   at each footprint node; sample counts and area accounting remain distinct.
   Exact outlet ground minus water level is reported, including submerged outlets,
   without treating a clear sampled route as proof of a stable lake level. See
@@ -120,7 +120,7 @@ preview, and PNG export. Those are not repeated below as unfinished work.
 - [x] **P1 — Route internal flats with known exits.** Integer ranks now route
   exact flats without editing the DEM. Every link is vector-contained, real
   downhill alternatives take precedence, and paths to closed pits stay retained.
-  Build v14 exports internal receivers and ranks; details separate resolved flat
+  Build v15 exports internal receivers and ranks; details separate resolved flat
   donors from those reaching lake water. The public flat-outlet fixture covers
   both outcomes. See [ADR-0038](docs/adr/0038-route-basin-flats-with-integer-gradients.md)
   and the [measured rundown](docs/research/2026-09-11-basin-flat-routing.md).
@@ -145,10 +145,17 @@ preview, and PNG export. Those are not repeated below as unfinished work.
   catches a 43.85 m climb missed by canonical nodes without changing its DEM.
   See [ADR-0041](docs/adr/0041-review-complete-downstream-outlet-profiles.md) and
   the [measured rundown](docs/research/2026-09-11-downstream-outlet-profiles.md).
-- [ ] **P1 — Complete internal wet-link evidence.** Check the ground between
-  connected wet nodes before allowing area transfer, retain rejected-link
-  evidence and conservation, and define contact selection when finer checks
-  separate pools. Clear external profiles cannot certify internal connectivity.
+- [x] **P1 — Complete internal wet-link evidence.** Batched feature-guided
+  checks now remove links with above-water ground, preserving alternate wet paths.
+  All wet nodes must reach the unchanged selected contact; separated pools and
+  excessive whole-lake sample budgets retain captured area. Builds retain each
+  candidate link's maximum, location and sample provenance; the review marks
+  barriers. See [ADR-0042](docs/adr/0042-review-internal-water-links.md) and the
+  [measured rundown](docs/research/2026-09-11-internal-water-links.md).
+- [ ] **P1 — Check dry collection links between canonical nodes.** Review
+  dry-to-dry and dry-to-water paths, including flat links, before collecting area.
+  Keep water-surface head, regional budgets, alternative-path choice and closed
+  pits explicit. Finer wet connectivity alone does not certify dry collection.
 - [ ] **P1 — Measure broader feature and project-scale sampling limits.** Add
   regional transitions, procedural extrema and overlapping/context-tail cases;
   compare local extrema and decisions across refinement levels. Current core
@@ -191,7 +198,9 @@ preview, and PNG export. Those are not repeated below as unfinished work.
   exterior transition if needed while preserving zero cuts inside. Derive
   vector shorelines and higher-resolution containment checks from numeric water.
   Test narrow footprint fingers and crossings between canonical nodes; sampled
-  retention alone cannot resolve every authored polygon feature.
+  retention alone cannot resolve every authored polygon feature. Compare refined
+  2D wet components and narrow off-grid water passages against canonical D8 links
+  before treating sampled disconnection as a complete shoreline model.
 - [ ] **P2 — Add reusable terrain profiles/presets.** Profiles should be
   versioned authored inputs with their own content hashes and should expose the
   effective values used by a build.

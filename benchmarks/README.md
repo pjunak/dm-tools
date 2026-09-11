@@ -31,6 +31,7 @@ while measuring them, and avoid concurrent tests or other heavy workloads.
 | `shoreline` | Narrow boundary opening missed by the canonical wet nodes |
 | `narrow` | 200 m boundary feature needing local refinement |
 | `downstream` | 100 m downstream height feature blocking a canonically clear route |
+| `internal` | 100 m internal height feature separating a canonically connected lake |
 
 Select cases and multiple resolutions/seeds explicitly:
 

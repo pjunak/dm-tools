@@ -7,6 +7,7 @@ from unittest.mock import patch
 import numpy as np
 import pytest
 from numpy.typing import NDArray
+from shapely import contains_xy
 from shapely.geometry import Point, Polygon
 
 from dmtools.terrain.adapters import load_terrain_project
@@ -19,7 +20,12 @@ from dmtools.terrain.pipeline import GeneratedTerrain, generate_terrain
 from dmtools.terrain.pipeline.basin_flow import BasinCatchmentClass, resolve_basin_outflow
 from dmtools.terrain.pipeline.hydrology import drainage_incision
 from dmtools.terrain.pipeline.water import MetricBasin, basin_intent_ids, prepare_basins
-from dmtools.terrain.pipeline.water_sampling import GroundSampler, SamplingFeature
+from dmtools.terrain.pipeline.water_sampling import (
+    GroundSampler,
+    GroundSamplingPlan,
+    SamplingFeature,
+    plan_ground_profile,
+)
 
 
 def _connection_sampler(
@@ -32,6 +38,14 @@ def _connection_sampler(
         for basin, height in zip(basins, heights, strict=True):
             if basin.outlet_km is None:
                 continue
+            # A continuous interior field agrees with the synthetic grid; boundaries stay high.
+            col = np.minimum(x.astype(int), ground.shape[1]-2)
+            row = np.minimum(y.astype(int), ground.shape[0]-2)
+            fx, fy = x-col, y-row
+            interior = contains_xy(basin.geometry, x, y)
+            interpolated = ((1-fy) * ((1-fx)*ground[row, col] + fx*ground[row, col+1])
+                            + fy * ((1-fx)*ground[row+1, col] + fx*ground[row+1, col+1]))
+            values[interior] = interpolated[interior].astype(np.float32)
             ox, oy = basin.outlet_km
             values[np.hypot(x - ox, y - oy) <= np.sqrt(2)] = 2
             # Preserve canonical values wherever the analytic profile visits a grid node.
@@ -452,3 +466,62 @@ def test_real_downstream_climb_blocks_transfer_and_is_marked_across_resolutions(
         col = round(x * 512 / terrain.x_km[-1])
         row = round(y * 302 / terrain.y_km[-1])
         assert np.any(np.all(pixels[row-3:row+4, col-3:col+4] == (255, 95, 65, 255), axis=-1))
+
+
+def test_real_internal_barrier_separates_water_without_changing_ground() -> None:
+    project = load_terrain_project(Path(__file__).parents[1] /
+                                  "examples/terrain/internal-water-barrier.dmterrain.json").project
+    settings = replace(project.settings, resolution_px=65)
+    terrain = generate_terrain(project.coastline, settings, constraints=project.constraints)
+    refined = generate_terrain(project.coastline, replace(settings, resolution_px=129),
+                               constraints=tuple(reversed(project.constraints)))
+    assert terrain.water.review == refined.water.review
+    def baseline_plan(
+        vertices: tuple[tuple[float, float], ...], spacing: float,
+        features: tuple[SamplingFeature, ...] = (),
+    ) -> GroundSamplingPlan:
+        return plan_ground_profile(vertices, spacing)
+    with patch("dmtools.terrain.pipeline.wet_links.plan_ground_profile", baseline_plan):
+        baseline = generate_terrain(project.coastline, settings, constraints=project.constraints)
+    lake = next(r for r in terrain.water.review.basins if r.source.kind == "lake")
+    old = next(r for r in baseline.water.review.basins if r.source.kind == "lake")
+    assert old.outlet_connection == "connected"
+    assert lake.outlet_connection == "blocked"
+    assert lake.wet_component_count == 1
+    links = lake.wet_links
+    assert links is not None and links.blocked_link_count == 1
+    assert links.contact_reachable_wet_cell_count is not None
+    assert 0 < links.contact_reachable_wet_cell_count < lake.wet_cell_count
+    assert "outlet_water_disconnected" in lake.issues
+    assert lake.outlet_route is not None and lake.outlet_route.status == "sampled_clear"
+    assert lake.shoreline is not None and lake.shoreline.uncontrolled_low_sample_count == 0
+    np.testing.assert_array_equal(terrain.elevation_m, baseline.elevation_m)
+    np.testing.assert_array_equal(terrain.routing_final_elevation_m,
+                                  baseline.routing_final_elevation_m)
+    np.testing.assert_array_equal(terrain.routing.accumulation_km2,
+                                  baseline.routing.accumulation_km2)
+    assert lake.retained_contributing_area_km2 == lake.captured_contributing_area_km2
+    assert not terrain.basin_outflow.source_km2.any()
+    assert terrain.basin_outflow.summary.area_balance_error_km2 == pytest.approx(0, abs=1e-6)
+    link = next(link for link in links.links if link.blocked)
+    with render_basin_outflow_overlay(terrain, (513, 303)) as overlay:
+        x, y = link.maximum_position_km
+        col = round(x * 512 / terrain.x_km[-1])
+        row = round(y * 302 / terrain.y_km[-1])
+        pixels = np.asarray(overlay)
+        assert np.any(np.all(pixels[row-3:row+4, col-3:col+4] == (255, 95, 65, 255), axis=-1))
+
+
+def test_unresolved_wet_network_retains_captured_area(monkeypatch: pytest.MonkeyPatch) -> None:
+    project = load_terrain_project(Path(__file__).parents[1] /
+                                  "examples/terrain/flat-outlet.dmterrain.json").project
+    monkeypatch.setattr("dmtools.terrain.pipeline.wet_links.MAX_WET_LINK_SAMPLES", 1)
+    terrain = generate_terrain(project.coastline, replace(project.settings, resolution_px=65),
+                               constraints=project.constraints)
+    lake = next(r for r in terrain.water.review.basins if r.source.kind == "lake")
+    assert lake.outlet_connection == "blocked"
+    assert lake.wet_links is not None and lake.wet_links.status == "budget_exceeded"
+    assert lake.wet_links.links == ()
+    assert "wet_link_sampling_unresolved" in lake.issues
+    assert not terrain.basin_outflow.source_km2.any()
+    assert lake.retained_contributing_area_km2 == lake.captured_contributing_area_km2

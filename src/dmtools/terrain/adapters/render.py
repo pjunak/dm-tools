@@ -317,7 +317,7 @@ def render_drainage_review(terrain: GeneratedTerrain) -> Image.Image:
         "yellow candidate exits. Teal: connected lake outflow.",
         "Basin fills: cyan water / green land feed a connected outlet; amber stays retained. "
         "Footprint nodes only, not full upstream catchments.",
-        "Orange dots: fine boundary openings. Red diamonds: outlet barriers or downstream climbs. "
+        "Orange dots: fine boundary openings. Red diamonds: water barriers or downstream climbs. "
         "Sampled evidence; stable lake levels are not modeled.",
         f"Shared review grid: {width} x {height}. Natural-basin escape candidates ignore "
         "authored retention. Connected outflows use sampled finished terrain.",
@@ -364,7 +364,8 @@ def render_basin_outflow_overlay(
                 draw.ellipse((px - 3, py - 3, px + 3, py + 3),
                              fill=(255, 160, 60, 255), outline=(24, 33, 43, 255))
         route = record.outlet_route
-        barriers: list[tuple[float, float]] = []
+        barriers = ([link.maximum_position_km for link in record.wet_links.links if link.blocked]
+                    if record.wet_links is not None else [])
         if route is not None and "outlet_connection_above_water" in route.issues:
             assert route.connection_profile is not None
             assert route.connection_profile.maximum_position_km is not None
