@@ -86,7 +86,11 @@ visible and exported ([ADR-0037](../adr/0037-expose-basin-catchment-outcomes.md)
 Exact internal flats now use integer ranks with contained links; closed pits
 remain retained ([ADR-0038](../adr/0038-route-basin-flats-with-integer-gradients.md)).
 
-1. Refine contact/shoreline sampling and controlling-sill evidence. Then support
+Finer shoreline and water/outlet-attachment profiles now detect additional
+openings and barriers ([ADR-0039](../adr/0039-sample-shorelines-and-outlet-connections.md)).
+
+1. Target unresolved narrow features and complete internal/downstream path
+   evidence; define controlling-sill and storage assumptions. Then support
    explicit lake chains with compatible levels and acyclic dependencies.
 2. Compare retention, constrained breach and reroute proposals using full paths,
    cut depth/length and preserved anchors, then expose reviewable river networks.

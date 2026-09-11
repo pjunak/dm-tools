@@ -57,7 +57,7 @@ def test_headless_build_preserves_dem_and_has_repeatable_verified_products(
     build_module.build_terrain_project(project_path, second)
     document: dict[str, Any] = json.loads((first / "manifest.json").read_text())
     schema_dir = EXAMPLES.parents[1] / "schemas" / "terrain"
-    assert document["schema_version"] == 11
+    assert document["schema_version"] == 12
     assert document["inputs"]["project_schema_version"] == 5
     assert document["algorithms"]["seed_policy"] == SEED_POLICY_ID
     resolved_seed = stage_seed(loaded.project.settings.seed, RELIEF_STAGE_ID)
@@ -75,7 +75,7 @@ def test_headless_build_preserves_dem_and_has_repeatable_verified_products(
     )
     schema = next(
         item for item in schemas
-        if item["$id"] == "urn:dmtools:schema:terrain-build:11"
+        if item["$id"] == "urn:dmtools:schema:terrain-build:12"
     )
     validate(document, schema, cls=Draft202012Validator, registry=registry)
     invalid = {**document, "coordinates": {**document["coordinates"], "world_crs": "EPSG:4326"}}
@@ -409,3 +409,14 @@ def test_connected_outlet_build_exports_conserved_source_and_terminal_area(
         lake["outlet_elevation_m"] - lake["source"]["water_level_m"])
     assert lake["outlet_ground_minus_water_m"] < 0
     assert "outlet_below_water" in lake["issues"]
+    shoreline = lake["shoreline"]
+    assert shoreline["profile"]["status"] == "sampled"
+    assert len(shoreline["profile"]["positions_km"]) > 1000
+    assert len(shoreline["profile"]["ground_m"]) == len(shoreline["profile"]["positions_km"])
+    assert shoreline["uncontrolled_low_sample_count"] == 0
+    connection = lake["outlet_route"]["connection_profile"]
+    assert connection["status"] == "sampled"
+    assert connection["maximum_ground_m"] == max(connection["ground_m"])
+    assert connection["maximum_ground_m"] <= lake["source"]["water_level_m"] + .01
+    maximum_index = connection["ground_m"].index(connection["maximum_ground_m"])
+    assert connection["positions_km"][maximum_index] == connection["maximum_position_km"]

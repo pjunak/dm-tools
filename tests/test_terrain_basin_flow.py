@@ -5,15 +5,41 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+from numpy.typing import NDArray
 from shapely.geometry import Polygon
 
 from dmtools.terrain.adapters import load_terrain_project
-from dmtools.terrain.adapters.render import render_basin_catchment_overlay
+from dmtools.terrain.adapters.render import (
+    render_basin_catchment_overlay,
+    render_basin_outflow_overlay,
+)
 from dmtools.terrain.domain import TerrainBasin, TerrainStructure
 from dmtools.terrain.pipeline import GeneratedTerrain, generate_terrain
 from dmtools.terrain.pipeline.basin_flow import BasinCatchmentClass, resolve_basin_outflow
 from dmtools.terrain.pipeline.hydrology import drainage_incision
-from dmtools.terrain.pipeline.water import basin_intent_ids, prepare_basins
+from dmtools.terrain.pipeline.water import MetricBasin, basin_intent_ids, prepare_basins
+from dmtools.terrain.pipeline.water_sampling import GroundSampler
+
+
+def _connection_sampler(
+    basins: tuple[MetricBasin, ...], ground: NDArray[np.float64],
+    heights: tuple[float | None, ...],
+) -> GroundSampler:
+    """Explicit high rims and low openings supplement these unit-spaced grid fixtures."""
+    def sample(x: NDArray[np.float64], y: NDArray[np.float64]) -> NDArray[np.float32]:
+        values = np.full(x.shape, 20., dtype=np.float32)
+        for basin, height in zip(basins, heights, strict=True):
+            if basin.outlet_km is None:
+                continue
+            ox, oy = basin.outlet_km
+            values[np.hypot(x - ox, y - oy) <= np.sqrt(2)] = 2
+            # Preserve canonical values wherever the analytic profile visits a grid node.
+            grid = (x == np.rint(x)) & (y == np.rint(y))
+            values[grid] = ground[y[grid].astype(int), x[grid].astype(int)]
+            assert height is not None
+            values[(x == ox) & (y == oy)] = height
+        return values
+    return sample
 
 
 def _check_internal_paths(terrain: GeneratedTerrain) -> float:
@@ -59,8 +85,11 @@ def _check_internal_paths(terrain: GeneratedTerrain) -> float:
 
 @pytest.mark.parametrize("case", ["connected", "closed", "dry", "uphill", "shoreline",
                                   "split", "pocket", "reentry", "contact_only",
-                                  "head_deep", "head_shallow", "submerged_outlet"])
-def test_basin_connection_and_conservation(case: str) -> None:
+                                  "head_deep", "head_shallow", "submerged_outlet",
+                                  "subgrid_inner_barrier", "subgrid_outer_barrier",
+                                  "subgrid_leak", "subgrid_budget", "subgrid_submerged",
+                                  "subgrid_tolerated"])
+def test_basin_connection_and_conservation(case: str, monkeypatch: pytest.MonkeyPatch) -> None:
     axis = np.arange(13, dtype=np.float64)
     x, y = np.meshgrid(axis, axis)
     land = (x >= 1) & (x <= 11) & (y >= 1) & (y <= 11)
@@ -103,12 +132,32 @@ def test_basin_connection_and_conservation(case: str) -> None:
     routing = drainage_incision(ground, land, np.ones_like(ground), x_spacing_km=1,
         y_spacing_km=1, maximum_elevation_m=100, variability=.5, retention_terminal_mask=ids > 0)
     old_area = routing.accumulation_km2.copy()
-    outlet_height = 2. if case == "submerged_outlet" else 10. if lake.outlet is not None else None
+    outlet_height = (2. if case in ("submerged_outlet", "subgrid_submerged") else
+                     10. if lake.outlet is not None else None)
+    base_sampler = _connection_sampler(basins, ground, (outlet_height,))
+
+    def sampler(xx: NDArray[np.float64], yy: NDArray[np.float64]) -> NDArray[np.float32]:
+        values = base_sampler(xx, yy)
+        if case in ("subgrid_inner_barrier", "subgrid_outer_barrier", "subgrid_submerged",
+                    "subgrid_tolerated"):
+            center = 7.6 if case == "subgrid_outer_barrier" else 7.1
+            selected = (np.abs(xx - center) < .03) & (np.abs(yy - 6) < .03)
+            values[selected] = (9. if case == "subgrid_submerged" else
+                                10.005 if case == "subgrid_tolerated" else 20.)
+        elif case == "subgrid_leak":
+            values[(np.abs(xx - 4.8) < .03) & (np.abs(yy - 2.4) < .03)] = 2
+        return values
+
+    if case.startswith("subgrid_"):
+        # Every existing grid height is identical: only finer evidence changes the decision.
+        np.testing.assert_array_equal(sampler(x, y), ground.astype(np.float32))
+    if case == "subgrid_budget":
+        monkeypatch.setattr("dmtools.terrain.pipeline.water_sampling.MAX_PROFILE_SAMPLES", 10)
     review, flow = resolve_basin_outflow(basins, ids, ground, routing, land, receivers,
-        flags, axis, axis, polygon, (lake,), (outlet_height,))
+        flags, axis, axis, polygon, (lake,), (outlet_height,), sampler)
     record = review.basins[0]
     connected = case in ("connected", "pocket", "contact_only", "head_deep", "head_shallow",
-                         "submerged_outlet")
+                         "submerged_outlet", "subgrid_submerged", "subgrid_tolerated")
     assert record.outlet_connection == ("connected" if connected else
                                         "closed" if case in ("closed", "dry") else "blocked")
     assert flow.summary.source_area_km2 == 121
@@ -163,13 +212,33 @@ def test_basin_connection_and_conservation(case: str) -> None:
         assert "outlet_below_water" in record.issues
     if case == "shoreline":
         assert "outlet_shoreline_uncontained" in record.issues
+    if case in ("subgrid_inner_barrier", "subgrid_outer_barrier"):
+        assert record.outlet_route is not None
+        assert "outlet_connection_above_water" in record.outlet_route.issues
+        assert record.outlet_route.connection_profile is not None
+        assert record.outlet_route.connection_profile.maximum_ground_m == 20
+        assert record.outlet_route.maximum_height_above_water_m == 10
+    if case == "subgrid_submerged":
+        assert record.outlet_route is not None
+        assert record.outlet_route.connection_profile is not None
+        assert record.outlet_route.connection_profile.maximum_ground_m == 9
+        assert record.outlet_ground_minus_water_m == -8
+    if case == "subgrid_leak":
+        assert record.low_boundary_cell_count == 3
+        assert record.uncontrolled_low_boundary_cell_count == 0
+        assert record.shoreline is not None and record.shoreline.uncontrolled_low_sample_count > 0
+        assert "shoreline_low_ground" in record.issues
+    if case == "subgrid_budget":
+        assert "shoreline_sampling_unresolved" in record.issues
+        assert record.shoreline is not None
+        assert record.shoreline.profile.positions_km == ()
     if case == "connected":
         assert record.retained_contributing_area_km2 == 0
         assert record.issues == ()
     np.testing.assert_array_equal(ground, original)
     np.testing.assert_array_equal(routing.accumulation_km2, old_area)
     repeated, again = resolve_basin_outflow(basins, ids, ground, routing, land, receivers,
-        flags, axis, axis, polygon, (lake,), (outlet_height,))
+        flags, axis, axis, polygon, (lake,), (outlet_height,), sampler)
     assert repeated == review
     np.testing.assert_array_equal(again.internal_receivers, flow.internal_receivers)
     np.testing.assert_array_equal(again.flat_rank, flow.flat_rank)
@@ -203,8 +272,9 @@ def test_two_outlets_share_a_trunk_without_double_counting_or_order_dependence()
     flags[6, 11] = 2
     routing = drainage_incision(ground, land, np.ones_like(ground), x_spacing_km=1,
         y_spacing_km=1, maximum_elevation_m=100, variability=.5, retention_terminal_mask=ids > 0)
+    sampler = _connection_sampler(basins, ground, (10., 10.))
     review, flow = resolve_basin_outflow(basins, ids, ground, routing, land, receivers,
-                                        flags, axis, axis, polygon, lakes, (10., 10.))
+                                        flags, axis, axis, polygon, lakes, (10., 10.), sampler)
     assert all(record.outlet_connection == "connected" for record in review.basins)
     total = sum(record.outlet_contributing_area_km2 for record in review.basins)
     assert flow.throughput_km2[6, 10] == pytest.approx(total)
@@ -212,7 +282,7 @@ def test_two_outlets_share_a_trunk_without_double_counting_or_order_dependence()
     assert flow.summary.area_balance_error_km2 == pytest.approx(0, abs=1e-10)
     reversed_basins = prepare_basins(tuple(reversed(lakes)), 12, 12, polygon, 100)
     other, result = resolve_basin_outflow(reversed_basins, ids, ground, routing, land, receivers,
-        flags, axis, axis, polygon, tuple(reversed(lakes)), (10., 10.))
+        flags, axis, axis, polygon, tuple(reversed(lakes)), (10., 10.), sampler)
     assert other == review
     np.testing.assert_array_equal(result.throughput_km2, flow.throughput_km2)
 
@@ -275,3 +345,31 @@ def test_real_outlet_revalidates_and_preserves_ground_across_resolution_and_clos
     record = next(r for r in blocked.water.review.basins if r.source.kind == "lake")
     assert record.outlet_route is not None
     assert "outlet_route_uphill" in record.outlet_route.issues
+
+
+def test_public_subgrid_shoreline_opening_is_rejected_and_marked_across_resolutions() -> None:
+    project = load_terrain_project(Path(__file__).parents[1] /
+                                  "examples/terrain/shoreline-gap.dmterrain.json").project
+    terrain = generate_terrain(project.coastline, replace(project.settings, resolution_px=65),
+                               constraints=project.constraints)
+    refined = generate_terrain(project.coastline, replace(project.settings, resolution_px=129),
+                               constraints=tuple(reversed(project.constraints)))
+    assert terrain.water.review == refined.water.review
+    assert terrain.basin_outflow.summary.connected_outlet_count == 0
+    assert not terrain.basin_outflow.source_km2.any()
+    assert not terrain.basin_outflow.flat_rank.any()
+    np.testing.assert_array_equal(terrain.basin_outflow.internal_receivers, -1)
+    assert terrain.basin_outflow.summary.area_balance_error_km2 == pytest.approx(0, abs=1e-6)
+    lake = next(r for r in terrain.water.review.basins if r.source.kind == "lake")
+    assert lake.outlet_connection == "blocked"
+    assert lake.outlet_route is not None and lake.outlet_route.status == "sampled_clear"
+    assert lake.uncontrolled_low_boundary_cell_count == 0
+    assert lake.shoreline is not None and lake.shoreline.uncontrolled_low_sample_count == 2
+    assert "shoreline_low_ground" in lake.issues
+    with render_basin_outflow_overlay(terrain, (513, 303)) as overlay:
+        pixels = np.asarray(overlay)
+        for index in lake.shoreline.uncontrolled_low_sample_indices:
+            x, y = lake.shoreline.profile.positions_km[index]
+            col = round(x * 512 / terrain.x_km[-1])
+            row = round(y * 302 / terrain.y_km[-1])
+            assert np.any(np.all(pixels[row-2:row+3, col-2:col+3] == (255, 160, 60, 255), axis=-1))

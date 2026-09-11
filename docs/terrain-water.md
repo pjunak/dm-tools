@@ -53,7 +53,7 @@ The generation result retains water products and a review on the shared
 sorted by kind, level, outlet and points. They identify this result and can change
 when inputs change; they are distinct from derived depression candidate IDs.
 
-Build v11 includes `water.npz`, sharing the delivered DEM's grid and axes:
+Build v12 includes `water.npz`, sharing the delivered DEM's grid and axes:
 
 | Field | Meaning |
 |---|---|
@@ -116,13 +116,23 @@ Selection happens before downstream success is known, so an obstruction is not
 hidden by choosing a farther node. A wet sample within the same distance and
 connected by a segment inside the footprint is required for sampled water contact.
 
+The water-contact node, exact outlet and selected outside attachment form a
+short connection profile. Re-evaluate the finished ground between those points,
+rounding each value to Float32. Spacing is at most one quarter of the shorter
+canonical axis step; every nonzero segment also includes an interior sample.
+A sampled height above water plus 0.01 m blocks the connection. A submerged
+crest can remain passable. The largest sampled ground height and its position
+are evidence for this selected connection, not a surveyed controlling sill.
+
 The review follows the finished field's conditioned D8 receivers to a terminal
 or the first invalid step. It inspects **unfilled** ground heights along the
 entire visited route, including the attachment from the lake's water level.
 It records canonical flat indices, reviewed length in kilometres, uphill step
 count, maximum rise, maximum height above lake level, terminal index and boundary
-flags. Length and height statistics cover the inspected prefix if geometry or
-a graph error blocks further tracing; they are not a complete breach estimate.
+flags. The maximum height above water includes the finer connection profile;
+uphill counts/rises still describe the coarse downstream steps. Downstream
+statistics cover the inspected prefix if geometry or a graph error blocks
+further tracing; they are not a complete breach estimate.
 
 Every segment is checked against vector land and every authored footprint, so
 a gap or protected area between raster nodes cannot be silently jumped. Re-entry,
@@ -132,8 +142,9 @@ terminals without exterior-water adjacency need an explicit boundary level.
 
 `outlet_route.status` is `sampled_clear`, `blocked` or `unresolved` (no eligible
 attachment). `sampled_clear` means this candidate has no detected obstruction
-at the sampled spacing. It does not check terrain between nodes, choose an
-ocean level or validate river gradients at finer scales. Connection additionally
+at the sampled spacing. The short water/outlet attachment receives the finer
+check above; subsequent downstream edges still use canonical ground heights.
+Ocean levels and finer river gradients remain unresolved. Connection additionally
 requires the water and shoreline checks below. Every regeneration reassesses
 the route on the current finished field; no stale connected state is persisted.
 
@@ -149,7 +160,22 @@ node, with vector-contained D8 links between water samples. All low shoreline
 edges outside the declared outlet opening block connection. The opening is
 bounded to one canonical grid diagonal from the exact outlet: both endpoints
 of an exempt low edge must be within that distance. Raster-edge leakage is
-never exempt. This is a coarse aperture, not a surveyed shoreline.
+never exempt. This aperture remains a declared sampling allowance, not an
+estimated channel width.
+
+The exact polygon boundary also receives finer ground samples at the spacing
+above. Every drawn corner is included, with canonical ring orientation/start.
+Any boundary sample below water minus 0.01 m outside the allowed opening blocks
+connection, even when no coarse wet node reveals it. Closed lakes receive the
+same review with no permitted opening; dry basins have no water-boundary review.
+A low boundary sample is potential uncontained water, not proof that a particular
+interior pool reaches it. The conservative gate does not merge isolated pools.
+
+Each profile permits at most 65,536 requested samples, evaluated in batches of
+at most 4,096. If the requested count exceeds that budget, it returns unresolved
+with empty evidence and blocks connection. It never silently loosens spacing.
+These are deterministic checks, independent of delivered DEM resolution; they
+cannot rule out a narrower feature falling between all sample points.
 
 Dry footprint nodes transfer captured area only when their internal D8 path
 reaches connected lake water. Each link must stay entirely inside the authored
@@ -182,9 +208,44 @@ not resize or cut the downstream channel, recompute all terrain runoff, or
 certify the other planned rivers. **Drainage review** shows connected outlet
 paths in teal; ordinary relief and the DEM remain ground/water-surface products.
 
+## Finer water evidence
+
+Build v12 stores the additional evidence in `diagnostics.json`, under
+`authored_water`; numeric archives retain their existing layouts.
+`sampling_algorithm_id` identifies `quarter-grid-float32-water-checks@1`.
+
+Each lake's `shoreline` contains a `profile`, `opening_radius_km`,
+`low_sample_count`, `uncontrolled_low_sample_count` and
+`uncontrolled_low_sample_indices`. The last field indexes the profile directly;
+counts include its repeated closing endpoint. A dry basin has null shoreline.
+`outlet_route.connection_profile` is null without both a selected water contact
+and an outside attachment.
+
+Both profiles use the same fields:
+
+| Field | Meaning |
+|---|---|
+| `status` | `sampled` or `budget_exceeded` |
+| `spacing_limit_km` | Maximum requested spacing in local kilometres |
+| `requested_sample_count` | Required count, retained even when over budget |
+| `positions_km` | Ordered local metric coordinate pairs, including exact vertices |
+| `ground_m` | Matching Float32 ground values represented as JSON numbers |
+| `minimum_ground_m`, `maximum_ground_m` | Sample extrema, null when unresolved |
+| `maximum_position_km` | First position attaining the sampled maximum, or null |
+
+Unresolved profiles contain empty position/height lists. All evaluated values
+must be finite; an invalid sampler result fails generation. Boundary and short
+connection checks share the current final-field evaluator and preserve source
+constraints, ground arrays and the original capture graph.
+
+**Basin details** reports boundary counts and the highest sampled connection
+ground. Orange dots mark low boundary samples outside the opening; red diamonds
+mark above-water connection ground. Both review toggles and the finished-terrain
+review show these markers. The complete evidence remains in the diagnostic file.
+
 ## Outflow products and conservation
 
-Build v11 includes `basin-flow.npz`, using the canonical axes in `routing.npz`:
+Build v12 includes `basin-flow.npz`, using the canonical axes in `routing.npz`:
 
 | Array | Type | Meaning |
 |---|---|---|
@@ -237,6 +298,12 @@ routing alongside retained pits.
 
 ## Shoreline findings and remaining work
 
+- `shoreline_low_ground`: finer boundary samples fall below water outside the
+  permitted opening; connection is blocked despite any clear coarse route.
+- `shoreline_sampling_unresolved`: the whole boundary exceeds the sample budget.
+- `outlet_connection_above_water`: the short contact/outlet/attachment profile
+  finds above-water ground; recorded on the candidate route.
+- `outlet_connection_unresolved`: the connection profile exceeds the sample budget.
 - `low_boundary`: wet land borders below-level ground beyond its drawn polygon
   by D8, or reaches the raster edge. An intended outlet can explain part of
   this evidence; other shoreline sections still need review.
@@ -255,10 +322,11 @@ routing alongside retained pits.
 
 The water surface remains an authored, clipped level preview. No runoff,
 water budget, automatic spill, breach, sediment or nested depression hierarchy
-is simulated. Next, refine contact/shoreline sampling and controlling-sill
-evidence, then define explicit inter-lake connections. Full constrained
+is simulated. Next, adapt sampling to narrow authored features, extend finer
+checks to internal water links and downstream paths, and define controlling-sill
+and storage assumptions before explicit lake chains. Full constrained
 breach/reroute proposals must preserve budgets and authored anchors. See
-[ADR-0038](adr/0038-route-basin-flats-with-integer-gradients.md).
+[ADR-0039](adr/0039-sample-shorelines-and-outlet-connections.md).
 
 For measured results and the prioritized next steps, read the
-[implementation rundown](research/2026-09-11-basin-flat-routing.md).
+[implementation rundown](research/2026-09-11-finer-water-connections.md).

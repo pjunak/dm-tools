@@ -27,6 +27,7 @@ from dmtools.terrain.pipeline.water import (
     review_water,
     water_products,
 )
+from dmtools.terrain.pipeline.water_sampling import review_shorelines
 
 POINTS = ((.2, .2), (.8, .2), (.8, .8), (.2, .8), (.2, .2))
 LAND = Polygon(((0, 0), (6, 0), (6, 6), (0, 6)))
@@ -42,7 +43,12 @@ def _review(
     routing = drainage_incision(surface, np.ones_like(surface, bool), np.ones_like(surface),
         x_spacing_km=1, y_spacing_km=1, maximum_elevation_m=100, variability=.5,
         retention_terminal_mask=ids > 0)
-    return review_water(basins, ids, surface, routing, anchors, (outlet_height,), (None,))
+    # These grid fixtures isolate the coarse review; a separate rim closes the exact boundary.
+    def sample_rim(x: NDArray[np.float64], y: NDArray[np.float64]) -> NDArray[np.float32]:
+        return np.full(x.shape, 100., dtype=np.float32)
+    shorelines = review_shorelines(basins, .25, float(np.sqrt(2)), sample_rim)
+    return review_water(basins, ids, surface, routing, anchors,
+                        (outlet_height,), (None,), shorelines)
 
 
 def _bowl() -> NDArray[np.float64]:

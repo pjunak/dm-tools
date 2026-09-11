@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:dmtools:schema:terrain-build:11",
-  "title": "DM Tools terrain build version 11",
-  "description": "Completion manifest for local terrain and authored-macro drainage review products.",
+  "$id": "urn:dmtools:schema:terrain-build:12",
+  "title": "DM Tools terrain build version 12",
+  "description": "Completion manifest for local terrain, drainage, and finer sampled shoreline/outlet evidence.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -25,7 +25,7 @@
       "const": "dmtools.terrain-build"
     },
     "schema_version": {
-      "const": 11
+      "const": 12
     },
     "status": {
       "const": "complete"

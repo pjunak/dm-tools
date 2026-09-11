@@ -23,6 +23,7 @@ from dmtools.terrain.pipeline.water import (
     low_boundary_cells,
     review_water,
 )
+from dmtools.terrain.pipeline.water_sampling import GroundSampler, review_shorelines
 
 
 class BasinCatchmentClass(IntEnum):
@@ -135,6 +136,7 @@ def resolve_basin_outflow(
     final_receivers: NDArray[np.int64], boundary_flags: NDArray[np.uint8],
     x_km: NDArray[np.float64], y_km: NDArray[np.float64], land: Polygon | MultiPolygon,
     constraints: tuple[TerrainConstraint, ...], outlet_heights: tuple[float | None, ...],
+    sample_ground: GroundSampler,
 ) -> tuple[WaterReview, BasinOutflow]:
     """Review current ground, connect eligible outlets, and account for every source once.
 
@@ -144,9 +146,12 @@ def resolve_basin_outflow(
     Paths must avoid every basin, so no connection can feed its own source.
     """
     routes = review_outlet_routes(basins, intent_ids, elevation_m, land_mask,
-                                  final_receivers, boundary_flags, x_km, y_km, land, outlet_heights)
+                                  final_receivers, boundary_flags, x_km, y_km, land,
+                                  outlet_heights, sample_ground)
+    dx, dy = float(x_km[1] - x_km[0]), float(y_km[1] - y_km[0])
+    shorelines = review_shorelines(basins, min(dx, dy) / 4, hypot(dx, dy), sample_ground)
     review = review_water(
-        basins, intent_ids, elevation_m, routing, constraints, outlet_heights, routes)
+        basins, intent_ids, elevation_m, routing, constraints, outlet_heights, routes, shorelines)
     catchment_class = np.where(intent_ids > 0, BasinCatchmentClass.RETAINED,
                                 BasinCatchmentClass.OUTSIDE).astype(np.uint8)
     retained = np.where((intent_ids > 0) & routing.retention_terminal_mask,
@@ -158,7 +163,6 @@ def resolve_basin_outflow(
     terminal = np.zeros_like(elevation_m)
     records = list(review.basins)
     x, y = np.meshgrid(x_km, y_km)
-    dx, dy = float(x_km[1] - x_km[0]), float(y_km[1] - y_km[0])
     for index, (basin, record) in enumerate(zip(basins, records, strict=True)):
         route = record.outlet_route
         if basin.outlet_km is None:
@@ -177,6 +181,8 @@ def resolve_basin_outflow(
         records[index] = replace(record, uncontrolled_low_boundary_cell_count=uncontrolled,
                                   issues=tuple(issues))
         if (route is None or route.status != "sampled_clear" or uncontrolled
+                or record.shoreline is None or record.shoreline.profile.status != "sampled"
+                or record.shoreline.uncontrolled_low_sample_count
                 or record.wet_component_count != 1 or not record.footprint_cell_count):
             continue
         assert route.water_contact_flat_index is not None
@@ -220,7 +226,7 @@ def resolve_basin_outflow(
     error = source_area - (retained_area + direct_area + delivered_area)
     if not np.isclose(error, 0., rtol=0., atol=max(1e-8, source_area * 1e-10)):
         raise RuntimeError("Basin outlet transfer did not conserve contributing area.")
-    summary = BasinOutflowSummary("captured-mfd-reviewed-d8-outlets@3",
+    summary = BasinOutflowSummary("captured-mfd-reviewed-d8-outlets@4",
         FLAT_ROUTING_ALGORITHM_ID,
         sum(record.outlet_connection == "connected" for record in records),
         source_area, retained_area, direct_area, delivered_area, error)

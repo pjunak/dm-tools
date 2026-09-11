@@ -12,8 +12,9 @@ from dmtools.terrain.domain import ElevationPoint, TerrainBasin, TerrainConstrai
 from dmtools.terrain.pipeline.basins import connected_components
 from dmtools.terrain.pipeline.hydrology import D8_NEIGHBOURS, DrainageIncision
 from dmtools.terrain.pipeline.outlets import OutletRouteReview
+from dmtools.terrain.pipeline.water_sampling import WATER_SAMPLING_ALGORITHM_ID, ShorelineReview
 
-WATER_ALGORITHM_ID = "authored-basin-water-review@5"
+WATER_ALGORITHM_ID = "authored-basin-water-review@6"
 
 
 @dataclass(frozen=True, slots=True)
@@ -85,12 +86,14 @@ class BasinIntentReview:
     retained_cell_count: int
     uncontrolled_low_boundary_cell_count: int
     outlet_route: OutletRouteReview | None
+    shoreline: ShorelineReview | None
     issues: tuple[str, ...]
 
 
 @dataclass(frozen=True, slots=True)
 class WaterReview:
     algorithm_id: str
+    sampling_algorithm_id: str
     grid_width: int
     grid_height: int
     elevation_tolerance_m: float
@@ -132,13 +135,14 @@ def review_water(
     elevation_m: NDArray[np.float64], routing: DrainageIncision,
     constraints: tuple[TerrainConstraint, ...], outlet_elevations_m: tuple[float | None, ...],
     outlet_routes: tuple[OutletRouteReview | None, ...],
+    shorelines: tuple[ShorelineReview | None, ...],
 ) -> WaterReview:
     """Report sampled shoreline and planned-flow conflicts without inventing repairs."""
     records: list[BasinIntentReview] = []
     tolerance = .01
     height, width = elevation_m.shape
-    for basin_id, (basin, outlet_elevation, outlet_route) in enumerate(
-        zip(basins, outlet_elevations_m, outlet_routes, strict=True), start=1,
+    for basin_id, (basin, outlet_elevation, outlet_route, shoreline) in enumerate(
+        zip(basins, outlet_elevations_m, outlet_routes, shorelines, strict=True), start=1,
     ):
         source = basin.source
         inside = intent_ids == basin_id
@@ -152,6 +156,11 @@ def review_water(
         outlet_delta = None
         if source.kind == "lake":
             assert source.water_level_m is not None
+            assert shoreline is not None
+            if shoreline.profile.status != "sampled":
+                issues.append("shoreline_sampling_unresolved")
+            elif shoreline.uncontrolled_low_sample_count:
+                issues.append("shoreline_low_ground")
             below = elevation_m < source.water_level_m - tolerance
             wet = inside & below
             wet_count = int(np.count_nonzero(wet))
@@ -194,9 +203,10 @@ def review_water(
             flat_routed_cell_count=0, collected_flat_cell_count=0,
             collected_wet_cell_count=0, collected_dry_cell_count=0, retained_cell_count=count,
             uncontrolled_low_boundary_cell_count=low_count, outlet_route=outlet_route,
-            issues=tuple(issues),
+            shoreline=shoreline, issues=tuple(issues),
         ))
-    return WaterReview(WATER_ALGORITHM_ID, width, height, tolerance, tuple(records))
+    return WaterReview(WATER_ALGORITHM_ID, WATER_SAMPLING_ALGORITHM_ID,
+                       width, height, tolerance, tuple(records))
 
 
 def water_products(

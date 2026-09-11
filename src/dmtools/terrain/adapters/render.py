@@ -259,7 +259,7 @@ def render_drainage_review(terrain: GeneratedTerrain) -> Image.Image:
     scale = max(1, 640 // max(width, height))
     map_width, map_height = width * scale, height * scale
     panel_width, panel_height = max(512, map_width), map_height + 32
-    image = Image.new("RGB", (panel_width * 2 + 24, panel_height * 2 + 129), "#18212b")
+    image = Image.new("RGB", (panel_width * 2 + 24, panel_height * 2 + 150), "#18212b")
     draw = ImageDraw.Draw(image)
     context = terrain.routing_conflicts
     summary = context.summary
@@ -317,6 +317,8 @@ def render_drainage_review(terrain: GeneratedTerrain) -> Image.Image:
         "yellow candidate exits. Teal: connected lake outflow.",
         "Basin fills: cyan water / green land feed a connected outlet; amber stays retained. "
         "Footprint nodes only, not full upstream catchments.",
+        "Orange dots: fine boundary openings. Red diamonds: connection ground above water. "
+        "Sampled evidence; stable lake levels are not modeled.",
         f"Shared review grid: {width} x {height}. Natural-basin escape candidates ignore "
         "authored retention. Connected outflows use sampled finished terrain.",
     )
@@ -348,7 +350,26 @@ def render_basin_outflow_overlay(
     image = Image.new("RGBA", size)
     draw = ImageDraw.Draw(image)
     grid = terrain.routing_grid
+    x0, y0, x1, y1 = grid.extent_km
+
+    def pixel(point: tuple[float, float]) -> tuple[float, float]:
+        return ((point[0] - x0) * (width - 1) / (x1 - x0),
+                (point[1] - y0) * (height - 1) / (y1 - y0))
+
     for record in terrain.water.review.basins:
+        shoreline = record.shoreline
+        if shoreline is not None:
+            for index in shoreline.uncontrolled_low_sample_indices:
+                px, py = pixel(shoreline.profile.positions_km[index])
+                draw.ellipse((px - 3, py - 3, px + 3, py + 3),
+                             fill=(255, 160, 60, 255), outline=(24, 33, 43, 255))
+        route = record.outlet_route
+        if route is not None and "outlet_connection_above_water" in route.issues:
+            assert route.connection_profile is not None
+            assert route.connection_profile.maximum_position_km is not None
+            px, py = pixel(route.connection_profile.maximum_position_km)
+            draw.polygon(((px, py - 4), (px + 4, py), (px, py + 4), (px - 4, py)),
+                         fill=(255, 95, 65, 255), outline="white")
         if record.outlet_connection != "connected":
             continue
         assert record.outlet_route is not None and record.source.outlet is not None

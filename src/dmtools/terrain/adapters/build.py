@@ -40,7 +40,7 @@ from dmtools.terrain.pipeline.generate import (
 from dmtools.terrain.pipeline.landforms import LANDFORM_ALGORITHM_ID
 from dmtools.terrain.pipeline.quality import TerrainQuality
 
-BUILD_SCHEMA_VERSION = 11
+BUILD_SCHEMA_VERSION = 12
 
 
 def file_sha256(path: Path) -> str:

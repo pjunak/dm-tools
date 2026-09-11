@@ -1773,6 +1773,10 @@ class TerrainApp:
             "outlet_above_water": "The outlet terrain is above the water level.",
             "outlet_below_water": "The outlet is submerged at the authored water level.",
             "outlet_route_blocked": "The declared outlet has no clear downstream route.",
+            "shoreline_low_ground": (
+                "Fine boundary samples reveal low ground outside the declared outlet opening."),
+            "shoreline_sampling_unresolved": (
+                "The fine shoreline check could not cover this whole boundary."),
             "outlet_shoreline_uncontained": "A low shoreline opening lies away from the outlet.",
             "outlet_water_disconnected": "Water is separated by the drawn basin boundary.",
             "outlet_partial_catchment": (
@@ -1812,14 +1816,28 @@ class TerrainApp:
                                 "of contributing area reaches the downstream boundary.")
             elif record.outlet_connection == "blocked":
                 findings.append("Outlet connection blocked; contributing area stays retained.")
+            shoreline = record.shoreline
+            if shoreline is not None and shoreline.profile.status == "sampled":
+                findings.append(f"Boundary review: {len(shoreline.profile.ground_m)} samples; "
+                                f"{shoreline.uncontrolled_low_sample_count} below water outside "
+                                "the outlet opening.")
             route = record.outlet_route
             if route is not None:
+                profile = route.connection_profile
+                if profile is not None and profile.maximum_ground_m is not None:
+                    findings.append(f"Highest sampled connection ground: "
+                                    f"{profile.maximum_ground_m:,.2f} m; spacing at most "
+                                    f"{profile.spacing_limit_km:,.3f} km.")
                 findings.append(f"Outlet candidate: {route.length_km:,.1f} km reviewed; "
                                 f"{route.uphill_edge_count} uphill steps, "
                                 f"largest rise {route.maximum_rise_m:,.2f} m.")
                 route_descriptions = {
                     "outlet_above_water": "The outlet terrain is above the water level.",
                     "outlet_without_sampled_water": "No sampled water connects to the outlet.",
+                    "outlet_connection_above_water": (
+                        "Ground along the water-to-outlet connection rises above the water level."),
+                    "outlet_connection_unresolved": (
+                        "The fine outlet-connection check is unresolved."),
                     "outlet_attachment_unresolved": "No nearby outward attachment was resolved.",
                     "outlet_route_cycle": "The candidate route contains a loop.",
                     "outlet_route_invalid_receiver": "The candidate route has an invalid step.",
@@ -1905,7 +1923,8 @@ class TerrainApp:
                     review.alpha_composite(paths)
                 self._review_photo = ImageTk.PhotoImage(review)
             self.preview.create_image(left, top, image=self._review_photo, anchor="nw")
-            legends.append("Teal lines: connected lake outlets. Sampled review only.")
+            legends.append("Teal lines: connected lake outlets. Orange dots: low boundary. "
+                           "Red diamonds: connection ground above water. Sampled review only.")
             self.preview.create_text(
                 left + 8, top + 8, anchor="nw", fill="white",
                 text="\n".join(legends), width=max(1, display_width - 16),

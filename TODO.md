@@ -32,7 +32,7 @@ preview, and PNG export. Those are not repeated below as unfinished work.
   hashes, generator and schema versions, master and stage seeds, effective
   parameters, working extent and units, runtime/dependency versions, warnings,
   and authoritative output hashes.
-  Current version-11 builds record named stage seeds, numeric product hashes,
+  Current version-12 builds record named stage seeds, numeric product hashes,
   and explicit local-only NPY/GeoTIFF coordinates. World placement remains open.
 - [x] **P0 — Export the authoritative Float32 DEM as local-metric GeoTIFF.**
   Implemented point registration, metre units, NaN nodata, embedded masks,
@@ -112,7 +112,7 @@ preview, and PNG export. Those are not repeated below as unfinished work.
   [ADR-0036](docs/adr/0036-connect-lake-outflow-with-area-transfer.md).
 - [x] **P1 — Show collected and retained basin nodes.** The workbench and
   finished-ground review now map collected water, collected dry ground and
-  retained nodes. Build v11 exports the classification and retained contribution
+  retained nodes. Build v12 exports the classification and retained contribution
   at each footprint node; sample counts and area accounting remain distinct.
   Exact outlet ground minus water level is reported, including submerged outlets,
   without treating a clear sampled route as proof of a stable lake level. See
@@ -120,16 +120,27 @@ preview, and PNG export. Those are not repeated below as unfinished work.
 - [x] **P1 — Route internal flats with known exits.** Integer ranks now route
   exact flats without editing the DEM. Every link is vector-contained, real
   downhill alternatives take precedence, and paths to closed pits stay retained.
-  Build v11 exports internal receivers and ranks; details separate resolved flat
+  Build v12 exports internal receivers and ranks; details separate resolved flat
   donors from those reaching lake water. The public flat-outlet fixture covers
   both outcomes. See [ADR-0038](docs/adr/0038-route-basin-flats-with-integer-gradients.md)
   and the [measured rundown](docs/research/2026-09-11-basin-flat-routing.md).
-- [ ] **P1 — Refine outlet contact, openings and controlling-sill evidence.**
-  Refine water/ground contact between nodes and validate finer
-  shoreline apertures. The measured outlet/level difference is now visible;
-  derive a controlling sill and define inflow/storage/boundary assumptions before
-  claiming stable lake levels. Do not drain isolated pockets solely because they
-  lie inside the same authored polygon.
+- [x] **P1 — Check shorelines and outlet contact between canonical nodes.**
+  Bounded profiles now sample every boundary corner and the water/outlet/first
+  attachment connection. Low boundary openings and above-water connection ground
+  block transfer; exports retain positions/heights and the review marks failures.
+  The public shoreline-gap fixture catches a real narrow opening missed by the
+  coarse review. See [ADR-0039](docs/adr/0039-sample-shorelines-and-outlet-connections.md)
+  and the [measured rundown](docs/research/2026-09-11-finer-water-connections.md).
+- [ ] **P1 — Target narrower features and complete path evidence.** Adapt
+  sample locations to authored influence radii and narrow crossings; demonstrate
+  convergence before reducing spacing or enlarging budgets. Extend finer checks
+  to internal wet links and full downstream paths. A clear quarter-grid profile
+  cannot certify ground between its samples or resolve all separate pools.
+- [ ] **P1 — Define controlling sills and physical lake-level assumptions.**
+  The exact outlet height and sampled connection maximum are now visible. Derive
+  the controlling opening/crest across relevant paths and define inflow, storage
+  and boundary assumptions before claiming stable levels. Do not drain isolated
+  pockets solely because they share an authored polygon.
 - [ ] **P1 — Connect explicit lake chains.** Require compatible water levels,
   reviewed incoming/outgoing paths and acyclic basin dependencies; keep closed
   and dry basins terminal. Current outlet paths reject every intervening basin.

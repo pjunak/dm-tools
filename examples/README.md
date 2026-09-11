@@ -35,3 +35,9 @@ plateau, shorter coastal transition and narrower height influences. Its exact
 Float32 flats exercise internal routing with exits, including paths to lower
 closed pits. Basin details separates resolved flat samples from those that
 reach connected water. This synthetic scene tests routing, not lake stability.
+
+The [shoreline-gap example](terrain/shoreline-gap.dmterrain.json) adds a narrow
+zero-height point on the connected example's lake boundary. Its coarse outlet
+path remains clear and detects no uncontrolled opening, but two finer boundary
+samples reveal the gap. The outlet stays blocked and orange review dots locate
+the low ground. This demonstrates a real generated feature, not a painted mask.

@@ -7,6 +7,8 @@ implemented with tests. Notes are listed newest first and package-support claims
 may become stale; use the
 [current development strategy](../strategy/README.md) for the active order.
 
+- [Finer water connections - 2026-09-11](2026-09-11-finer-water-connections.md)
+  records detected shoreline gaps, contact barriers, exported profiles and measured cost.
 - [Basin flat routing - 2026-09-11](2026-09-11-basin-flat-routing.md)
   records exact-flat routing, preserved pits, exported paths and measured cost.
 - [Basin catchment review - 2026-09-11](2026-09-11-basin-catchment-review.md)

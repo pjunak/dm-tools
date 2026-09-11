@@ -1260,22 +1260,25 @@ def generate_terrain(
     )
 
     routing_basin_ids = basin_intent_ids(routing_x, routing_y, basins)
+    def sample_water_ground(x: NDArray[np.float64], y: NDArray[np.float64]) -> NDArray[np.float32]:
+        values, on_land = _evaluate_elevation_samples(
+            x, y, polygon, boundary, settings, metric_constraints, automatic_valleys,
+            regions=regions)
+        return np.where(on_land, values, np.nan).astype(np.float32)
+
     outlet_heights: list[float | None] = []
     for basin in basins:
         if basin.outlet_km is None:
             outlet_heights.append(None)
         else:
             outlet_x, outlet_y = basin.outlet_km
-            values, _ = _evaluate_elevation_samples(
-                np.asarray([outlet_x]), np.asarray([outlet_y]), polygon, boundary,
-                settings, metric_constraints, automatic_valleys, regions=regions,
-            )
-            outlet_heights.append(float(np.float32(values[0])))
+            values = sample_water_ground(np.asarray([outlet_x]), np.asarray([outlet_y]))
+            outlet_heights.append(float(values[0]))
     water_review, basin_outflow = resolve_basin_outflow(
         basins, routing_basin_ids, routing_final, automatic_valleys.drainage,
         automatic_valleys.land_mask, review.drainage.receivers, review.drainage.boundary_flags,
         automatic_valleys.x_km, automatic_valleys.y_km, polygon, authored_constraints,
-        tuple(outlet_heights),
+        tuple(outlet_heights), sample_water_ground,
     )
     water = water_products(elevation, x_km, y_km, basins, routing_basin_ids, water_review)
 

@@ -10,6 +10,12 @@ import numpy as np
 from numpy.typing import NDArray
 from shapely.geometry import LineString, MultiPolygon, Polygon
 
+from dmtools.terrain.pipeline.water_sampling import (
+    GroundProfile,
+    GroundSampler,
+    sample_ground_profile,
+)
+
 if TYPE_CHECKING:
     from dmtools.terrain.pipeline.water import MetricBasin
 
@@ -17,6 +23,7 @@ if TYPE_CHECKING:
 @dataclass(frozen=True, slots=True)
 class OutletRouteReview:
     status: Literal["sampled_clear", "blocked", "unresolved"]
+    connection_profile: GroundProfile | None
     path_flat_indices: tuple[int, ...]
     water_contact_flat_index: int | None
     length_km: float
@@ -33,7 +40,7 @@ def review_outlet_routes(
     elevation_m: NDArray[np.float64], land_mask: NDArray[np.bool_],
     receivers: NDArray[np.int64], boundary_flags: NDArray[np.uint8],
     x_km: NDArray[np.float64], y_km: NDArray[np.float64], land: Polygon | MultiPolygon,
-    outlet_elevations_m: tuple[float | None, ...],
+    outlet_elevations_m: tuple[float | None, ...], sample_ground: GroundSampler,
 ) -> tuple[OutletRouteReview | None, ...]:
     """Assess one deterministic nearby attachment and its entire conditioned route.
 
@@ -108,17 +115,29 @@ def review_outlet_routes(
         if not candidates:
             issues.append("outlet_attachment_unresolved")
             results.append(OutletRouteReview(
-                "unresolved", (), contact, 0., 0, 0., max(0., outlet_height - level),
+                "unresolved", None, (), contact, 0., 0, 0., max(0., outlet_height - level),
                 None, 0, tuple(issues),
             ))
             continue
         # Choose by geometric proximity before looking at downstream success.
         _distance, current = min(candidates)
+        connection = None
+        if contact is not None:
+            connection = sample_ground_profile((coordinate(contact), outlet, coordinate(current)),
+                                                min(dx, dy) / 4, sample_ground)
+            if connection.status != "sampled":
+                issues.append("outlet_connection_unresolved")
+            else:
+                assert connection.maximum_ground_m is not None
+                if connection.maximum_ground_m > level + tolerance:
+                    issues.append("outlet_connection_above_water")
         previous_point, previous_height = outlet, level
         path: list[int] = []
         visited: set[int] = set()
         length = max_rise = 0.
         max_above = max(0., outlet_height - level)
+        if connection is not None and connection.maximum_ground_m is not None:
+            max_above = max(max_above, connection.maximum_ground_m - level)
         uphill = 0
         terminal = None
         flags = 0
@@ -171,6 +190,7 @@ def review_outlet_routes(
         if terminal is not None and (flags & 4 or not flags & 2):
             issues.append("outlet_terminal_level_unknown")
         status = "blocked" if issues else "sampled_clear"
-        results.append(OutletRouteReview(status, tuple(path), contact, length, uphill, max_rise,
-                                         max_above, terminal, flags, tuple(issues)))
+        results.append(OutletRouteReview(
+            status, connection, tuple(path), contact, length, uphill, max_rise,
+            max_above, terminal, flags, tuple(issues)))
     return tuple(results)

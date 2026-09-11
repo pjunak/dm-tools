@@ -4,6 +4,7 @@ from dataclasses import replace
 
 import numpy as np
 import pytest
+from numpy.typing import NDArray
 from shapely.geometry import Polygon
 
 from dmtools.terrain.domain import TerrainBasin
@@ -72,10 +73,18 @@ def test_outlet_route_evidence(case: str, expected: str | None) -> None:
         receivers[4, 6] = -1
     elif case in ("hole_terminal", "raster_terminal"):
         flags[4, 7] = 4 if case == "hole_terminal" else 1
+    def sample_ground(xx: NDArray[np.float64], yy: NDArray[np.float64]) -> NDArray[np.float32]:
+        # The analytic connection is submerged except at the explicit outlet point.
+        values = np.full(xx.shape, 2., dtype=np.float32)
+        assert basins[-1].outlet_km is not None
+        ox, oy = basins[-1].outlet_km
+        values[(xx == ox) & (yy == oy)] = outlet_height
+        return values
+
     original = ground.copy()
     heights = tuple(outlet_height if item.outlet_km is not None else None for item in basins)
     results = review_outlet_routes(basins, ids, ground, land, receivers, flags,
-                                   axis, axis, land_geometry, heights)
+                                   axis, axis, land_geometry, heights, sample_ground)
     result = results[-1]
     assert result is not None
     if expected is None:
@@ -95,8 +104,8 @@ def test_outlet_route_evidence(case: str, expected: str | None) -> None:
         assert result.uphill_edge_count == 1
     np.testing.assert_array_equal(ground, original)
     assert results == review_outlet_routes(basins, ids, ground, land, receivers, flags,
-                                           axis, axis, land_geometry, heights)
+                                           axis, axis, land_geometry, heights, sample_ground)
     # A closed lake supplies no outlet route, regardless of the candidate graph.
     closed = (replace(basins[-1], source=replace(lake, outlet=None), outlet_km=None),)
     assert review_outlet_routes(closed, ids, ground, land, receivers, flags,
-                                axis, axis, land_geometry, (None,)) == (None,)
+                                axis, axis, land_geometry, (None,), sample_ground) == (None,)
