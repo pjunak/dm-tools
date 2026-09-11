@@ -23,7 +23,11 @@ from dmtools.terrain.pipeline.water import (
     low_boundary_cells,
     review_water,
 )
-from dmtools.terrain.pipeline.water_sampling import GroundSampler, review_shorelines
+from dmtools.terrain.pipeline.water_sampling import (
+    GroundSampler,
+    SamplingFeature,
+    review_shorelines,
+)
 
 
 class BasinCatchmentClass(IntEnum):
@@ -136,7 +140,7 @@ def resolve_basin_outflow(
     final_receivers: NDArray[np.int64], boundary_flags: NDArray[np.uint8],
     x_km: NDArray[np.float64], y_km: NDArray[np.float64], land: Polygon | MultiPolygon,
     constraints: tuple[TerrainConstraint, ...], outlet_heights: tuple[float | None, ...],
-    sample_ground: GroundSampler,
+    sample_ground: GroundSampler, features: tuple[SamplingFeature, ...] = (),
 ) -> tuple[WaterReview, BasinOutflow]:
     """Review current ground, connect eligible outlets, and account for every source once.
 
@@ -147,9 +151,9 @@ def resolve_basin_outflow(
     """
     routes = review_outlet_routes(basins, intent_ids, elevation_m, land_mask,
                                   final_receivers, boundary_flags, x_km, y_km, land,
-                                  outlet_heights, sample_ground)
+                                  outlet_heights, sample_ground, features)
     dx, dy = float(x_km[1] - x_km[0]), float(y_km[1] - y_km[0])
-    shorelines = review_shorelines(basins, min(dx, dy) / 4, hypot(dx, dy), sample_ground)
+    shorelines = review_shorelines(basins, min(dx, dy) / 4, hypot(dx, dy), sample_ground, features)
     review = review_water(
         basins, intent_ids, elevation_m, routing, constraints, outlet_heights, routes, shorelines)
     catchment_class = np.where(intent_ids > 0, BasinCatchmentClass.RETAINED,
@@ -226,7 +230,7 @@ def resolve_basin_outflow(
     error = source_area - (retained_area + direct_area + delivered_area)
     if not np.isclose(error, 0., rtol=0., atol=max(1e-8, source_area * 1e-10)):
         raise RuntimeError("Basin outlet transfer did not conserve contributing area.")
-    summary = BasinOutflowSummary("captured-mfd-reviewed-d8-outlets@4",
+    summary = BasinOutflowSummary("captured-mfd-reviewed-d8-outlets@5",
         FLAT_ROUTING_ALGORITHM_ID,
         sum(record.outlet_connection == "connected" for record in records),
         source_area, retained_area, direct_area, delivered_area, error)

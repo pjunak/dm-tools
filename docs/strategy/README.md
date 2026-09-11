@@ -89,8 +89,12 @@ remain retained ([ADR-0038](../adr/0038-route-basin-flats-with-integer-gradients
 Finer shoreline and water/outlet-attachment profiles now detect additional
 openings and barriers ([ADR-0039](../adr/0039-sample-shorelines-and-outlet-connections.md)).
 
-1. Target unresolved narrow features and complete internal/downstream path
-   evidence; define controlling-sill and storage assumptions. Then support
+Authored narrow cores and crossings now guide local profile refinement without
+changing ground or canonical topology
+([ADR-0040](../adr/0040-refine-water-profiles-around-authored-features.md)).
+
+1. Complete internal/downstream path evidence and broader sampling convergence;
+   define controlling-sill and storage assumptions. Then support
    explicit lake chains with compatible levels and acyclic dependencies.
 2. Compare retention, constrained breach and reroute proposals using full paths,
    cut depth/length and preserved anchors, then expose reviewable river networks.

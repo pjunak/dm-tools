@@ -14,7 +14,7 @@ from dmtools.terrain.pipeline.hydrology import D8_NEIGHBOURS, DrainageIncision
 from dmtools.terrain.pipeline.outlets import OutletRouteReview
 from dmtools.terrain.pipeline.water_sampling import WATER_SAMPLING_ALGORITHM_ID, ShorelineReview
 
-WATER_ALGORITHM_ID = "authored-basin-water-review@6"
+WATER_ALGORITHM_ID = "authored-basin-water-review@7"
 
 
 @dataclass(frozen=True, slots=True)

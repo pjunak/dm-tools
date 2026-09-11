@@ -2,11 +2,12 @@
 
 from dataclasses import replace
 from pathlib import Path
+from unittest.mock import patch
 
 import numpy as np
 import pytest
 from numpy.typing import NDArray
-from shapely.geometry import Polygon
+from shapely.geometry import Point, Polygon
 
 from dmtools.terrain.adapters import load_terrain_project
 from dmtools.terrain.adapters.render import (
@@ -18,7 +19,7 @@ from dmtools.terrain.pipeline import GeneratedTerrain, generate_terrain
 from dmtools.terrain.pipeline.basin_flow import BasinCatchmentClass, resolve_basin_outflow
 from dmtools.terrain.pipeline.hydrology import drainage_incision
 from dmtools.terrain.pipeline.water import MetricBasin, basin_intent_ids, prepare_basins
-from dmtools.terrain.pipeline.water_sampling import GroundSampler
+from dmtools.terrain.pipeline.water_sampling import GroundSampler, SamplingFeature
 
 
 def _connection_sampler(
@@ -88,7 +89,8 @@ def _check_internal_paths(terrain: GeneratedTerrain) -> float:
                                   "head_deep", "head_shallow", "submerged_outlet",
                                   "subgrid_inner_barrier", "subgrid_outer_barrier",
                                   "subgrid_leak", "subgrid_budget", "subgrid_submerged",
-                                  "subgrid_tolerated"])
+                                  "subgrid_tolerated", "feature_inner_barrier",
+                                  "feature_outer_barrier"])
 def test_basin_connection_and_conservation(case: str, monkeypatch: pytest.MonkeyPatch) -> None:
     axis = np.arange(13, dtype=np.float64)
     x, y = np.meshgrid(axis, axis)
@@ -144,17 +146,27 @@ def test_basin_connection_and_conservation(case: str, monkeypatch: pytest.Monkey
             selected = (np.abs(xx - center) < .03) & (np.abs(yy - 6) < .03)
             values[selected] = (9. if case == "subgrid_submerged" else
                                 10.005 if case == "subgrid_tolerated" else 20.)
+        elif case in ("feature_inner_barrier", "feature_outer_barrier"):
+            center = 7.037 if case == "feature_inner_barrier" else 7.537
+            values[np.hypot(xx - center, yy - 6) < .001] = 20.
         elif case == "subgrid_leak":
             values[(np.abs(xx - 4.8) < .03) & (np.abs(yy - 2.4) < .03)] = 2
         return values
 
-    if case.startswith("subgrid_"):
+    features: tuple[SamplingFeature, ...] = ()
+    if case.startswith("feature_"):
+        center = 7.037 if case == "feature_inner_barrier" else 7.537
+        features = (SamplingFeature(Point(center, 6.), .001, .001),)
+        baseline, _ = resolve_basin_outflow(basins, ids, ground, routing, land, receivers,
+            flags, axis, axis, polygon, (lake,), (outlet_height,), sampler)
+        assert baseline.basins[0].outlet_connection == "connected"
+    if case.startswith(("subgrid_", "feature_")):
         # Every existing grid height is identical: only finer evidence changes the decision.
         np.testing.assert_array_equal(sampler(x, y), ground.astype(np.float32))
     if case == "subgrid_budget":
         monkeypatch.setattr("dmtools.terrain.pipeline.water_sampling.MAX_PROFILE_SAMPLES", 10)
     review, flow = resolve_basin_outflow(basins, ids, ground, routing, land, receivers,
-        flags, axis, axis, polygon, (lake,), (outlet_height,), sampler)
+        flags, axis, axis, polygon, (lake,), (outlet_height,), sampler, features)
     record = review.basins[0]
     connected = case in ("connected", "pocket", "contact_only", "head_deep", "head_shallow",
                          "submerged_outlet", "subgrid_submerged", "subgrid_tolerated")
@@ -212,7 +224,8 @@ def test_basin_connection_and_conservation(case: str, monkeypatch: pytest.Monkey
         assert "outlet_below_water" in record.issues
     if case == "shoreline":
         assert "outlet_shoreline_uncontained" in record.issues
-    if case in ("subgrid_inner_barrier", "subgrid_outer_barrier"):
+    if case in ("subgrid_inner_barrier", "subgrid_outer_barrier",
+                "feature_inner_barrier", "feature_outer_barrier"):
         assert record.outlet_route is not None
         assert "outlet_connection_above_water" in record.outlet_route.issues
         assert record.outlet_route.connection_profile is not None
@@ -238,7 +251,7 @@ def test_basin_connection_and_conservation(case: str, monkeypatch: pytest.Monkey
     np.testing.assert_array_equal(ground, original)
     np.testing.assert_array_equal(routing.accumulation_km2, old_area)
     repeated, again = resolve_basin_outflow(basins, ids, ground, routing, land, receivers,
-        flags, axis, axis, polygon, (lake,), (outlet_height,), sampler)
+        flags, axis, axis, polygon, (lake,), (outlet_height,), sampler, features)
     assert repeated == review
     np.testing.assert_array_equal(again.internal_receivers, flow.internal_receivers)
     np.testing.assert_array_equal(again.flat_rank, flow.flat_rank)
@@ -347,14 +360,28 @@ def test_real_outlet_revalidates_and_preserves_ground_across_resolution_and_clos
     assert "outlet_route_uphill" in record.outlet_route.issues
 
 
-def test_public_subgrid_shoreline_opening_is_rejected_and_marked_across_resolutions() -> None:
+@pytest.mark.parametrize("example", ["shoreline-gap", "narrow-shoreline-gap"])
+def test_public_subgrid_shoreline_opening_is_rejected_and_marked_across_resolutions(
+    example: str,
+) -> None:
     project = load_terrain_project(Path(__file__).parents[1] /
-                                  "examples/terrain/shoreline-gap.dmterrain.json").project
+                                  f"examples/terrain/{example}.dmterrain.json").project
     terrain = generate_terrain(project.coastline, replace(project.settings, resolution_px=65),
                                constraints=project.constraints)
     refined = generate_terrain(project.coastline, replace(project.settings, resolution_px=129),
                                constraints=tuple(reversed(project.constraints)))
     assert terrain.water.review == refined.water.review
+    if example == "narrow-shoreline-gap":
+        # Controlled ablation: the same generated field with only the extra stations disabled.
+        with patch("dmtools.terrain.pipeline.water_sampling._feature_windows", return_value=[]):
+            fixed = generate_terrain(project.coastline, replace(project.settings, resolution_px=65),
+                                     constraints=project.constraints)
+        assert fixed.basin_outflow.summary.connected_outlet_count == 1
+        np.testing.assert_array_equal(terrain.elevation_m, fixed.elevation_m)
+        np.testing.assert_array_equal(terrain.routing_final_elevation_m,
+                                      fixed.routing_final_elevation_m)
+        np.testing.assert_array_equal(terrain.routing.accumulation_km2,
+                                      fixed.routing.accumulation_km2)
     assert terrain.basin_outflow.summary.connected_outlet_count == 0
     assert not terrain.basin_outflow.source_km2.any()
     assert not terrain.basin_outflow.flat_rank.any()
@@ -364,7 +391,11 @@ def test_public_subgrid_shoreline_opening_is_rejected_and_marked_across_resoluti
     assert lake.outlet_connection == "blocked"
     assert lake.outlet_route is not None and lake.outlet_route.status == "sampled_clear"
     assert lake.uncontrolled_low_boundary_cell_count == 0
-    assert lake.shoreline is not None and lake.shoreline.uncontrolled_low_sample_count == 2
+    assert lake.shoreline is not None and lake.shoreline.uncontrolled_low_sample_count > 2
+    assert lake.shoreline.profile.minimum_ground_m is not None
+    assert lake.shoreline.profile.minimum_ground_m < .01
+    assert lake.shoreline.profile.feature_sample_count is not None
+    assert lake.shoreline.profile.feature_sample_count > 0
     assert "shoreline_low_ground" in lake.issues
     with render_basin_outflow_overlay(terrain, (513, 303)) as overlay:
         pixels = np.asarray(overlay)

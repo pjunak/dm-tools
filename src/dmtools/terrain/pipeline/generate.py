@@ -54,6 +54,7 @@ from dmtools.terrain.pipeline.water import (
     prepare_basins,
     water_products,
 )
+from dmtools.terrain.pipeline.water_sampling import SamplingFeature
 
 type ProgressCallback = Callable[[float, str], None]
 
@@ -204,6 +205,11 @@ def _metric_polygon(
     if not polygon.is_valid or polygon.area <= 0:
         raise ValueError("The coastline does not form a valid land polygon.")
     return polygon, frame.width_km, frame.height_km
+
+
+STRUCTURE_MIN_TAPER = .35
+STRUCTURE_MIN_WIDTH_VARIATION = .82
+ATTACHED_POINT_RADIUS_FACTOR = .45
 
 
 @dataclass(frozen=True, slots=True)
@@ -567,8 +573,8 @@ def _structure_response(
     taper_length = max(2.0 * constraint.influence_radius_km, 0.12 * line.length)
     taper_progress = np.clip(distance_to_tapered_end / taper_length, 0.0, 1.0)
     taper = taper_progress * taper_progress * (3.0 - 2.0 * taper_progress)
-    width_variation = 0.82 + 0.36 * (0.5 + 0.5 * detail_driver)
-    effective_radius = constraint.influence_radius_km * (0.35 + 0.65 * taper)
+    width_variation = STRUCTURE_MIN_WIDTH_VARIATION + 0.36 * (0.5 + 0.5 * detail_driver)
+    effective_radius = constraint.influence_radius_km * (STRUCTURE_MIN_TAPER + 0.65 * taper)
     effective_radius *= width_variation
     weight = _constraint_weight(
         distance,
@@ -837,7 +843,7 @@ def _apply_constraints(
         weight = _constraint_weight(
             distance,
             (
-                0.45 * constraint.influence_radius_km
+                ATTACHED_POINT_RADIUS_FACTOR * constraint.influence_radius_km
                 if constraint.attached_to_structure
                 else constraint.influence_radius_km
             ),
@@ -1274,11 +1280,20 @@ def generate_terrain(
             outlet_x, outlet_y = basin.outlet_km
             values = sample_water_ground(np.asarray([outlet_x]), np.asarray([outlet_y]))
             outlet_heights.append(float(values[0]))
+    # Reuse the actual smoothed geometry and the evaluator's narrowest width factors.
+    water_features = tuple(SamplingFeature(
+        c.geometry, c.influence_radius_km,
+        c.influence_radius_km * (STRUCTURE_MIN_TAPER * STRUCTURE_MIN_WIDTH_VARIATION
+                                if c.kind in ("ridge", "valley") else
+                                ATTACHED_POINT_RADIUS_FACTOR
+                                if c.kind == "point" and c.attached_to_structure else 1.))
+        for c in metric_constraints
+        if not (c.kind == "point" and c.attached_to_structure and c.elevation_mode == "relative"))
     water_review, basin_outflow = resolve_basin_outflow(
         basins, routing_basin_ids, routing_final, automatic_valleys.drainage,
         automatic_valleys.land_mask, review.drainage.receivers, review.drainage.boundary_flags,
         automatic_valleys.x_km, automatic_valleys.y_km, polygon, authored_constraints,
-        tuple(outlet_heights), sample_water_ground,
+        tuple(outlet_heights), sample_water_ground, water_features,
     )
     water = water_products(elevation, x_km, y_km, basins, routing_basin_ids, water_review)
 

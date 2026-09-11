@@ -1822,6 +1822,13 @@ class TerrainApp:
                                 f"{shoreline.uncontrolled_low_sample_count} below water outside "
                                 "the outlet opening.")
             route = record.outlet_route
+            for label, profile in (("Boundary", shoreline.profile if shoreline else None),
+                                   ("Connection", route.connection_profile if route else None)):
+                if (profile is not None and profile.status == "sampled"
+                        and profile.feature_sample_count and profile.feature_spacing_limit_km):
+                    findings.append(f"{label} feature checks: {profile.feature_sample_count} extra "
+                                    "samples near authored terrain; smallest local spacing limit "
+                                    f"{profile.feature_spacing_limit_km * 1000:,.3g} m.")
             if route is not None:
                 profile = route.connection_profile
                 if profile is not None and profile.maximum_ground_m is not None:

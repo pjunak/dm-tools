@@ -38,6 +38,11 @@ reach connected water. This synthetic scene tests routing, not lake stability.
 
 The [shoreline-gap example](terrain/shoreline-gap.dmterrain.json) adds a narrow
 zero-height point on the connected example's lake boundary. Its coarse outlet
-path remains clear and detects no uncontrolled opening, but two finer boundary
+path remains clear and detects no uncontrolled opening, but finer boundary
 samples reveal the gap. The outlet stays blocked and orange review dots locate
 the low ground. This demonstrates a real generated feature, not a painted mask.
+
+The [narrow-shoreline-gap example](terrain/narrow-shoreline-gap.dmterrain.json)
+reduces that height point's influence radius to 200 m. Fixed quarter-grid probes
+miss the opening entirely; local feature-guided probes now detect it and retain
+the lake's captured area. It uses the same public coast and a 750 m imposed level.

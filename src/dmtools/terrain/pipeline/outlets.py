@@ -13,6 +13,7 @@ from shapely.geometry import LineString, MultiPolygon, Polygon
 from dmtools.terrain.pipeline.water_sampling import (
     GroundProfile,
     GroundSampler,
+    SamplingFeature,
     sample_ground_profile,
 )
 
@@ -41,6 +42,7 @@ def review_outlet_routes(
     receivers: NDArray[np.int64], boundary_flags: NDArray[np.uint8],
     x_km: NDArray[np.float64], y_km: NDArray[np.float64], land: Polygon | MultiPolygon,
     outlet_elevations_m: tuple[float | None, ...], sample_ground: GroundSampler,
+    features: tuple[SamplingFeature, ...] = (),
 ) -> tuple[OutletRouteReview | None, ...]:
     """Assess one deterministic nearby attachment and its entire conditioned route.
 
@@ -124,7 +126,7 @@ def review_outlet_routes(
         connection = None
         if contact is not None:
             connection = sample_ground_profile((coordinate(contact), outlet, coordinate(current)),
-                                                min(dx, dy) / 4, sample_ground)
+                                                min(dx, dy) / 4, sample_ground, features)
             if connection.status != "sampled":
                 issues.append("outlet_connection_unresolved")
             else:

@@ -7,6 +7,8 @@ implemented with tests. Notes are listed newest first and package-support claims
 may become stale; use the
 [current development strategy](../strategy/README.md) for the active order.
 
+- [Feature-guided water sampling - 2026-09-11](2026-09-11-feature-guided-water-sampling.md)
+  records narrow-core detection, convergence probes, preserved ground and measured cost.
 - [Finer water connections - 2026-09-11](2026-09-11-finer-water-connections.md)
   records detected shoreline gaps, contact barriers, exported profiles and measured cost.
 - [Basin flat routing - 2026-09-11](2026-09-11-basin-flat-routing.md)

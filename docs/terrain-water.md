@@ -53,7 +53,7 @@ The generation result retains water products and a review on the shared
 sorted by kind, level, outlet and points. They identify this result and can change
 when inputs change; they are distinct from derived depression candidate IDs.
 
-Build v12 includes `water.npz`, sharing the delivered DEM's grid and axes:
+Build v13 includes `water.npz`, sharing the delivered DEM's grid and axes:
 
 | Field | Meaning |
 |---|---|
@@ -120,6 +120,7 @@ The water-contact node, exact outlet and selected outside attachment form a
 short connection profile. Re-evaluate the finished ground between those points,
 rounding each value to Float32. Spacing is at most one quarter of the shorter
 canonical axis step; every nonzero segment also includes an interior sample.
+Authored narrow cores receive additional feature-guided stations as described below.
 A sampled height above water plus 0.01 m blocks the connection. A submerged
 crest can remain passable. The largest sampled ground height and its position
 are evidence for this selected connection, not a surveyed controlling sill.
@@ -175,7 +176,8 @@ Each profile permits at most 65,536 requested samples, evaluated in batches of
 at most 4,096. If the requested count exceeds that budget, it returns unresolved
 with empty evidence and blocks connection. It never silently loosens spacing.
 These are deterministic checks, independent of delivered DEM resolution; they
-cannot rule out a narrower feature falling between all sample points.
+cannot rule out unsampled terrain between probes. The baseline alone cannot
+resolve narrow authored cores; the local refinement below targets those cores.
 
 Dry footprint nodes transfer captured area only when their internal D8 path
 reaches connected lake water. Each link must stay entirely inside the authored
@@ -210,9 +212,9 @@ paths in teal; ordinary relief and the DEM remain ground/water-surface products.
 
 ## Finer water evidence
 
-Build v12 stores the additional evidence in `diagnostics.json`, under
+Build v13 stores the additional evidence in `diagnostics.json`, under
 `authored_water`; numeric archives retain their existing layouts.
-`sampling_algorithm_id` identifies `quarter-grid-float32-water-checks@1`.
+`sampling_algorithm_id` identifies `feature-guided-float32-water-checks@2`.
 
 Each lake's `shoreline` contains a `profile`, `opening_radius_km`,
 `low_sample_count`, `uncontrolled_low_sample_count` and
@@ -227,7 +229,9 @@ Both profiles use the same fields:
 |---|---|
 | `status` | `sampled` or `budget_exceeded` |
 | `spacing_limit_km` | Maximum requested spacing in local kilometres |
-| `requested_sample_count` | Required count, retained even when over budget |
+| `requested_sample_count` | Exact count when sampled; required lower bound when over budget |
+| `feature_sample_count` | Added stations beyond the baseline, or null when unresolved |
+| `feature_spacing_limit_km` | Smallest local core-spacing limit used in the plan, or null |
 | `positions_km` | Ordered local metric coordinate pairs, including exact vertices |
 | `ground_m` | Matching Float32 ground values represented as JSON numbers |
 | `minimum_ground_m`, `maximum_ground_m` | Sample extrema, null when unresolved |
@@ -238,14 +242,38 @@ must be finite; an invalid sampler result fails generation. Boundary and short
 connection checks share the current final-field evaluator and preserve source
 constraints, ground arrays and the original capture graph.
 
+The baseline stations remain present. Each prepared point, brush segment or
+smoothed ridge/valley segment whose narrowest core radius divided by four is
+less than the baseline spacing can request refinement. Intersect a conservative
+corridor extending two nominal influence radii around that geometry with the
+profile; include closest approaches, projected endpoints and corridor ends.
+Sample the intersecting intervals with spacing no greater than one quarter of
+the narrowest core radius. Use the evaluator's 0.35 endpoint taper and 0.82
+minimum width variation for structures, and its 0.45 attached absolute-point
+radius factor. Attached relative points act through a structure profile; they
+do not add a separate local core. Region boundaries and procedural features do
+not yet provide guidance.
+
+Split polylines into segments to keep multiple crossings, normalize feature
+geometry, merge overlapping interval requirements using the finest active
+spacing, and retain deterministic station order. Duplicate guidance does not
+increase sample counts. The profile count is checked before allocating the
+refined positions or evaluating ground. If the baseline alone exceeds the
+budget, its count is a lower bound and feature planning is skipped. Otherwise
+the count includes the complete merged refinement plan. Neither failure returns
+partial ground evidence. The smallest local spacing is not a global uniform
+resolution or an accuracy guarantee; Gaussian context tails extend outside the
+chosen core corridors and interacting features can move extrema.
+
 **Basin details** reports boundary counts and the highest sampled connection
-ground. Orange dots mark low boundary samples outside the opening; red diamonds
+ground, plus extra feature samples and the smallest local spacing limit. Orange
+dots mark low boundary samples outside the opening; red diamonds
 mark above-water connection ground. Both review toggles and the finished-terrain
 review show these markers. The complete evidence remains in the diagnostic file.
 
 ## Outflow products and conservation
 
-Build v12 includes `basin-flow.npz`, using the canonical axes in `routing.npz`:
+Build v13 includes `basin-flow.npz`, using the canonical axes in `routing.npz`:
 
 | Array | Type | Meaning |
 |---|---|---|
@@ -322,11 +350,11 @@ routing alongside retained pits.
 
 The water surface remains an authored, clipped level preview. No runoff,
 water budget, automatic spill, breach, sediment or nested depression hierarchy
-is simulated. Next, adapt sampling to narrow authored features, extend finer
-checks to internal water links and downstream paths, and define controlling-sill
+is simulated. Next, extend finer evidence beyond the targeted authored cores,
+check internal water links and downstream paths, and define controlling-sill
 and storage assumptions before explicit lake chains. Full constrained
 breach/reroute proposals must preserve budgets and authored anchors. See
-[ADR-0039](adr/0039-sample-shorelines-and-outlet-connections.md).
+[ADR-0040](adr/0040-refine-water-profiles-around-authored-features.md).
 
 For measured results and the prioritized next steps, read the
-[implementation rundown](research/2026-09-11-finer-water-connections.md).
+[implementation rundown](research/2026-09-11-feature-guided-water-sampling.md).

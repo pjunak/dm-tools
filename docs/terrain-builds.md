@@ -98,7 +98,7 @@ apply the archive's `land_mask`, not an elevation threshold.
 
 `receivers` contains row-major flat D8 indices, with -1 for terminals and sea.
 `outlet_mask` identifies terminal land nodes on the filled routing graph.
-Build v12 includes `retention_terminal_mask`, identifying absorbing authored basin
+Build v13 includes `retention_terminal_mask`, identifying absorbing authored basin
 nodes among those terminals. Their D8 receiver is -1 and MFD area stays there;
 other nodes can deliver incoming area to them. Eligible lake outlets transfer
 captured area afterward in the separate `basin-flow.npz` product; this avoids
@@ -136,7 +136,7 @@ project, SVG and installed Python package files are fingerprinted; runtime and
 dependency versions are recorded. No network service is needed to build.
 
 Consumers must validate the manifest and verify product hashes. Register the
-[current build schema](../schemas/terrain/build-v12.schema.json) and
+[current build schema](../schemas/terrain/build-v13.schema.json) and
 [current project schema](../schemas/terrain/project-v5.schema.json) locally by
 `$id` for offline validation. Older formats are unsupported. The
 [seed contract](terrain-seeds.md) describes the single named-stage algorithm.
@@ -183,7 +183,7 @@ They do not assign lake levels, classify authored dry basins or modify terrain.
 
 ## Authored water products
 
-Build v12 includes `water.npz` with delivered-grid Float32 water surfaces/depths and
+Build v13 includes `water.npz` with delivered-grid Float32 water surfaces/depths and
 UInt32 footprint IDs. `routing.npz` adds canonical `basin_intent_ids`;
 `diagnostics.json` records `authored_water` and `water_sha256`. Ground elevations
 remain in the DEM and GeoTIFF. Cartographic relief shows wet lake samples, while
@@ -191,7 +191,7 @@ scientific elevation shows the ground beneath them. See the
 [water contract](terrain-water.md) for retention rules and unresolved flow conflicts.
 
 
-Build v12 requires `basin-flow.npz` on the canonical routing grid and records
+Build v13 requires `basin-flow.npz` on the canonical routing grid and records
 `basin_outflow` plus `basin_flow_sha256` in diagnostics. It includes Int64
 `internal_receivers` and UInt32 `flat_rank` alongside `catchment_class` and the
 retained, source, throughput and terminal area arrays. Diagnostics partition
@@ -202,8 +202,8 @@ additional delivery from connected outlets, not total river flow.
 See [the water contract](terrain-water.md#outflow-products-and-conservation)
 for field definitions and the conservation equation.
 
-Build v12 adds the full sampled shoreline and short water/outlet-attachment
+Build v13 includes full sampled shoreline and short water/outlet-attachment
 profiles to `diagnostics.json`. Each records metric positions, Float32 heights,
-spacing and completeness; low-boundary indices and sample extrema support the
-new review markers. Numeric archive layouts remain unchanged. See the
+baseline spacing, added feature-sample count, smallest local refinement spacing
+and completeness; low-boundary indices and sample extrema support review markers. Numeric archive layouts remain unchanged. See the
 [finer water evidence contract](terrain-water.md#finer-water-evidence).
