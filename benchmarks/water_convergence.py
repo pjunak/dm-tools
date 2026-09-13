@@ -17,8 +17,9 @@ import numpy as np
 from numpy.typing import NDArray
 from shapely.geometry import Polygon
 
-from benchmarks import profile_convergence
+from benchmarks import profile_convergence, profile_refinement
 from benchmarks.profile_convergence import DEFAULT_REFINEMENTS, compare_profile, validate_comparison
+from benchmarks.profile_refinement import refine_profile, validate_refinement
 from benchmarks.terrain import ROOT, numeric_hashes, peak_resident_bytes
 from dmtools.terrain.adapters.build import canonical_json, file_sha256, runtime_identity
 from dmtools.terrain.domain import (
@@ -126,6 +127,8 @@ def probe(
     resolution: int,
     refinements: tuple[int, ...],
     max_samples: int,
+    *, adaptive_tolerances: tuple[float, ...] = (), adaptive_max_depth: int = 7,
+    adaptive_max_samples: int = 65_536,
 ) -> dict[str, Any]:
     scene = fixture(case, seed, scale_km, direction, resolution)
     signature = inspect.signature(generate.resolve_basin_outflow)
@@ -167,6 +170,12 @@ def probe(
             plan, sample, scene.water_level_m, refinements=refinements, max_samples=max_samples
         )
         results[name] = {"plan": asdict(plan), "comparison": asdict(comparison)}
+        if name == "current" and adaptive_tolerances:
+            results[name]["adaptive"] = [asdict(refine_profile(
+                plan, sample, scene.water_level_m, tolerance_m=tolerance,
+                max_depth=adaptive_max_depth, max_samples=adaptive_max_samples,
+                reference_budget=max_samples,
+            )) for tolerance in adaptive_tolerances]
     comparison_seconds = perf_counter() - started
     if (
         before != numeric_hashes(terrain)
@@ -198,6 +207,7 @@ def source_identity() -> dict[str, str]:
         for p in (
             Path(__file__),
             Path(profile_convergence.__file__),
+            Path(profile_refinement.__file__),
             ROOT / "benchmarks/terrain.py",
         )
     }
@@ -212,12 +222,19 @@ def main() -> None:
     parser.add_argument("--resolution", type=int, default=64)
     parser.add_argument("--refinements", type=int, nargs="+", default=list(DEFAULT_REFINEMENTS))
     parser.add_argument("--max-samples", type=int, default=262_144)
+    parser.add_argument("--adaptive-tolerance", type=float, nargs="+", default=[],
+                        help="Research midpoint residual thresholds in metres; not error bounds.")
+    parser.add_argument("--adaptive-max-depth", type=int, default=7)
+    parser.add_argument("--adaptive-max-samples", type=int, default=65_536)
     parser.add_argument("--repeats", type=int, default=1)
     parser.add_argument("--output", type=Path)
     parser.add_argument("--worker", action="store_true", help=argparse.SUPPRESS)
     args = parser.parse_args()
     try:
         validate_comparison(tuple(args.refinements), args.max_samples)
+        for tolerance in args.adaptive_tolerance or [.01]:
+            validate_refinement(tolerance, args.adaptive_max_depth,
+                                args.adaptive_max_samples, args.max_samples)
         if args.repeats < 1:
             raise ValueError("Repeats must be positive.")
         for seed in args.seed:
@@ -236,6 +253,9 @@ def main() -> None:
                     args.resolution,
                     tuple(args.refinements),
                     args.max_samples,
+                    adaptive_tolerances=tuple(args.adaptive_tolerance),
+                    adaptive_max_depth=args.adaptive_max_depth,
+                    adaptive_max_samples=args.adaptive_max_samples,
                 )
             ).decode(),
             end="",
@@ -273,6 +293,13 @@ def main() -> None:
                                 "--refinements",
                                 *(str(f) for f in args.refinements),
                             ]
+                            if args.adaptive_tolerance:
+                                command.extend([
+                                    "--adaptive-tolerance",
+                                    *(str(t) for t in args.adaptive_tolerance),
+                                    "--adaptive-max-depth", str(args.adaptive_max_depth),
+                                    "--adaptive-max-samples", str(args.adaptive_max_samples),
+                                ])
                             done = subprocess.run(
                                 command, cwd=ROOT, capture_output=True, text=True, check=True
                             )
@@ -296,7 +323,7 @@ def main() -> None:
             raise RuntimeError("Generator, runtime or comparison source changed during inspection.")
         report = {
             "schema": "dmtools.water-profile-convergence",
-            "schema_version": 1,
+            "schema_version": 2,
             "complete": True,
             "runtime": runtime,
             "comparison_source_sha256": sources,
@@ -305,6 +332,14 @@ def main() -> None:
                 "changes_terrain": False,
                 "reference": "finite nested samples; not continuous ground truth",
                 "head_model": "raw Float32 ground; no lake storage or discharge",
+                "adaptive": {
+                    "method_id": profile_refinement.REFINEMENT_METHOD_ID,
+                    "tolerances_m": args.adaptive_tolerance,
+                    "max_depth": args.adaptive_max_depth,
+                    "sample_budget": args.adaptive_max_samples,
+                    "reference_factor": 1 << (args.adaptive_max_depth + 1),
+                    "continuous_error_bound": False,
+                },
             },
             "runs": runs,
         }

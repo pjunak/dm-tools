@@ -12,6 +12,10 @@ in the current status or a new dated report.
 
 ## Implemented and measured work
 
+- [Adaptive water-profile refinement - 2026-09-13](2026-09-13-adaptive-water-profile-refinement.md)
+  measures a research-only midpoint experiment, false convergence, sample demand
+  and explicit exhaustion; the heuristic is not adopted for runtime clearance.
+
 - [Water-sampling budget forecast - 2026-09-13](2026-09-13-water-budget-forecast.md)
   records shared demand planning, unchanged output/evidence and fresh-process cost.
 

@@ -76,14 +76,16 @@ Exact feature/sample reuse is now implemented; the
 [comparison](../research/2026-09-13-water-sampling-reuse.md) records unchanged
 numeric/evidence contracts and measured cost.
 
-1. Evaluate bounded local error refinement and project-scale cost against the
-   residual blended/grazing misses in the
-   [detail/context matrix](../research/2026-09-13-detail-and-context-sampling.md).
-   Regional transitions, procedural lattice-scale spacing and context shoulders
-   are implemented. Retain explicit unresolved results for complete-budget
-   exhaustion; denser sampling alone does not prove continuous clearance.
-   Define controlling-sill/storage assumptions before introducing explicit lake
-   chains with compatible levels and acyclic flow.
+1. Establish usable bounds for residual blended/grazing extrema and measure
+   project-scale sampling cost. The
+   [adaptive experiment](../research/2026-09-13-adaptive-water-profile-refinement.md)
+   shows why a small midpoint residual cannot certify an unseen interval. Keep
+   it as a research control; evaluate conservative component/combined-field
+   bounds, including Float32 rounding, before choosing a certified adaptive
+   method. Regional, procedural and context guidance remain the runtime policy.
+   Retain explicit unresolved results for complete-budget exhaustion. Define
+   controlling-sill/storage assumptions before introducing explicit lake chains
+   with compatible levels and acyclic flow.
 2. Compare retention, constrained breach and reroute proposals using full paths,
    cut depth/length and preserved anchors, then expose reviewable river networks.
 3. Extend point-anchored ridge/valley profiles with direct per-vertex controls,

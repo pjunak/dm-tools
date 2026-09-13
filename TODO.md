@@ -197,12 +197,21 @@ substeps.
   input controls and complete-budget failures. See
   [ADR-0045](docs/adr/0045-sample-procedural-detail-and-context-shoulders.md) and
   the [measured report](docs/research/2026-09-13-detail-and-context-sampling.md).
-- [ ] **P1 — Bound residual blended and grazing sampling errors.** Compare local
-  refinement driven by conservative amplitude/gradient bounds with the remaining
-  shifted extrema and longitudinal/context-tail peaks. Sweep octave counts,
-  roughness, feature scales and grazing distances, including narrow off-grid 2D
-  passages. Lattice spacing and stabilized finite extrema alone do not certify
-  clearance. Keep whole-profile/network budgets and explicit unresolved results.
+- [x] **P1 — Measure bounded midpoint refinement and false convergence.** The
+  research runner retains production probes, enforces complete-wave/depth limits
+  and checks apparent convergence against a denser nested reference. A narrow
+  20 m peak defeats an exactly zero midpoint residual. This indicator is not
+  adopted for runtime clearance; see the
+  [adaptive experiment](docs/research/2026-09-13-adaptive-water-profile-refinement.md).
+- [ ] **P1 — Bound residual blended and grazing sampling errors.** Establish
+  conservative interval/gradient bounds for the complete field before using
+  adaptive stopping to certify clearance. Account for procedural octaves, coast
+  weights, regional/constraint blends, longitudinal profiles, incision and
+  Float32 rounding; measured secants and midpoint residuals are not such bounds.
+  Compare their tightness and cost before adopting a branch-and-bound method.
+  Sweep roughness, feature scales and grazing distances, including narrow
+  off-grid 2D passages. Keep whole-profile/network budgets and explicit unresolved
+  results; the completed midpoint experiment leaves this broader item open.
 - [x] **P1 — Expose sampling demand before high-detail water reviews.**
   `terrain water-budget PROJECT` shares canonical terrain preparation and actual
   shoreline/internal-link planning. It reports exact counts or bounded required

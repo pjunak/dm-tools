@@ -125,8 +125,8 @@ split each original interval by factors 1, 2, 4, 8, 16, 32 and 64; half-shifted
 trials instead place interior probes at `(i + 0.5) / factor`, also keeping the
 original endpoints. The reference uses twice the largest factor and includes
 all trial stations exactly. It is a finite sampled reference, never continuous
-ground truth, a GCI calculation or a hydraulic model. Extrema, raw-ground
-cumulative rise, witness positions, 0.01 m threshold decisions and differences
+ground truth, a GCI calculation or a hydraulic model. Extrema, greatest raw-ground
+rise from an earlier minimum, witness positions, 0.01 m threshold decisions and differences
 to that reference are recorded. Shared positions and Float32 values must match
 byte for byte; no resampling or interpolation substitutes for field evaluation.
 
@@ -150,5 +150,40 @@ and verifies that inspection leaves numeric products and water review unchanged.
 No new product API is added. Each repeat is a fresh process; output files must
 be new, publication is completion-last, and source changes during measurement
 invalidate the run. Avoid concurrent heavy work. Results belong under ignored
-`artifacts/`; the [latest report](../docs/research/2026-09-13-detail-and-context-sampling.md)
-records findings and remaining gaps.
+`artifacts/`; the [station-policy report](../docs/research/2026-09-13-detail-and-context-sampling.md)
+records the implemented guidance and remaining gaps.
+
+### Adaptive midpoint experiment
+
+```powershell
+.\.venv\Scripts\python.exe -m benchmarks.water_convergence --seed 42 20260913 --direction horizontal diagonal oblique --repeats 2 --adaptive-tolerance 1 .1 .01 --output artifacts/adaptive-profile-matrix-final-20260913.json
+```
+
+`--adaptive-tolerance` adds midpoint-residual trials to the `current` profile;
+geometry controls and uniform trials remain available. Each threshold is a
+positive finite number of metres. This research experiment adds probes where
+midpoint ground differs from the endpoint average. It preserves all production
+stations and evaluates the entire pending wave only if it fits. The defaults
+are `--adaptive-max-depth 7` (allowed 1-8) and `--adaptive-max-samples 65536`
+(allowed 1-65536). Exhausted baseline, wave, depth or coordinate precision is
+explicit, with no accepted partial metrics or reference comparison.
+
+`indicator_satisfied` means only that the tested residuals passed. It does not
+mean clear water, bounded extrema or a converged terrain solution. Afterwards,
+a separate reference divides each original interval into
+`2**(adaptive_max_depth + 1)` parts: factor 256 at default depth. It includes
+all adaptive probes exactly and shares the `--max-samples` reference cap.
+A reference that cannot fit remains `budget_exceeded`, and error comparisons
+remain unknown. The reference never chooses the adaptive probes.
+
+The report records visited/requested station counts, residuals, hashes, extrema,
+baseline/adaptive differences against the same finite reference and
+`reference_exceeds_tolerance`. That last flag compares the largest minimum,
+maximum or ordered-rise discrepancy with the requested residual threshold;
+it is not a hydraulic decision. Station counts include repeated path positions;
+they are not unique evaluations. Timings include controls and reference work,
+not just the proposed probes. Research report schema v2 records the experiment
+method/source identity; product schemas and algorithm identities are unchanged.
+See the [adaptive report](../docs/research/2026-09-13-adaptive-water-profile-refinement.md)
+for measured benefits, false convergence and the decision to keep this heuristic
+out of runtime clearance checks.

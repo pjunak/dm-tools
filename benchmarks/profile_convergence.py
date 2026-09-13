@@ -85,7 +85,7 @@ def validate_comparison(refinements: tuple[int, ...], max_samples: int) -> None:
         raise ValueError("Comparison sample budget must be an integer from 1 to 262144.")
 
 
-def _stations(
+def nested_stations(
     base: NDArray[np.float64],
     factor: int,
     shifted: bool,
@@ -115,7 +115,7 @@ def _stations(
     return positions, indices
 
 
-def _metrics(
+def profile_metrics(
     positions: NDArray[np.float64],
     ground: NDArray[np.float32],
     level_m: float,
@@ -139,6 +139,18 @@ def _metrics(
         bool(values[maximum] > level_m + HEAD_TOLERANCE_M),
         bool(values[minimum] < level_m - HEAD_TOLERANCE_M),
         bool(rises[crest] > HEAD_TOLERANCE_M),
+    )
+
+
+def reference_difference(actual: ProfileMetrics, reference: ProfileMetrics) -> ReferenceDifference:
+    """Compare extrema and ordered rise on nested finite station sets."""
+    return ReferenceDifference(
+        actual.minimum_ground_m - reference.minimum_ground_m,
+        reference.maximum_ground_m - actual.maximum_ground_m,
+        reference.maximum_uphill_m - actual.maximum_uphill_m,
+        reference.above_level and not actual.above_level,
+        reference.below_level and not actual.below_level,
+        reference.uphill and not actual.uphill,
     )
 
 
@@ -185,7 +197,7 @@ def compare_profile(
         phase = "half_shifted" if shifted else "aligned"
         if count > max_samples:
             return ProfileTrial(factor, phase, "budget_exceeded", count), None, None, None
-        positions, indices = _stations(base, factor, shifted, reference_factor)
+        positions, indices = nested_stations(base, factor, shifted, reference_factor)
         values = sample_ground_positions(positions, sample_ground)
         trial = ProfileTrial(
             factor,
@@ -195,7 +207,7 @@ def compare_profile(
             float(np.max(np.linalg.norm(np.diff(positions, axis=0), axis=1), initial=0)),
             sha256(positions.tobytes()).hexdigest(),
             sha256(values.tobytes()).hexdigest(),
-            _metrics(positions, values, water_level_m),
+            profile_metrics(positions, values, water_level_m),
         )
         return trial, positions, values, indices
 
@@ -229,14 +241,7 @@ def compare_profile(
                 assert a is not None and b is not None
                 trial = replace(
                     trial,
-                    difference_to_reference=ReferenceDifference(
-                        a.minimum_ground_m - b.minimum_ground_m,
-                        b.maximum_ground_m - a.maximum_ground_m,
-                        b.maximum_uphill_m - a.maximum_uphill_m,
-                        b.above_level and not a.above_level,
-                        b.below_level and not a.below_level,
-                        b.uphill and not a.uphill,
-                    ),
+                    difference_to_reference=reference_difference(a, b),
                 )
             trials.append(trial)
     status = "sampled" if reference.status == "sampled" else "reference_budget_exceeded"

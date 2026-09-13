@@ -35,6 +35,13 @@ enable negative land heights or bathymetry.
 
 ## Research that has not been adopted
 
+Midpoint-residual refinement is implemented only in the research harness.
+The [measured experiment](2026-09-13-adaptive-water-profile-refinement.md) exposes
+false convergence against a denser finite reference, including an exactly zero
+indicator that misses a 20 m peak. It is not a runtime clearance rule or a
+continuous error bound. Conservative bounds for the complete blended field
+remain an open prerequisite for certified adaptive stopping.
+
 Local RBF/screened-Poisson replacement, time-stepped erosion, bedrock/sediment
 transport, coupled ridge/drainage generation, specialized glacial/wind/volcanic
 families, Earth-analogue synthesis and learned proposals remain candidates.
@@ -56,6 +63,9 @@ measured benefit and packaging/workflow evidence; it is not the next prerequisit
 
 ## Evidence and next experiments
 
+- [Adaptive profile refinement](2026-09-13-adaptive-water-profile-refinement.md)
+  measures midpoint residuals, finite-reference errors and bounded exhaustion;
+  apparent convergence does not authorize a new runtime sampling policy.
 - [Water-budget forecasting](2026-09-13-water-budget-forecast.md) adds read-only
   saved-project demand planning and preserves the existing terrain/sampler.
 - [Detail and context sampling](2026-09-13-detail-and-context-sampling.md) is
@@ -85,8 +95,8 @@ The [water-budget command](../terrain-water-budget.md) now exposes shoreline
 and potential internal-network demand using shared planning; the
 [forecast report](2026-09-13-water-budget-forecast.md) measures its cost and verifies
 unchanged terrain/evidence. It does not estimate whole-project or export cost.
-Next, compare bounded local error refinement for blended/grazing extrema and
-whole-project sampling cost, then define sill/storage semantics before lake
+Next, evaluate conservative bounds for the complete field and whole-project
+sampling cost, then define sill/storage semantics before lake
 chains. Five detail octaves keep the public flat-routing example within budget;
 its six-octave regression deliberately retains every dry donor after exhaustion.
 Do not present denser probes as continuous clearance or a physical lake model.
