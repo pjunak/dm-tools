@@ -18,7 +18,7 @@ performance claims. A source audit is not a successfully run engine comparison.
 | Basin intent and flow | Lake/dry footprints retain terrain and captured MFD area; eligible outlets transfer collected area conservatively | Runoff/discharge, equilibrium water levels, controlling sills, lake chains and nested depressions |
 | Finer water review | Shoreline/contact/full-route profiles, wet-link separation, dry-link alternatives and chosen-path cumulative checks | Sampling error bounds, off-grid 2D passages and alternatives after cumulative rejection |
 | Measurements (R41) | Elevation min/max/mean/deviation and masked X/Y differences/semivariances at physical lags | Detrending, arbitrary direction, terrain atlas, multiscale/topological descriptors |
-| Performance (R45-R47) | Selective land sampling and a 13-case fresh-process benchmark harness | Repeated network work, complex-scene crossover, 4096/memory budgets and native migration evidence |
+| Performance (R45-R47) | Selective land sampling, exact water-sample reuse and a 13-case benchmark harness | Remaining network/serialization cost, complex-scene crossover, 4096/memory budgets and native migration evidence |
 
 The current format inventory lives in [schemas](../../schemas/README.md), and
 algorithm identities, sample budgets and numeric evidence belong to the
@@ -67,8 +67,8 @@ measured benefit and packaging/workflow evidence; it is not the next prerequisit
   successful exact-output optimization and a slower rejected coast index.
   Neither result proves the best method for today's enlarged water workload.
 
-Next, measure exact reuse of repeated network preparation/evaluation without
-removing probes, relaxing budgets or dropping failure evidence. Then compare
-sampling refinement/offsets on procedural, transition and tail fixtures before
+Exact feature/sample reuse is now implemented with preserved station counts and
+evidence; see the [measured follow-through](2026-09-13-water-sampling-reuse.md).
+Next, compare sampling refinement/offsets on procedural, transition and tail fixtures before
 sill/storage semantics and lake chains. Keep the full roadmap instead of
 promoting every interesting research direction into immediate implementation.

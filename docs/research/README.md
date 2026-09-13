@@ -12,6 +12,9 @@ in the current status or a new dated report.
 
 ## Implemented and measured work
 
+- [Exact water-sampling reuse - 2026-09-13](2026-09-13-water-sampling-reuse.md)
+  records shared feature preparation/evaluation, preserved evidence and measured cost.
+
 - [Dry collection paths - 2026-09-11](2026-09-11-dry-collection-paths.md)
   records dry barriers, alternate routes, cumulative head checks and measured cost.
 - [Internal water links - 2026-09-11](2026-09-11-internal-water-links.md)

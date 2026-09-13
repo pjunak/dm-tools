@@ -9,7 +9,11 @@ from shapely.geometry import Polygon
 
 from dmtools.terrain.domain import TerrainBasin
 from dmtools.terrain.pipeline.water import prepare_basins
-from dmtools.terrain.pipeline.water_sampling import review_shorelines, sample_ground_profile
+from dmtools.terrain.pipeline.water_sampling import (
+    review_shorelines,
+    sample_ground_positions,
+    sample_ground_profile,
+)
 
 
 def test_profile_includes_corners_and_midpoints_with_bounded_spacing_and_batches(
@@ -108,3 +112,42 @@ def test_only_the_declared_bounded_opening_is_allowed() -> None:
     assert other is not None
     assert other.opening_radius_km == 0
     assert other.uncontrolled_low_sample_count == 5
+
+
+@pytest.mark.parametrize("strided", [False, True])
+def test_exact_coordinate_reuse_preserves_every_station_and_float_bits(
+    monkeypatch: pytest.MonkeyPatch, strided: bool,
+) -> None:
+    positions = np.asarray(((0., 1.), (-0., 1.), (2., 3.), (2., 4.),
+                            (np.nextafter(2., 3.), 3.), (0., 1.), (2., 3.), (-0., 1.)))
+    if strided:
+        positions = positions[::-1]
+    original = positions.tobytes()
+    monkeypatch.setattr("dmtools.terrain.pipeline.water_sampling.SAMPLE_BATCH_SIZE", 2)
+    seen: list[bytes] = []
+    batches: list[int] = []
+
+    def sampler(x: NDArray[np.float64], y: NDArray[np.float64]) -> NDArray[np.float32]:
+        batches.append(len(x))
+        seen.extend(np.asarray((a, b)).tobytes() for a, b in zip(x, y, strict=True))
+        return np.copysign(x + y, x).astype(np.float32)
+
+    expected = np.copysign(positions[:, 0] + positions[:, 1], positions[:, 0]).astype(np.float32)
+    ground = sample_ground_positions(positions, sampler)
+    assert ground.tobytes() == expected.tobytes()
+    assert len(ground) == len(positions) == 8
+    assert len(seen) == len(set(seen)) == 5
+    assert set(seen) == {p.tobytes() for p in positions}
+    assert max(batches) <= 2
+    assert positions.tobytes() == original
+    # Reuse is confined to one evaluation, with no stale values on regeneration.
+    changed = sample_ground_positions(positions, lambda x, y: np.full(x.shape, 77., np.float32))
+    np.testing.assert_array_equal(changed, 77.)
+
+
+def test_empty_profile_positions_do_not_evaluate_ground() -> None:
+    def unexpected(x: NDArray[np.float64], y: NDArray[np.float64]) -> NDArray[np.float32]:
+        pytest.fail("An empty network needs no ground evaluations.")
+
+    result = sample_ground_positions(np.empty((0, 2), dtype=np.float64), unexpected)
+    assert result.shape == (0,) and result.dtype == np.float32

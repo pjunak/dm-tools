@@ -64,17 +64,18 @@ transfers only eligible area. See [current research status](../research/status.m
 for evidence and limits, and [ADR-0043](../adr/0043-review-dry-collection-paths.md)
 for the latest accepted water behavior.
 
-1. Reduce measured repeated water-network work in Python, preserving every
-   probe, budget decision, Float32 result and failed-link record. Compare whole
-   generations and controls, not only a faster isolated helper.
-2. Measure sampling convergence for procedural relief, regional transitions and
+Exact feature/sample reuse is now implemented; the
+[comparison](../research/2026-09-13-water-sampling-reuse.md) records unchanged
+numeric/evidence contracts and measured cost.
+
+1. Measure sampling convergence for procedural relief, regional transitions and
    authored context tails. Define controlling-sill/storage assumptions before
    introducing explicit lake chains with compatible levels and acyclic flow.
-3. Compare retention, constrained breach and reroute proposals using full paths,
+2. Compare retention, constrained breach and reroute proposals using full paths,
    cut depth/length and preserved anchors, then expose reviewable river networks.
-4. Extend point-anchored ridge/valley profiles with direct per-vertex controls,
+3. Extend point-anchored ridge/valley profiles with direct per-vertex controls,
    explicit passes and asymmetric sides.
-5. Add regional drainage-density/runoff controls, then selected-region refinement
+4. Add regional drainage-density/runoff controls, then selected-region refinement
    with explicit parent and halo contracts.
 
 R04/R05 provide the first drainage correctness slice and review products;
@@ -94,8 +95,10 @@ native coast-distance cost and large generation/UI modules. The later
 substantial repeated planning/sampling cost on connected-water scenes. Earlier
 coast-only profiles do not describe that enlarged workload.
 
-Measure unchanged inputs before optimizing. Prefer bounded reuse of exact
-geometry and field evaluations; retain full evidence and conservation checks.
+Exact per-feature preparation and per-call field reuse address the first
+measured network cost. Next measure many-constraint/lake workloads, index
+crossover, scratch memory and diagnostic serialization while preserving complete
+evidence and conservation. Keep unchanged-input controls for every optimization.
 The [earlier STRtree probe](../research/2026-09-05-selective-terrain-sampling.md)
 was slower on the simple coast, so do not adopt an index without a demonstrated
 crossover. Keep process spacing and terrain budgets unchanged for an exact-output

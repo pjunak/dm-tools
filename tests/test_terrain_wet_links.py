@@ -89,7 +89,8 @@ def test_endpoint_identity_and_batched_evaluation(monkeypatch: pytest.MonkeyPatc
         return np.full(x.shape, 2., dtype=np.float32)
     args = (nodes, neighbours, np.ones(3, dtype=np.bool_), 11, ground, axis, axis, 10.)
     review, connected = review_wet_links(*args, sampler)
-    assert sizes == [3, 3, 3, 1]
+    # Two complete five-station links share one exact endpoint evaluation.
+    assert sizes == [3, 3, 3]
     assert review.requested_sample_count == 10 and connected.all()
     ground[2, 1] = 3
     with pytest.raises(ValueError, match="canonical Float32"):

@@ -50,3 +50,8 @@ requested probes, complete budgets, Float32 heights, conservation and failure
 records, and accept reuse only after focused/full tests and matching-input
 performance comparisons. Broader sampling convergence, sill/storage and lake
 chains remain the next behavior work in the [strategy](../strategy/README.md).
+
+
+The [development follow-through](../research/2026-09-13-water-sampling-reuse.md)
+records the subsequent implementation and its separate validation. The audit
+above describes documentation reconciliation before that runtime change.

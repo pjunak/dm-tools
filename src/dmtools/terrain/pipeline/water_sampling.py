@@ -1,7 +1,7 @@
 """Bounded finished-ground evidence between canonical water-review nodes."""
 
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from heapq import heappop, heappush
 from itertools import pairwise
 from math import ceil, hypot, isfinite
@@ -30,6 +30,7 @@ class SamplingFeature:
     geometry: Point | LineString
     influence_radius_km: float
     minimum_radius_km: float
+    parts: tuple[Point | LineString, ...] = field(init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
         if (self.geometry.is_empty or not self.geometry.is_valid
@@ -37,6 +38,12 @@ class SamplingFeature:
                 or not 0 < self.minimum_radius_km <= self.influence_radius_km
                 or not isfinite(self.influence_radius_km)):
             raise ValueError("Water sampling features require finite geometry and positive radii.")
+        # Every link sees the same canonical parts. Keep preparation local to the
+        # immutable feature so edited/replaced geometry cannot reuse stale parts.
+        normalized = self.geometry.normalize()
+        parts = ((normalized,) if isinstance(normalized, Point) else
+                 tuple(LineString((a, b)) for a, b in pairwise(normalized.coords) if a != b))
+        object.__setattr__(self, "parts", parts)
 
 
 @dataclass(frozen=True, slots=True)
@@ -61,11 +68,8 @@ def _feature_windows(
         step = feature.minimum_radius_km / FEATURE_RADIUS_DIVISOR
         if step >= spacing_km:
             continue
-        geometry = feature.geometry.normalize()
-        parts = ((geometry,) if isinstance(geometry, Point) else
-                 tuple(LineString((a, b)) for a, b in pairwise(geometry.coords) if a != b))
         radius = 2 * feature.influence_radius_km
-        for part in parts:
+        for part in feature.parts:
             if segment.distance(part) > radius:
                 continue
             corridor = (box(part.x - radius, part.y - radius, part.x + radius, part.y + radius)
@@ -203,7 +207,17 @@ def profile_positions(plan: GroundSamplingPlan) -> NDArray[np.float64]:
 def sample_ground_positions(
     positions: NDArray[np.float64], sample_ground: GroundSampler,
 ) -> NDArray[np.float32]:
-    """Evaluate a bounded profile or a batch of independent links consistently."""
+    """Evaluate a pointwise field once per exact position within this call.
+
+    Requested stations and budget counts are unchanged. Compare coordinate bytes
+    so signed zero and neighbouring Float64 positions are never merged; restore
+    every occurrence in its original order. No cache survives this evaluation.
+    """
+    keys = np.ascontiguousarray(positions).view(np.dtype((np.void, 16))).ravel()
+    _, first, inverse = np.unique(keys, return_index=True, return_inverse=True)
+    repeated = len(first) < len(positions)
+    if repeated:
+        positions = positions[first]
     count = len(positions)
     ground = np.empty(count, dtype=np.float32)
     for start in range(0, count, SAMPLE_BATCH_SIZE):
@@ -214,7 +228,7 @@ def sample_ground_positions(
         ground[start:start + len(part)] = values
     if not np.all(np.isfinite(ground)):
         raise ValueError("Water sampling requires finite Float32 ground.")
-    return ground
+    return ground[inverse] if repeated else ground
 
 
 def sample_ground_profile(

@@ -209,8 +209,8 @@ same review with no permitted opening; dry basins have no water-boundary review.
 A low boundary sample is potential uncontained water, not proof that a particular
 interior pool reaches it. The conservative gate does not merge isolated pools.
 
-Each profile permits at most 65,536 requested samples, evaluated in batches of
-at most 4,096. If the requested count exceeds that budget, it returns unresolved
+Each profile permits at most 65,536 requested sample stations. Ground evaluation
+uses batches of at most 4,096 distinct positions. If the requested count exceeds that budget, it returns unresolved
 with empty evidence and blocks connection. It never silently loosens spacing.
 These are deterministic checks, independent of delivered DEM resolution; they
 cannot rule out unsampled terrain between probes. The baseline alone cannot
@@ -309,9 +309,9 @@ radius factor. Attached relative points act through a structure profile; they
 do not add a separate local core. Region boundaries and procedural features do
 not yet provide guidance.
 
-Split polylines into segments to keep multiple crossings, normalize feature
-geometry, merge overlapping interval requirements using the finest active
-spacing, and retain deterministic station order. Duplicate guidance does not
+Normalize and split feature geometry once per immutable prepared feature,
+keeping every crossing. Merge overlapping interval requirements using the finest
+active spacing and retain deterministic station order. Duplicate guidance does not
 increase sample counts. The profile count is checked before allocating the
 refined positions or evaluating ground. If the baseline alone exceeds the
 budget, its count is a lower bound and feature planning is skipped. Otherwise
@@ -329,6 +329,22 @@ crest of a blocked downstream climb. The climb crest may differ from the path's
 global maximum. Both review toggles and the finished-terrain review show these
 markers. The complete evidence remains in the diagnostic file.
 
+### Exact reuse and count meaning
+
+Within one profile/network sampling call, identical pairs of Float64 coordinate
+bytes share one pointwise ground evaluation. Signed zero and distinct neighbouring
+coordinates remain distinct. Every requested station receives its original
+Float32 value in its original order, including repeated endpoints, before
+canonical checks or link/path diagnostics run. No value cache persists between
+calls, lakes or generations.
+
+`requested_sample_count`, per-link `sample_count` and feature-added counts still
+count logical station occurrences, including shared endpoints. They are the
+unchanged inputs to complete-budget decisions, not counts of evaluator calls or
+distinct positions. Reuse cannot admit an otherwise excessive profile/network.
+Sampled maxima, failure witnesses, full link records and area accounting are
+unchanged. See the [reuse measurements](research/2026-09-13-water-sampling-reuse.md).
+
 ## Internal water-link evidence
 
 Build v16 includes `wet_links` to each basin diagnostic. It is null for closed/dry
@@ -341,7 +357,7 @@ are candidates, recorded once with ascending canonical flat indices.
 | `status` | `sampled` or `budget_exceeded` |
 | `spacing_limit_km` | Quarter of the shorter canonical axis spacing |
 | `candidate_link_count` | Number of undirected wet links in this contained graph |
-| `requested_sample_count` | Exact evaluated count when sampled; required lower bound when unresolved |
+| `requested_sample_count` | Exact station count when sampled; required lower bound when unresolved |
 | `blocked_link_count` | Links with above-water ground, or null unresolved |
 | `contact_reachable_wet_cell_count` | Wet nodes reachable from the existing contact, or null unresolved |
 | `links` | Per-link evidence; empty for an excessive whole-network plan |

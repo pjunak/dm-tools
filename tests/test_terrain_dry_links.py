@@ -173,7 +173,8 @@ def test_endpoint_identity_and_bounded_batches(monkeypatch: pytest.MonkeyPatch) 
         sizes.append(len(x))
         return np.full(x.shape, 10., dtype=np.float32)
     result = route_dry_links(nodes, graph, nodes == 15, ground, axis, axis, 10., sampler)
-    assert sizes == [3, 3, 3, 1] and result.review.requested_sample_count == 10
+    # Two complete five-station links share one exact endpoint evaluation.
+    assert sizes == [3, 3, 3] and result.review.requested_sample_count == 10
     assert result.routing.receivers[0] == 1
     ground[2, 1] = 11
     with pytest.raises(ValueError, match="canonical Float32"):

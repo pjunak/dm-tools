@@ -170,10 +170,15 @@ substeps.
   path exceeding tolerance retains that donor and its upstream paths; it does
   not search different downstream choices. Compare bounded state-aware methods
   without favouring lake exits over closed pits or perturbing the DEM.
-- [ ] **P1 — Reduce repeated network profile planning and evidence overhead.**
-  Measure shared endpoint/interior evaluations, indexed feature candidates and
-  compact diagnostics before optimizing. Preserve Float32 identity, all required
-  probes, complete budget decisions and reviewable failed links.
+- [x] **P1 — Reuse exact water-sampling work.** Prepared features now retain
+  normalized parts, and each profile/network call evaluates duplicate coordinate
+  bytes once before restoring every station. Budgets, Float32 ground, endpoint
+  checks, routing and complete evidence remain unchanged. See the
+  [measured comparison](docs/research/2026-09-13-water-sampling-reuse.md).
+- [ ] **P1 — Measure remaining network planning and evidence overhead.** Compare
+  feature indexing on many-constraint scenes, project-scale profile memory and
+  compact diagnostic serialization. Retain every required probe, complete budget
+  decision and reviewable failed link; exact per-call reuse is already implemented.
 - [ ] **P1 — Measure broader feature and project-scale sampling limits.** Add
   regional transitions, procedural extrema and overlapping/context-tail cases;
   compare local extrema and decisions across refinement levels. Current core
@@ -751,7 +756,8 @@ Priorities remain conditional on the current strategy's prerequisites.
   The first implementation skips ocean samples in the delivered field and
   diagnostic sampling while preserving full canonical routing grids. Exact
   indexed segment queries were slower on the public coastline in a small probe;
-  they have not been adopted. Broader indexing/caching comparisons remain.
+  they have not been adopted. Exact feature preparation and per-call water-sample
+  reuse are now implemented; broader indexing/caching comparisons remain.
 - [ ] **Research — R46: Compare compiled kernels on demonstrated bottlenecks.**
   Start with fused noise evaluation and allocation reduction; test hydrology
   loops when representative profiles justify them. Compare existing NumPy,

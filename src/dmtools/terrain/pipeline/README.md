@@ -153,3 +153,10 @@ A failed/budget-limited review retains the affected area instead of accepting a
 sampled prefix. No review repairs terrain or establishes a physical lake level.
 See the [water contract](../../../../docs/terrain-water.md) for precise gates,
 scope, algorithms and exported evidence.
+
+
+Water review prepares normalized feature parts once and reuses exact coordinate
+samples within each bounded profile/network call. The evaluator is pointwise;
+all logical stations, endpoint checks, failed-link evidence and budget counts
+survive reconstruction. Reuse does not persist between builds. See the
+[measured comparison](../../../../docs/research/2026-09-13-water-sampling-reuse.md).
