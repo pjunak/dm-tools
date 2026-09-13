@@ -42,6 +42,13 @@ indicator that misses a 20 m peak. It is not a runtime clearance rule or a
 continuous error bound. Conservative bounds for the complete blended field
 remain an open prerequisite for certified adaptive stopping.
 
+The [noise-component experiment](2026-09-13-noise-component-bounds.md) now provides
+natural and polynomial/cell enclosures with explicit rounding allowances, a
+Float32 field boundary and complete cell-work budgets. These bound the isolated
+noise component under the documented arithmetic assumptions. They do not cover
+coast weights, regional/constraint blending, longitudinal profiles or incision,
+and have not been adopted for runtime water decisions.
+
 Local RBF/screened-Poisson replacement, time-stepped erosion, bedrock/sediment
 transport, coupled ridge/drainage generation, specialized glacial/wind/volcanic
 families, Earth-analogue synthesis and learned proposals remain candidates.
@@ -62,6 +69,10 @@ Rasterio/GDAL inside the export adapter. A future Rust port needs representative
 measured benefit and packaging/workflow evidence; it is not the next prerequisite.
 
 ## Evidence and next experiments
+
+- [Procedural-noise bounds](2026-09-13-noise-component-bounds.md) compare component
+  tightness and cost, verify rounding/finite-reference inclusion and fix the
+  twelfth-octave hash overflow warning without changing generated noise values.
 
 - [Prepared guide bounds](2026-09-13-water-guide-bounds.md) reject distant
   geometric candidates without changing sampling policy. The paired comparison
@@ -101,9 +112,9 @@ The [water-budget command](../terrain-water-budget.md) now exposes shoreline
 and potential internal-network demand using shared planning; the
 [forecast report](2026-09-13-water-budget-forecast.md) measures its cost and verifies
 unchanged terrain/evidence. It does not estimate whole-project or export cost.
-Next, evaluate conservative bounds for the complete field and whole-project
-sampling cost, then define sill/storage semantics before lake
-chains. Five detail octaves keep the public flat-routing example within budget;
+Next, assess local interval/ordered-rise uncertainty and compose conservative
+bounds beyond the isolated noise term. Measure whole-project sampling cost, then
+define sill/storage semantics before lake chains. Five detail octaves keep the public flat-routing example within budget;
 its six-octave regression deliberately retains every dry donor after exhaustion.
 Do not present denser probes as continuous clearance or a physical lake model.
 Keep the full roadmap instead of promoting every research direction into

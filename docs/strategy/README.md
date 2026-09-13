@@ -86,7 +86,13 @@ bounds on unseen terrain heights.
    shows why a small midpoint residual cannot certify an unseen interval. Keep
    it as a research control; evaluate conservative component/combined-field
    bounds, including Float32 rounding, before choosing a certified adaptive
-   method. Regional, procedural and context guidance remain the runtime policy.
+   method. The [noise-component comparison](../research/2026-09-13-noise-component-bounds.md)
+   now supplies rounded natural and polynomial/cell enclosures for one term.
+   Next assess segment/cell work and local interval/ordered-rise uncertainty;
+   then compose coast/region/constraint weights, profiles and incision with
+   valid rounding bounds. Component success
+   alone does not close the full-field contract. Regional, procedural and context
+   guidance remain the runtime policy.
    Retain explicit unresolved results for complete-budget exhaustion. Define
    controlling-sill/storage assumptions before introducing explicit lake chains
    with compatible levels and acyclic flow.

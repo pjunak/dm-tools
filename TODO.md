@@ -209,6 +209,13 @@ substeps.
   20 m peak defeats an exactly zero midpoint residual. This indicator is not
   adopted for runtime clearance; see the
   [adaptive experiment](docs/research/2026-09-13-adaptive-water-profile-refinement.md).
+- [x] **P1 — Establish and measure rounded procedural-noise component bounds.**
+  The research harness compares natural intervals with monotone polynomial and
+  bilinear-cell enclosures, including derived binary64 error allowances and final
+  Float32 conversion. Complete cell budgets, exact-rational checks, finite
+  references and replay hashes are enforced. The twelfth-octave hash now wraps
+  explicitly without overflow warnings or changed values. See the
+  [component report](docs/research/2026-09-13-noise-component-bounds.md).
 - [ ] **P1 — Bound residual blended and grazing sampling errors.** Establish
   conservative interval/gradient bounds for the complete field before using
   adaptive stopping to certify clearance. Account for procedural octaves, coast
@@ -217,7 +224,11 @@ substeps.
   Compare their tightness and cost before adopting a branch-and-bound method.
   Sweep roughness, feature scales and grazing distances, including narrow
   off-grid 2D passages. Keep whole-profile/network budgets and explicit unresolved
-  results; the completed midpoint experiment leaves this broader item open.
+  results. The noise-component experiment closes only one term; segment/cell
+  clipping, correlated octave bounds, local interval/ordered-rise uncertainty,
+  coast/region/constraint composition and rounding of distance/exponential
+  operations remain open. Neither component
+  bounds nor the completed midpoint experiment close the full-field contract.
 - [x] **P1 — Expose sampling demand before high-detail water reviews.**
   `terrain water-budget PROJECT` shares canonical terrain preparation and actual
   shoreline/internal-link planning. It reports exact counts or bounded required

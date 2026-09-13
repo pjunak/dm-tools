@@ -203,3 +203,38 @@ method/source identity; product schemas and algorithm identities are unchanged.
 See the [adaptive report](../docs/research/2026-09-13-adaptive-water-profile-refinement.md)
 for measured benefits, false convergence and the decision to keep this heuristic
 out of runtime clearance checks.
+
+
+### Procedural-noise component bounds
+
+```powershell
+.\.venv\Scripts\python.exe -m benchmarks.noise_bounds --seed 42 20260913 --detail 1 6 12 --roughness .25 .55 .9 --span .25 2 --direction horizontal diagonal oblique --divisions 1 16 256 4096 --repeats 2 --output artifacts/noise-bounds-matrix-final-20260913.json
+```
+
+This research runner compares outward natural intervals with monotone fade and
+bilinear corner bounds plus derived rounding allowances. It encloses the existing
+noise component, transformed to `Float32(2000 + 1000 * noise)` metres, over the
+boxes of fixed profile subdivisions. It does not inspect a saved project or
+bound the complete coast/region/constraint/incision field.
+
+`--span` is the horizontal profile extent in multiples of the fixed 2 km largest
+feature; diagonal/oblique profiles also move in Y. `--detail` accepts 1-12,
+`--roughness` is strictly between zero and one, and `--divisions` accepts increasing
+powers of two through 8192. Defaults use seed 42, details 1/6/12, roughness .55,
+spans .25/2, horizontal/oblique directions and subdivisions 1/16/256.
+`--max-cells` defaults to 262144 and cannot exceed it. This counts the full set of
+box/octave lattice-cell visits before evaluating any of them; it is unrelated to
+production station caps. An over-budget trial has no accepted enclosure.
+
+Each case/repeat starts a fresh process. It records source/runtime identity,
+input/bound/sample hashes, required/evaluated cells, explicit exhaustion,
+component/reference timings and process high-water memory. Both policies share
+endpoint evaluations. Their timing order is fixed, natural first. A separate
+65,537-point finite reference checks every interval and exact shared Float32
+values, without selecting bounds from those heights. Reference agreement is an
+independent check, not the proof of inclusion. Reports reserve a new path and
+publish completion last; changed sources or non-repeatable evidence fail the run.
+
+The [component report](../docs/research/2026-09-13-noise-component-bounds.md)
+derives the rounding allowances and records tightness, cost and limitations.
+Runtime water decisions and the existing water-profile benchmark remain separate.

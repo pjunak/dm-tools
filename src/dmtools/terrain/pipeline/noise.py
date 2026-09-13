@@ -24,11 +24,13 @@ def _lattice_values(
 
     x_bits = x_indices.astype(np.uint64, copy=False)
     y_bits = y_indices.astype(np.uint64, copy=False)
+    # Integer mixing is modulo 2**64, including octaves that exceed uint64.
+    octave_bits = np.uint64(((octave + 1) * int(_OCTAVE_MULTIPLIER)) & 0xFFFFFFFFFFFFFFFF)
     value = (
         np.uint64(seed)
         ^ (x_bits * _X_MULTIPLIER)
         ^ (y_bits * _Y_MULTIPLIER)
-        ^ (np.uint64(octave + 1) * _OCTAVE_MULTIPLIER)
+        ^ octave_bits
     ) & _UINT64_MASK
     value ^= value >> np.uint64(30)
     value *= np.uint64(0xBF58476D1CE4E5B9)
