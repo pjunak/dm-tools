@@ -61,16 +61,20 @@ grids, authored-macro routing, four regional recipes with incision caps, and
 lake/dry-basin authoring. Water review retains captured MFD area, checks exact
 flats, finer shorelines, full external routes and internal wet/dry paths, then
 transfers only eligible area. See [current research status](../research/status.md)
-for evidence and limits, and [ADR-0043](../adr/0043-review-dry-collection-paths.md)
-for the latest accepted water behavior.
+for evidence and limits. [ADR-0043](../adr/0043-review-dry-collection-paths.md)
+owns dry-path gates; [ADR-0044](../adr/0044-guide-water-profiles-through-regional-transitions.md)
+adds regional guidance to the shared sampler.
 
 Exact feature/sample reuse is now implemented; the
 [comparison](../research/2026-09-13-water-sampling-reuse.md) records unchanged
 numeric/evidence contracts and measured cost.
 
-1. Measure sampling convergence for procedural relief, regional transitions and
-   authored context tails. Define controlling-sill/storage assumptions before
-   introducing explicit lake chains with compatible levels and acyclic flow.
+1. Address the procedural and context-tail misses measured by the
+   [first convergence matrix](../research/2026-09-13-water-sampling-convergence.md).
+   Regional transition guidance is implemented. Compare wavelength-aware and
+   bounded local refinement, including oblique/grazing paths and representative
+   runtime. Define controlling-sill/storage assumptions before introducing
+   explicit lake chains with compatible levels and acyclic flow.
 2. Compare retention, constrained breach and reroute proposals using full paths,
    cut depth/length and preserved anchors, then expose reviewable river networks.
 3. Extend point-anchored ridge/valley profiles with direct per-vertex controls,

@@ -179,13 +179,30 @@ substeps.
   feature indexing on many-constraint scenes, project-scale profile memory and
   compact diagnostic serialization. Retain every required probe, complete budget
   decision and reviewable failed link; exact per-call reuse is already implemented.
-- [ ] **P1 — Measure broader feature and project-scale sampling limits.** Add
-  regional transitions, procedural extrema and overlapping/context-tail cases;
-  compare local extrema and decisions across refinement levels. Current core
-  corridors and radius/4 spacing are bounded review choices, not error bounds.
-  Measure complex many-lake projects and total profile/export cost before adding
-  a spatial index, shared-path reuse, a project-wide budget, or larger per-profile
-  limits; preserve exact field evaluation and deterministic evidence when reusing work.
+- [x] **P1 — Compare nested and shifted finished-ground profiles.** A read-only
+  four-case runner now measures regional transitions, procedural detail, context
+  tails and overlapping points across physical scales, directions and seeds.
+  Shared positions/Float32 ground must match exactly; unresolved budgets remain
+  explicit. The 64-run matrix is finite-reference evidence, not an error bound.
+  See the [convergence report](docs/research/2026-09-13-water-sampling-convergence.md).
+- [x] **P1 — Guide water probes through regional transitions.** Polygon boundary
+  corridors and local contained intervals now expose a 950 m plateau rise missed
+  by regular probes on a 4000 km object. Preserve ground, baseline stations,
+  complete budgets and existing wet/dry/outlet gates. See
+  [ADR-0044](docs/adr/0044-guide-water-profiles-through-regional-transitions.md).
+- [ ] **P1 — Resolve measured procedural and context-tail sampling gaps.**
+  The convergence fixtures retain procedural crest underestimates up to 388.97 m,
+  raw-path rise underestimates up to 971.28 m, a 0.31 m missed context-tail crest,
+  and shifted extrema where positive/negative influences overlap. Compare
+  wavelength-aware spacing and bounded local refinement with explicit cost and
+  unresolved status. Stabilized finite extrema alone must not certify clearance;
+  exercise oblique/grazing paths and multiple feature sizes before adoption.
+- [ ] **P1 — Measure broader project-scale sampling limits.** Extend the current
+  numeric stress fixtures to complex many-lake projects, alternate boundary shapes
+  and total profile/export cost before adding a spatial index, shared-path reuse,
+  a project-wide budget or larger per-profile limits. Preserve exact evaluation,
+  complete budgets and deterministic evidence. Current guidance is a sampling
+  policy, not a continuous terrain error bound.
 - [ ] **P1 — Define controlling sills and physical lake-level assumptions.**
   The exact outlet height and sampled connection maximum are now visible. Derive
   the controlling opening/crest across relevant paths and define inflow, storage

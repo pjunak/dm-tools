@@ -253,7 +253,7 @@ paths in teal; ordinary relief and the DEM remain ground/water-surface products.
 
 Build v16 stores the additional evidence in `diagnostics.json`, under
 `authored_water`; numeric archives retain their existing layouts.
-`sampling_algorithm_id` identifies `feature-guided-float32-water-checks@2`.
+`sampling_algorithm_id` identifies `feature-guided-float32-water-checks@3`.
 
 Each lake's `shoreline` contains a `profile`, `opening_radius_km`,
 `low_sample_count`, `uncontrolled_low_sample_count` and
@@ -270,7 +270,7 @@ Boundary, connection and external downstream profiles use the same fields:
 | `spacing_limit_km` | Maximum requested spacing in local kilometres |
 | `requested_sample_count` | Exact count when sampled; required lower bound when over budget |
 | `feature_sample_count` | Added stations beyond the baseline, or null when unresolved |
-| `feature_spacing_limit_km` | Smallest local core-spacing limit used in the plan, or null |
+| `feature_spacing_limit_km` | Smallest local core/region spacing limit used in the plan, or null |
 | `positions_km` | Ordered local metric coordinate pairs, including exact vertices |
 | `ground_m` | Matching Float32 ground values represented as JSON numbers |
 | `minimum_ground_m`, `maximum_ground_m` | Sample extrema, null when unresolved |
@@ -306,8 +306,23 @@ Sample the intersecting intervals with spacing no greater than one quarter of
 the narrowest core radius. Use the evaluator's 0.35 endpoint taper and 0.82
 minimum width variation for structures, and its 0.45 attached absolute-point
 radius factor. Attached relative points act through a structure profile; they
-do not add a separate local core. Region boundaries and procedural features do
-not yet provide guidance.
+do not add a separate local core.
+
+Regional polygons also guide every water profile. Within conservative corridors
+extending twice the inward transition distance around their boundary segments,
+request spacing no greater than transition/4 when finer than the baseline.
+Intersect the path with the region and refine the portions inside those corridors
+to at most one quarter of each contained interval's length. This catches thin
+crossed regions even when their nominal transition is broad. Include each such
+interval's midpoint if it lies in the corridor. Deep interiors keep baseline
+spacing. Tangencies add no zero-length interval, and concave regions retain
+every separate crossing. Polygon vertex clearance is not used as physical width.
+See [ADR-0044](adr/0044-guide-water-profiles-through-regional-transitions.md).
+
+Procedural relief and feature context tails still have no dedicated guidance.
+The [convergence comparison](research/2026-09-13-water-sampling-convergence.md)
+measures remaining extrema and threshold misses against finite finer samples;
+it does not establish a continuous terrain error bound.
 
 Normalize and split feature geometry once per immutable prepared feature,
 keeping every crossing. Merge overlapping interval requirements using the finest

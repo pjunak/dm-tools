@@ -12,6 +12,10 @@ in the current status or a new dated report.
 
 ## Implemented and measured work
 
+- [Water-profile convergence and regional guidance - 2026-09-13](2026-09-13-water-sampling-convergence.md)
+  records nested/shifted real-field comparisons, detected regional barriers,
+  measured remaining extrema misses and bounded implementation cost.
+
 - [Exact water-sampling reuse - 2026-09-13](2026-09-13-water-sampling-reuse.md)
   records shared feature preparation/evaluation, preserved evidence and measured cost.
 

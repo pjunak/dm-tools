@@ -9,7 +9,8 @@ from typing import TYPE_CHECKING, Literal, cast
 
 import numpy as np
 from numpy.typing import NDArray
-from shapely.geometry import LineString, Point, Polygon, box
+from shapely.geometry import GeometryCollection, LineString, MultiLineString, Point, Polygon, box
+from shapely.geometry.base import BaseGeometry
 from shapely.ops import nearest_points
 
 if TYPE_CHECKING:
@@ -17,7 +18,7 @@ if TYPE_CHECKING:
 
 type GroundSampler = Callable[[NDArray[np.float64], NDArray[np.float64]], NDArray[np.float32]]
 
-WATER_SAMPLING_ALGORITHM_ID = "feature-guided-float32-water-checks@2"
+WATER_SAMPLING_ALGORITHM_ID = "feature-guided-float32-water-checks@3"
 MAX_PROFILE_SAMPLES = 65_536
 SAMPLE_BATCH_SIZE = 4_096
 FEATURE_RADIUS_DIVISOR = 4
@@ -25,24 +26,30 @@ FEATURE_RADIUS_DIVISOR = 4
 
 @dataclass(frozen=True, slots=True)
 class SamplingFeature:
-    """Prepared terrain geometry and its nominal and narrowest core radii."""
+    """Prepared cores or regional boundaries with physical transition distances."""
 
-    geometry: Point | LineString
+    geometry: Point | LineString | Polygon
     influence_radius_km: float
     minimum_radius_km: float
     parts: tuple[Point | LineString, ...] = field(init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
         if (self.geometry.is_empty or not self.geometry.is_valid
-                or not all(isfinite(v) for point in self.geometry.coords for v in point)
                 or not 0 < self.minimum_radius_km <= self.influence_radius_km
                 or not isfinite(self.influence_radius_km)):
             raise ValueError("Water sampling features require finite geometry and positive radii.")
         # Every link sees the same canonical parts. Keep preparation local to the
         # immutable feature so edited/replaced geometry cannot reuse stale parts.
         normalized = self.geometry.normalize()
+        rings = ((normalized.exterior, *normalized.interiors)
+                 if isinstance(normalized, Polygon) else (normalized,))
         parts = ((normalized,) if isinstance(normalized, Point) else
-                 tuple(LineString((a, b)) for a, b in pairwise(normalized.coords) if a != b))
+                 tuple(LineString((a, b)) for ring in rings
+                       for a, b in pairwise(ring.coords) if a != b))
+        if not all(isfinite(v) for part in parts for point in part.coords for v in point):
+            raise ValueError("Water sampling features require finite geometry and positive radii.")
+        if isinstance(normalized, Polygon):
+            object.__setattr__(self, "geometry", normalized)
         object.__setattr__(self, "parts", parts)
 
 
@@ -66,8 +73,18 @@ def _feature_windows(
     windows: list[_FeatureWindow] = []
     for feature in features:
         step = feature.minimum_radius_km / FEATURE_RADIUS_DIVISOR
+        regional = isinstance(feature.geometry, Polygon)
         if step >= spacing_km:
-            continue
+            if not regional:
+                continue
+            # A broad transition can only add spacing inside a short contained
+            # interval. Skip proven full-length/disjoint cases before building
+            # boundary corridors, preserving the complete interval policy below.
+            if (segment.length / FEATURE_RADIUS_DIVISOR >= spacing_km
+                    and feature.geometry.covers(segment)) or feature.geometry.disjoint(segment):
+                continue
+        step = min(step, spacing_km)
+        boundary_windows: list[_FeatureWindow] = []
         radius = 2 * feature.influence_radius_km
         for part in feature.parts:
             if segment.distance(part) > radius:
@@ -85,8 +102,39 @@ def _feature_windows(
             closest = float(segment.project(nearest_points(segment, part)[0], normalized=True))
             projected = (float(segment.project(Point(p), normalized=True)) for p in part.coords)
             anchors = tuple(t for t in (closest, *projected) if start <= t <= end)
-            windows.append(_FeatureWindow(start, end, step, anchors))
+            boundary_windows.append(_FeatureWindow(start, end, step, anchors))
+        if step < spacing_km:
+            windows.extend(boundary_windows)
+        if regional and boundary_windows:
+            # A thin crossed region may never reach its nominal transition depth.
+            # Refine its contained spans locally; vertex clearance is not width.
+            for piece in _linear_parts(segment.intersection(feature.geometry)):
+                bounds = tuple(float(segment.project(Point(p), normalized=True))
+                               for p in piece.coords)
+                start, end = min(bounds), max(bounds)
+                if start >= end:
+                    continue
+                local_step = min(step, (end - start) * segment.length / FEATURE_RADIUS_DIVISOR)
+                if local_step >= spacing_km:
+                    continue
+                midpoint = (start + end) / 2
+                for window in boundary_windows:
+                    low, high = max(start, window.start), min(end, window.end)
+                    if low < high:
+                        anchors = (midpoint,) if low <= midpoint <= high else ()
+                        windows.append(_FeatureWindow(low, high, local_step, anchors))
     return windows
+
+
+def _linear_parts(geometry: BaseGeometry) -> tuple[LineString, ...]:
+    if isinstance(geometry, LineString):
+        return () if geometry.is_empty else (geometry,)
+    if isinstance(geometry, MultiLineString):
+        return tuple(geometry.geoms)
+    if isinstance(geometry, GeometryCollection):
+        collection = cast("GeometryCollection[BaseGeometry]", geometry)
+        return tuple(part for item in collection.geoms for part in _linear_parts(item))
+    return ()
 
 
 def _refined_spans(

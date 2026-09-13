@@ -1289,6 +1289,9 @@ def generate_terrain(
                                 if c.kind == "point" and c.attached_to_structure else 1.))
         for c in metric_constraints
         if not (c.kind == "point" and c.attached_to_structure and c.elevation_mode == "relative"))
+    water_features += tuple(SamplingFeature(
+        region.geometry, region.source.settings.transition_km, region.source.settings.transition_km)
+        for region in regions)
     water_review, basin_outflow = resolve_basin_outflow(
         basins, routing_basin_ids, routing_final, automatic_valleys.drainage,
         automatic_valleys.land_mask, review.drainage.receivers, review.drainage.boundary_flags,

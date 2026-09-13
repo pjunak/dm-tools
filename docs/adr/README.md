@@ -67,3 +67,4 @@ supersedes their legacy compatibility commitments during early development.
 - [ADR-0041: Review complete downstream outlet profiles](0041-review-complete-downstream-outlet-profiles.md)
 - [ADR-0042: Review internal water links](0042-review-internal-water-links.md)
 - [ADR-0043: Review dry collection paths](0043-review-dry-collection-paths.md)
+- [ADR-0044: Guide water profiles through regional transitions](0044-guide-water-profiles-through-regional-transitions.md)

@@ -16,7 +16,7 @@ performance claims. A source audit is not a successfully run engine comparison.
 | Regional landforms | Plain/hill/plateau/mountain recipes, orientation, transitions and regional cut limits | Distribution targets, transition-gradient validation, related geological regions |
 | Structural authoring | Absolute/relative point-anchored profiles, directed valley floors and compatible junctions | Direct per-vertex controls, explicit passes, asymmetric sides and generated branching |
 | Basin intent and flow | Lake/dry footprints retain terrain and captured MFD area; eligible outlets transfer collected area conservatively | Runoff/discharge, equilibrium water levels, controlling sills, lake chains and nested depressions |
-| Finer water review | Shoreline/contact/full-route profiles, wet-link separation, dry-link alternatives and chosen-path cumulative checks | Sampling error bounds, off-grid 2D passages and alternatives after cumulative rejection |
+| Finer water review | Shoreline/contact/full-route profiles, regional transition guidance, wet-link separation and dry-path checks | Measured procedural/tail extrema misses, sampling error bounds and off-grid/path alternatives |
 | Measurements (R41) | Elevation min/max/mean/deviation and masked X/Y differences/semivariances at physical lags | Detrending, arbitrary direction, terrain atlas, multiscale/topological descriptors |
 | Performance (R45-R47) | Selective land sampling, exact water-sample reuse and a 13-case benchmark harness | Remaining network/serialization cost, complex-scene crossover, 4096/memory budgets and native migration evidence |
 
@@ -55,20 +55,26 @@ measured benefit and packaging/workflow evidence; it is not the next prerequisit
 
 ## Evidence and next experiments
 
-- [Dry collection paths](2026-09-11-dry-collection-paths.md) is the latest
-  accepted behavior baseline: full-path head checks, preserved terrain/area and
-  measured planning/sampling cost. Its fresh-process generation measurements
-  are distinct from prepared-stage timings and full CLI-build timings.
+- [Regional guidance and convergence](2026-09-13-water-sampling-convergence.md)
+  is the latest accepted sampling change: real regional barriers are found while
+  procedural/tail gaps remain explicitly measured. The comparison runs the
+  prepared finished-ground evaluator and checks shared stations exactly.
+- [Dry collection paths](2026-09-11-dry-collection-paths.md) records full-path
+  head checks, preserved terrain/area and measured planning/sampling cost. Its
+  fresh-process generation measurements are distinct from prepared-stage timings and full CLI-build timings.
 - [Feature-guided sampling](2026-09-11-feature-guided-water-sampling.md) shows
   why regular quarter-grid stations miss narrow cores. Radius/4 guidance is a
-  bounded sampling choice, not a terrain error bound. Broader procedural,
-  regional-transition and feature-tail convergence remains necessary.
+  bounded sampling choice, not a terrain error bound. The later convergence
+  matrix extends these measurements across regions, procedural detail and tails;
+  broad geometric/feature distributions and accuracy bounds remain open.
 - [Selective sampling](2026-09-05-selective-terrain-sampling.md) records a
   successful exact-output optimization and a slower rejected coast index.
   Neither result proves the best method for today's enlarged water workload.
 
 Exact feature/sample reuse is now implemented with preserved station counts and
 evidence; see the [measured follow-through](2026-09-13-water-sampling-reuse.md).
-Next, compare sampling refinement/offsets on procedural, transition and tail fixtures before
+The first 64-run convergence matrix and regional guidance are also complete.
+Next, compare wavelength-aware and local refinement against the measured
+procedural/tail misses, with complete budgets and representative cost, before
 sill/storage semantics and lake chains. Keep the full roadmap instead of
 promoting every interesting research direction into immediate implementation.

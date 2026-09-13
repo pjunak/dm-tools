@@ -419,7 +419,7 @@ def test_connected_outlet_build_exports_conserved_source_and_terminal_area(
     assert len(shoreline["profile"]["ground_m"]) == len(shoreline["profile"]["positions_km"])
     assert shoreline["uncontrolled_low_sample_count"] == 0
     assert diagnostics["authored_water"]["sampling_algorithm_id"] == (
-        "feature-guided-float32-water-checks@2")
+        "feature-guided-float32-water-checks@3")
     for profile in (shoreline["profile"], lake["outlet_route"]["connection_profile"]):
         assert 0 < profile["feature_sample_count"] < profile["requested_sample_count"]
         assert 0 < profile["feature_spacing_limit_km"] < profile["spacing_limit_km"]

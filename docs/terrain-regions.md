@@ -88,6 +88,16 @@ and depression context counts; the headless build adds a coloured context panel
 and numeric edge evidence ([ADR-0032](adr/0032-classify-channel-conflicts.md)). See
 [ADR-0031](adr/0031-bound-incision-by-regional-relief.md) for fixture results.
 
+## Water-path review
+
+Regional boundaries now guide finer ground checks on shorelines and water
+paths. Narrow transitions and thin crossed regions receive local probes while
+authored ground remains unchanged. A detected crest can block collection or
+outlet transfer. See the [water sampling contract](terrain-water.md#finer-water-evidence)
+and [measured convergence](research/2026-09-13-water-sampling-convergence.md).
+This is finite profile evidence, not a guarantee that every regional or
+procedural extremum has been found.
+
 ## Current limits
 
 There are no regional sediment, rock-resistance, runoff or drainage-density

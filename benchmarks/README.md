@@ -103,3 +103,46 @@ records earlier coast/regional bottlenecks. The
 [dry-path follow-up](../docs/research/2026-09-11-dry-collection-paths.md) measures
 the expanded water workload; the [current status](../docs/research/status.md)
 tracks remaining performance and validation gaps.
+
+## Water-profile convergence
+
+```powershell
+.\.venv\Scripts\python.exe -m benchmarks.water_convergence --seed 42 20260913 --repeats 2 --output artifacts/water-convergence.json
+```
+
+This separate read-only runner compares real finished-ground profiles in four
+synthetic scenes: a narrow regional plateau, short-wavelength procedural detail,
+a point's context tail outside its core corridor, and overlapping positive and
+negative points. Defaults compare 400/4000 km objects, horizontal/diagonal
+canonical edges and a 64-pixel delivered raster. Protected dry footprints keep
+automatic cuts from obscuring the field being studied. These are numeric
+stress fixtures, not recommended authoring presets.
+
+Every trial preserves the complete production station set. Aligned trials
+split each original interval by factors 1, 2, 4, 8, 16, 32 and 64; half-shifted
+trials instead place interior probes at `(i + 0.5) / factor`, also keeping the
+original endpoints. The reference uses twice the largest factor and includes
+all trial stations exactly. It is a finite sampled reference, never continuous
+ground truth, a GCI calculation or a hydraulic model. Extrema, raw-ground
+cumulative rise, witness positions, 0.01 m threshold decisions and differences
+to that reference are recorded. Shared positions and Float32 values must match
+byte for byte; no resampling or interpolation substitutes for field evaluation.
+
+Use `--case`, `--scale`, `--direction`, `--resolution`, `--seed`, `--refinements`
+and `--max-samples` to select an experiment. Refinements must be increasing
+powers of two starting at 1 (maximum 256); the comparison cap defaults to 65536
+and cannot exceed 262144. Each complete trial/reference budget is checked before
+allocation or evaluation. A missing reference or over-budget baseline remains
+explicitly unresolved, with no error difference or accepted prefix. This
+research-only cap does not change any production budget.
+
+Reports record inputs, engine/runtime and harness source hashes, all 27 numeric
+product hashes, water evidence identity, per-run time/peak process memory and
+repeatability. A control omits only region sampling guides, using the exact
+same finished field. The runner observes the existing prepared evaluator call
+and verifies that inspection leaves numeric products and water review unchanged.
+No new product API is added. Each repeat is a fresh process; output files must
+be new, publication is completion-last, and source changes during measurement
+invalidate the run. Avoid concurrent heavy work. Results belong under ignored
+`artifacts/`; the [dated report](../docs/research/2026-09-13-water-sampling-convergence.md)
+records findings and remaining gaps.

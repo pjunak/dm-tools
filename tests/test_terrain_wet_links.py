@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 from numpy.typing import NDArray
-from shapely.geometry import Point
+from shapely.geometry import Point, box
 
 from dmtools.terrain.pipeline.hydrology import D8_NEIGHBOURS
 from dmtools.terrain.pipeline.water_sampling import SamplingFeature
@@ -21,13 +21,17 @@ def _graph(bypass: bool = False) -> tuple[NDArray[np.int64], NDArray[np.int64]]:
     return nodes, neighbours
 
 
+@pytest.mark.parametrize("regional", [False, True])
 @pytest.mark.parametrize("height,bypass", [(20., False), (20., True), (9., False), (10.005, False)])
-def test_water_links_use_water_level_and_clear_alternate_paths(height: float, bypass: bool) -> None:
+def test_water_links_use_water_level_and_clear_alternate_paths(
+    height: float, bypass: bool, regional: bool,
+) -> None:
     nodes, neighbours = _graph(bypass)
     before = neighbours.copy()
     ground = np.full((5, 5), 2., dtype=np.float64)
     axis = np.arange(5, dtype=np.float64)
-    feature = SamplingFeature(Point(1.371, 2.), .001, .001)
+    geometry = box(1.370, 1.99, 1.372, 2.01) if regional else Point(1.371, 2.)
+    feature = SamplingFeature(geometry, .001, .001)
     def sampler(x: NDArray[np.float64], y: NDArray[np.float64]) -> NDArray[np.float32]:
         return np.where(np.hypot(x-1.371, y-2.) < .001, height, 2.).astype(np.float32)
     args = (nodes, neighbours, np.ones(len(nodes), dtype=np.bool_), 11, ground, axis, axis, 10.)

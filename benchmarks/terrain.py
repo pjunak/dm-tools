@@ -27,7 +27,7 @@ from dmtools.terrain.domain import (
     TerrainSettings,
     TerrainStructure,
 )
-from dmtools.terrain.pipeline.generate import generate_terrain
+from dmtools.terrain.pipeline.generate import GeneratedTerrain, generate_terrain
 from dmtools.terrain.pipeline.quality import measure_terrain_quality
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -145,38 +145,9 @@ def peak_resident_bytes() -> int | None:
     return None
 
 
-def probe(case: str, resolution: int, seed: int) -> dict[str, Any]:
-    load_start = perf_counter()
-    coast, settings, constraints = fixture(case, resolution, seed)
-    load_seconds = perf_counter() - load_start
-    inputs = {
-        "coastline": asdict(coast),
-        "settings": asdict(settings),
-        "constraints": [asdict(item) for item in constraints],
-    }
-    timer = StageTimer()
-    start, cpu_start = perf_counter(), process_time()
-    terrain = generate_terrain(coast, settings, timer, constraints=constraints)
-    generation_seconds, cpu_seconds = perf_counter() - start, process_time() - cpu_start
-    timer.finish()
-    generation_peak = peak_resident_bytes()
-    start = perf_counter()
-    quality = measure_terrain_quality(
-        terrain.elevation_m,
-        terrain.land_mask,
-        x_spacing_km=terrain.grid.x_spacing_km,
-        y_spacing_km=terrain.grid.y_spacing_km,
-    )
-    quality_seconds = perf_counter() - start
-    render_seconds: dict[str, float] = {}
-    for style in ("cartographic", "scientific"):
-        start = perf_counter()
-        with render_height_map(terrain, style=style):
-            pass
-        render_seconds[style] = perf_counter() - start
-    products_peak = peak_resident_bytes()
-    # Hash after memory sampling so comparison bookkeeping is not charged to generation.
-    output_hashes = {
+def numeric_hashes(terrain: GeneratedTerrain) -> dict[str, str]:
+    """One identity inventory shared by timing and read-only sampling probes."""
+    return {
         name: sha256(array.tobytes()).hexdigest()
         for name, array in (
             ("elevation", terrain.elevation_m),
@@ -208,6 +179,40 @@ def probe(case: str, resolution: int, seed: int) -> dict[str, Any]:
             ("boundary_flags", terrain.drainage.boundary_flags),
         )
     }
+
+
+def probe(case: str, resolution: int, seed: int) -> dict[str, Any]:
+    load_start = perf_counter()
+    coast, settings, constraints = fixture(case, resolution, seed)
+    load_seconds = perf_counter() - load_start
+    inputs = {
+        "coastline": asdict(coast),
+        "settings": asdict(settings),
+        "constraints": [asdict(item) for item in constraints],
+    }
+    timer = StageTimer()
+    start, cpu_start = perf_counter(), process_time()
+    terrain = generate_terrain(coast, settings, timer, constraints=constraints)
+    generation_seconds, cpu_seconds = perf_counter() - start, process_time() - cpu_start
+    timer.finish()
+    generation_peak = peak_resident_bytes()
+    start = perf_counter()
+    quality = measure_terrain_quality(
+        terrain.elevation_m,
+        terrain.land_mask,
+        x_spacing_km=terrain.grid.x_spacing_km,
+        y_spacing_km=terrain.grid.y_spacing_km,
+    )
+    quality_seconds = perf_counter() - start
+    render_seconds: dict[str, float] = {}
+    for style in ("cartographic", "scientific"):
+        start = perf_counter()
+        with render_height_map(terrain, style=style):
+            pass
+        render_seconds[style] = perf_counter() - start
+    products_peak = peak_resident_bytes()
+    # Hash after memory sampling so comparison bookkeeping is not charged to generation.
+    output_hashes = numeric_hashes(terrain)
     return {
         "case": case,
         "resolution_px": resolution,
