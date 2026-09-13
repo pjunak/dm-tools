@@ -10,7 +10,7 @@ from numpy.typing import NDArray
 from dmtools.terrain.pipeline.water_sampling import (
     GroundSampler,
     GroundSamplingPlan,
-    SamplingFeature,
+    SamplingGuide,
     plan_ground_profile,
     profile_positions,
     sample_ground_positions,
@@ -46,7 +46,7 @@ def review_wet_links(
     nodes: NDArray[np.int64], neighbours: NDArray[np.int64], wet: NDArray[np.bool_],
     contact: int, elevation_m: NDArray[np.float64], x_km: NDArray[np.float64],
     y_km: NDArray[np.float64], water_level_m: float, sample_ground: GroundSampler,
-    features: tuple[SamplingFeature, ...] = (),
+    features: tuple[SamplingGuide, ...] = (),
 ) -> tuple[WetLinkReview, NDArray[np.bool_]]:
     """Inspect each undirected wet link once; reach water only through clear links.
 

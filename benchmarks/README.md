@@ -110,13 +110,15 @@ tracks remaining performance and validation gaps.
 .\.venv\Scripts\python.exe -m benchmarks.water_convergence --seed 42 20260913 --repeats 2 --output artifacts/water-convergence.json
 ```
 
-This separate read-only runner compares real finished-ground profiles in four
-synthetic scenes: a narrow regional plateau, short-wavelength procedural detail,
-a point's context tail outside its core corridor, and overlapping positive and
-negative points. Defaults compare 400/4000 km objects, horizontal/diagonal
+This separate read-only runner compares real finished-ground profiles in five
+synthetic scenes: a narrow regional plateau, global procedural detail, rotated
+regional detail, a point's context tail outside its core corridor, and overlapping
+positive and negative points. Defaults compare 400/4000 km objects, horizontal/diagonal
 canonical edges and a 64-pixel delivered raster. Protected dry footprints keep
 automatic cuts from obscuring the field being studied. These are numeric
-stress fixtures, not recommended authoring presets.
+stress fixtures, not recommended authoring presets. Optional `--direction oblique`
+uses a `(1, 0.37)` grid-edge vector; its endpoint is deliberately off the canonical
+grid. Horizontal and diagonal remain the defaults.
 
 Every trial preserves the complete production station set. Aligned trials
 split each original interval by factors 1, 2, 4, 8, 16, 32 and 64; half-shifted
@@ -130,19 +132,23 @@ byte for byte; no resampling or interpolation substitutes for field evaluation.
 
 Use `--case`, `--scale`, `--direction`, `--resolution`, `--seed`, `--refinements`
 and `--max-samples` to select an experiment. Refinements must be increasing
-powers of two starting at 1 (maximum 256); the comparison cap defaults to 65536
-and cannot exceed 262144. Each complete trial/reference budget is checked before
+powers of two starting at 1 (maximum 256); the comparison cap defaults to 262144
+and cannot exceed that value. The former 65536 default could not fit the full
+128-fold reference after procedural guidance enlarged production profiles. Each complete trial/reference budget is checked before
 allocation or evaluation. A missing reference or over-budget baseline remains
 explicitly unresolved, with no error difference or accepted prefix. This
 research-only cap does not change any production budget.
 
 Reports record inputs, engine/runtime and harness source hashes, all 27 numeric
 product hashes, water evidence identity, per-run time/peak process memory and
-repeatability. A control omits only region sampling guides, using the exact
-same finished field. The runner observes the existing prepared evaluator call
+repeatability. `geometry_only` removes procedural density and context guidance
+while keeping authored cores and regional transitions. `without_region_guidance`
+omits polygon transition guides only; procedural density remains. Both inspect
+the exact same finished field, and are research controls rather than product
+settings. The runner observes the existing prepared evaluator call
 and verifies that inspection leaves numeric products and water review unchanged.
 No new product API is added. Each repeat is a fresh process; output files must
 be new, publication is completion-last, and source changes during measurement
 invalidate the run. Avoid concurrent heavy work. Results belong under ignored
-`artifacts/`; the [dated report](../docs/research/2026-09-13-water-sampling-convergence.md)
+`artifacts/`; the [latest report](../docs/research/2026-09-13-detail-and-context-sampling.md)
 records findings and remaining gaps.

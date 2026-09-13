@@ -9,7 +9,15 @@ from typing import TYPE_CHECKING, Literal, cast
 
 import numpy as np
 from numpy.typing import NDArray
-from shapely.geometry import GeometryCollection, LineString, MultiLineString, Point, Polygon, box
+from shapely.geometry import (
+    GeometryCollection,
+    LineString,
+    MultiLineString,
+    MultiPolygon,
+    Point,
+    Polygon,
+    box,
+)
 from shapely.geometry.base import BaseGeometry
 from shapely.ops import nearest_points
 
@@ -18,7 +26,7 @@ if TYPE_CHECKING:
 
 type GroundSampler = Callable[[NDArray[np.float64], NDArray[np.float64]], NDArray[np.float32]]
 
-WATER_SAMPLING_ALGORITHM_ID = "feature-guided-float32-water-checks@3"
+WATER_SAMPLING_ALGORITHM_ID = "feature-guided-float32-water-checks@4"
 MAX_PROFILE_SAMPLES = 65_536
 SAMPLE_BATCH_SIZE = 4_096
 FEATURE_RADIUS_DIVISOR = 4
@@ -31,6 +39,7 @@ class SamplingFeature:
     geometry: Point | LineString | Polygon
     influence_radius_km: float
     minimum_radius_km: float
+    context_radius_km: float | None = None
     parts: tuple[Point | LineString, ...] = field(init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
@@ -38,6 +47,10 @@ class SamplingFeature:
                 or not 0 < self.minimum_radius_km <= self.influence_radius_km
                 or not isfinite(self.influence_radius_km)):
             raise ValueError("Water sampling features require finite geometry and positive radii.")
+        if self.context_radius_km is not None and (
+                isinstance(self.geometry, Polygon) or not isfinite(self.context_radius_km)
+                or self.context_radius_km <= 0):
+            raise ValueError("Context guidance requires a positive radius and point/line geometry.")
         # Every link sees the same canonical parts. Keep preparation local to the
         # immutable feature so edited/replaced geometry cannot reuse stale parts.
         normalized = self.geometry.normalize()
@@ -48,9 +61,27 @@ class SamplingFeature:
                        for a, b in pairwise(ring.coords) if a != b))
         if not all(isfinite(v) for part in parts for point in part.coords for v in point):
             raise ValueError("Water sampling features require finite geometry and positive radii.")
-        if isinstance(normalized, Polygon):
-            object.__setattr__(self, "geometry", normalized)
+        object.__setattr__(self, "geometry", normalized)
         object.__setattr__(self, "parts", parts)
+
+
+@dataclass(frozen=True, slots=True)
+class SamplingDensity:
+    """Physical spacing for an active procedural field; None geometry is global."""
+
+    spacing_km: float
+    geometry: Polygon | MultiPolygon | None = None
+
+    def __post_init__(self) -> None:
+        if not isfinite(self.spacing_km) or self.spacing_km <= 0:
+            raise ValueError("Procedural sampling spacing must be finite and positive.")
+        if self.geometry is not None:
+            if self.geometry.is_empty or not self.geometry.is_valid:
+                raise ValueError("Procedural sampling regions require valid nonempty geometry.")
+            object.__setattr__(self, "geometry", self.geometry.normalize())
+
+
+type SamplingGuide = SamplingFeature | SamplingDensity
 
 
 @dataclass(frozen=True, slots=True)
@@ -62,7 +93,7 @@ class _FeatureWindow:
 
 
 def _feature_windows(
-    segment: LineString, features: tuple[SamplingFeature, ...], spacing_km: float,
+    segment: LineString, features: tuple[SamplingGuide, ...], spacing_km: float,
 ) -> list[_FeatureWindow]:
     """Clip conservative core corridors; split polylines to retain every crossing.
 
@@ -72,6 +103,15 @@ def _feature_windows(
     """
     windows: list[_FeatureWindow] = []
     for feature in features:
+        if isinstance(feature, SamplingDensity):
+            if feature.spacing_km < spacing_km:
+                intervals = ((0., 1.),) if feature.geometry is None else (
+                    _contained_intervals(segment, feature.geometry))
+                windows.extend(_FeatureWindow(start, end, feature.spacing_km, ())
+                               for start, end in intervals)
+            continue
+        if feature.context_radius_km is not None:
+            windows.extend(_context_windows(segment, feature, spacing_km))
         step = feature.minimum_radius_km / FEATURE_RADIUS_DIVISOR
         regional = isinstance(feature.geometry, Polygon)
         if step >= spacing_km:
@@ -84,36 +124,14 @@ def _feature_windows(
                     and feature.geometry.covers(segment)) or feature.geometry.disjoint(segment):
                 continue
         step = min(step, spacing_km)
-        boundary_windows: list[_FeatureWindow] = []
-        radius = 2 * feature.influence_radius_km
-        for part in feature.parts:
-            if segment.distance(part) > radius:
-                continue
-            corridor = (box(part.x - radius, part.y - radius, part.x + radius, part.y + radius)
-                        if isinstance(part, Point) else part.buffer(radius, cap_style="square"))
-            intersection = segment.intersection(corridor)
-            if intersection.is_empty:
-                continue
-            if not isinstance(intersection, (Point, LineString)):
-                raise ValueError("Water sampling requires a single convex feature corridor.")
-            bounds = tuple(float(segment.project(Point(p), normalized=True))
-                           for p in intersection.coords)
-            start, end = min(bounds), max(bounds)
-            closest = float(segment.project(nearest_points(segment, part)[0], normalized=True))
-            projected = (float(segment.project(Point(p), normalized=True)) for p in part.coords)
-            anchors = tuple(t for t in (closest, *projected) if start <= t <= end)
-            boundary_windows.append(_FeatureWindow(start, end, step, anchors))
+        boundary_windows = _corridor_windows(
+            segment, feature.parts, 2 * feature.influence_radius_km, step)
         if step < spacing_km:
             windows.extend(boundary_windows)
         if regional and boundary_windows:
             # A thin crossed region may never reach its nominal transition depth.
             # Refine its contained spans locally; vertex clearance is not width.
-            for piece in _linear_parts(segment.intersection(feature.geometry)):
-                bounds = tuple(float(segment.project(Point(p), normalized=True))
-                               for p in piece.coords)
-                start, end = min(bounds), max(bounds)
-                if start >= end:
-                    continue
+            for start, end in _contained_intervals(segment, cast(Polygon, feature.geometry)):
                 local_step = min(step, (end - start) * segment.length / FEATURE_RADIUS_DIVISOR)
                 if local_step >= spacing_km:
                     continue
@@ -124,6 +142,67 @@ def _feature_windows(
                         anchors = (midpoint,) if low <= midpoint <= high else ()
                         windows.append(_FeatureWindow(low, high, local_step, anchors))
     return windows
+
+
+def _corridor_windows(
+    segment: LineString, parts: tuple[Point | LineString, ...], radius: float, step: float,
+) -> list[_FeatureWindow]:
+    windows: list[_FeatureWindow] = []
+    for part in parts:
+        if segment.distance(part) > radius:
+            continue
+        corridor = (box(part.x - radius, part.y - radius, part.x + radius, part.y + radius)
+                    if isinstance(part, Point) else part.buffer(radius, cap_style="square"))
+        intersection = segment.intersection(corridor)
+        if intersection.is_empty:
+            continue
+        if not isinstance(intersection, (Point, LineString)):
+            raise ValueError("Water sampling requires a single convex feature corridor.")
+        bounds = tuple(float(segment.project(Point(p), normalized=True))
+                       for p in intersection.coords)
+        start, end = min(bounds), max(bounds)
+        closest = float(segment.project(nearest_points(segment, part)[0], normalized=True))
+        projected = (float(segment.project(Point(p), normalized=True)) for p in part.coords)
+        anchors = tuple(t for t in (closest, *projected) if start <= t <= end)
+        windows.append(_FeatureWindow(start, end, step, anchors))
+    return windows
+
+
+def _context_windows(
+    segment: LineString, feature: SamplingFeature, spacing_km: float,
+) -> list[_FeatureWindow]:
+    radius = feature.context_radius_km
+    assert radius is not None
+    step = radius / FEATURE_RADIUS_DIVISOR
+    if step < spacing_km:
+        return _corridor_windows(segment, feature.parts, 2 * radius, step)
+    # Broad shoulders already fit the baseline spacing. Anchor the closest
+    # approach to the complete geometry without buffering/splitting every part.
+    # Narrow corridors above still retain every crossing. Neither policy bounds
+    # the extrema of interacting or longitudinally varying features.
+    if segment.distance(feature.geometry) > 2 * radius:
+        return []
+    closest = float(segment.project(nearest_points(segment, feature.geometry)[0], normalized=True))
+    return ([_FeatureWindow(closest, closest, spacing_km, (closest,))]
+            if 0 < closest < 1 else [])
+
+
+def _contained_intervals(
+    segment: LineString, geometry: Polygon | MultiPolygon,
+) -> tuple[tuple[float, float], ...]:
+    # Strict interior avoids clipping unchanged links. Merely covered paths
+    # can touch re-entrant/hole corners and require those split-interval anchors.
+    if geometry.contains_properly(segment):
+        return ((0., 1.),)
+    if geometry.disjoint(segment):
+        return ()
+    intervals: list[tuple[float, float]] = []
+    for piece in _linear_parts(segment.intersection(geometry)):
+        bounds = tuple(float(segment.project(Point(p), normalized=True)) for p in piece.coords)
+        start, end = min(bounds), max(bounds)
+        if start < end:
+            intervals.append((start, end))
+    return tuple(intervals)
 
 
 def _linear_parts(geometry: BaseGeometry) -> tuple[LineString, ...]:
@@ -189,7 +268,7 @@ class GroundSamplingPlan:
 
 def plan_ground_profile(
     vertices_km: tuple[tuple[float, float], ...], spacing_limit_km: float,
-    features: tuple[SamplingFeature, ...] = (),
+    features: tuple[SamplingGuide, ...] = (),
 ) -> GroundSamplingPlan:
     """Include every vertex and bounded intervening samples; never silently coarsen.
 
@@ -281,7 +360,7 @@ def sample_ground_positions(
 
 def sample_ground_profile(
     vertices_km: tuple[tuple[float, float], ...], spacing_limit_km: float,
-    sample_ground: GroundSampler, features: tuple[SamplingFeature, ...] = (),
+    sample_ground: GroundSampler, features: tuple[SamplingGuide, ...] = (),
 ) -> GroundProfile:
     """Evaluate a complete planned profile; excessive budgets retain no prefix."""
     plan = plan_ground_profile(vertices_km, spacing_limit_km, features)
@@ -311,7 +390,7 @@ class ShorelineReview:
 
 def review_shorelines(
     basins: tuple[MetricBasin, ...], spacing_limit_km: float, opening_radius_km: float,
-    sample_ground: GroundSampler, features: tuple[SamplingFeature, ...] = (),
+    sample_ground: GroundSampler, features: tuple[SamplingGuide, ...] = (),
 ) -> tuple[ShorelineReview | None, ...]:
     """Review lake polygon boundaries, including low ground missed by coarse wet nodes."""
     reviews: list[ShorelineReview | None] = []

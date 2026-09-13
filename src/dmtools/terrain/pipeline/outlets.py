@@ -14,7 +14,7 @@ from dmtools.terrain.pipeline.outlet_profiles import DownstreamProfile, sample_d
 from dmtools.terrain.pipeline.water_sampling import (
     GroundProfile,
     GroundSampler,
-    SamplingFeature,
+    SamplingGuide,
     sample_ground_profile,
 )
 
@@ -44,7 +44,7 @@ def review_outlet_routes(
     receivers: NDArray[np.int64], boundary_flags: NDArray[np.uint8],
     x_km: NDArray[np.float64], y_km: NDArray[np.float64], land: Polygon | MultiPolygon,
     outlet_elevations_m: tuple[float | None, ...], sample_ground: GroundSampler,
-    features: tuple[SamplingFeature, ...] = (),
+    features: tuple[SamplingGuide, ...] = (),
 ) -> tuple[OutletRouteReview | None, ...]:
     """Assess one deterministic nearby attachment and its entire conditioned route.
 

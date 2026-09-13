@@ -7,7 +7,7 @@ import numpy as np
 from dmtools.terrain.pipeline.water_sampling import (
     GroundProfile,
     GroundSampler,
-    SamplingFeature,
+    SamplingGuide,
     sample_ground_profile,
 )
 
@@ -25,7 +25,7 @@ class DownstreamProfile:
 def sample_downstream_profile(
     vertices_km: tuple[tuple[float, float], ...], canonical_ground_m: tuple[float, ...],
     reaches_terminal: bool, spacing_limit_km: float, sample_ground: GroundSampler,
-    features: tuple[SamplingFeature, ...] = (),
+    features: tuple[SamplingGuide, ...] = (),
 ) -> DownstreamProfile:
     """Keep a complete profile or no ground evidence; never reset its budget per edge.
 

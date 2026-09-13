@@ -63,18 +63,21 @@ flats, finer shorelines, full external routes and internal wet/dry paths, then
 transfers only eligible area. See [current research status](../research/status.md)
 for evidence and limits. [ADR-0043](../adr/0043-review-dry-collection-paths.md)
 owns dry-path gates; [ADR-0044](../adr/0044-guide-water-profiles-through-regional-transitions.md)
-adds regional guidance to the shared sampler.
+adds regional guidance and [ADR-0045](../adr/0045-sample-procedural-detail-and-context-shoulders.md)
+adds procedural density and context shoulders to the shared sampler.
 
 Exact feature/sample reuse is now implemented; the
 [comparison](../research/2026-09-13-water-sampling-reuse.md) records unchanged
 numeric/evidence contracts and measured cost.
 
-1. Address the procedural and context-tail misses measured by the
-   [first convergence matrix](../research/2026-09-13-water-sampling-convergence.md).
-   Regional transition guidance is implemented. Compare wavelength-aware and
-   bounded local refinement, including oblique/grazing paths and representative
-   runtime. Define controlling-sill/storage assumptions before introducing
-   explicit lake chains with compatible levels and acyclic flow.
+1. Evaluate bounded local error refinement and project-scale cost against the
+   residual blended/grazing misses in the
+   [detail/context matrix](../research/2026-09-13-detail-and-context-sampling.md).
+   Regional transitions, procedural lattice-scale spacing and context shoulders
+   are implemented. Retain explicit unresolved results for complete-budget
+   exhaustion; denser sampling alone does not prove continuous clearance.
+   Define controlling-sill/storage assumptions before introducing explicit lake
+   chains with compatible levels and acyclic flow.
 2. Compare retention, constrained breach and reroute proposals using full paths,
    cut depth/length and preserved anchors, then expose reviewable river networks.
 3. Extend point-anchored ridge/valley profiles with direct per-vertex controls,
@@ -97,7 +100,11 @@ reconciles current contracts with the backlog. The earlier
 native coast-distance cost and large generation/UI modules. The later
 [dry-path measurements](../research/2026-09-11-dry-collection-paths.md) add a
 substantial repeated planning/sampling cost on connected-water scenes. Earlier
-coast-only profiles do not describe that enlarged workload.
+coast-only profiles do not describe that enlarged workload. The latest
+[detail/context measurements](../research/2026-09-13-detail-and-context-sampling.md)
+record an additional 31-34% generation cost on connected-water cases after
+removing redundant regional intersections; required samples and evidence remain
+complete.
 
 Exact per-feature preparation and per-call field reuse address the first
 measured network cost. Next measure many-constraint/lake workloads, index

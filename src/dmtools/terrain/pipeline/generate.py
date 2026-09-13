@@ -54,7 +54,7 @@ from dmtools.terrain.pipeline.water import (
     prepare_basins,
     water_products,
 )
-from dmtools.terrain.pipeline.water_sampling import SamplingFeature
+from dmtools.terrain.pipeline.water_sampling import SamplingDensity, SamplingFeature, SamplingGuide
 
 type ProgressCallback = Callable[[float, str], None]
 
@@ -415,6 +415,19 @@ def _metric_constraints(
     return tuple(converted)
 
 
+def _context_factors(
+    *, is_structure: bool, is_brush: bool = False, attached_point: bool = False,
+) -> tuple[float, float, float]:
+    """Shared radius/feature-scale multipliers and amplitude for sampling and ground."""
+    if is_structure:
+        return 3.0, 0.8, 0.32
+    if is_brush:
+        return 1.75, 0.3, 0.18
+    if attached_point:
+        return 1.25, 0.15, 0.04
+    return 2.0, 0.35, 0.12
+
+
 def _constraint_weight(
     distance_km: NDArray[np.float64],
     radius_km: float | NDArray[np.float64],
@@ -426,18 +439,9 @@ def _constraint_weight(
 ) -> NDArray[np.float64]:
     """Blend a defined landform core into a broader geological context."""
 
-    if is_structure:
-        context_radius_km = np.maximum(3.0 * radius_km, 0.8 * largest_feature_km)
-        context_share = 0.32
-    elif is_brush:
-        context_radius_km = np.maximum(1.75 * radius_km, 0.3 * largest_feature_km)
-        context_share = 0.18
-    elif attached_point:
-        context_radius_km = max(1.25 * float(radius_km), 0.15 * largest_feature_km)
-        context_share = 0.04
-    else:
-        context_radius_km = max(2.0 * float(radius_km), 0.35 * largest_feature_km)
-        context_share = 0.12
+    radius_factor, feature_factor, context_share = _context_factors(
+        is_structure=is_structure, is_brush=is_brush, attached_point=attached_point)
+    context_radius_km = np.maximum(radius_factor * radius_km, feature_factor * largest_feature_km)
     core = np.exp(-np.log(2.0) * np.square(distance_km / radius_km))
     context = np.exp(-np.log(2.0) * np.square(distance_km / context_radius_km))
     return (1.0 - context_share) * core + context_share * context
@@ -1185,6 +1189,42 @@ def _evaluate_land_samples(
     return np.clip(elevation, 0.0, settings.maximum_elevation_m)
 
 
+def _water_sampling_guides(
+    constraints: tuple[_MetricConstraint, ...], regions: tuple[MetricRegion, ...],
+    settings: TerrainSettings,
+) -> tuple[SamplingGuide, ...]:
+    features: list[SamplingGuide] = []
+    # Global detail also drives structure width even when base variability is zero.
+    if settings.variability > 0 or any(c.kind in ("ridge", "valley") for c in constraints):
+        features.append(SamplingDensity(
+            settings.largest_feature_km / (2 ** settings.detail_levels)))
+    for region in regions:
+        controls = region.source.settings
+        features.append(SamplingFeature(region.geometry, controls.transition_km,
+                                        controls.transition_km))
+        if controls.relief_m > 0:
+            # Regional recipes always include two macro octaves. Belt stretching
+            # lengthens one axis; the unstretched axis keeps this conservative scale.
+            features.append(SamplingDensity(
+                controls.feature_size_km / (2 ** max(2, settings.detail_levels)), region.geometry))
+    for constraint in constraints:
+        if (constraint.kind == "point" and constraint.attached_to_structure
+                and constraint.elevation_mode == "relative"):
+            continue
+        structure = constraint.kind in ("ridge", "valley")
+        attached = constraint.kind == "point" and constraint.attached_to_structure
+        radius = constraint.influence_radius_km
+        minimum = radius * (STRUCTURE_MIN_TAPER * STRUCTURE_MIN_WIDTH_VARIATION if structure else
+                            ATTACHED_POINT_RADIUS_FACTOR if attached else 1.)
+        maximum = radius * (STRUCTURE_MIN_WIDTH_VARIATION + .36 if structure else
+                            ATTACHED_POINT_RADIUS_FACTOR if attached else 1.)
+        radius_factor, feature_factor, _share = _context_factors(
+            is_structure=structure, is_brush=constraint.kind == "brush", attached_point=attached)
+        context = max(radius_factor * maximum, feature_factor * settings.largest_feature_km)
+        features.append(SamplingFeature(constraint.geometry, radius, minimum, context))
+    return tuple(features)
+
+
 def generate_terrain(
     coastline: Coastline,
     settings: TerrainSettings,
@@ -1280,18 +1320,7 @@ def generate_terrain(
             outlet_x, outlet_y = basin.outlet_km
             values = sample_water_ground(np.asarray([outlet_x]), np.asarray([outlet_y]))
             outlet_heights.append(float(values[0]))
-    # Reuse the actual smoothed geometry and the evaluator's narrowest width factors.
-    water_features = tuple(SamplingFeature(
-        c.geometry, c.influence_radius_km,
-        c.influence_radius_km * (STRUCTURE_MIN_TAPER * STRUCTURE_MIN_WIDTH_VARIATION
-                                if c.kind in ("ridge", "valley") else
-                                ATTACHED_POINT_RADIUS_FACTOR
-                                if c.kind == "point" and c.attached_to_structure else 1.))
-        for c in metric_constraints
-        if not (c.kind == "point" and c.attached_to_structure and c.elevation_mode == "relative"))
-    water_features += tuple(SamplingFeature(
-        region.geometry, region.source.settings.transition_km, region.source.settings.transition_km)
-        for region in regions)
+    water_features = _water_sampling_guides(metric_constraints, regions, settings)
     water_review, basin_outflow = resolve_basin_outflow(
         basins, routing_basin_ids, routing_final, automatic_valleys.drainage,
         automatic_valleys.land_mask, review.drainage.receivers, review.drainage.boundary_flags,

@@ -201,7 +201,7 @@
   "schema_version": 5,
   "settings": {
     "coastal_rise_km": 20.0,
-    "detail_levels": 6,
+    "detail_levels": 5,
     "largest_feature_km": 100.0,
     "maximum_elevation_m": 4500.0,
     "object_scale_km": 4000.0,

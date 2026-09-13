@@ -12,6 +12,8 @@ in the current status or a new dated report.
 
 ## Implemented and measured work
 
+- [Procedural detail and context sampling - 2026-09-13](2026-09-13-detail-and-context-sampling.md)
+  measures lattice-scale/shoulder guidance, residual misses and complete-budget cost.
 - [Water-profile convergence and regional guidance - 2026-09-13](2026-09-13-water-sampling-convergence.md)
   records nested/shifted real-field comparisons, detected regional barriers,
   measured remaining extrema misses and bounded implementation cost.

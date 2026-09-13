@@ -11,7 +11,7 @@ from dmtools.terrain.pipeline.flat_routing import FlatRouting, route_flats
 from dmtools.terrain.pipeline.water_sampling import (
     GroundSampler,
     GroundSamplingPlan,
-    SamplingFeature,
+    SamplingGuide,
     plan_ground_profile,
     profile_positions,
     sample_ground_positions,
@@ -76,7 +76,7 @@ def route_dry_links(
     nodes: NDArray[np.int64], neighbours: NDArray[np.int64], wet: NDArray[np.bool_],
     elevation_m: NDArray[np.float64], x_km: NDArray[np.float64],
     y_km: NDArray[np.float64], water_level_m: float, sample_ground: GroundSampler,
-    features: tuple[SamplingFeature, ...] = (),
+    features: tuple[SamplingGuide, ...] = (),
 ) -> DryCollectionRouting:
     """Screen all potential descents/flats, then review complete chosen paths.
 

@@ -16,7 +16,7 @@ performance claims. A source audit is not a successfully run engine comparison.
 | Regional landforms | Plain/hill/plateau/mountain recipes, orientation, transitions and regional cut limits | Distribution targets, transition-gradient validation, related geological regions |
 | Structural authoring | Absolute/relative point-anchored profiles, directed valley floors and compatible junctions | Direct per-vertex controls, explicit passes, asymmetric sides and generated branching |
 | Basin intent and flow | Lake/dry footprints retain terrain and captured MFD area; eligible outlets transfer collected area conservatively | Runoff/discharge, equilibrium water levels, controlling sills, lake chains and nested depressions |
-| Finer water review | Shoreline/contact/full-route profiles, regional transition guidance, wet-link separation and dry-path checks | Measured procedural/tail extrema misses, sampling error bounds and off-grid/path alternatives |
+| Finer water review | Shoreline/contact/full-route profiles, regional transitions, procedural density, context shoulders, wet-link separation and dry-path checks | Residual blended/grazing extrema, continuous error bounds, complete-budget cost and off-grid/path alternatives |
 | Measurements (R41) | Elevation min/max/mean/deviation and masked X/Y differences/semivariances at physical lags | Detrending, arbitrary direction, terrain atlas, multiscale/topological descriptors |
 | Performance (R45-R47) | Selective land sampling, exact water-sample reuse and a 13-case benchmark harness | Remaining network/serialization cost, complex-scene crossover, 4096/memory budgets and native migration evidence |
 
@@ -55,10 +55,14 @@ measured benefit and packaging/workflow evidence; it is not the next prerequisit
 
 ## Evidence and next experiments
 
+- [Detail and context sampling](2026-09-13-detail-and-context-sampling.md) is
+  the latest accepted change: global/regional lattice scales and context shoulders
+  guide the shared sampler. The expanded comparison covers oblique profiles,
+  fixed-input field preservation, residual misses and complete-budget failures.
 - [Regional guidance and convergence](2026-09-13-water-sampling-convergence.md)
-  is the latest accepted sampling change: real regional barriers are found while
-  procedural/tail gaps remain explicitly measured. The comparison runs the
-  prepared finished-ground evaluator and checks shared stations exactly.
+  records the preceding 64-run matrix and regional barrier detection. Its
+  procedural/tail misses motivated the current change; the original measurements
+  remain historical evidence rather than current error claims.
 - [Dry collection paths](2026-09-11-dry-collection-paths.md) records full-path
   head checks, preserved terrain/area and measured planning/sampling cost. Its
   fresh-process generation measurements are distinct from prepared-stage timings and full CLI-build timings.
@@ -73,8 +77,11 @@ measured benefit and packaging/workflow evidence; it is not the next prerequisit
 
 Exact feature/sample reuse is now implemented with preserved station counts and
 evidence; see the [measured follow-through](2026-09-13-water-sampling-reuse.md).
-The first 64-run convergence matrix and regional guidance are also complete.
-Next, compare wavelength-aware and local refinement against the measured
-procedural/tail misses, with complete budgets and representative cost, before
-sill/storage semantics and lake chains. Keep the full roadmap instead of
-promoting every interesting research direction into immediate implementation.
+Regional, procedural and context guidance now have finite-reference evidence.
+Next, compare bounded local error refinement for blended/grazing extrema and
+whole-project sampling cost, then define sill/storage semantics before lake
+chains. Five detail octaves keep the public flat-routing example within budget;
+its six-octave regression deliberately retains every dry donor after exhaustion.
+Do not present denser probes as continuous clearance or a physical lake model.
+Keep the full roadmap instead of promoting every research direction into
+immediate implementation.

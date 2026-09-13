@@ -6,7 +6,7 @@ from numpy.typing import NDArray
 from shapely.geometry import Point, box
 
 from dmtools.terrain.pipeline.hydrology import D8_NEIGHBOURS
-from dmtools.terrain.pipeline.water_sampling import SamplingFeature
+from dmtools.terrain.pipeline.water_sampling import SamplingDensity, SamplingFeature, SamplingGuide
 from dmtools.terrain.pipeline.wet_links import review_wet_links
 
 
@@ -56,14 +56,14 @@ def test_water_links_use_water_level_and_clear_alternate_paths(
     np.testing.assert_array_equal(ground, 2.)
 
 
-@pytest.mark.parametrize("limit", ["network", "profile", "refinement"])
+@pytest.mark.parametrize("limit", ["network", "profile", "refinement", "detail"])
 def test_budget_failure_keeps_no_accepted_prefix(
     limit: str, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     nodes, neighbours = _graph()
     ground = np.full((5, 5), 2., dtype=np.float64)
     axis = np.arange(5, dtype=np.float64)
-    features: tuple[SamplingFeature, ...] = ()
+    features: tuple[SamplingGuide, ...] = ()
     if limit == "profile":
         monkeypatch.setattr("dmtools.terrain.pipeline.water_sampling.MAX_PROFILE_SAMPLES", 4)
     else:
@@ -71,6 +71,8 @@ def test_budget_failure_keeps_no_accepted_prefix(
                             9 if limit == "network" else 10)
         if limit == "refinement":
             features = (SamplingFeature(Point(1.371, 2.), .001, .001),)
+        elif limit == "detail":
+            features = (SamplingDensity(.01),)
     def unexpected(x: NDArray[np.float64], y: NDArray[np.float64]) -> NDArray[np.float32]:
         pytest.fail("No ground evaluation is allowed for an excessive whole-network plan.")
     review, reachable = review_wet_links(nodes, neighbours, np.ones(3, dtype=np.bool_), 11,

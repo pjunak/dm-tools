@@ -24,6 +24,7 @@ from dmtools.terrain.pipeline.water_sampling import (
     GroundSampler,
     GroundSamplingPlan,
     SamplingFeature,
+    SamplingGuide,
     plan_ground_profile,
 )
 
@@ -481,7 +482,7 @@ def test_real_internal_barrier_separates_water_without_changing_ground() -> None
     assert terrain.water.review == refined.water.review
     def baseline_plan(
         vertices: tuple[tuple[float, float], ...], spacing: float,
-        features: tuple[SamplingFeature, ...] = (),
+        features: tuple[SamplingGuide, ...] = (),
     ) -> GroundSamplingPlan:
         return plan_ground_profile(vertices, spacing)
     with patch("dmtools.terrain.pipeline.wet_links.plan_ground_profile", baseline_plan):
@@ -536,10 +537,11 @@ def test_real_dry_barrier_reroutes_without_changing_the_field_or_capture() -> No
     settings = replace(project.settings, resolution_px=65)
     def omit_new_core(
         vertices: tuple[tuple[float, float], ...], spacing: float,
-        features: tuple[SamplingFeature, ...] = (),
+        features: tuple[SamplingGuide, ...] = (),
     ) -> GroundSamplingPlan:
         return plan_ground_profile(vertices, spacing,
-                                   tuple(f for f in features if f.influence_radius_km != .1))
+                                   tuple(f for f in features if not isinstance(f, SamplingFeature)
+                                         or f.influence_radius_km != .1))
     with patch("dmtools.terrain.pipeline.dry_links.plan_ground_profile", omit_new_core):
         baseline = generate_terrain(project.coastline, settings, constraints=project.constraints)
     terrain = generate_terrain(project.coastline, settings, constraints=project.constraints)
@@ -567,14 +569,18 @@ def test_real_dry_barrier_reroutes_without_changing_the_field_or_capture() -> No
         assert np.count_nonzero(np.all(pixels == (255, 95, 65, 255), axis=-1)) > 0
 
 
+@pytest.mark.parametrize("budget_case", ["forced", "procedural_detail"])
 def test_dry_budget_keeps_verified_water_and_retains_every_dry_donor(
-    monkeypatch: pytest.MonkeyPatch,
+    monkeypatch: pytest.MonkeyPatch, budget_case: str,
 ) -> None:
     project = load_terrain_project(Path(__file__).parents[1] /
                                   "examples/terrain/flat-outlet.dmterrain.json").project
-    monkeypatch.setattr("dmtools.terrain.pipeline.dry_links.MAX_DRY_LINK_SAMPLES", 1)
-    terrain = generate_terrain(project.coastline, replace(project.settings, resolution_px=65),
-                               constraints=project.constraints)
+    settings = replace(project.settings, resolution_px=65)
+    if budget_case == "forced":
+        monkeypatch.setattr("dmtools.terrain.pipeline.dry_links.MAX_DRY_LINK_SAMPLES", 1)
+    else:
+        settings = replace(settings, detail_levels=6)
+    terrain = generate_terrain(project.coastline, settings, constraints=project.constraints)
     lake = next(b for b in terrain.water.review.basins if b.source.kind == "lake")
     assert lake.dry_links is not None and lake.dry_links.status == "budget_exceeded"
     assert lake.dry_links.links == () and lake.collected_dry_cell_count == 0

@@ -180,23 +180,34 @@ substeps.
   compact diagnostic serialization. Retain every required probe, complete budget
   decision and reviewable failed link; exact per-call reuse is already implemented.
 - [x] **P1 — Compare nested and shifted finished-ground profiles.** A read-only
-  four-case runner now measures regional transitions, procedural detail, context
-  tails and overlapping points across physical scales, directions and seeds.
+  five-case runner now measures regional transitions, global/regional procedural
+  detail, context tails and overlapping points across scales, directions and seeds.
   Shared positions/Float32 ground must match exactly; unresolved budgets remain
-  explicit. The 64-run matrix is finite-reference evidence, not an error bound.
+  explicit. The initial 64-run matrix is finite-reference evidence, not an error bound.
   See the [convergence report](docs/research/2026-09-13-water-sampling-convergence.md).
 - [x] **P1 — Guide water probes through regional transitions.** Polygon boundary
   corridors and local contained intervals now expose a 950 m plateau rise missed
   by regular probes on a 4000 km object. Preserve ground, baseline stations,
   complete budgets and existing wet/dry/outlet gates. See
   [ADR-0044](docs/adr/0044-guide-water-profiles-through-regional-transitions.md).
-- [ ] **P1 — Resolve measured procedural and context-tail sampling gaps.**
-  The convergence fixtures retain procedural crest underestimates up to 388.97 m,
-  raw-path rise underestimates up to 971.28 m, a 0.31 m missed context-tail crest,
-  and shifted extrema where positive/negative influences overlap. Compare
-  wavelength-aware spacing and bounded local refinement with explicit cost and
-  unresolved status. Stabilized finite extrema alone must not certify clearance;
-  exercise oblique/grazing paths and multiple feature sizes before adoption.
+- [x] **P1 — Add procedural detail and context-shoulder sampling.** Global and
+  regional density now follows half the finest active noise lattice cell; local
+  context guidance uses evaluator radii and closest approaches. The expanded
+  matrix includes oblique paths and a rotated regional-detail case, with fixed-
+  input controls and complete-budget failures. See
+  [ADR-0045](docs/adr/0045-sample-procedural-detail-and-context-shoulders.md) and
+  the [measured report](docs/research/2026-09-13-detail-and-context-sampling.md).
+- [ ] **P1 — Bound residual blended and grazing sampling errors.** Compare local
+  refinement driven by conservative amplitude/gradient bounds with the remaining
+  shifted extrema and longitudinal/context-tail peaks. Sweep octave counts,
+  roughness, feature scales and grazing distances, including narrow off-grid 2D
+  passages. Lattice spacing and stabilized finite extrema alone do not certify
+  clearance. Keep whole-profile/network budgets and explicit unresolved results.
+- [ ] **P1 — Expose sampling cost before high-detail water reviews.** The six-
+  octave flat-outlet variant now exhausts its dry-network budget; the public
+  five-octave example fits. Compare cheap complete-count estimates and bounded
+  planning diagnostics before offering settings advice. Do not silently reduce
+  detail, raise caps, or accept only part of a network to hide this limit.
 - [ ] **P1 — Measure broader project-scale sampling limits.** Extend the current
   numeric stress fixtures to complex many-lake projects, alternate boundary shapes
   and total profile/export cost before adding a spatial index, shared-path reuse,

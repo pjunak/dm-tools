@@ -6,7 +6,7 @@ import json
 import os
 import subprocess
 import sys
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from hashlib import sha256
 from pathlib import Path
 from time import perf_counter
@@ -35,11 +35,12 @@ from dmtools.terrain.pipeline.water_sampling import (
     WATER_SAMPLING_ALGORITHM_ID,
     GroundSampler,
     SamplingFeature,
+    SamplingGuide,
     plan_ground_profile,
 )
 
-CASES = ("regional", "procedural", "tail", "overlap")
-DIRECTIONS = ("horizontal", "diagonal")
+CASES = ("regional", "procedural", "regional_detail", "tail", "overlap")
+DIRECTIONS = ("horizontal", "diagonal", "oblique")
 
 
 @dataclass(frozen=True, slots=True)
@@ -60,11 +61,13 @@ def fixture(case: str, seed: int, scale_km: float, direction: str, resolution: i
         resolution_px=resolution,
         coastal_rise_km=1.0,
         largest_feature_km=2.0 if case == "procedural" else 450.0,
+        variability=0.0 if case == "regional_detail" else 0.75,
     )
     ring = ((0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0), (0.0, 0.0))
     coastline = Coastline(ring, "public-convergence-square")
     start = np.asarray((0.25, 0.5 + 1 / 256)) * scale_km
-    vector = np.asarray((1.0, 0.0 if direction == "horizontal" else 1.0)) * scale_km / 256
+    slope = {"horizontal": 0.0, "diagonal": 1.0, "oblique": .37}[direction]
+    vector = np.asarray((1.0, slope)) * scale_km / 256
     axis = vector / np.linalg.norm(vector)
     normal = np.asarray((-axis[1], axis[0]))
     center = start + 0.375 * vector
@@ -77,13 +80,15 @@ def fixture(case: str, seed: int, scale_km: float, direction: str, resolution: i
     )
     plain = TerrainRegion(ring, LandformSettings("plain", 100.0, 0.0, 100.0, 1.0))
     constraints: tuple[TerrainConstraint, ...] = (
-        (retained,) if case == "procedural" else (plain, retained)
+        (retained,) if case in ("procedural", "regional_detail") else (plain, retained)
     )
     level = (
         750.0
         if case == "regional"
         else 3100.0
         if case == "procedural"
+        else 1800.0
+        if case == "regional_detail"
         else 339.6
         if case == "tail"
         else 125.0
@@ -99,6 +104,9 @@ def fixture(case: str, seed: int, scale_km: float, direction: str, resolution: i
                 (*corners, corners[0]), LandformSettings("plateau", 2000.0, 0.0, 100.0, 0.1)
             ),
         )
+    elif case == "regional_detail":
+        constraints += (TerrainRegion(
+            ring, LandformSettings("hills", 1800., 1800., 2., 1., 31.)),)
     elif case == "tail":
         constraints += (ElevationPoint(point(center + normal), 2000.0, 0.1, "relative"),)
     elif case == "overlap":
@@ -135,14 +143,20 @@ def probe(
         raise RuntimeError("Expected exactly one finished-ground review call.")
     bound = signature.bind(*observed.call_args.args, **observed.call_args.kwargs)
     sample = cast(GroundSampler, bound.arguments["sample_ground"])
-    features = cast(tuple[SamplingFeature, ...], bound.arguments["features"])
+    features = cast(tuple[SamplingGuide, ...], bound.arguments["features"])
     before = numeric_hashes(terrain)
     water_before = sha256(canonical_json(asdict(terrain.water.review))).hexdigest()
     x_km = cast(NDArray[np.float64], bound.arguments["x_km"])
     y_km = cast(NDArray[np.float64], bound.arguments["y_km"])
     spacing = min(float(x_km[1] - x_km[0]), float(y_km[1] - y_km[0])) / 4
     variants = {"current": features}
-    without_regions = tuple(f for f in features if not isinstance(f.geometry, Polygon))
+    geometry_only = tuple(replace(f, context_radius_km=None)
+                          for f in features if isinstance(f, SamplingFeature))
+    if geometry_only != features:
+        variants["geometry_only"] = geometry_only
+    without_regions = tuple(f for f in features
+                            if not (isinstance(f, SamplingFeature)
+                                    and isinstance(f.geometry, Polygon)))
     if len(without_regions) != len(features):
         variants["without_region_guidance"] = without_regions
     results: dict[str, Any] = {}
@@ -194,10 +208,10 @@ def main() -> None:
     parser.add_argument("--case", choices=CASES, nargs="+", default=list(CASES))
     parser.add_argument("--seed", type=int, nargs="+", default=[42])
     parser.add_argument("--scale", type=float, nargs="+", default=[400.0, 4000.0])
-    parser.add_argument("--direction", choices=DIRECTIONS, nargs="+", default=list(DIRECTIONS))
+    parser.add_argument("--direction", choices=DIRECTIONS, nargs="+", default=list(DIRECTIONS[:2]))
     parser.add_argument("--resolution", type=int, default=64)
     parser.add_argument("--refinements", type=int, nargs="+", default=list(DEFAULT_REFINEMENTS))
-    parser.add_argument("--max-samples", type=int, default=65_536)
+    parser.add_argument("--max-samples", type=int, default=262_144)
     parser.add_argument("--repeats", type=int, default=1)
     parser.add_argument("--output", type=Path)
     parser.add_argument("--worker", action="store_true", help=argparse.SUPPRESS)

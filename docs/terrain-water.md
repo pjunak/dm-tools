@@ -253,7 +253,7 @@ paths in teal; ordinary relief and the DEM remain ground/water-surface products.
 
 Build v16 stores the additional evidence in `diagnostics.json`, under
 `authored_water`; numeric archives retain their existing layouts.
-`sampling_algorithm_id` identifies `feature-guided-float32-water-checks@3`.
+`sampling_algorithm_id` identifies `feature-guided-float32-water-checks@4`.
 
 Each lake's `shoreline` contains a `profile`, `opening_radius_km`,
 `low_sample_count`, `uncontrolled_low_sample_count` and
@@ -270,7 +270,7 @@ Boundary, connection and external downstream profiles use the same fields:
 | `spacing_limit_km` | Maximum requested spacing in local kilometres |
 | `requested_sample_count` | Exact count when sampled; required lower bound when over budget |
 | `feature_sample_count` | Added stations beyond the baseline, or null when unresolved |
-| `feature_spacing_limit_km` | Smallest local core/region spacing limit used in the plan, or null |
+| `feature_spacing_limit_km` | Smallest active feature/detail spacing limit used in the plan, or null |
 | `positions_km` | Ordered local metric coordinate pairs, including exact vertices |
 | `ground_m` | Matching Float32 ground values represented as JSON numbers |
 | `minimum_ground_m`, `maximum_ground_m` | Sample extrema, null when unresolved |
@@ -314,15 +314,36 @@ request spacing no greater than transition/4 when finer than the baseline.
 Intersect the path with the region and refine the portions inside those corridors
 to at most one quarter of each contained interval's length. This catches thin
 crossed regions even when their nominal transition is broad. Include each such
-interval's midpoint if it lies in the corridor. Deep interiors keep baseline
-spacing. Tangencies add no zero-length interval, and concave regions retain
+interval's midpoint if it lies in the corridor. Deep interiors need no extra transition probes; procedural guidance below
+may still refine them. Tangencies add no zero-length interval, and concave regions retain
 every separate crossing. Polygon vertex clearance is not used as physical width.
 See [ADR-0044](adr/0044-guide-water-profiles-through-regional-transitions.md).
 
-Procedural relief and feature context tails still have no dedicated guidance.
-The [convergence comparison](research/2026-09-13-water-sampling-convergence.md)
-measures remaining extrema and threshold misses against finite finer samples;
-it does not establish a continuous terrain error bound.
+Procedural guidance requests a maximum physical gap of half the finest active
+noise lattice cell: `largest_feature_km / 2**detail_levels` for the global field.
+This also applies when global variability is zero but ridge/valley widths still
+use global detail. Nonzero-relief regions request
+`feature_size_km / 2**max(2, detail_levels)` only inside their polygons; regional
+recipes always contain at least two macro octaves. Combine overlapping requests
+at the finest spacing. A zero-relief region adds no regional noise request, but
+does not cancel global guidance: global detail can still change structure widths.
+
+Point and line context shoulders use the same radius factors as the evaluator.
+For structures, use the maximum variable radius (1.18 times nominal); attached
+absolute points use their 0.45 radius factor. Narrow contexts request context/4
+spacing within conservative twice-context-radius corridors, retaining every
+crossing. Broad contexts already fit baseline spacing: add one interior closest-
+approach station to the complete normalized geometry within twice the context
+radius, without buffering each segment. Attached relative points remain part of
+the structure profile. See
+[ADR-0045](adr/0045-sample-procedural-detail-and-context-shoulders.md).
+
+These are finite sampling choices, not spectral cutoffs or continuous terrain
+error bounds. Gaussian tails extend beyond the chosen corridors, blended extrema
+can lie between probes, and a single broad-context closest approach does not
+locate every longitudinal peak. The
+[detail/context comparison](research/2026-09-13-detail-and-context-sampling.md)
+records the residual errors and complete-budget failures alongside the gains.
 
 Normalize and split feature geometry once per immutable prepared feature,
 keeping every crossing. Merge overlapping interval requirements using the finest
@@ -332,8 +353,8 @@ refined positions or evaluating ground. If the baseline alone exceeds the
 budget, its count is a lower bound and feature planning is skipped. Otherwise
 the count includes the complete merged refinement plan. Neither failure returns
 partial ground evidence. The smallest local spacing is not a global uniform
-resolution or an accuracy guarantee; Gaussian context tails extend outside the
-chosen core corridors and interacting features can move extrema.
+resolution or an accuracy guarantee. Context-only anchors can add stations
+without lowering the baseline spacing limit.
 
 **Basin details** reports boundary counts, the highest sampled connection
 ground and the largest downstream climb, plus extra feature samples and the
@@ -499,7 +520,11 @@ authors a narrow valley all the way to the public coast. Part of its captured
 area drains through the lake; isolated dry pockets remain retained. The
 [flat-outlet example](../examples/terrain/flat-outlet.dmterrain.json) adds a
 zero-relief plateau and narrower height influences to exercise exact flat
-routing alongside retained pits.
+routing alongside retained pits. It uses five detail octaves so the complete dry
+network fits the current sample budget. At six octaves, finer width-detail probes
+exceed that budget: every dry donor stays retained while verified wet flow
+survives. Tests cover both cases; increasing raster export resolution does not
+change either review.
 
 ## Shoreline findings and remaining work
 
@@ -540,11 +565,11 @@ routing alongside retained pits.
 
 The water surface remains an authored, clipped level preview. No runoff,
 water budget, automatic spill, breach, sediment or nested depression hierarchy
-is simulated. Next, extend finer evidence beyond the targeted authored cores,
-measure regional/procedural extrema and context tails, and define controlling-sill
-and storage assumptions before explicit lake chains. Full constrained
+is simulated. Next, measure residual blended/grazing extrema and whole-project
+sampling cost, then define controlling-sill and storage assumptions before
+explicit lake chains. Full constrained
 breach/reroute proposals must preserve budgets and authored anchors. See
 [ADR-0043](adr/0043-review-dry-collection-paths.md).
 
 For measured results and the prioritized next steps, read the
-[implementation rundown](research/2026-09-11-dry-collection-paths.md).
+[sampling rundown](research/2026-09-13-detail-and-context-sampling.md).

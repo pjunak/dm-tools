@@ -25,7 +25,7 @@ from dmtools.terrain.pipeline.water import (
 )
 from dmtools.terrain.pipeline.water_sampling import (
     GroundSampler,
-    SamplingFeature,
+    SamplingGuide,
     review_shorelines,
 )
 from dmtools.terrain.pipeline.wet_links import WetLinkReview, review_wet_links
@@ -111,7 +111,7 @@ class _BasinCollection:
 def _collect_basin(
     basin: MetricBasin, inside: NDArray[np.bool_], wet: NDArray[np.bool_], contact: int,
     elevation_m: NDArray[np.float64], x_km: NDArray[np.float64], y_km: NDArray[np.float64],
-    sample_ground: GroundSampler, features: tuple[SamplingFeature, ...],
+    sample_ground: GroundSampler, features: tuple[SamplingGuide, ...],
 ) -> _BasinCollection:
     nodes, neighbours = basin_neighbours(basin, inside, x_km, y_km)
     local_wet = wet.ravel()[nodes]
@@ -140,7 +140,7 @@ def resolve_basin_outflow(
     final_receivers: NDArray[np.int64], boundary_flags: NDArray[np.uint8],
     x_km: NDArray[np.float64], y_km: NDArray[np.float64], land: Polygon | MultiPolygon,
     constraints: tuple[TerrainConstraint, ...], outlet_heights: tuple[float | None, ...],
-    sample_ground: GroundSampler, features: tuple[SamplingFeature, ...] = (),
+    sample_ground: GroundSampler, features: tuple[SamplingGuide, ...] = (),
 ) -> tuple[WaterReview, BasinOutflow]:
     """Review current ground, connect eligible outlets, and account for every source once.
 
