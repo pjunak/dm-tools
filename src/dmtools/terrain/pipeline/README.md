@@ -5,14 +5,15 @@ configuration. Stochastic stages use named deterministic seeds; generation
 returns numeric elevation, retained routing products and diagnostics.
 
 The implemented generator builds a coordinate-addressed relief field and a
-separate low-frequency macro surface. It routes MFD contributing area over a
-Priority-Flood-conditioned copy of that macro surface on a fixed canonical
-grid, then cuts a bounded, stream-power-inspired automatic valley field. The
-incision is sampled in world coordinates, so output resolution does not reroute
-the continent's major valleys. When authored constraints exist, the pipeline
-then applies broad smooth brush, ridge, valley, and height-point responses and
-restores the high-frequency residual. Absolute constraints attenuate that
-residual to satisfy world elevations. Relative constraints are deterministic
+separate low-frequency macro surface. Regional recipes and authored constraints,
+including valley profiles prepared against a stable pre-incision reference,
+shape that macro surface before routing. MFD contributing area uses a
+Priority-Flood-conditioned copy on a fixed canonical grid, then drives bounded,
+stream-power-inspired automatic valleys. Incision is sampled in local metric
+coordinates, so changing output resolution does not reroute major valleys.
+Final shaping applies authored brush, ridge, valley and height-point responses
+and restores permitted high-frequency residual. Absolute constraints attenuate
+that residual to satisfy absolute metre elevations. Relative constraints are deterministic
 displacement fields over the surface entering their stage and preserve its
 residual relief. The order is brush, ridge, valley, relative point, then exact
 absolute point. Same-kind overlaps are order-independent. The coastline remains
@@ -39,7 +40,7 @@ the complete deterministic surface entering the valley stage at metric
 positions spaced by at most 2 km, with every authored anchor inserted as an
 exact knot. Relative incision profiles are subtracted from this reference. A
 cumulative downstream minimum then removes only floor rises; it never raises
-the preferred floor. Absolute valleys interpolate non-rising world-height
+the preferred floor. Absolute valleys interpolate non-rising absolute-height
 anchors toward the line's outlet-floor value and reject an uphill hard-anchor
 sequence. The prepared profile is independent of output raster resolution and
 is reused by every processing chunk.
@@ -48,8 +49,9 @@ Automatic drainage is broad terrain structure, not a hydrologic certification.
 Its temporary filled surface is never substituted for the DEM, and it currently
 routes the authored macro surface before final constraint restoration. Regional
 relief limits automatic incision, including downstream corrections.
-It does not yet represent authored lakes, endorheic basins, sediment, lithology,
-climate, unique river trees, or river vector export.
+Authored lake/dry-basin footprints retain planned flow and exclude automatic
+cuts. Sediment, lithology, climate and validated river-vector products are not
+implemented.
 
 MFD accumulation measures broad convergence, while a complementary D8 receiver
 tree supplies one generated valley centreline. A logarithmic contributing-area
@@ -64,8 +66,8 @@ heads have order one; equal highest-order tributaries increment the downstream
 order, while a smaller tributary joining a larger reach does not. The order
 raster is retained and exported as numeric topology, with zero outside the
 channel network. It does not currently modify elevation or width: direct
-order-based width and centreline-depth experiments regressed the synthetic width fixture or
-the coarse Tharkeniss drainage diagnostic. Area and slope therefore remain the
+order-based width and centreline-depth experiments regressed the synthetic
+width fixture or the historical Tharkeniss drainage check (ADR-0023). Area and slope therefore remain the
 active shaping controls until valley character and confinement are explicit.
 
 The broad response also receives a deliberately small MFD convergence
@@ -112,8 +114,8 @@ Priority-Flood operates on a copy, and its conditioned receivers are reused for
 channel comparison, fill extents and deterministic escape candidates. The typed
 analysis retains labels, original-terrain spill points, terminals and raster
 exterior/enclosed-water boundary context. It never repairs the authoritative DEM.
-The separate 129-node diagnostic pass is removed; candidate IDs and numeric
-products are resolution-independent. See the
+Candidate IDs and canonical numeric products are independent of delivered
+resolution for otherwise identical inputs and algorithms. See the
 [basin contract](../../../../docs/terrain-basins.md) for representative-route
 selection and the limits of connected components versus authored lakes.
 
@@ -137,7 +139,17 @@ near-zero flow correction are specified in
 [ADR-0032](../../../../docs/adr/0032-classify-channel-conflicts.md).
 
 Authored retention footprints and separate lake-water products live in
-`water.py`. Canonical incision budgets and continuous vector membership both
-exclude generated cutting inside lake/dry-basin areas. Finished-ground outlet
-samples and shared-grid shoreline/flow review remain separate from repair.
-See the [water contract](../../../../docs/terrain-water.md).
+`water.py`. Canonical incision budgets and exact vector membership exclude
+generated cutting inside lake/dry-basin areas. MFD absorption preserves captured
+contributing area at each footprint node.
+
+`water_sampling.py` plans bounded feature-guided Float32 profiles for shoreline
+and outlet contact. `outlet_profiles.py` checks full external paths;
+`wet_links.py` checks internal water connectivity; `dry_links.py` checks dry
+candidate links and cumulative rises along chosen paths. `flat_routing.py`
+routes exact flats using integer ranks without changing elevations.
+`basin_flow.py` transfers eligible collected area and checks terminal conservation.
+A failed/budget-limited review retains the affected area instead of accepting a
+sampled prefix. No review repairs terrain or establishes a physical lake level.
+See the [water contract](../../../../docs/terrain-water.md) for precise gates,
+scope, algorithms and exported evidence.

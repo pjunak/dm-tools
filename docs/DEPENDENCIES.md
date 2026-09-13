@@ -1,6 +1,6 @@
 # Runtime dependency register
 
-The first terrain vertical slice uses the following runtime dependencies. The
+The terrain application uses the following runtime dependencies. The
 version range in `pyproject.toml` is authoritative; versions below are the
 minimum accepted versions when the dependency was adopted.
 
@@ -30,7 +30,7 @@ Primary references:
 
 ## Development-only schema validation
 
-`jsonschema >=4.25,<5` (MIT) validates the new build manifest and its project
+`jsonschema >=4.25,<5` (MIT) validates the current build manifest and its project
 schema reference in tests. Version 4.26.0 and its dependency stack were verified
 on Windows / CPython 3.14.7. It is installed through the `dev` extra and is not
 needed by the build command or desktop runtime. Its `referencing` dependency
@@ -55,7 +55,7 @@ release. Dependency permissions do not license project-owned code.
 ## GeoTIFF runtime
 
 Rasterio 1.5.1 and Affine 3.0.1 passed local Windows / CPython 3.14.7 checks.
-The installed Rasterio wheel reports GDAL 3.12.4 and PROJ 9.8.1. Build manifests
+The environment rechecked on 2026-09-13 reports GDAL 3.12.4 and PROJ 9.8.1. Build manifests
 record these package/native versions. Rasterio and Affine are runtime
 requirements because every headless build writes a GeoTIFF; native I/O stays
 inside adapters. Domain and numerical generation do not import them.

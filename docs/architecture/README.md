@@ -31,23 +31,25 @@ The current implemented path is:
 
 1. Load and validate an SVG or versioned terrain project, then dissolve its
    closed land geometry.
-2. Project normalized authored constraints into one metric working grid shared
-   by mainland sections and islands.
-3. Compose soft regional full/macro fields for plains, hills, plateaus and
-   mountain belts. Prepare valley profiles against a stable pre-incision reference and construct
-   the broad routing surface with authored constraints. Route automatic valleys
-   on its canonical grid and retain the drainage topology.
-4. Apply authored brush, point, ridge, and valley semantics and restore
-   coordinate-addressed residual detail.
-5. Calculate finite-value, coastline, basin and drainage diagnostics. Compare
-   planned channels against the finished field on matching routing nodes;
-   preserve authoritative constraints and report unresolved uphill segments.
-   Read-only basin and channel-context work lives in `pipeline/diagnostics.py`,
-   separate from flow and incision primitives in `pipeline/hydrology.py`.
-6. Return the Float32 DEM in memory and derive the workbench colour preview and
-   PNG export. The shared headless application operation also writes numeric
-   NPY arrays, local-metric GeoTIFF, both preview styles, spatial measurements and a completion
-   manifest using the existing local-coordinate model.
+2. Convert normalized authored constraints into the source-bounds local metric
+   frame shared by mainland and islands. This is scaling, not a world projection.
+3. Compose regional full/macro fields, prepare stable valley profiles and apply
+   authored macro constraints before canonical routing. Lake/dry footprints
+   absorb flow; regional relief limits automatic incision.
+4. Reapply final authored semantics and restore permitted coordinate-addressed
+   detail. Return Float32 ground without filling it to the routing surface.
+5. Review finished ground on the shared canonical grid, retaining basin labels,
+   spill paths, topology and unresolved channel conflicts. `diagnostics.py`
+   owns read-only review; `hydrology.py` owns flow and incision primitives.
+6. Derive clipped lake water and review shorelines, outlet attachments, full
+   external paths and internal wet/dry links against finer Float32 samples.
+   `water_sampling.py` owns probe plans; `outlet_profiles.py`, `wet_links.py`
+   and `dry_links.py` own path/link checks. `basin_flow.py` conserves captured
+   area while transferring only eligible collections. These checks do not
+   establish physical lake equilibrium, discharge or a complete river network.
+7. The workbench renders derived relief/review overlays and exports PNG. The
+   shared headless build operation writes NPY/NPZ, local-metric GeoTIFF, both
+   preview styles, diagnostics and a completion-last manifest through adapters.
 
 The next durable-build work adds world georeferencing,
 derived GIS products, explicit hard/soft/inequality projection after optional
@@ -96,10 +98,12 @@ layer or path boundaries.
 ## Deferred decisions
 
 - World-georeferenced build contracts and explicit source placement
-- Elevation profiles and asymmetric side slopes along structural lines
+- Direct per-vertex profiles, explicit passes and asymmetric structural sides
+  (point-anchored longitudinal ridge/valley profiles are implemented)
 - Inter-lake transfer, constrained repair and nested depression policy
   (lake levels, retention, outlet checks and conservative area transfer are implemented)
-- Public drainage/catchment products and external hydrology validation boundary
+- River/catchment vector products and external hydrology validation
+  (numeric routing, footprint collection and basin review archives are implemented)
 - Multiresolution storage and refinement strategy
 - Global climate-field and ecological-classification contracts
 - Web framework, queue, storage, and frontend

@@ -22,7 +22,11 @@ Priority labels:
 The current baseline already includes deterministic coordinate-addressed
 detail, dissolved multipart SVG land geometry, absolute and relative
 brush/point/line constraints, per-tool settings, project save/open, colour
-preview, and PNG export. Those are not repeated below as unfinished work.
+preview and PNG export. Numeric builds, regional recipes, authored basin
+retention and sampled outlet transfer are also implemented as recorded below.
+The [research status](docs/research/status.md) separates completed slices from
+partially addressed research goals; unchecked broad items may contain completed
+substeps.
 
 ## Features
 
@@ -103,7 +107,8 @@ preview, and PNG export. Those are not repeated below as unfinished work.
 - [x] **P1 — Assess candidate downstream lake outlets on finished ground.**
   Review nearest outward attachments, whole candidate paths, uphill steps,
   basin re-entry, vector coastline gaps, cycles and terminal boundary context.
-  Export sampled path evidence; a clear result does not activate flow.
+  Export sampled path evidence; clearance alone is insufficient for transfer
+  until shoreline, wet/dry collection and whole-route gates also pass.
 - [x] **P1 — Connect eligible lake outlets and transfer retained area.**
   Finished-ground routes now carry captured MFD area from connected lake water
   and dry nodes that drain into it. Extra shoreline openings and invalid routes
@@ -185,8 +190,8 @@ preview, and PNG export. Those are not repeated below as unfinished work.
   reviewed incoming/outgoing paths and acyclic basin dependencies; keep closed
   and dry basins terminal. Current outlet paths reject every intervening basin.
 - [ ] **P1 — Reconcile blocked channels through explicit water/outlet choices.**
-  The plain fixture has 253 uphill edges; all exceed remaining receiver cut
-  and 234 touch depressions. Spill candidates and exterior/enclosed raster
+  The ADR-0032 plain fixture recorded 253 uphill edges; all exceeded remaining
+  receiver cut and 234 touched depressions (historical diagnostic baseline). Spill candidates and exterior/enclosed raster
   boundaries are mapped, and lake/dry-basin intent now protects authored areas.
   Closed basins retain flow and eligible outlets now transfer captured area.
   Classify ocean boundaries and compare full paths before applying
@@ -273,10 +278,11 @@ terrain-output and regional-refinement contracts needed by the
 
 ## Algorithm and result improvements
 
-The [2026-09-03 terrain algorithm research](docs/research/2026-09-03-terrain-algorithm-options.md)
-recommends building the measurement harness first, then comparing local RBF and
-sparse screened-Poisson correction fields, followed by drainage and optional
-landscape-process spikes. It is working research, not an accepted architecture.
+The [2026-09-03 algorithm research](docs/research/2026-09-03-terrain-algorithm-options.md)
+proposed a measurement harness and solver/process comparisons. The harness and
+substantial drainage work are now implemented. RBF/Poisson replacement and
+landscape-evolution experiments remain candidates; the current strategy owns
+execution order.
 
 ### Constraint-conditioned base surface
 
@@ -305,7 +311,9 @@ landscape-process spikes. It is working research, not an accepted architecture.
   moving neighbourhood.
 - [ ] **P1 — Add terrain-character-aware residual detail.** Control spectral
   slope, anisotropy, roughness, and amplitude by region so plains, plateaus,
-  rolling hills, and mountain belts do not share one texture.
+  rolling hills and mountain belts do not share one texture. The first four
+  regional recipes already vary detail and mountain orientation; exposed spectral
+  targets, terrain-adaptive orientation and suitability controls remain open.
 - [ ] **P1 — Preserve authored constraints after every optional process stage.**
   Reproject or solve back to hard constraints after erosion/diffusion and report
   the remaining residual for soft constraints.
@@ -352,7 +360,8 @@ landscape-process spikes. It is working research, not an accepted architecture.
   permits otherwise; let high-terrain valleys remain high while retaining
   relative incision. Valleys are now ordered head-to-outlet and use a stable
   pre-valley metric reference profile plus downstream-only floor correction. Authored
-  lake and basin exceptions remain part of the explicit-water work.
+  lake/dry-basin retention limits automatic cuts only; explicit valley floors
+  still apply inside those footprints. Water-aware valley exceptions remain open.
 - [ ] **P1 — Add variable valley cross-sections.** Support narrow V-shaped
   valleys, glacial U-shaped valleys, broad floodplains, terraces, and smooth
   width/depth changes along a line. Generated fluvial valleys now widen and
@@ -362,23 +371,17 @@ landscape-process spikes. It is working research, not an accepted architecture.
   Horton-Strahler order, but measured regressions rejected using it as a direct
   width or depth control without valley character or confinement; authored
   per-vertex shape, glacial forms, floodplains, and terraces remain.
-- [ ] **P0 — Derive drainage direction and flow accumulation.** Define the
-  depression fill/breach policy, flat handling, edge outlets, and sea
-  connectivity before promising hydrologically valid rivers. Prototype MFD for
-  continuous accumulation and D8 for unique catchment trees; include rotated
-  fixtures so grid-direction bias is measurable. A fixed canonical-grid
-  Priority-Flood + MFD accumulation stage now drives automatic broad valleys,
-  with a rotated fixture, and a complementary D8 tree supplies unique generated
-  centrelines. A bounded area-slope channel-head rule now starts steep
-  headwaters earlier, preserves large gentle rivers, and closes every selected
-  path downstream. Generated floors are now conditioned after residual-detail
-  restoration with bounded downstream-only cuts; the aligned Tharkeniss network
-  improves. Extreme generated knickpoints now receive a second bounded
-  normalized-steepness pass with explicit unresolved diagnostics, while the
-  coarser completed-surface diagnostic documents remaining scale aliasing.
-  Horton-Strahler order now records equal-tributary hierarchy without changing
-  the DEM. Public drainage products, authored depression policy, basin labels,
-  and user-facing drainage-density profiles remain.
+- [x] **P0 — Derive canonical drainage direction and flow accumulation.**
+  Priority-Flood, MFD accumulation and a complementary D8 tree drive automatic
+  valleys; initiation, downstream closure, Strahler order and bounded floor/
+  steepness corrections have numeric fixtures. Builds retain basin labels,
+  topology and finished-field conflicts on the same 257-node review grid.
+  Authored lake/dry intent absorbs area and eligible outlets transfer it.
+- [ ] **P1 — Complete physical drainage policy and river products.** Define
+  nested depressions, controlling sills, ocean semantics and constrained repair;
+  add river/catchment vectors and user-facing drainage-density/runoff controls.
+  Canonical topology and sampled outlet clearance do not certify every river
+  or every point of the delivered surface.
 - [ ] **P1 — Reconcile authored rivers with generated drainage.** Rivers should
   descend to a valid outlet and occupy a local valley; report conflicts rather
   than silently moving an authored route.
@@ -388,14 +391,15 @@ landscape-process spikes. It is working research, not an accepted architecture.
   257-node shared routing/review grid reports strict-D8 boundary connectivity,
   potential sinks, fill depth/volume and largest catchment without changing terrain.
   Significant fill components now retain extent labels and representative
-  exit/spill/terminal routes, plus raster exterior/enclosed-water boundary context. Authored basin classification, a full nested depression
-  hierarchy, river-segment checks, and local refinement diagnostics remain.
+  exit/spill/terminal routes, plus raster exterior/enclosed-water boundary context. Authored lake/dry classification, finer outlet/link profiles and
+  conservative area transfer are implemented. A full nested depression
+  hierarchy, physical river validation and local refinement diagnostics remain.
 - [ ] **Research — Compare a mature hydrology adapter with selected in-project
   primitives.** Candidates already considered include ANUDEM-style
   hydrological conditioning and established GIS flow/depression tooling. Keep
   optional engines behind adapters and measure Python 3.14/platform support,
-  determinism, license implications, and refinement behavior. Landlab is the
-  strongest Python 3.14 experiment adapter found; GRASS and Whitebox remain
+  determinism, license implications, and refinement behavior. The dated source audit shortlisted Landlab for a Python experiment, but no
+  local Landlab runtime comparison has run. GRASS and Whitebox remain
   external comparison tools with explicit license/version boundaries.
 
 ### Landscape processes and validation
@@ -419,8 +423,9 @@ landscape-process spikes. It is working research, not an accepted architecture.
   The first compact drainage summary now travels with generated terrain and PNG
   metadata. Internal generated-channel results now also report total and
   steepness-only floor corrections, excessive normalized-steepness ratios, and
-  unresolved uphill edges; public profile statistics and a durable build report
-  remain.
+  unresolved uphill edges. Durable build diagnostics include elevation min/max/mean/deviation and
+  masked X/Y directional measurements. Full constraint residuals, slope/curvature
+  distributions, clipping fractions, hypsometry and profile statistics remain open.
 - [ ] **P1 — Add explicit prominence and saddle analysis.** Keep this derived
   measurement separate from the current relative-relief controls.
 - [x] **P0 — Record algorithm and stage identifiers in each build.** Record
@@ -443,12 +448,15 @@ landscape-process spikes. It is working research, not an accepted architecture.
   diagnostics, I/O, startup and peak memory; distinguish native calls from
   Python loops. The first public-example timing/profile is recorded in the
   [language assessment](docs/research/2026-09-05-language-and-performance.md);
-  it is not yet a representative benchmark suite or memory measurement.
-  A [repeatable harness](benchmarks/README.md) now covers five public/synthetic
+  it predates the representative harness and native peak-memory measurements.
+  The [repeatable harness](benchmarks/README.md) now offers 13 public/synthetic
   cases, selectable seeds/resolutions, generation stages, CPU time, quality,
   rendering, process peak memory and numerical hashes in isolated repetitions.
   The [2026-09-10 review](docs/maintenance/2026-09-10-sanity-and-performance.md)
-  adds regional landforms, retained routing identities and CPU profiles.
+  adds regional landforms, retained routing identities and CPU profiles. The
+  [dry-path follow-up](docs/research/2026-09-11-dry-collection-paths.md) measures
+  the newer connected-water workload; older coast profiles are not current
+  end-to-end cost estimates.
   Export timing, regional-refinement/4096 cases, many-constraint stress tests
   and agreed latency/memory budgets remain.
 - [ ] **P1 — Optimize measured boundary-distance cost.** Prototype indexed
@@ -509,8 +517,9 @@ Priorities remain conditional on the current strategy's prerequisites.
 - [x] **P0 — R04: Route on currently authored macro geography.** Brush, ridge,
   point and prepared valley constraints now participate in canonical routing.
   Relative valley profiles use a stable pre-incision reference, with one
-  planning pass and existing final constraint precedence. Explicit river/divide
-  and water-level entities remain future work; see ADR-0029.
+  planning pass and existing final constraint precedence. Lake levels and dry
+  retention intent are implemented; explicit river/divide entities remain open.
+  See ADR-0029 and the [water contract](docs/terrain-water.md).
 - [x] **P1 — R05: Retain inspectable drainage topology.** Builds retain source
   and filled routing DEMs, final-field samples, D8 receivers, MFD accumulation,
   stream order, channels, heads and outlets with coordinates, mask and hashes.
@@ -519,9 +528,9 @@ Priorities remain conditional on the current strategy's prerequisites.
 - [ ] **P1 — Reconcile remaining planned/final channel conflicts.** Quantify
   hard-anchor conflicts separately from residual-detail and depression effects.
   Preserve authored intent; do not treat filled routes as validated rivers.
-  The seed-42 authored benchmark currently reports 390 uphill edges among 2455
-  planned channel edges (maximum rise 135.07 m); this is a baseline for future
-  reconciliation, not hydrologic acceptance.
+  ADR-0029 recorded 390 uphill edges among 2455 planned channel edges
+  (maximum rise 135.07 m) for its seed-42 authored baseline. Re-measure the
+  current fixture before comparing changes; that result is not acceptance.
 - [ ] **P1 — R06: Separate coastline height from coastal terrain character.**
   Compare regional coastal plains, steep mountain coasts, cliff approaches and
   plateau margins with the uniform exponential rise. Keep the authored shore
@@ -539,8 +548,8 @@ Priorities remain conditional on the current strategy's prerequisites.
   global histogram remapping that alters hard anchors or drainage.
 - [ ] **Research — R09: Couple ridge and drainage skeletons.** Generate spurs
   between tributaries, preserve divides and saddle connections, and measure
-  network crossings, orphan peaks, junction angles and branch scale. Extend
-  existing hierarchical branching rather than creating a second ridge system.
+  network crossings, orphan peaks, junction angles and branch scale. Build on
+  authored structure profiles and junctions; generated ridge branching remains open.
   Preserve the distinct surface-ridge, divide, thalweg and channel meanings
   described by R42 rather than assuming the two skeletons are exact duals.
 - [ ] **Research — R10: Add layered substrate to lithology regions.** Evaluate
@@ -631,9 +640,11 @@ Priorities remain conditional on the current strategy's prerequisites.
   selected terrain character from reference patches after fitting broad relief
   and boundaries to authored geography. Measure repeated motifs, seams,
   constraint errors and drainage changes; retain source data rights/hashes.
-- [ ] **P1 — R27: Add a reproducible candidate comparison gallery.** Extend the
-  existing seed/before-after view with fixed-seed ensembles, region descriptors
-  and multiple valid alternatives. Keep visual interest separate from hard
+- [ ] **P1 — R27: Add a reproducible candidate comparison gallery.** Build on
+  benchmark fixtures and relief styles with fixed-seed ensembles,
+  before/after views, region descriptors and multiple valid alternatives.
+  The workbench has no seed/before-after comparison view yet. Keep visual
+  interest separate from hard
   validity; adoption is an explicit author choice, not one opaque quality score.
 - [ ] **P1 — R28: Compare multiscale and multidirectional relief rendering.**
   Use GDAL hillshade variants and coarse/fine shading at the same DEM and fixed
@@ -648,7 +659,7 @@ Priorities remain conditional on the current strategy's prerequisites.
   Assess Houdini, Gaea, World Machine, World Creator and HighMap only where
   useful. Exchange numeric heights, extent, datum, masks and settings; detect
   normalization or coast movement. Verify exact component license, automation
-  rights and runtime; pyHighMap currently documents Linux-only support.
+  rights and runtime; the dated pyHighMap audit reported Linux-only support; recheck before use.
 - [ ] **Research — R31: Benchmark GPU routing/process backends after profiling.**
   Compare FastFlow, compute-shader and CUDA candidates only for a demonstrated
   bottleneck. Record hardware, drivers, precision and repeat-run variance;
@@ -672,7 +683,8 @@ Priorities remain conditional on the current strategy's prerequisites.
   2-to-6-band probe reduces existing band coefficients by 28.26%; this is a
   setting-change effect, not broken shared-coordinate determinism. Measure
   coarse power and parent restriction after nonlinear mapping and processes;
-  preserve old presets and algorithm identifiers.
+  version deliberate algorithm changes and update current presets; do not
+  preserve obsolete presets or output solely for compatibility.
 - [ ] **Research — R35: Constrain regional transition gradients.** Match
   province reference levels and budget the extra slope from blending surfaces
   at different heights. Measure slope/curvature across flat, plateau and
@@ -760,8 +772,9 @@ Priorities remain conditional on the current strategy's prerequisites.
 - [ ] **P0 — Add selection and a property inspector.** Click a brush stroke,
   point, ridge, or valley to inspect and edit its mode, elevation, size, and
   strength without deleting and redrawing it.
-- [ ] **P0 — Add multi-step undo and redo.** Cover creation, deletion, movement,
-  property edits, project loading, and clear-all as explicit commands.
+- [ ] **P0 — Add command-based undo and redo.** Existing Undo removes draft
+  vertices and committed features in reverse order. Add redo and history for
+  deletion, movement, property edits, project loading and clear-all.
 - [ ] **P0 — Add pan and zoom.** Keep wheel-based brush sizing predictable by
   assigning zoom to a modifier or dedicated navigation mode; show current map
   scale and cursor coordinates.
@@ -784,11 +797,13 @@ Priorities remain conditional on the current strategy's prerequisites.
   resolution preview in the background while retaining an explicit full-quality
   Generate action.
 - [ ] **P0 — Add stage-aware progress and cancellation.** Show the current
-  pipeline stage, elapsed work, and cancellation status without leaving a
-  partial build that appears complete.
+  pipeline stage, elapsed work and cancellation status. Background generation
+  already reports progress labels; cancellation and elapsed work remain open.
+  Headless builds already publish completion last.
 - [ ] **P1 — Add switchable inspection overlays.** Include contours, hillshade,
   slope, curvature, influence extents, hard-constraint residuals, drainage,
-  catchments, and clipped-elevation warnings.
+  catchments and clipped-elevation warnings. Drainage and basin catchment
+  toggles are implemented; the other listed overlays remain open.
 - [ ] **P1 — Improve elevation inspection.** Show elevation under the cursor,
   local slope, active constraint contributions, and an optional cross-section
   through the selected ridge or valley.

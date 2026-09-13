@@ -46,7 +46,7 @@ quality measurements and exported metadata share the same grid description.
 ## World positioning remains explicit future work
 
 Current projects have no declared source-to-world correspondence, working CRS
-or planetary radius. They remain local after this refactor. A source origin
+or planetary radius. Their coordinate model remains local. A source origin
 recorded in parsed SVG units is not enough to infer its relationship to an
 original document or global projection.
 

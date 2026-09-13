@@ -56,64 +56,26 @@ layers are derived products that can be rebuilt and inspected independently.
 
 ## Next implementation order
 
-Local numeric builds, seed/grid contracts and authored-macro drainage are now
-implemented. Focus the next iterations on visible terrain quality:
+The implemented baseline includes local numeric builds, named seeds and endpoint
+grids, authored-macro routing, four regional recipes with incision caps, and
+lake/dry-basin authoring. Water review retains captured MFD area, checks exact
+flats, finer shorelines, full external routes and internal wet/dry paths, then
+transfers only eligible area. See [current research status](../research/status.md)
+for evidence and limits, and [ADR-0043](../adr/0043-review-dry-collection-paths.md)
+for the latest accepted water behavior.
 
-The first [landform region slice](../terrain-regions.md) is implemented, including
-polygon authoring, shared routing input, four recipes and smooth transitions.
-Regional automatic incision now follows relief budgets; corrections and numeric
-exports carry their limits ([ADR-0031](../adr/0031-bound-incision-by-regional-relief.md)).
-
-Conflict classification is now implemented; it retains overlapping evidence
-and fixes near-zero flow underflow ([ADR-0032](../adr/0032-classify-channel-conflicts.md)).
-
-Basin extents, representative spill routes and boundary context now share the
-257-node routing grid ([ADR-0033](../adr/0033-map-basin-spill-candidates.md)).
-The separate coarse inventory is removed. Authored lakes and dry-basin areas
-now protect terrain from automatic cuts and export separate water surfaces
-([ADR-0034](../adr/0034-author-lakes-and-dry-basins.md)).
-
-Authored footprint nodes now absorb D8/MFD flow, with conserved area and
-finished-ground candidate outlet review
-([ADR-0035](../adr/0035-retain-basin-flow-and-assess-outlets.md)).
-
-Eligible outlets now transfer captured area after shoreline and finished-field
-checks ([ADR-0036](../adr/0036-connect-lake-outflow-with-area-transfer.md)).
-
-Collected/retained footprint nodes and signed outlet-level differences are now
-visible and exported ([ADR-0037](../adr/0037-expose-basin-catchment-outcomes.md)).
-
-Exact internal flats now use integer ranks with contained links; closed pits
-remain retained ([ADR-0038](../adr/0038-route-basin-flats-with-integer-gradients.md)).
-
-Finer shoreline and water/outlet-attachment profiles now detect additional
-openings and barriers ([ADR-0039](../adr/0039-sample-shorelines-and-outlet-connections.md)).
-
-Authored narrow cores and crossings now guide local profile refinement without
-changing ground or canonical topology
-([ADR-0040](../adr/0040-refine-water-profiles-around-authored-features.md)).
-
-Full external candidate routes now have bounded profiles, canonical vertex
-mapping and cumulative uphill checks
-([ADR-0041](../adr/0041-review-complete-downstream-outlet-profiles.md)).
-
-Internal water links now receive bounded batched checks, preserving the selected
-contact and clear alternate wet paths. Separated pools retain their captured area
-([ADR-0042](../adr/0042-review-internal-water-links.md)).
-
-Dry collection now checks every candidate descent/flat and complete chosen
-paths; sampled barriers permit clear local alternatives and unresolved dry area
-stays retained ([ADR-0043](../adr/0043-review-dry-collection-paths.md)).
-
-1. Measure broader sampling convergence, including procedural relief, regional
-   transitions and feature context tails. Profile the enlarged dry network and
-   define controlling-sill and storage assumptions. Then support
-   explicit lake chains with compatible levels and acyclic dependencies.
-2. Compare retention, constrained breach and reroute proposals using full paths,
+1. Reduce measured repeated water-network work in Python, preserving every
+   probe, budget decision, Float32 result and failed-link record. Compare whole
+   generations and controls, not only a faster isolated helper.
+2. Measure sampling convergence for procedural relief, regional transitions and
+   authored context tails. Define controlling-sill/storage assumptions before
+   introducing explicit lake chains with compatible levels and acyclic flow.
+3. Compare retention, constrained breach and reroute proposals using full paths,
    cut depth/length and preserved anchors, then expose reviewable river networks.
-3. Per-vertex ridge/valley profiles, explicit passes and asymmetric sides.
-4. Regional drainage-density/runoff controls, followed by selected-region
-   refinement with explicit parent and halo contracts.
+4. Extend point-anchored ridge/valley profiles with direct per-vertex controls,
+   explicit passes and asymmetric sides.
+5. Add regional drainage-density/runoff controls, then selected-region refinement
+   with explicit parent and halo contracts.
 
 R04/R05 provide the first drainage correctness slice and review products;
 [ADR-0029](../adr/0029-route-drainage-over-authored-terrain.md) records its limits.
@@ -124,20 +86,21 @@ forward when integration or regional/climate coordinates require it.
 
 ## Engineering checkpoint
 
-The [2026-09-10 sanity and performance review](../maintenance/2026-09-10-sanity-and-performance.md)
-found sound dependency direction, large orchestration/UI modules and a native
-geometry-distance bottleneck. Keep the product order above. Basin and channel
-review now live in a separate diagnostics module; separate structure-profile
-preparation when that authoring work starts.
-Split workbench controls and drawing interaction as those flows change.
+The [2026-09-13 documentation audit](../maintenance/2026-09-13-documentation-and-research-status.md)
+reconciles current contracts with the backlog. The earlier
+[2026-09-10 review](../maintenance/2026-09-10-sanity-and-performance.md) identified
+native coast-distance cost and large generation/UI modules. The later
+[dry-path measurements](../research/2026-09-11-dry-collection-paths.md) add a
+substantial repeated planning/sampling cost on connected-water scenes. Earlier
+coast-only profiles do not describe that enlarged workload.
 
-Benchmark boundary-distance alternatives separately on complex coasts; the
-[earlier STRtree probe](../research/2026-09-05-selective-terrain-sampling.md)
-was slower on the simple public coast. A new indexed approach must demonstrate
-its crossover before adoption. Require unchanged masks, Float32 terrain and
-routing products, or explicitly version and quantify a numerical change. Optimize repeated noise
-work only after measuring its share on regional scenes. Do not increase routing
-resolution or replace the Python runtime as part of this cleanup.
+Measure unchanged inputs before optimizing. Prefer bounded reuse of exact
+geometry and field evaluations; retain full evidence and conservation checks.
+The [earlier STRtree probe](../research/2026-09-05-selective-terrain-sampling.md)
+was slower on the simple coast, so do not adopt an index without a demonstrated
+crossover. Keep process spacing and terrain budgets unchanged for an exact-output
+optimization. Separate profile preparation and workbench interaction modules as
+their next feature changes require, without a broad architecture rewrite.
 
 ## Remaining work by dependency
 
@@ -157,8 +120,7 @@ The [seed contract](../terrain-seeds.md) provides portable named stage seeds
 for all generation. Only the current project/build format is supported.
 Future stochastic stages must get their own stable identifiers.
 
-- Define source-world origin, planetary model, working projection, raster
-  registration and effective process spacing before freezing georeferenced
+- Define source-world origin, planetary model and working projection before freezing georeferenced
   outputs. The current longest-dimension local plane is not a world CRS contract.
 - Add world placement to the implemented local-metric Float32 GeoTIFF export.
 - Extend the existing build manifest only when a new product needs additional
@@ -185,14 +147,17 @@ checks when declaring planetary placement.
 
 - Separate hard equalities, soft guidance, and inequalities explicitly.
 - Extend current point-anchored ridge/valley profiles to per-vertex authoring,
-  explicit passes and asymmetric sides. Terrain-character regions are complete.
+  explicit passes and asymmetric sides. The first four regional recipes are
+  implemented; distribution targets and coupled/geological regions remain open.
 - Reproject hard constraints after every optional process stage and report soft
   residuals rather than silently changing authored intent.
 
 ### 4. Finish hydrology semantics and validation
 
-- Define authored lakes, outlets, endorheic basins, depression policy, and the
-  public drainage and catchment products.
+- Extend implemented lake/dry-basin intent and sampled outlet transfer with
+  sill/storage semantics, lake chains and nested depression policy. Numeric
+  drainage/basin archives exist; river/catchment vectors and physical flow
+  validation remain open.
 - Compare the in-project routing against Landlab first and GRASS GIS as an
   external reference. Keep Whitebox behind a separately audited optional
   boundary because its product family has mixed licensing.
@@ -220,7 +185,7 @@ continuous seasonal or monthly fields before assigning named zones:
 - potential evapotranspiration, aridity, runoff, and terrain wetness; and
 - diagnostics and uncertainty or suitability values.
 
-Use a transparent NumPy/SciPy process model first. Smith-Barstad-style linear
+For that future prototype, evaluate a transparent NumPy/SciPy process model. Smith-Barstad-style linear
 orographic precipitation, FAO Penman-Monteith evapotranspiration, and the Budyko
 water-balance relation are useful scientific components. Climlab and xclim are
 reference or comparison libraries; ExoPlaSim is an external plausibility
@@ -249,6 +214,12 @@ mutually exclusive categories.
 
 ## Current technology position
 
+This is an adoption plan, not a list of installed engines. NumPy and Rasterio
+are runtime dependencies; SciPy, Landlab and Numba are not installed in the
+environment checked on 2026-09-13. The [dependency register](../DEPENDENCIES.md)
+owns adopted packages. External support/license findings remain dated evidence
+and require a fresh check before a prototype or adoption.
+
 | Area | Recommendation now | Evidence gate before adoption |
 |---|---|---|
 | Numeric core | Keep NumPy; spike SciPy locally | Fixture improvements and deterministic tolerances |
@@ -263,10 +234,9 @@ mutually exclusive categories.
 
 The [landform-diversity research](../research/2026-09-04-terrain-realism-and-landform-diversity.md)
 adds the R01–R33 candidate register in the roadmap without promoting research
-engines to dependencies. Within the phases above, prioritize a measured
-regional-character/oriented-detail comparison, reconciliation of generated
-drainage with authored macro geography, a sediment-aware valley experiment,
-and multi-scale regional refinement. Measure final-surface drainage after
+engines to dependencies. The first regional recipes and authored-macro routing are implemented.
+Remaining comparisons concern regional transition gradients, complete final-field
+drainage, sediment-aware valleys and multiscale refinement. Measure final-surface drainage after
 constraint restoration and parent restriction. The 2026 stochastic-transport
 paper merits an isolated comparison; retain the existing reproducibility and
 constraint gates rather than rejecting particle methods as a whole.

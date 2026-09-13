@@ -1,11 +1,16 @@
 # Research notes
 
-Research notes collect evidence and prototype recommendations that have not yet
-become architecture decisions. They are working material: an approach listed
-here is not part of the terrain contract until it is accepted in an ADR and
-implemented with tests. Notes are listed newest first and package-support claims
-may become stale; use the
-[current development strategy](../strategy/README.md) for the active order.
+This index preserves dated evidence: implementation rundowns, measured or
+rejected prototypes, and candidate papers/tools. A research mention does not
+mean a dependency or feature was adopted. The [current status](status.md) maps
+these findings to implemented contracts and remaining TODO work; the
+[development strategy](../strategy/README.md) owns execution order.
+
+Notes are newest first. Measurements and package-support claims belong to their
+recorded revision/date. Keep historical findings intact and record later changes
+in the current status or a new dated report.
+
+## Implemented and measured work
 
 - [Dry collection paths - 2026-09-11](2026-09-11-dry-collection-paths.md)
   records dry barriers, alternate routes, cumulative head checks and measured cost.
@@ -35,8 +40,10 @@ may become stale; use the
 - [Selective terrain sampling — 2026-09-05](2026-09-05-selective-terrain-sampling.md)
   records the Python benchmark harness, exact-output optimization, timing/memory
   comparisons and rejected indexing probe for the first R45 slice.
+## Candidate research and historical assessments
+
 - [Language and performance — 2026-09-05](2026-09-05-language-and-performance.md)
-  measures the current generator, recommends a bounded foundation/performance
+  measures the generator at that date, recommends a bounded foundation/performance
   pass in Python, compares a future Rust migration and records R45–R47 gates.
 - [Geological structure and terrain composition — 2026-09-05](2026-09-05-geological-structure-and-terrain-composition.md)
   adds R40–R44: related regional recipes, material-coordinate and event-order

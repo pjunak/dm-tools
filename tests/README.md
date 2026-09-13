@@ -1,56 +1,37 @@
 # Tests
 
-The test suite will be organized around observable contracts:
+The suite checks observable domain, adapter, generation and build contracts with
+small deterministic fixtures. Run the full pytest, Ruff and strict Pyright gates
+from [the repository instructions](../AGENTS.md) for runtime/schema changes.
 
-- unit tests for domain invariants and seed derivation;
-- contract tests for versioned schemas and adapters;
-- integration tests for small end-to-end terrain builds; and
-- deterministic regression tests using compact, purpose-built fixtures.
+Current coverage includes:
 
-Prefer numeric assertions and invariants over large binary golden files.
+- strict current project/schema validation, SVG hashes, atomic saves, per-tool
+  settings and display-free Tcl control behavior;
+- multipart coast dissolution, islands/holes, cross-water rejection, local-frame
+  round trips, endpoint grids and portable named stage seeds;
+- absolute/relative anchors, brush strength, shape-preserving point-anchored
+  ridge/valley profiles, downstream floors, regional recipes and incision caps;
+- MFD accumulation, D8 topology, initiation, Strahler order, bounded corrections,
+  basin labels/spill routes and overlapping final-channel conflict evidence;
+- authored lake/dry retention, captured-area conservation, eligible outlet
+  transfer, exact flats, contained links, finer shorelines and full outlet paths;
+- narrow feature guidance, internal wet/dry barriers, alternate paths, cumulative
+  rises, complete-budget rejection and canonical Float32 endpoint agreement; and
+- headless builds, all numeric archives, GeoTIFF point registration/masks,
+  repeatable hashes, diagnostics and completion-last publication failures.
 
-The selective terrain-sampling tests compare complete Float32 outputs against
-the original dense evaluation path, including authored structures on an
-irregular coast, islands and inland water. They also cover water-only chunk
-short-circuiting and exact nested-grid samples around a hole. Benchmark tests
-exercise fresh-process repeatability, native peak-memory reporting and refusal
-to overwrite a report. Performance measurements live separately under
-[`benchmarks/`](../benchmarks/README.md); correctness tests do not assert runtime
-thresholds.
+Sampling tests compare the selective evaluator with a dense reference and check
+exact shared local-metric nodes across nested output grids, chunk boundaries,
+regions and authored water. These are point-sample guarantees. Parent cell-average
+restriction, selected-region generation and refinement halos are not implemented
+or proven by those tests.
 
-The current terrain suite specifically verifies that nested resolutions retain
-identical masks and Float32 elevations at shared world-coordinate samples. It
-verifies multipart SVG import, adjacent-land dissolution, near-touching seam
-repair, islands, retained enclosed water, and rejection of cross-water lines. It
-also verifies that soft terrain-brush strength is monotonic, can raise or lower
-the base, preserves sea level, and survives preview metadata export.
-Absolute and relative elevation modes are tested separately, including relative
-peaks on ridges, relative valley incision, per-mode validation, deterministic
-automatic MFD accumulation, D8 centreline concentration, downstream valley
-width, floor-detail suppression, bounded area-slope channel initiation,
-downstream network closure, nested resolutions, and preservation of the
-underlying relief field. The two-slope initiation fixture requires steep
-headwaters to start earlier with nonzero relief while retaining a large gentle
-river. A retained-detail fixture places a 100 m bump on a selected channel and
-requires the bounded correction to restore downstream descent without
-unresolved edges. A separate longitudinal-profile fixture requires an extreme
-generated knickpoint to relax under the existing incision cap while retaining
-strict descent and the normalized-steepness limit. Canonical drainage
-topology has a deterministic Horton-Strahler fixture covering equal-order and
-unequal-order tributary joins, zero order outside the channel mask, head order,
-and nondecreasing downstream hierarchy. Canonical drainage
-diagnostics have planar-outlet and
-known-depression fixtures covering direct connectivity, significant fill depth,
-fill volume, non-mutation, metadata, and resolution-independent summaries. The
-known depression also verifies candidate floor, spill, area, volume, terminal
-membership, and normalized location; a two-depression fixture verifies stable
-depth ordering and separate connected components.
-Project contract tests cover every current constraint kind and per-tool setting,
-relative coastline paths, strict schema-version handling, and SVG hash mismatch
-detection on both load and save.
-The first quantitative terrain-quality fixture models two ridge peaks and a
-lower pass. It checks exact anchors, interval overshoot, saddle geometry,
-constraint-order independence, conflicting hard anchors, and nested-resolution
-equality. Equivalent relative-profile fixtures check signed ridge relief,
-shallower and deeper valley sections, single application of attached points,
-structure-kind preservation, and the same ordering and refinement invariants.
+Prefer numeric invariants over large binary golden files. Full visible desktop
+flows and external desktop GIS acceptance require separate inspection; Tcl tests
+alone do not establish those workflows.
+
+The [benchmark harness](../benchmarks/README.md) measures fresh-process stage
+time, native peak memory and numerical identities separately from correctness
+tests. Its tests cover repeatability and report publication. Do not add fragile
+machine-dependent timing assertions to the correctness suite.

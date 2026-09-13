@@ -98,5 +98,8 @@ The [language assessment](../docs/research/2026-09-05-language-and-performance.m
 records why optimization begins in Python and the evidence required before a
 native-language migration.
 
-See the [2026-09-10 review](../docs/maintenance/2026-09-10-sanity-and-performance.md)
-for measured bottlenecks and the remaining workload/validation gaps.
+The [2026-09-10 review](../docs/maintenance/2026-09-10-sanity-and-performance.md)
+records earlier coast/regional bottlenecks. The
+[dry-path follow-up](../docs/research/2026-09-11-dry-collection-paths.md) measures
+the expanded water workload; the [current status](../docs/research/status.md)
+tracks remaining performance and validation gaps.

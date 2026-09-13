@@ -33,8 +33,9 @@ change.
   intended dependency direction.
 - [`adr/`](adr/README.md) preserves accepted decisions, alternatives, and
   consequences; accepted ADRs are append-only history.
-- [`research/`](research/README.md) contains dated evidence and prototype
-  recommendations that are not architecture decisions.
+- [`research/`](research/README.md) indexes implemented, measured results and
+  candidate investigations. Its [status page](research/status.md) distinguishes
+  shipped work, partial experiments and work not yet run.
 - [`DEPENDENCIES.md`](DEPENDENCIES.md) records packages and assets actually used
   at runtime, with purposes and licenses.
 
@@ -54,5 +55,7 @@ For authored lake levels, dry-basin retention and their review, read the
 For basin extents, spill candidates and water-boundary limits, read the
 [basin review contract](terrain-basins.md).
 
-For the latest structure, validation and bottleneck review, read the
-[2026-09-10 maintenance checkpoint](maintenance/2026-09-10-sanity-and-performance.md).
+For the latest documentation and research reconciliation, read the
+[2026-09-13 audit](maintenance/2026-09-13-documentation-and-research-status.md).
+The [2026-09-10 checkpoint](maintenance/2026-09-10-sanity-and-performance.md)
+records the earlier structure and performance baseline.

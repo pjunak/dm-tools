@@ -73,7 +73,7 @@ diagnostic routing still accepts all three boundary kinds at their terrain
 elevations. Planning additionally terminates at authored retention nodes; its
 receiver graph is distinct from this diagnostic copy.
 
-## Display and next authoring contract
+## Display and water-authoring boundary
 
 **Drainage review** now toggles basin extents alongside planned channels in the
 workbench. Purple shows extents; white circles mark the eight deepest candidates;

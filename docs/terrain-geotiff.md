@@ -45,8 +45,9 @@ coefficients in Rasterio/Affine order `(a, b, c, d, e, f)`, raster outer bounds
 ## Values, masks and provenance
 
 - One Float32 band stores elevation in metres, with band unit `m`.
-- Finite land elevations include zero-height coastlines. Water/outside-land
-  samples are NaN nodata and invalid in the embedded mask.
+- Finite land elevations include zero-height coastlines and ground beneath
+  authored lake water. SVG non-land (ocean and enclosed gaps) is NaN nodata
+  and invalid in the embedded mask; lake-water coverage does not mask the DEM.
 - DEFLATE compression and floating-point prediction preserve numeric values.
   Blocks are 256 by 256; no external mask or PAM sidecar is required.
 - Tags identify the local coordinate model, unspecified world position,

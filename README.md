@@ -2,24 +2,27 @@
 
 DM Tools is a local-first collection of reusable worldbuilding and tabletop
 utilities. The project begins with a deterministic terrain generator: an engine
-that will turn an authored coastline, elevation constraints, structural terrain
-guides, a profile, and a seed into a reproducible digital elevation model.
+that turns authored coastlines, elevation guidance, landform regions, basin
+intent, generator settings and a seed into a reproducible digital elevation model.
 
-The repository is intentionally starting as a local Python project. A future web
+The application runs locally in Python. A future web
 interface should call the same engine rather than replacing it.
 
 ## Status
 
-The first terrain-generator vertical slice is usable. Its desktop workbench can
-import and dissolve closed SVG mainland and island shapes, paint broad soft
-elevation guidance, draw exact or relative height points plus ridge and valley
-centrelines, generate a deterministic constraint-conditioned elevation field,
-preview it as colour relief, and export the preview as a transparent PNG. Every
-authoring tool keeps its own mode, value, and width while the user switches
-tools. Authored work can be saved and reopened as a versioned
-`.dmterrain.json` project.
-The headless build command also saves numeric elevations, both preview styles,
-spatial measurements and a versioned provenance manifest in a new directory.
+The desktop workbench imports and dissolves closed SVG land shapes; authors
+absolute/relative brush, point, ridge and valley constraints; draws plain, hill,
+plateau and mountain regions; and saves those inputs as `.dmterrain.json`.
+Authored lakes and dry basins retain ground and captured contributing area.
+Reviewed lake outlets transfer eligible area downstream, with visible shoreline,
+wet-link and dry-path evidence. Water levels are imposed previews, not simulated
+lake equilibria.
+
+Generation produces a Float32 ground DEM and separate derived water and drainage
+review products. The workbench exports PNG. Headless builds also write NPY/NPZ,
+local-metric GeoTIFF, both relief styles, diagnostics and a completion manifest.
+World placement, validated river vectors and regional refinement remain future
+work. See the [current research status](docs/research/status.md).
 
 ## Requirements
 
@@ -61,7 +64,7 @@ generation. Use **Save project** after adding terrain guidance, then **Open
 project** to restore the coastline, generator settings, constraints, and
 per-tool controls. The workbench explains invalid inputs before generation.
 
-## Intended workflow
+## Current workflow
 
 ```text
 authored constraints + terrain profile + master seed
@@ -72,12 +75,13 @@ authored constraints + terrain profile + master seed
           +--------------+---------------+
           |              |               |
           v              v               v
-     Float32 DEM     vector products   visual previews
+     Float32 DEM    numeric reviews   visual previews
 ```
 
 Authored vector constraints and configuration remain inputs. A floating-point
-raster DEM is the authoritative generated elevation surface. Contours, drainage,
-hillshade, colour relief, and future meshes are derived products.
+raster DEM is the authoritative generated elevation surface. Water and drainage
+reviews, hillshade and colour relief are derived products. Contour/river vectors
+and meshes are planned.
 
 Build the same saved project without opening the workbench:
 
@@ -90,7 +94,7 @@ limits, diagnostics and completion checks. Builds include lossless NPY arrays
 and [Float32 GeoTIFF](docs/terrain-geotiff.md) in an explicit local metric frame.
 World placement remains planned.
 
-The current [project schema](schemas/terrain/project-v4.schema.json) and
+The current [project and build schemas](schemas/README.md) and
 [named stage seed algorithm](docs/terrain-seeds.md) describe implemented behavior.
 This project is in early development: obsolete features and old saves are not
 supported. Current correctness and useful improvements take priority.
@@ -121,16 +125,16 @@ changing authored projects or introducing machine-dependent test thresholds.
 ## Design principles
 
 - Local use is complete use; hosting is an additional interface.
-- The same inputs, versions, and seed produce the same authoritative output.
+- Reproduction requires matching inputs, algorithms, runtime and named seeds.
 - User-authored geographic constraints are never silently mutated.
 - Numeric terrain data is authoritative; rendered maps are derived.
-- Continental and local detail form a parent/child hierarchy rather than
-  independent generations.
+- Future local refinement must preserve its parent; shared-point equality is
+  implemented, while parent averaging and regional build requests remain open.
 - Scientific language remains honest about what the model does and does not
   prove.
 
 ## Licensing
 
-The repository does not yet declare a distribution license. Dependency licenses
-will be recorded as tools are selected. A project license must be chosen before
+The repository does not yet declare a distribution license. Adopted dependency licenses
+are recorded in the [dependency register](docs/DEPENDENCIES.md). A project license must be chosen before
 the first public release.

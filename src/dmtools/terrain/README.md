@@ -4,7 +4,7 @@ The terrain tool generates reproducible elevation data from an authored
 geographic skeleton. It is designed for continent-scale work that can later be
 refined into consistent regional and local maps.
 
-## Run the first workbench
+## Run the workbench
 
 ```powershell
 .\.venv\Scripts\dmtools.exe terrain gui
@@ -13,7 +13,8 @@ refined into consistent regional and local maps.
 The current workbench imports closed SVG land shapes, dissolves adjacent
 mainland sections, and retains disconnected islands in the same map. It exposes
 numeric generator settings as sliders and steppers, and lets
-the user draw exact height points plus ridge and valley centrelines. A terrain brush
+the user draw absolute/relative height points, ridges and valleys, landform
+regions, lakes and dry basins. A terrain brush
 paints broad soft elevation guidance directly over the continent. Import
 validation and generation run on background workers with progress reporting.
 The result is previewed and can be exported as a transparent colour-relief PNG.
@@ -45,9 +46,11 @@ Use **Region** to draw plains, hills, plateaus and mountain belts.
 The [region guide](../../../docs/terrain-regions.md) explains controls, overlap,
 transitions and the [public example](../../../examples/terrain/landform-regions.dmterrain.json).
 
-## Current input contract
+## SVG land-source contract
 
-- The file must be SVG.
+Open a saved project JSON or import an SVG land source. For SVG import:
+
+- The coastline source must be SVG.
 - If groups named `Land Shapes` exist, only drawable objects beneath those
   groups are land. Otherwise, every drawable object is treated as land.
 - Every land object must contain exactly one continuous, closed subpath.
@@ -80,11 +83,11 @@ Each tool keeps its own mode, elevation value, and radius or width while tools
 are switched. Brush strength is also retained independently. The initial modes
 are relative brush, absolute height point, relative ridge, and relative valley.
 
-Every feature can use one of two elevation modes:
+Brush, point, ridge and valley tools use one of two elevation modes:
 
 | Mode | Meaning |
 |---|---|
-| **Absolute** | Specifies a world elevation in metres above sea level. A point is exact, a ridge is a minimum crest, a valley value is its downstream outlet floor, and a brush blends toward its target. |
+| **Absolute** | Specifies an absolute elevation in metres above the zero sea-level datum. A point is exact, a ridge is a minimum crest, a valley value is its downstream outlet floor, and a brush blends toward its target. |
 | **Relative** | Specifies displacement from the terrain entering that pipeline stage. Positive point or brush values raise terrain, negative values lower it, ridge values add relief, and valley values add incision depth. |
 
 Relative mode is deliberately local relief rather than true topographic
@@ -124,7 +127,7 @@ its free-standing displacement behavior.
 
 When several anchors lie on one compatible structure, a shape-preserving cubic
 profile connects them along the line without overshooting adjacent targets.
-Absolute anchors set world elevations. On a relative ridge, a point's signed
+Absolute anchors set absolute metre elevations. On a relative ridge, a point's signed
 displacement is added to the line's base relief; on a relative valley, it is
 subtracted from the base incision depth, so a positive point makes the floor
 shallower and a negative point makes it deeper. A profile cannot reverse the
@@ -154,8 +157,8 @@ metadata.
 **Save project** writes the coastline reference, all generator settings, every
 committed constraint, the active tool, and each tool's independent controls to
 a readable JSON document ending in `.dmterrain.json`. **Open project** restores
-that state. An unfinished ridge or valley must be finished or undone before
-saving so no invisible draft is lost.
+that state. An unfinished line or area must be finished or undone before saving so no
+invisible draft is lost.
 
 The SVG remains the authoritative coastline rather than being duplicated into
 the project. Its path is relative to the project file whenever possible, and
@@ -193,7 +196,7 @@ the seed, detail band, and absolute kilometre lattice coordinate to a value.
 It does not consume a mutable random-number stream and does not depend on raster
 dimensions or evaluation order.
 
-Consequently, if a finer grid includes the same world-coordinate samples as a
+Consequently, if a finer grid includes the same local-metric coordinate samples as a
 coarser grid, their values are bit-for-bit equal; the finer grid only adds
 samples between them. The test suite verifies this with nested 65 and 129 sample
 grids. Arbitrary output dimensions do not necessarily share pixel positions,
@@ -203,67 +206,26 @@ This is the basis for later local refinement. It is not yet a complete
 multiresolution storage scheme, nor does it make separately chosen regional
 settings automatically continuous with a parent build.
 
-## Scientific scope of the first result
+## Model and review limits
 
-The current surface combines multi-scale value noise, distance from the coast,
-and user-authored elevation guidance. When constraints are present, a broad
-low-frequency surface is conditioned first. Absolute constraints suppress fine
-residual relief as needed to satisfy their world elevations. Relative
-constraints operate as smooth displacement fields and retain the pre-existing
-residual relief, so a peak on a tall ridge becomes taller and a valley through a
-high plateau remains high while being incised. A smooth outer shoulder prevents
-structures from appearing as hard-edged stamps, while a coast-distance gate
-keeps the coastline fixed at sea level.
+The surface combines coordinate-addressed relief, coastal conditioning, regional
+recipes and authored guidance. Automatic valleys use contributing area and slope
+on a fixed 257-longest-side routing grid. Regional relief caps bound generated
+cuts; absolute anchors remain authoritative. This is process-informed terrain,
+not a simulation of tectonics, rock, sediment, climate or geological time.
+Read [the pipeline overview](pipeline/README.md) for stage order and algorithms.
 
-This is a constraint-aware, process-informed terrain model, not a full
-landscape-evolution model. A fixed-resolution hydrology stage now fills
-accidental sinks on a temporary routing surface, accumulates multiple-direction
-flow, and uses contributing area plus slope to incise broad automatic valleys.
-The generated valley hierarchy stays fixed when output resolution changes.
-MFD represents broad convergence, a deterministic D8 tree locates one centre,
-and drainage-area hierarchy makes major downstream trunks broader and smoother
-than their headwaters. Channel heads now use a bounded area-slope criterion:
-steep convergent terrain can initiate with less source area, while a fourfold
-cap on the local area threshold preserves large rivers through gentle plains.
-Every initiated cell is traced down the D8 tree so selected channels cannot
-vanish merely because a downstream reach becomes flatter.
-The generated tree now also carries Horton-Strahler order, distinguishing joins
-of comparable tributaries from small tributaries entering a larger trunk. This
-is retained as derived topology only. Tests showed that making order directly
-widen or deepen valleys could regress downstream-width or coarse drainage
-measurements, so it does not yet alter the DEM.
-A high-order, 4%-strength MFD convergence correction now nudges broad generated
-valleys toward the continuous flow minimum where the unique D8 tree is
-directionally quantized. It leaves the connected D8 centreline, downstream
-floor correction, and residual-detail suppression authoritative.
-After residual detail is restored on the canonical grid, generated channel
-floors receive a bounded downstream-only correction: a receiver is lowered just
-enough to retain a 0.01 m drop, never raised, and never cut without limit. The
-pass may use at most 60% of reconstructed local elevation and add at most 2% of
-the generation ceiling. It affects generated centre cells only and runs before
-authored constraints.
-Consecutive generated-channel edges then receive a second bounded profile
-check. Only a downstream normalized-steepness increase above eight is relaxed,
-using `S * A^0.45`; the middle cell is lowered under the same incision cap.
-This removes extreme numerical knickpoints without flattening ordinary profile
-variation or modifying authored features.
-The model still does **not** simulate plate tectonics, rock type, sediment,
-climate or geological time. Authored lake/dry-basin areas now exclude automatic
-cutting and absorb planned flow. Eligible downstream outlets transfer captured area after finished-ground
-and shoreline checks; unresolved dry pockets remain retained. The drainage
-field is exported for review but is not certified as a river network.
+Finished-ground diagnostics use that same canonical grid. Priority-Flood works
+on a copy and reports depression extents, fill measurements and representative
+spill/terminal routes; it never replaces the ground DEM. **Drainage review**
+shows the eight deepest candidates, plus planned channels and uphill conflicts.
+These candidates do not automatically author lakes or form a nested depression
+hierarchy. See [the basin contract](../../../docs/terrain-basins.md).
 
-Every result includes a canonical broad-scale drainage check on the same
-257-longest-side grid as channel review. It reports direct boundary connectivity,
-potential sinks and required filling of a copied surface. Significant fill
-regions have ranked IDs, extent labels, floor/depth/area/volume measurements,
-and a representative escape route with a concrete spill point and terminal.
-The **Drainage review** toggle shows purple extents plus yellow routes and spill
-diamonds for the eight deepest candidates. Exterior and enclosed non-land have
-separate diagnostic classes without changing existing routing boundaries.
-These findings do not alter elevation, assign lakes or model nested depressions.
-Read the [basin contract](../../../docs/terrain-basins.md) for numeric products
-and the remaining explicit-water authoring work.
+Authored water adds bounded, finer profiles between canonical nodes. Increasing
+output image size does not refine the routing topology or prove that every
+between-sample obstruction was found. Sampled outlet clearance and transferred
+contributing area are review results, not physical discharge or lake equilibrium.
 
 The generated elevation array is Float32 metres in memory. The PNG is a derived
 visual product with transparent ocean, elevation tint, hillshade, source name,
@@ -290,40 +252,27 @@ and [ADR-0012](../../../docs/adr/0012-fix-cartographic-colour-scale-at-ten-kilom
 with supporting [cartographic-style analysis](../../../docs/research/2026-09-03-cartographic-relief-style.md)
 and [scientific colour-ramp research](../../../docs/research/2026-09-03-elevation-colour-ramp.md).
 
-## Inputs
+## Saved inputs and build outputs
 
-The intended input project contains:
+Projects persist the SVG reference and fingerprint, generator settings, authoring
+defaults, brush/point/ridge/valley constraints, landform regions and lake/dry-basin
+intent. Direct per-vertex profiles, new structural guide types, reusable profile
+files and planetary placement remain in the [roadmap](../../../TODO.md).
+Only current formats in the [schema index](../../../schemas/README.md) are supported.
 
-- a coastline or land mask with sea level;
-- spot heights and optional height ranges;
-- ridge, divide, valley, river, fault, and escarpment guides;
-- terrain-character regions;
-- a versioned terrain profile;
-- a master seed; and
-- an explicit planetary model, projection, extent, and working resolution.
-
-The current project persists the implemented coastline, generator
-settings, authoring defaults, brush strokes, height points, ridges, and valleys.
-Add planned input kinds to the current schema as their semantics are accepted;
-remove obsolete formats without maintaining old-save support.
-
-## Outputs
-
-A successful build is expected to produce:
-
-- a Float32 elevation raster in metres;
-- a machine-readable build manifest;
-- derived contours and drainage vectors;
-- hillshade and elevation-colour previews; and
-- validation results describing satisfied constraints and known limitations.
+Headless builds write authoritative Float32 ground as NPY and local-metric
+GeoTIFF, masks/coordinates, routing/water/basin-flow archives, derived previews,
+diagnostics and a completion manifest. The [build guide](../../../docs/terrain-builds.md)
+owns the product list. Contour and river vectors, meshes and separate tint-only
+or hillshade-only files are future products.
 
 ## Internal modules
 
 | Module | Responsibility |
 |---|---|
 | `application/` | Shared saved-project build operation and completion checks |
-| `domain/` | Units, coordinates, constraints, profiles, grids, manifests, and ports |
-| `pipeline/` | Deterministic stage orchestration and refinement rules |
+| `domain/` | Units, coordinates, constraints, settings, projects, grids and seeds |
+| `pipeline/` | Deterministic generation, numeric routing and review |
 | `adapters/` | File formats, GIS libraries, renderers, and optional engines |
 
 These are boundaries, not promises of immediate complexity. Add modules within
@@ -336,50 +285,31 @@ for the implementation order and evidence gates. The
 [terrain roadmap](../../../TODO.md) tracks the wider backlog, including world
 placement, refinement and contour exports.
 
-Process-informed erosion should follow only after the hard constraints,
-reproducibility, and multiresolution contracts are validated.
+Additional time-stepped processes need constraint, reproducibility and scale
+validation; the bounded automatic-incision heuristic is already implemented.
 
 
 ## Authored lakes and dry basins
 
 Use **Lake** or **Dry basin** to draw a closed area and choose **Finish area**.
-Lake controls set a water level and optional first-vertex outlet. Generated cuts
-are excluded inside either footprint; authored height and structure constraints
-still apply. Cartographic relief displays water over its preserved ground DEM.
-**Basin catchments** colours water and dry ground that feed a connected outlet,
-and the footprint nodes that remain retained. **Basin details** explains sample
-counts, contributing areas, shoreline findings and exact outlet ground versus
-water level. Footprint nodes capture planned area; eligible declared outlets
-transfer the portion that can reach the lake. Connected outlet paths appear in
-teal in either review overlay. Exact flat ground can feed a lake through
-resolved internal paths; closed flats and pits remain retained. **Basin details**
-reports how many flat samples gained routes and how many reach water.
-Finer boundary and water/outlet checks can block a connection missed by the
-coarse grid. Orange dots mark low shoreline ground; red diamonds locate sampled
-connection ground above water or a downstream climb. Full external outlet
-paths now receive the same feature-guided checks, with exact routing-node
-height checks and one budget per path. Extra probes follow narrow authored
-points, brush segments and smoothed ridge/valley crossings. Details reports
-heights, the largest downstream climb, profile scope, added sample counts
-and the smallest local spacing limit.
-Internal water links now receive batched checks too. Above-water ground removes
-a link, while clear alternate paths may still connect the pool. If water separates
-from the selected contact or the lake's total sample budget is exceeded, the
-whole outlet stays blocked. Details explains the reachable water count and red
-barrier markers. Dry collection links now receive finer checks before routing;
-clear alternate descents and flats remain available. Complete chosen paths also
-check accumulated rises. A dry-network sampling limit retains all dry donors
-while verified water still drains. Details explains the result; red markers
-show the strongest dry climbs and build diagnostics retain every candidate.
-Lake levels remain imposed previews.
-See the [water guide](../../../docs/terrain-water.md), public
-[closed-water example](../../../examples/terrain/basin-water.dmterrain.json) and
-[connected-outlet example](../../../examples/terrain/connected-outlet.dmterrain.json).
-The [flat-outlet example](../../../examples/terrain/flat-outlet.dmterrain.json)
-exercises drainable plateau ground and retained pockets together.
-The [shoreline-gap example](../../../examples/terrain/shoreline-gap.dmterrain.json)
-shows a narrow authored boundary opening that blocks an otherwise clear route.
-Supported formats are listed in the [schema index](../../../schemas/README.md).
+Lake controls set an imposed water level and an optional first-vertex outlet.
+Both footprints exclude automatic cuts and absorb planned contributing area;
+authored heights and valleys still apply. Lake water is displayed separately
+over its preserved ground DEM.
 
-The [dry-collection barrier example](../../../examples/terrain/dry-collection-barrier.dmterrain.json)
-shows a narrow obstruction between dry nodes and a clear neighbouring route.
+**Basin catchments** maps collected water, collected dry ground and retained
+nodes. **Basin details** explains area accounting, flat routing, shoreline
+openings, outlet-level differences and sampled wet/dry/path barriers. Orange
+points mark uncontrolled low shorelines; red diamonds mark sampled barriers;
+connected outlet paths appear in teal. Full evidence is exported even where the
+display limits markers.
+
+Eligible outlets transfer only area with reviewed paths. Closed pits and
+unresolved dry donors retain their contributions; separated wet pools block the
+whole outlet. Complete sampling budgets are checked before evaluation. Water
+levels remain authored previews and inter-lake transfer is not implemented.
+
+The [water guide](../../../docs/terrain-water.md) owns detailed semantics,
+budgets and evidence fields. The [public examples](../../../examples/README.md)
+cover closed basins, connected outlets, flats and narrow shoreline, downstream,
+internal-water and dry-collection barriers.
