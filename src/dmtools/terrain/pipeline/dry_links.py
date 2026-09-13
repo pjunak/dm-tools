@@ -1,16 +1,15 @@
 """Finer dry collection links and cumulative head checks on the chosen paths."""
 
 from dataclasses import dataclass
-from math import ceil, hypot
 from typing import Literal
 
 import numpy as np
 from numpy.typing import NDArray
 
 from dmtools.terrain.pipeline.flat_routing import FlatRouting, route_flats
+from dmtools.terrain.pipeline.link_planning import plan_water_links, water_link_candidates
 from dmtools.terrain.pipeline.water_sampling import (
     GroundSampler,
-    GroundSamplingPlan,
     SamplingGuide,
     plan_ground_profile,
     profile_positions,
@@ -91,36 +90,21 @@ def route_dry_links(
         raise ValueError("Dry-link review needs matching node and edge arrays.")
     head = np.where(wet, water_level_m, elevation_m.ravel()[nodes])
     dx, dy = float(x_km[1] - x_km[0]), float(y_km[1] - y_km[0])
-    spacing = min(dx, dy) / 4
-    sources, directions = np.nonzero((neighbours > np.arange(count)[:, None])
-        & ~(wet[:, None] & wet[np.maximum(neighbours, 0)]))
-    targets = neighbours[sources, directions]
-    reverse = (head[targets] > head[sources]) | wet[sources]
-    sources, targets = np.where(reverse, targets, sources), np.where(reverse, sources, targets)
-    directions = np.where(reverse, 7 - directions, directions)
-    possible = ~wet[sources] & (head[sources] >= head[targets])
-    sources, targets, directions = sources[possible], targets[possible], directions[possible]
+    candidates = water_link_candidates(nodes, neighbours, wet, elevation_m, x_km, y_km,
+                                        water_level_m, kind="dry")
+    sources, targets, directions = candidates.sources, candidates.targets, candidates.directions
+    spacing = candidates.spacing_km
     width = elevation_m.shape[1]
     coordinates = np.column_stack((x_km[nodes % width], y_km[nodes // width]))
-    vertices = tuple((_position(coordinates, int(a)), _position(coordinates, int(b)))
-                     for a, b in zip(sources, targets, strict=True))
-    baseline = tuple(1 + max(2, ceil(hypot(b[0]-a[0], b[1]-a[1]) / spacing))
-                     for a, b in vertices)
-    requested = sum(baseline)
-    def unresolved() -> DryCollectionRouting:
+    planned = plan_water_links(candidates, features, sample_budget=MAX_DRY_LINK_SAMPLES,
+                               planner=plan_ground_profile)
+    requested = planned.requested_sample_count
+    if planned.status != "sampled":
         return DryCollectionRouting(
             FlatRouting(np.full(count, -1, dtype=np.int64), np.zeros(count, dtype=np.uint32)),
             np.zeros(count, dtype=np.float64),
-            DryLinkReview("budget_exceeded", spacing, len(vertices), requested, None, None, (), ()))
-    if requested > MAX_DRY_LINK_SAMPLES:
-        return unresolved()
-    plans: list[GroundSamplingPlan] = []
-    for pair, base in zip(vertices, baseline, strict=True):
-        plan = plan_ground_profile(pair, spacing, features)
-        requested += plan.requested_sample_count - base
-        if plan.status != "sampled" or requested > MAX_DRY_LINK_SAMPLES:
-            return unresolved()
-        plans.append(plan)
+            DryLinkReview("budget_exceeded", spacing, len(sources), requested, None, None, (), ()))
+    plans = planned.plans
     offsets = np.concatenate((np.zeros(1, dtype=np.int64), np.cumsum(
         np.asarray([p.requested_sample_count for p in plans], dtype=np.int64))))
     positions = (np.concatenate([profile_positions(p) for p in plans]) if plans else
@@ -195,6 +179,6 @@ def route_dry_links(
         _position(low_position, int(n)), _position(crest_position, int(n)))
         for n in np.flatnonzero(origins))
     return DryCollectionRouting(routing, path_uphill,
-        DryLinkReview("sampled", spacing, len(vertices), requested,
+        DryLinkReview("sampled", spacing, len(sources), requested,
             sum(e.blocked for e in evidence), int(np.count_nonzero(excessive)),
             tuple(evidence), barriers))

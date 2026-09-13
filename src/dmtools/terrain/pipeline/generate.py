@@ -54,6 +54,7 @@ from dmtools.terrain.pipeline.water import (
     prepare_basins,
     water_products,
 )
+from dmtools.terrain.pipeline.water_budget import WaterSamplingBudget, plan_water_sampling_budget
 from dmtools.terrain.pipeline.water_sampling import SamplingDensity, SamplingFeature, SamplingGuide
 
 type ProgressCallback = Callable[[float, str], None]
@@ -1225,15 +1226,39 @@ def _water_sampling_guides(
     return tuple(features)
 
 
-def generate_terrain(
-    coastline: Coastline,
-    settings: TerrainSettings,
-    progress: ProgressCallback | None = None,
-    *,
-    constraints: Sequence[TerrainConstraint] = (),
-) -> GeneratedTerrain:
-    """Generate a deterministic Float32 elevation grid inside a coastline."""
+@dataclass(frozen=True, slots=True)
+class _PreparedTerrainField:
+    """One prepared pointwise field shared by raster generation and budget planning."""
 
+    polygon: LandGeometry
+    boundary: Any
+    width_km: float
+    height_km: float
+    settings: TerrainSettings
+    constraints: tuple[_MetricConstraint, ...]
+    regions: tuple[MetricRegion, ...]
+    basins: tuple[MetricBasin, ...]
+    automatic_valleys: _AutomaticValleyField
+
+    def evaluate(
+        self, x: NDArray[np.float64], y: NDArray[np.float64],
+    ) -> tuple[NDArray[np.float64], NDArray[np.bool_]]:
+        return _evaluate_elevation_samples(
+            x, y, self.polygon, self.boundary, self.settings, self.constraints,
+            self.automatic_valleys, regions=self.regions,
+        )
+
+    def sample_ground(
+        self, x: NDArray[np.float64], y: NDArray[np.float64],
+    ) -> NDArray[np.float32]:
+        values, on_land = self.evaluate(x, y)
+        return np.where(on_land, values, np.nan).astype(np.float32)
+
+
+def _prepare_terrain_field(
+    coastline: Coastline, settings: TerrainSettings, constraints: Sequence[TerrainConstraint],
+    progress: ProgressCallback | None,
+) -> _PreparedTerrainField:
     _report(progress, 0.02, "Preparing metric grid")
     polygon, width_km, height_km = _metric_polygon(coastline, settings.object_scale_km)
     authored_constraints = tuple(constraints)
@@ -1251,11 +1276,6 @@ def generate_terrain(
         height_km,
         settings.maximum_elevation_m,
     )
-    grid = EndpointGrid.for_extent((0.0, 0.0, width_km, height_km), settings.resolution_px)
-    width, height = grid.width, grid.height
-    x_km, y_km = grid_coordinates(grid)
-    elevation = np.full((height, width), np.nan, dtype=np.float32)
-    mask = np.zeros((height, width), dtype=np.bool_)
     boundary = polygon.boundary
     _report(progress, 0.04, "Preparing authored valley profiles")
     metric_constraints = _prepare_downstream_valley_profiles(
@@ -1268,21 +1288,52 @@ def generate_terrain(
         regions=regions, basins=basins,
     )
 
+    return _PreparedTerrainField(polygon, boundary, width_km, height_km, settings,
+                                 metric_constraints, regions, basins, automatic_valleys)
+
+
+def forecast_water_sampling(
+    coastline: Coastline, settings: TerrainSettings, *,
+    constraints: Sequence[TerrainConstraint] = (),
+) -> WaterSamplingBudget:
+    """Plan shoreline and potential internal-network demand without fine water evaluation."""
+    field = _prepare_terrain_field(coastline, settings, constraints, None)
+    automatic = field.automatic_valleys
+    x, y = np.meshgrid(automatic.x_km, automatic.y_km)
+    ground, _mask = field.evaluate(x, y)
+    return plan_water_sampling_budget(
+        field.basins, ground.astype(np.float32).astype(np.float64),
+        automatic.x_km, automatic.y_km,
+        _water_sampling_guides(field.constraints, field.regions, settings),
+    )
+
+
+def generate_terrain(
+    coastline: Coastline,
+    settings: TerrainSettings,
+    progress: ProgressCallback | None = None,
+    *,
+    constraints: Sequence[TerrainConstraint] = (),
+) -> GeneratedTerrain:
+    """Generate a deterministic Float32 elevation grid inside a coastline."""
+
+    authored_constraints = tuple(constraints)
+    field = _prepare_terrain_field(coastline, settings, authored_constraints, progress)
+    polygon, width_km, height_km = field.polygon, field.width_km, field.height_km
+    metric_constraints, regions, basins = field.constraints, field.regions, field.basins
+    automatic_valleys = field.automatic_valleys
+    grid = EndpointGrid.for_extent((0.0, 0.0, width_km, height_km), settings.resolution_px)
+    width, height = grid.width, grid.height
+    x_km, y_km = grid_coordinates(grid)
+    elevation = np.full((height, width), np.nan, dtype=np.float32)
+    mask = np.zeros((height, width), dtype=np.bool_)
+
     _report(progress, 0.08, "Building elevation field")
     chunk_rows = 128
     for start in range(0, height, chunk_rows):
         stop = min(start + chunk_rows, height)
         x_grid, y_grid = np.meshgrid(x_km, y_km[start:stop])
-        chunk_elevation, chunk_mask = _evaluate_elevation_samples(
-            x_grid,
-            y_grid,
-            polygon,
-            boundary,
-            settings,
-            metric_constraints,
-            automatic_valleys,
-            regions=regions,
-        )
+        chunk_elevation, chunk_mask = field.evaluate(x_grid, y_grid)
         chunk_elevation = np.where(chunk_mask, chunk_elevation, np.nan)
 
         elevation[start:stop] = chunk_elevation.astype(np.float32)
@@ -1292,10 +1343,7 @@ def generate_terrain(
 
     _report(progress, 0.92, "Checking drainage connectivity")
     routing_x, routing_y = np.meshgrid(automatic_valleys.x_km, automatic_valleys.y_km)
-    routing_final, _routing_mask = _evaluate_elevation_samples(
-        routing_x, routing_y, polygon, boundary, settings, metric_constraints, automatic_valleys,
-        regions=regions,
-    )
+    routing_final, _routing_mask = field.evaluate(routing_x, routing_y)
     # Match the authoritative Float32 field, sampled at canonical routing nodes.
     routing_final = routing_final.astype(np.float32).astype(np.float64)
     review = review_drainage_routing(
@@ -1306,26 +1354,20 @@ def generate_terrain(
     )
 
     routing_basin_ids = basin_intent_ids(routing_x, routing_y, basins)
-    def sample_water_ground(x: NDArray[np.float64], y: NDArray[np.float64]) -> NDArray[np.float32]:
-        values, on_land = _evaluate_elevation_samples(
-            x, y, polygon, boundary, settings, metric_constraints, automatic_valleys,
-            regions=regions)
-        return np.where(on_land, values, np.nan).astype(np.float32)
-
     outlet_heights: list[float | None] = []
     for basin in basins:
         if basin.outlet_km is None:
             outlet_heights.append(None)
         else:
             outlet_x, outlet_y = basin.outlet_km
-            values = sample_water_ground(np.asarray([outlet_x]), np.asarray([outlet_y]))
+            values = field.sample_ground(np.asarray([outlet_x]), np.asarray([outlet_y]))
             outlet_heights.append(float(values[0]))
     water_features = _water_sampling_guides(metric_constraints, regions, settings)
     water_review, basin_outflow = resolve_basin_outflow(
         basins, routing_basin_ids, routing_final, automatic_valleys.drainage,
         automatic_valleys.land_mask, review.drainage.receivers, review.drainage.boundary_flags,
         automatic_valleys.x_km, automatic_valleys.y_km, polygon, authored_constraints,
-        tuple(outlet_heights), sample_water_ground, water_features,
+        tuple(outlet_heights), field.sample_ground, water_features,
     )
     water = water_products(elevation, x_km, y_km, basins, routing_basin_ids, water_review)
 

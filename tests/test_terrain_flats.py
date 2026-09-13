@@ -8,9 +8,9 @@ from numpy.typing import NDArray
 from shapely.geometry import Polygon
 
 from dmtools.terrain.domain import TerrainBasin
-from dmtools.terrain.pipeline.basin_flow import basin_neighbours
 from dmtools.terrain.pipeline.flat_routing import FlatRouting, route_flats
 from dmtools.terrain.pipeline.hydrology import D8_NEIGHBOURS
+from dmtools.terrain.pipeline.link_planning import basin_neighbours
 from dmtools.terrain.pipeline.water import MetricBasin, basin_intent_ids
 
 

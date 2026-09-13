@@ -38,6 +38,15 @@ def create_parser() -> argparse.ArgumentParser:
         "--output", type=Path, required=True, help="New build directory (must not exist)."
     )
     build.set_defaults(_handler=_run_terrain_build)
+    budget = terrain_commands.add_parser(
+        "water-budget",
+        help="Forecast shoreline and potential internal-network sampling before a build.",
+        description=("Count water profile demand using canonical terrain, without raster export "
+                     "or fine ground review. Internal networks are conditional; external outlet "
+                     "routes and contacts are not included."),
+    )
+    budget.add_argument("project", type=Path, help="Saved .dmterrain.json project (read only).")
+    budget.set_defaults(_handler=_run_terrain_water_budget)
     return parser
 
 
@@ -57,6 +66,59 @@ def _run_terrain_build(arguments: argparse.Namespace) -> int:
         print(f"Terrain build failed: {error}", file=sys.stderr)
         return 1
     print(f"Terrain build complete: {manifest}")
+    return 0
+
+
+def _run_terrain_water_budget(arguments: argparse.Namespace) -> int:
+    from dmtools.terrain.application.water_budget import forecast_project_water_budget
+    from dmtools.terrain.pipeline.water_budget import SamplingDemand
+
+    try:
+        result = forecast_project_water_budget(arguments.project)
+    except (OSError, ValueError, RuntimeError) as error:
+        print(f"Water budget forecast failed: {error}", file=sys.stderr)
+        return 1
+    budget = result.budget
+    print(f"Water sampling budget: {result.project_path}")
+    print(f"Canonical grid: {budget.grid_width} x {budget.grid_height}; "
+          f"sampler: {budget.sampling_algorithm_id}")
+    print(f"Limits: {budget.profile_sample_limit:,} stations/profile; "
+          f"{budget.wet_network_sample_limit:,}/wet network; "
+          f"{budget.dry_network_sample_limit:,}/dry network.")
+    print("Counts include repeated stations. Budget failures are lower bounds.")
+    print("Potential networks depend on outlet, shoreline and wet-connectivity checks. "
+          "External routes/contacts and terrain clearance are not evaluated.")
+
+    def show_demand(label: str, demand: SamplingDemand) -> None:
+        count = f"{demand.requested_sample_count:,}"
+        count = f"{count} (exact)" if demand.count_is_exact else f"at least {count}"
+        status = ("within budget" if demand.status == "within_budget" else
+                  f"EXCEEDS {demand.limiting_budget} budget")
+        print(f"  {label}: {count} stations; {status}; "
+              f"{demand.candidate_profile_count:,} profiles, "
+              f"{demand.visited_profile_count:,} visited; "
+              f"baseline {demand.baseline_sample_count:,}.")
+
+    if not budget.basins:
+        print("No authored basins; no shoreline or internal-network demand.")
+    for basin in budget.basins:
+        outlet = ", authored outlet" if basin.has_outlet else ""
+        kind = basin.kind.replace("_", " ")
+        print(f"Basin {basin.intent_id} ({kind}{outlet}): "
+              f"{basin.footprint_cell_count:,} canonical nodes, {basin.wet_cell_count:,} wet.")
+        if not basin.footprint_cell_count:
+            print("  Footprint unresolved on the canonical grid; full review is required.")
+        if basin.shoreline is not None:
+            show_demand("Shoreline", basin.shoreline)
+        if basin.wet_links is not None:
+            show_demand("Potential wet network", basin.wet_links)
+        if basin.dry_links is not None:
+            show_demand("Potential dry network", basin.dry_links)
+        if basin.wet_links is None:
+            print("  No internal outlet network for this basin.")
+    print(f"Project SHA-256: {result.project_sha256}")
+    print(f"Coastline SHA-256: {result.coastline_sha256}")
+    print(f"Generator source SHA-256: {result.runtime['package_source_sha256']}")
     return 0
 
 

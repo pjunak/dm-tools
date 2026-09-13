@@ -222,3 +222,11 @@ Residual metre-scale procedural error exceeds the 0.01 m decision tolerance.
 The matrix is finite reference evidence, not continuous clearance, off-grid 2D
 connectivity, a hydraulic model or a universal performance bound. Manual
 workbench interaction and a Tharkeniss Veld rebuild remain unverified.
+
+## Budget correction - 2026-09-13
+
+The network-limit statement above incorrectly generalized the dry-network cap.
+The unchanged runtime limits are 65,536 stations per profile, **65,536 per wet
+network**, and 262,144 per dry network; evaluation batches remain 4,096.
+[ADR-0046](../adr/0046-forecast-water-sampling-budgets.md) corrects this documentation error. No sampling cap or reported
+measurement has changed as part of this correction.

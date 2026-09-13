@@ -11,6 +11,11 @@ existing file or directory and returns a nonzero exit code on failure. It
 uses the project's saved settings and constraints with the same generator as
 the workbench. No input file or generator setting is changed.
 
+Before a detailed water build, use the read-only
+[water-budget forecast](terrain-water-budget.md) to inspect shoreline and
+potential internal-network sample demand. It does not create a build or replace
+its water review.
+
 ## Products
 
 | File | Meaning |

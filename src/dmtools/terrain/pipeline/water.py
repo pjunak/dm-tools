@@ -17,6 +17,7 @@ from dmtools.terrain.pipeline.water_sampling import WATER_SAMPLING_ALGORITHM_ID,
 from dmtools.terrain.pipeline.wet_links import WetLinkReview
 
 WATER_ALGORITHM_ID = "authored-basin-water-review@10"
+WATER_ELEVATION_TOLERANCE_M = .01
 
 
 @dataclass(frozen=True, slots=True)
@@ -143,7 +144,7 @@ def review_water(
 ) -> WaterReview:
     """Report sampled shoreline and planned-flow conflicts without inventing repairs."""
     records: list[BasinIntentReview] = []
-    tolerance = .01
+    tolerance = WATER_ELEVATION_TOLERANCE_M
     height, width = elevation_m.shape
     for basin_id, (basin, outlet_elevation, outlet_route, shoreline) in enumerate(
         zip(basins, outlet_elevations_m, outlet_routes, shorelines, strict=True), start=1,
@@ -229,6 +230,7 @@ def water_products(
             for basin_id, basin in enumerate(basins, start=1):
                 level = basin.source.water_level_m
                 if level is not None:
-                    wet = (chunk == basin_id) & (elevation_m[rows] < level - .01)
+                    wet = ((chunk == basin_id)
+                           & (elevation_m[rows] < level - WATER_ELEVATION_TOLERANCE_M))
                     surface[rows][wet] = level
     return WaterProducts(surface, labels, routing_ids, review)

@@ -66,6 +66,12 @@ owns dry-path gates; [ADR-0044](../adr/0044-guide-water-profiles-through-regiona
 adds regional guidance and [ADR-0045](../adr/0045-sample-procedural-detail-and-context-shoulders.md)
 adds procedural density and context shoulders to the shared sampler.
 
+A read-only [water-budget forecast](../terrain-water-budget.md) now exposes
+shoreline and potential internal-network demand before raster generation and
+fine ground review. It shares current planning and reports budget failures as
+required lower bounds. External route/contact and whole-project cost remain open;
+[ADR-0046](../adr/0046-forecast-water-sampling-budgets.md) owns this boundary.
+
 Exact feature/sample reuse is now implemented; the
 [comparison](../research/2026-09-13-water-sampling-reuse.md) records unchanged
 numeric/evidence contracts and measured cost.

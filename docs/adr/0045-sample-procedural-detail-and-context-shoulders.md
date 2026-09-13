@@ -69,3 +69,11 @@ Finite reference extrema can still miss peaks, particularly in blended features;
 Gaussian tails extend outside finite corridors and one broad-context closest
 approach does not identify every longitudinal extremum. This does not certify
 continuous passage, off-grid two-dimensional connectivity or stable lake levels.
+
+## Budget correction - 2026-09-13
+
+The network-limit statement above incorrectly generalized the dry-network cap.
+The unchanged runtime limits are 65,536 stations per profile, **65,536 per wet
+network**, and 262,144 per dry network; evaluation batches remain 4,096.
+[ADR-0046](0046-forecast-water-sampling-budgets.md) corrects this documentation error. No sampling cap or reported
+measurement has changed as part of this correction.

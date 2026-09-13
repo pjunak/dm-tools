@@ -26,6 +26,9 @@ format is supported; older saves must be recreated.
 For saved projects, `dmtools terrain build PROJECT --output NEW_DIRECTORY`
 uses the same pipeline without opening the GUI. It saves the Float32 DEM,
 mask, coordinates, both PNG styles, inspectable drainage and a completion manifest.
+Use `dmtools terrain water-budget PROJECT` to inspect shoreline and potential
+internal-network demand before a build; see the
+[forecast guide](../../../docs/terrain-water-budget.md).
 See the [numeric build guide](../../../docs/terrain-builds.md). The coordinate
 model remains the local SVG plane. Builds now include a
 [local-metric GeoTIFF](../../../docs/terrain-geotiff.md); world placement is still planned.

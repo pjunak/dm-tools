@@ -9,7 +9,7 @@ operations later.
 ```text
 Tk UI / CLI
      |
-     +--> application build operation
+     +--> application build / water-budget operations
      |           |
      +-----------+--> numeric generation pipeline --> domain values
                  |
@@ -43,13 +43,20 @@ The current implemented path is:
    owns read-only review; `hydrology.py` owns flow and incision primitives.
 6. Derive clipped lake water and review shorelines, outlet attachments, full
    external paths and internal wet/dry links against finer Float32 samples.
-   `water_sampling.py` owns probe plans; `outlet_profiles.py`, `wet_links.py`
-   and `dry_links.py` own path/link checks. `basin_flow.py` conserves captured
+   `water_sampling.py` owns probe plans; `link_planning.py` shares vector-contained
+   candidates and bounded internal-network planning. `outlet_profiles.py`,
+   `wet_links.py` and `dry_links.py` own path/link checks. `basin_flow.py` conserves captured
    area while transferring only eligible collections. These checks do not
    establish physical lake equilibrium, discharge or a complete river network.
 7. The workbench renders derived relief/review overlays and exports PNG. The
    shared headless build operation writes NPY/NPZ, local-metric GeoTIFF, both
    preview styles, diagnostics and a completion-last manifest through adapters.
+
+The read-only [water-budget operation](../terrain-water-budget.md) shares field
+preparation and finished canonical ground with generation. Its pipeline planner
+uses the same shoreline/candidate/profile plans, then returns demand without
+fine evaluation, transfer, raster output or exports. Application code owns saved
+input/runtime verification; the CLI labels internal demand as conditional.
 
 The next durable-build work adds world georeferencing,
 derived GIS products, explicit hard/soft/inequality projection after optional

@@ -12,6 +12,9 @@ in the current status or a new dated report.
 
 ## Implemented and measured work
 
+- [Water-sampling budget forecast - 2026-09-13](2026-09-13-water-budget-forecast.md)
+  records shared demand planning, unchanged output/evidence and fresh-process cost.
+
 - [Procedural detail and context sampling - 2026-09-13](2026-09-13-detail-and-context-sampling.md)
   measures lattice-scale/shoulder guidance, residual misses and complete-budget cost.
 - [Water-profile convergence and regional guidance - 2026-09-13](2026-09-13-water-sampling-convergence.md)

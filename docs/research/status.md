@@ -18,6 +18,7 @@ performance claims. A source audit is not a successfully run engine comparison.
 | Basin intent and flow | Lake/dry footprints retain terrain and captured MFD area; eligible outlets transfer collected area conservatively | Runoff/discharge, equilibrium water levels, controlling sills, lake chains and nested depressions |
 | Finer water review | Shoreline/contact/full-route profiles, regional transitions, procedural density, context shoulders, wet-link separation and dry-path checks | Residual blended/grazing extrema, continuous error bounds, complete-budget cost and off-grid/path alternatives |
 | Measurements (R41) | Elevation min/max/mean/deviation and masked X/Y differences/semivariances at physical lags | Detrending, arbitrary direction, terrain atlas, multiscale/topological descriptors |
+| Water demand forecast | Saved-project shoreline and potential internal-network plans, exact counts or bounded lower bounds, verified source identity | External routes/contacts, actual eligibility, whole-project cost and workbench access |
 | Performance (R45-R47) | Selective land sampling, exact water-sample reuse and a 13-case benchmark harness | Remaining network/serialization cost, complex-scene crossover, 4096/memory budgets and native migration evidence |
 
 The current format inventory lives in [schemas](../../schemas/README.md), and
@@ -55,9 +56,11 @@ measured benefit and packaging/workflow evidence; it is not the next prerequisit
 
 ## Evidence and next experiments
 
+- [Water-budget forecasting](2026-09-13-water-budget-forecast.md) adds read-only
+  saved-project demand planning and preserves the existing terrain/sampler.
 - [Detail and context sampling](2026-09-13-detail-and-context-sampling.md) is
-  the latest accepted change: global/regional lattice scales and context shoulders
-  guide the shared sampler. The expanded comparison covers oblique profiles,
+  the latest station-policy change: global/regional lattice scales and context
+  shoulders guide the shared sampler. The expanded comparison covers oblique profiles,
   fixed-input field preservation, residual misses and complete-budget failures.
 - [Regional guidance and convergence](2026-09-13-water-sampling-convergence.md)
   records the preceding 64-run matrix and regional barrier detection. Its
@@ -78,6 +81,10 @@ measured benefit and packaging/workflow evidence; it is not the next prerequisit
 Exact feature/sample reuse is now implemented with preserved station counts and
 evidence; see the [measured follow-through](2026-09-13-water-sampling-reuse.md).
 Regional, procedural and context guidance now have finite-reference evidence.
+The [water-budget command](../terrain-water-budget.md) now exposes shoreline
+and potential internal-network demand using shared planning; the
+[forecast report](2026-09-13-water-budget-forecast.md) measures its cost and verifies
+unchanged terrain/evidence. It does not estimate whole-project or export cost.
 Next, compare bounded local error refinement for blended/grazing extrema and
 whole-project sampling cost, then define sill/storage semantics before lake
 chains. Five detail octaves keep the public flat-routing example within budget;

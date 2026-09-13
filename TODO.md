@@ -203,11 +203,20 @@ substeps.
   roughness, feature scales and grazing distances, including narrow off-grid 2D
   passages. Lattice spacing and stabilized finite extrema alone do not certify
   clearance. Keep whole-profile/network budgets and explicit unresolved results.
-- [ ] **P1 — Expose sampling cost before high-detail water reviews.** The six-
-  octave flat-outlet variant now exhausts its dry-network budget; the public
-  five-octave example fits. Compare cheap complete-count estimates and bounded
-  planning diagnostics before offering settings advice. Do not silently reduce
-  detail, raise caps, or accept only part of a network to hide this limit.
+- [x] **P1 — Expose sampling demand before high-detail water reviews.**
+  `terrain water-budget PROJECT` shares canonical terrain preparation and actual
+  shoreline/internal-link planning. It reports exact counts or bounded required
+  lower bounds and distinguishes potential networks from executed review. No fine
+  profiles, delivered raster or source writes are needed. The five/six-detail
+  flat fixtures match actual review demand. See the
+  [command guide](docs/terrain-water-budget.md),
+  [ADR-0046](docs/adr/0046-forecast-water-sampling-budgets.md) and
+  [measured report](docs/research/2026-09-13-water-budget-forecast.md).
+- [ ] **P1 — Extend cost forecasts only with measured workflow value.** Evaluate
+  saved-project forecast access in the workbench and an explicit exportable report;
+  preserve input identity and distinguish saved from unsaved edits. Measure
+  route/contact demand, conditional network work and unique evaluations before
+  introducing whole-project cost estimates or automatic settings advice.
 - [ ] **P1 — Measure broader project-scale sampling limits.** Extend the current
   numeric stress fixtures to complex many-lake projects, alternate boundary shapes
   and total profile/export cost before adding a spatial index, shared-path reuse,

@@ -1,15 +1,14 @@
 """Bounded, batched ground checks for vector-contained internal water links."""
 
 from dataclasses import dataclass
-from math import ceil, hypot
 from typing import Literal
 
 import numpy as np
 from numpy.typing import NDArray
 
+from dmtools.terrain.pipeline.link_planning import plan_water_links, water_link_candidates
 from dmtools.terrain.pipeline.water_sampling import (
     GroundSampler,
-    GroundSamplingPlan,
     SamplingGuide,
     plan_ground_profile,
     profile_positions,
@@ -59,32 +58,18 @@ def review_wet_links(
     if (neighbours.shape != (count, 8) or wet.shape != (count,)
             or local_contact >= count or nodes[local_contact] != contact or not wet[local_contact]):
         raise ValueError("Wet-link review needs matching nodes and a selected wet contact.")
-    spacing = min(float(x_km[1] - x_km[0]), float(y_km[1] - y_km[0])) / 4
-    sources, directions = np.nonzero((neighbours > np.arange(count)[:, None]) & wet[:, None]
-                                     & wet[np.maximum(neighbours, 0)])
-    targets = neighbours[sources, directions]
-    width = elevation_m.shape[1]
-    def coordinate(local: int) -> tuple[float, float]:
-        row, column = divmod(int(nodes[local]), width)
-        return float(x_km[column]), float(y_km[row])
-    vertices = tuple((coordinate(int(a)), coordinate(int(b)))
-                     for a, b in zip(sources, targets, strict=True))
-    baseline = tuple(1 + max(2, ceil(hypot(b[0]-a[0], b[1]-a[1]) / spacing))
-                     for a, b in vertices)
-    requested = sum(baseline)
+    candidates = water_link_candidates(nodes, neighbours, wet, elevation_m, x_km, y_km,
+                                        water_level_m, kind="wet")
+    sources, targets, directions = candidates.sources, candidates.targets, candidates.directions
+    spacing = candidates.spacing_km
+    planned = plan_water_links(candidates, features, sample_budget=MAX_WET_LINK_SAMPLES,
+                               planner=plan_ground_profile)
+    requested = planned.requested_sample_count
     connected = np.zeros(count, dtype=np.bool_)
-    def unresolved() -> tuple[WetLinkReview, NDArray[np.bool_]]:
-        return (WetLinkReview("budget_exceeded", spacing, len(vertices), requested,
+    if planned.status != "sampled":
+        return (WetLinkReview("budget_exceeded", spacing, len(sources), requested,
                               None, None, ()), connected)
-    if requested > MAX_WET_LINK_SAMPLES:
-        return unresolved()
-    plans: list[GroundSamplingPlan] = []
-    for pair, base in zip(vertices, baseline, strict=True):
-        plan = plan_ground_profile(pair, spacing, features)
-        requested += plan.requested_sample_count - base
-        if plan.status != "sampled" or requested > MAX_WET_LINK_SAMPLES:
-            return unresolved()
-        plans.append(plan)
+    plans = planned.plans
     lengths = np.asarray([p.requested_sample_count for p in plans], dtype=np.int64)
     offsets = np.concatenate((np.zeros(1, dtype=np.int64), np.cumsum(lengths)))
     positions = (np.concatenate([profile_positions(p) for p in plans]) if plans else
@@ -116,6 +101,6 @@ def review_wet_links(
             if target >= 0 and wet[target] and not connected[target]:
                 connected[target] = True
                 queue.append(target)
-    return (WetLinkReview("sampled", spacing, len(vertices), requested,
+    return (WetLinkReview("sampled", spacing, len(sources), requested,
                           sum(e.blocked for e in evidence), int(np.count_nonzero(connected)),
                           tuple(evidence)), connected)

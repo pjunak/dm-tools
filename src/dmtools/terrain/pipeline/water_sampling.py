@@ -388,6 +388,12 @@ class ShorelineReview:
     uncontrolled_low_sample_indices: tuple[int, ...]
 
 
+def shoreline_vertices(basin: MetricBasin) -> tuple[tuple[float, float], ...]:
+    """Canonical ring orientation/start keep review and forecast stations identical."""
+    normalized = cast(Polygon, basin.geometry.normalize())
+    return tuple((float(x), float(y)) for x, y in normalized.exterior.coords)
+
+
 def review_shorelines(
     basins: tuple[MetricBasin, ...], spacing_limit_km: float, opening_radius_km: float,
     sample_ground: GroundSampler, features: tuple[SamplingGuide, ...] = (),
@@ -399,10 +405,8 @@ def review_shorelines(
         if level is None:
             reviews.append(None)
             continue
-        # Canonical ring orientation/start avoid shifting samples when equivalent rings are redrawn.
-        normalized = cast(Polygon, basin.geometry.normalize())
-        vertices = tuple((float(x), float(y)) for x, y in normalized.exterior.coords)
-        profile = sample_ground_profile(vertices, spacing_limit_km, sample_ground, features)
+        profile = sample_ground_profile(
+            shoreline_vertices(basin), spacing_limit_km, sample_ground, features)
         low = np.asarray(profile.ground_m, dtype=np.float64) < level - .01
         allowed = np.zeros(low.size, dtype=np.bool_)
         radius = 0. if basin.outlet_km is None else opening_radius_km

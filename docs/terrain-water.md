@@ -13,6 +13,10 @@ areas, outlet ground versus water level, shoreline findings and downstream route
 [water example](../examples/terrain/basin-water.dmterrain.json) contains one lake
 and one dry basin on the synthetic public coastline.
 
+For saved projects, the read-only [water-budget command](terrain-water-budget.md)
+reports shoreline and potential internal-network sample demand before a build.
+It shares actual planning, but does not test terrain clearance or water connectivity.
+
 ## What changes terrain
 
 Every authored basin footprint excludes automatic incision and automatic detail

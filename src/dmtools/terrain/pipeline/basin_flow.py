@@ -6,7 +6,6 @@ from math import hypot
 
 import numpy as np
 from numpy.typing import NDArray
-from shapely import covers, linestrings
 from shapely.geometry import MultiPolygon, Polygon
 
 from dmtools.terrain.domain import TerrainConstraint
@@ -15,7 +14,8 @@ from dmtools.terrain.pipeline.flat_routing import (
     FLAT_ROUTING_ALGORITHM_ID,
     FlatRouting,
 )
-from dmtools.terrain.pipeline.hydrology import D8_NEIGHBOURS, DrainageIncision
+from dmtools.terrain.pipeline.hydrology import DrainageIncision
+from dmtools.terrain.pipeline.link_planning import basin_neighbours
 from dmtools.terrain.pipeline.outlets import review_outlet_routes
 from dmtools.terrain.pipeline.water import (
     MetricBasin,
@@ -64,38 +64,6 @@ class BasinOutflow:
     terminal_km2: NDArray[np.float64]
     summary: BasinOutflowSummary
 
-
-def basin_neighbours(
-    basin: MetricBasin, inside: NDArray[np.bool_],
-    x_km: NDArray[np.float64], y_km: NDArray[np.float64],
-) -> tuple[NDArray[np.int64], NDArray[np.int64]]:
-    """Build each undirected vector-contained link once, in bulk."""
-    nodes = np.flatnonzero(inside).astype(np.int64)
-    height, width = inside.shape
-    rows, columns = nodes // width, nodes % width
-    local = np.full(inside.size, -1, dtype=np.int64)
-    local[nodes] = np.arange(nodes.size, dtype=np.int64)
-    neighbours = np.full((nodes.size, 8), -1, dtype=np.int64)
-    for direction, (dr, dc) in enumerate(D8_NEIGHBOURS):
-        if dr < 0 or (dr == 0 and dc < 0):
-            continue
-        target_rows, target_columns = rows + dr, columns + dc
-        valid = ((target_rows >= 0) & (target_rows < height)
-                 & (target_columns >= 0) & (target_columns < width))
-        sources = np.flatnonzero(valid)
-        targets = local[target_rows[valid] * width + target_columns[valid]]
-        present = targets >= 0
-        sources, targets = sources[present], targets[present]
-        if not sources.size:
-            continue
-        first = np.column_stack((x_km[columns[sources]], y_km[rows[sources]]))
-        second = np.column_stack((x_km[columns[targets]], y_km[rows[targets]]))
-        segments = linestrings(np.stack((first, second), axis=1))
-        allowed = np.asarray(covers(basin.geometry, segments), dtype=np.bool_)
-        sources, targets = sources[allowed], targets[allowed]
-        neighbours[sources, direction] = targets
-        neighbours[targets, 7 - direction] = sources
-    return nodes, neighbours
 
 
 @dataclass(frozen=True, slots=True)
