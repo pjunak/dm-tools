@@ -175,6 +175,12 @@ substeps.
   bytes once before restoring every station. Budgets, Float32 ground, endpoint
   checks, routing and complete evidence remain unchanged. See the
   [measured comparison](docs/research/2026-09-13-water-sampling-reuse.md).
+- [x] **P1 — Reject distant sampling guides before geometry queries.** Immutable
+  guide bounds now cover core/context corridors and polygon interiors, with
+  outward rounding and unchanged exact checks for possible contacts. Shared
+  runtime/forecast plans retain every station and budget decision. Three opt-in
+  fixtures add 4/16 lakes, 16/64 points and broad overlap; see the
+  [measured comparison](docs/research/2026-09-13-water-guide-bounds.md).
 - [ ] **P1 — Measure remaining network planning and evidence overhead.** Compare
   feature indexing on many-constraint scenes, project-scale profile memory and
   compact diagnostic serialization. Retain every required probe, complete budget
@@ -229,7 +235,9 @@ substeps.
 - [ ] **P1 — Measure broader project-scale sampling limits.** Extend the current
   numeric stress fixtures to complex many-lake projects, alternate boundary shapes
   and total profile/export cost before adding a spatial index, shared-path reuse,
-  a project-wide budget or larger per-profile limits. Preserve exact evaluation,
+  a project-wide budget or larger per-profile limits. The completed 4/16-lake,
+  16/64-point comparison now covers distributed and broad overlapping guides;
+  larger counts, more boundary/constraint types and export cost remain. Preserve exact evaluation,
   complete budgets and deterministic evidence. Current guidance is a sampling
   policy, not a continuous terrain error bound.
 - [ ] **P1 — Define controlling sills and physical lake-level assumptions.**
@@ -500,16 +508,19 @@ execution order.
   Python loops. The first public-example timing/profile is recorded in the
   [language assessment](docs/research/2026-09-05-language-and-performance.md);
   it predates the representative harness and native peak-memory measurements.
-  The [repeatable harness](benchmarks/README.md) now offers 13 public/synthetic
-  cases, selectable seeds/resolutions, generation stages, CPU time, quality,
+  The [repeatable harness](benchmarks/README.md) now offers 13 default cases and
+  three opt-in lake/constraint scaling cases, selectable seeds/resolutions,
+  generation stages, CPU time, quality,
   rendering, process peak memory and numerical hashes in isolated repetitions.
   The [2026-09-10 review](docs/maintenance/2026-09-10-sanity-and-performance.md)
   adds regional landforms, retained routing identities and CPU profiles. The
   [dry-path follow-up](docs/research/2026-09-11-dry-collection-paths.md) measures
   the newer connected-water workload; older coast profiles are not current
   end-to-end cost estimates.
-  Export timing, regional-refinement/4096 cases, many-constraint stress tests
-  and agreed latency/memory budgets remain.
+  The [guide-bounds comparison](docs/research/2026-09-13-water-guide-bounds.md)
+  adds larger lake/constraint scenes and separates forecast planning from
+  generation and evidence serialization. Export timing, regional-refinement/4096
+  cases, larger constraint mixes and agreed latency/memory budgets remain.
 - [ ] **P1 — Optimize measured boundary-distance cost.** Prototype indexed
   coast-segment distance queries on complex coasts before a native rewrite;
   the prior simple-coast STRtree probe was slower. Preserve exact masks,
@@ -803,7 +814,9 @@ Priorities remain conditional on the current strategy's prerequisites.
   diagnostic sampling while preserving full canonical routing grids. Exact
   indexed segment queries were slower on the public coastline in a small probe;
   they have not been adopted. Exact feature preparation and per-call water-sample
-  reuse are now implemented; broader indexing/caching comparisons remain.
+  reuse and conservative spatial rejection of distant sampling guides are now
+  implemented; broader indexing/caching comparisons remain. Guide bounds preserve
+  finite sampling policy and do not bound the complete elevation field.
 - [ ] **Research — R46: Compare compiled kernels on demonstrated bottlenecks.**
   Start with fused noise evaluation and allocation reduction; test hydrology
   loops when representative profiles justify them. Compare existing NumPy,

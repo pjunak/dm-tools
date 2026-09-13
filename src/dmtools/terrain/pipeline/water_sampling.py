@@ -4,7 +4,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from heapq import heappop, heappush
 from itertools import pairwise
-from math import ceil, hypot, isfinite
+from math import ceil, hypot, inf, isfinite, nextafter
 from typing import TYPE_CHECKING, Literal, cast
 
 import numpy as np
@@ -32,6 +32,23 @@ SAMPLE_BATCH_SIZE = 4_096
 FEATURE_RADIUS_DIVISOR = 4
 
 
+type SamplingBounds = tuple[float, float, float, float]
+
+
+def _expanded_bounds(geometry: BaseGeometry, radius_km: float = 0.) -> SamplingBounds:
+    left, bottom, right, top = geometry.bounds
+    # Round outward both before expansion and after subtraction/addition. Bounds
+    # reject only impossible candidates; grazing contacts still reach GEOS.
+    padding = nextafter(radius_km, inf) if radius_km else 0.
+    return (nextafter(left - padding, -inf), nextafter(bottom - padding, -inf),
+            nextafter(right + padding, inf), nextafter(top + padding, inf))
+
+
+def _bounds_overlap(first: SamplingBounds, second: SamplingBounds) -> bool:
+    return not (first[2] < second[0] or second[2] < first[0]
+                or first[3] < second[1] or second[3] < first[1])
+
+
 @dataclass(frozen=True, slots=True)
 class SamplingFeature:
     """Prepared cores or regional boundaries with physical transition distances."""
@@ -41,6 +58,7 @@ class SamplingFeature:
     minimum_radius_km: float
     context_radius_km: float | None = None
     parts: tuple[Point | LineString, ...] = field(init=False, repr=False, compare=False)
+    bounds_km: SamplingBounds = field(init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
         if (self.geometry.is_empty or not self.geometry.is_valid
@@ -63,6 +81,10 @@ class SamplingFeature:
             raise ValueError("Water sampling features require finite geometry and positive radii.")
         object.__setattr__(self, "geometry", normalized)
         object.__setattr__(self, "parts", parts)
+        # Include polygon interiors, core corridors and the broadest context
+        # shoulder. This bounds sampling guidance, not the field's Gaussian tail.
+        object.__setattr__(self, "bounds_km", _expanded_bounds(
+            normalized, 2 * max(self.influence_radius_km, self.context_radius_km or 0.)))
 
 
 @dataclass(frozen=True, slots=True)
@@ -71,6 +93,7 @@ class SamplingDensity:
 
     spacing_km: float
     geometry: Polygon | MultiPolygon | None = None
+    bounds_km: SamplingBounds | None = field(init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
         if not isfinite(self.spacing_km) or self.spacing_km <= 0:
@@ -79,6 +102,8 @@ class SamplingDensity:
             if self.geometry.is_empty or not self.geometry.is_valid:
                 raise ValueError("Procedural sampling regions require valid nonempty geometry.")
             object.__setattr__(self, "geometry", self.geometry.normalize())
+        object.__setattr__(self, "bounds_km",
+                           None if self.geometry is None else _expanded_bounds(self.geometry))
 
 
 type SamplingGuide = SamplingFeature | SamplingDensity
@@ -102,7 +127,10 @@ def _feature_windows(
     approximation. The corridor is a sampling choice, not a hydraulic boundary.
     """
     windows: list[_FeatureWindow] = []
+    segment_bounds = segment.bounds
     for feature in features:
+        if feature.bounds_km is not None and not _bounds_overlap(segment_bounds, feature.bounds_km):
+            continue
         if isinstance(feature, SamplingDensity):
             if feature.spacing_km < spacing_km:
                 intervals = ((0., 1.),) if feature.geometry is None else (

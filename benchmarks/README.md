@@ -33,6 +33,22 @@ while measuring them, and avoid concurrent tests or other heavy workloads.
 | `downstream` | 100 m downstream height feature blocking a canonically clear route |
 | `internal` | 100 m internal height feature separating a canonically connected lake |
 | `dry` | 100 m dry height feature rejected before selecting a clear alternative |
+| `lakes_small` | Opt-in: four irregular lakes, two outlets and 16 distributed relative points |
+| `lakes` | Opt-in: 16 irregular lakes, eight outlets and 64 distributed relative points |
+| `lakes_broad` | Opt-in: the same 16 lakes and 64 points with broad, overlapping influence |
+
+The three `lakes*` scaling cases are excluded from the default run. They keep
+physical inputs fixed on a 4000 km square, use five detail levels and mix
+positive/negative points. Point radii are 12 km for the distributed cases and
+2000 km for the broad case. Lake levels are workload inputs: forecast networks
+may exist even when actual outlet review rejects transfer. These are not
+recommended authoring settings or a physical lake model. For the current
+scaling and guide-query results, see the
+[prepared-bounds report](../docs/research/2026-09-13-water-guide-bounds.md).
+
+```powershell
+.\.venv\Scripts\python.exe -m benchmarks.terrain --case lakes_small lakes lakes_broad --resolution 768 --seed 42 --repeats 3 --output artifacts/lake-scaling.json
+```
 
 Select cases and multiple resolutions/seeds explicitly:
 

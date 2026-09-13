@@ -74,7 +74,11 @@ required lower bounds. External route/contact and whole-project cost remain open
 
 Exact feature/sample reuse is now implemented; the
 [comparison](../research/2026-09-13-water-sampling-reuse.md) records unchanged
-numeric/evidence contracts and measured cost.
+numeric/evidence contracts and measured cost. Prepared guide bounds now also
+reject distant candidates before geometry queries; the
+[scaling comparison](../research/2026-09-13-water-guide-bounds.md) records 4/16-lake,
+16/64-point workloads and broad overlap. These are spatial search bounds, not
+bounds on unseen terrain heights.
 
 1. Establish usable bounds for residual blended/grazing extrema and measure
    project-scale sampling cost. The
@@ -114,10 +118,12 @@ record an additional 31-34% generation cost on connected-water cases after
 removing redundant regional intersections; required samples and evidence remain
 complete.
 
-Exact per-feature preparation and per-call field reuse address the first
-measured network cost. Next measure many-constraint/lake workloads, index
-crossover, scratch memory and diagnostic serialization while preserving complete
-evidence and conservation. Keep unchanged-input controls for every optimization.
+Exact per-feature preparation, per-call field reuse and prepared guide bounds
+address measured network cost. The first many-lake/point comparison now records
+forecast planning, generation, process memory and evidence serialization. Next
+extend counts, constraint types and boundary complexity before selecting an
+index; measure total export cost and scratch allocations while preserving
+complete evidence and conservation. Keep unchanged-input controls for every optimization.
 The [earlier STRtree probe](../research/2026-09-05-selective-terrain-sampling.md)
 was slower on the simple coast, so do not adopt an index without a demonstrated
 crossover. Keep process spacing and terrain budgets unchanged for an exact-output

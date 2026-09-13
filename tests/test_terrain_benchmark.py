@@ -5,7 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from benchmarks.terrain import ROOT, fixture, peak_resident_bytes
+from benchmarks.terrain import DEFAULT_CASES, ROOT, fixture, peak_resident_bytes
+from dmtools.terrain.domain import ElevationPoint, TerrainBasin
 
 
 def test_benchmark_report_is_repeatable_and_measures_native_process_memory(tmp_path: Path) -> None:
@@ -88,3 +89,19 @@ def test_benchmark_fixture_identity_preserves_explicit_parameters() -> None:
 def test_peak_memory_is_unavailable_or_a_positive_byte_count() -> None:
     peak = peak_resident_bytes()
     assert peak is None or peak > 0
+
+
+@pytest.mark.parametrize("case,lakes,points,radius", [
+    ("lakes_small", 4, 16, 12.), ("lakes", 16, 64, 12.), ("lakes_broad", 16, 64, 2000.),
+])
+def test_scaling_fixtures_are_explicit_repeatable_and_opt_in(
+    case: str, lakes: int, points: int, radius: float,
+) -> None:
+    first = fixture(case, 65, 17)
+    assert first == fixture(case, 65, 17) and case not in DEFAULT_CASES
+    _, settings, constraints = first
+    assert settings.resolution_px == 65 and settings.seed == 17
+    basins = [c for c in constraints if isinstance(c, TerrainBasin)]
+    anchors = [c for c in constraints if isinstance(c, ElevationPoint)]
+    assert len(basins) == lakes and sum(b.outlet is not None for b in basins) == lakes // 2
+    assert len(anchors) == points and all(p.influence_radius_km == radius for p in anchors)

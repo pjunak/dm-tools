@@ -65,8 +65,10 @@ contributing-area transfer, unique evaluation cost and export/serialization
 cost are not forecast. There is no whole-project station total or promised
 runtime. Ineligible networks can make this command do planning that full review
 would skip. A small footprint with no canonical node is explicitly unresolved.
-See the [measurements](research/2026-09-13-water-budget-forecast.md) for observed
-cost and the [water guide](terrain-water.md) for actual review semantics.
+See the [forecast measurements](research/2026-09-13-water-budget-forecast.md)
+for the initial cost, the [guide-bounds comparison](research/2026-09-13-water-guide-bounds.md)
+for later planning improvements, and the [water guide](terrain-water.md) for
+actual review semantics.
 
 The command prints project, coastline and installed-generator source SHA-256
 identities and rejects inputs/runtime that change during forecasting. A completed

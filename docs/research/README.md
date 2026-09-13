@@ -12,6 +12,10 @@ in the current status or a new dated report.
 
 ## Implemented and measured work
 
+- [Prepared bounds for water-sampling guides - 2026-09-13](2026-09-13-water-guide-bounds.md)
+  records exact candidate rejection, lake/constraint scaling, paired runtime
+  measurements and preserved station/numeric/evidence identities.
+
 - [Adaptive water-profile refinement - 2026-09-13](2026-09-13-adaptive-water-profile-refinement.md)
   measures a research-only midpoint experiment, false convergence, sample demand
   and explicit exhaustion; the heuristic is not adopted for runtime clearance.

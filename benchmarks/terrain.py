@@ -22,6 +22,7 @@ from dmtools.terrain.domain import (
     Coastline,
     ElevationPoint,
     LandComponent,
+    TerrainBasin,
     TerrainBrushStroke,
     TerrainConstraint,
     TerrainSettings,
@@ -31,8 +32,10 @@ from dmtools.terrain.pipeline.generate import GeneratedTerrain, generate_terrain
 from dmtools.terrain.pipeline.quality import measure_terrain_quality
 
 ROOT = Path(__file__).resolve().parents[1]
-CASES = ("example", "square", "archipelago", "authored", "regional", "water", "outlet",
-         "flat", "shoreline", "narrow", "downstream", "internal", "dry")
+DEFAULT_CASES = ("example", "square", "archipelago", "authored", "regional", "water", "outlet",
+                 "flat", "shoreline", "narrow", "downstream", "internal", "dry")
+SCALING_CASES = ("lakes_small", "lakes", "lakes_broad")
+CASES = (*DEFAULT_CASES, *SCALING_CASES)
 
 
 def _ring(x: float, y: float, rx: float, ry: float, count: int) -> tuple[tuple[float, float], ...]:
@@ -47,10 +50,41 @@ def _ring(x: float, y: float, rx: float, ry: float, count: int) -> tuple[tuple[f
     return (*points, points[0])
 
 
+
+def _lake_fixture(
+    case: str, resolution: int, seed: int,
+) -> tuple[Coastline, TerrainSettings, tuple[TerrainConstraint, ...]]:
+    """Distributed retention footprints and point guides, including broad overlap.
+
+    Potential networks deliberately include lakes whose full outlet review can
+    reject the connection. These are workload inputs, not plausible lake levels.
+    """
+    settings = TerrainSettings(resolution_px=resolution, seed=seed, detail_levels=5)
+    coast = Coastline(((0., 0.), (1., 0.), (1., 1.), (0., 1.), (0., 0.)), case)
+    side = 2 if case == "lakes_small" else 4
+    constraints: list[TerrainConstraint] = []
+    for row in range(side):
+        for column in range(side):
+            ring = _ring(.15 + .7 * column / (side-1), .15 + .7 * row / (side-1),
+                         .1 / side, .13 / side, 16)
+            constraints.append(TerrainBasin(
+                ring, "lake", 1500., ring[0] if (row + column) % 2 == 0 else None))
+    point_side = 2 * side
+    radius = 2000. if case == "lakes_broad" else 12.
+    for row in range(point_side):
+        for column in range(point_side):
+            constraints.append(ElevationPoint(
+                (.08 + .84 * column / (point_side-1), .08 + .84 * row / (point_side-1)),
+                60. if (row + column) % 2 else -60., radius, "relative"))
+    return coast, settings, tuple(constraints)
+
+
 def fixture(
     case: str, resolution: int, seed: int
 ) -> tuple[Coastline, TerrainSettings, tuple[TerrainConstraint, ...]]:
     """Public or synthetic inputs only; no private map or authored file changes."""
+    if case in SCALING_CASES:
+        return _lake_fixture(case, resolution, seed)
     settings = TerrainSettings(resolution_px=resolution, seed=seed)
     constraints: tuple[TerrainConstraint, ...] = ()
     if case in ("example", "regional", "water", "outlet", "flat", "shoreline", "narrow",
@@ -242,7 +276,7 @@ def probe(case: str, resolution: int, seed: int) -> dict[str, Any]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--case", choices=CASES, nargs="+", default=list(CASES))
+    parser.add_argument("--case", choices=CASES, nargs="+", default=list(DEFAULT_CASES))
     parser.add_argument("--resolution", type=int, nargs="+", default=[768])
     parser.add_argument("--seed", type=int, nargs="+", default=[20260902])
     parser.add_argument("--repeats", type=int, default=3)
