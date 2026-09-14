@@ -205,36 +205,48 @@ for measured benefits, false convergence and the decision to keep this heuristic
 out of runtime clearance checks.
 
 
-### Procedural-noise component bounds
+### Procedural-noise component and profile bounds
 
 ```powershell
-.\.venv\Scripts\python.exe -m benchmarks.noise_bounds --seed 42 20260913 --detail 1 6 12 --roughness .25 .55 .9 --span .25 2 --direction horizontal diagonal oblique --divisions 1 16 256 4096 --repeats 2 --output artifacts/noise-bounds-matrix-final-20260913.json
+.\.venv\Scripts\python.exe -m benchmarks.noise_bounds --seed 42 20260913 --detail 1 6 12 --roughness .25 .55 .9 --span .25 2 --direction horizontal diagonal oblique --divisions 1 16 256 4096 --repeats 2 --output artifacts/noise-profiles-matrix-20260914.json
 ```
 
-This research runner compares outward natural intervals with monotone fade and
-bilinear corner bounds plus derived rounding allowances. It encloses the existing
-noise component, transformed to `Float32(2000 + 1000 * noise)` metres, over the
-boxes of fixed profile subdivisions. It does not inspect a saved project or
-bound the complete coast/region/constraint/incision field.
+This research runner compares three policies: `natural`, `monotone_cell` and
+`profile_slabs`. The first two enclose the rectangle around each fixed profile
+interval with outward natural arithmetic or monotone fade/bilinear corner bounds
+plus derived rounding allowances. The third restricts cell work to rounded grid
+strips along the original affine path. All three bound the existing noise
+component transformed to `Float32(2000 + 1000 * noise)` metres. The runner does
+not inspect a saved project or bound the complete coast/region/constraint/incision
+field. See the [component report](../docs/research/2026-09-13-noise-component-bounds.md)
+for the shared rounding kernel and its original two-policy measurements.
 
 `--span` is the horizontal profile extent in multiples of the fixed 2 km largest
 feature; diagonal/oblique profiles also move in Y. `--detail` accepts 1-12,
 `--roughness` is strictly between zero and one, and `--divisions` accepts increasing
 powers of two through 8192. Defaults use seed 42, details 1/6/12, roughness .55,
 spans .25/2, horizontal/oblique directions and subdivisions 1/16/256.
-`--max-cells` defaults to 262144 and cannot exceed it. This counts the full set of
-box/octave lattice-cell visits before evaluating any of them; it is unrelated to
-production station caps. An over-budget trial has no accepted enclosure.
+
+`--max-slabs` defaults to 262144 (allowed 1-262144) and counts the complete initial
+strip plan before allocation. `--max-cells` has the same default/range and counts
+all planned cell visits across intervals and octaves before lattice evaluation.
+An exhausted strip plan has unknown cell demand; neither failure accepts partial
+bounds. These limits govern research work, separately from production station caps.
 
 Each case/repeat starts a fresh process. It records source/runtime identity,
-input/bound/sample hashes, required/evaluated cells, explicit exhaustion,
-component/reference timings and process high-water memory. Both policies share
-endpoint evaluations. Their timing order is fixed, natural first. A separate
-65,537-point finite reference checks every interval and exact shared Float32
-values, without selecting bounds from those heights. Reference agreement is an
-independent check, not the proof of inclusion. Reports reserve a new path and
-publish completion last; changed sources or non-repeatable evidence fail the run.
+input/bound/sample hashes, required/evaluated cells, strip counts, exhaustion,
+component/reference timings and process high-water memory. All policies share
+endpoint evaluations. Their timing order is fixed: natural, rectangle, profile.
+A separate 65,537-point finite reference checks every interval and exact shared
+Float32 values without selecting bounds from those heights. Reference agreement
+is an independent check, not the proof of inclusion. Reports reserve a new path
+and publish completion last; changed sources or non-repeatable evidence fail the run.
 
-The [component report](../docs/research/2026-09-13-noise-component-bounds.md)
-derives the rounding allowances and records tightness, cost and limitations.
-Runtime water decisions and the existing water-profile benchmark remain separate.
+Report version 2 adds the profile method/source identity and ordered uphill
+bounds/gaps. Ordered-rise summaries assume complete intervals in path order and
+include possible low/high positions within the same interval. These conservative
+upper bounds can remain loose even when overall extrema are well bounded. They
+are research report fields, not terrain build fields. See the
+[profile report](../docs/research/2026-09-14-noise-profile-bounds.md) for rounding,
+measured work/uncertainty and the remaining full-terrain boundary. Runtime water
+decisions and the existing water-profile benchmark remain separate.

@@ -216,6 +216,19 @@ substeps.
   references and replay hashes are enforced. The twelfth-octave hash now wraps
   explicitly without overflow warnings or changed values. See the
   [component report](docs/research/2026-09-13-noise-component-bounds.md).
+- [x] **P1 — Restrict noise-bound work to rounded profile strips.** A separate
+  research policy clips the original affine path through major-axis grid strips,
+  preserves rounding at contacts and enforces complete strip/cell limits. Ordered
+  uphill bounds include possible rises hidden within one interval. All 864 profile
+  trials fit the comparison limits, while fine-path overhead and rough-field
+  uncertainty remain; see the [profile report](docs/research/2026-09-14-noise-profile-bounds.md).
+- [ ] **P1 — Compare bound-driven noise refinement and geometry selection.** Measure
+  cheap rectangle bounds on short spans versus clipped strips on broad spans;
+  the strip policy is slower at 4096 subdivisions in the current comparison.
+  Refine original parameter spans using local and ordered-rise uncertainty,
+  with complete work/precision limits and explicit unresolved results. Compare
+  cost and tightness before selecting a method; noise success alone does not
+  authorize full-terrain water clearance.
 - [ ] **P1 — Bound residual blended and grazing sampling errors.** Establish
   conservative interval/gradient bounds for the complete field before using
   adaptive stopping to certify clearance. Account for procedural octaves, coast
@@ -224,11 +237,11 @@ substeps.
   Compare their tightness and cost before adopting a branch-and-bound method.
   Sweep roughness, feature scales and grazing distances, including narrow
   off-grid 2D passages. Keep whole-profile/network budgets and explicit unresolved
-  results. The noise-component experiment closes only one term; segment/cell
-  clipping, correlated octave bounds, local interval/ordered-rise uncertainty,
-  coast/region/constraint composition and rounding of distance/exponential
-  operations remain open. Neither component
-  bounds nor the completed midpoint experiment close the full-field contract.
+  results. Rounded strip clipping and conservative ordered-rise bounds now exist
+  for noise only. Within-cell path correlation, correlated octave bounds, usable
+  local stopping tolerances, coast/region/constraint composition and rounding of
+  distance/exponential operations remain open. Neither component bounds nor the
+  completed midpoint experiment close the full-field contract.
 - [x] **P1 — Expose sampling demand before high-detail water reviews.**
   `terrain water-budget PROJECT` shares canonical terrain preparation and actual
   shoreline/internal-link planning. It reports exact counts or bounded required

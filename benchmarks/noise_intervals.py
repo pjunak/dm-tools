@@ -157,24 +157,28 @@ def cell_interval(
 
 @dataclass(frozen=True, slots=True)
 class NoiseEnclosure:
-    status: Literal["bounded", "cell_budget_exceeded", "coordinate_range_exceeded"]
+    status: Literal[
+        "bounded", "cell_budget_exceeded", "coordinate_range_exceeded", "slab_budget_exceeded"
+    ]
     requested_cell_count: int | None
     evaluated_cell_count: int
     noise: Interval | None = None
     field_m: Interval | None = None
+    requested_slab_count: int | None = None
 
 
 @dataclass(frozen=True, slots=True)
-class _OctavePlan:
+class OctavePlan:
     x: Interval
     y: Interval
     first: NDArray[np.int64]
     last: NDArray[np.int64]
     cell_count: int
+    owners: NDArray[np.int64]
 
 
 def _octave_interval(
-    plan: _OctavePlan, seed: int, octave: int, box_count: int, method: BoundMethod
+    plan: OctavePlan, seed: int, octave: int, box_count: int, method: BoundMethod
 ) -> Interval:
     cells = np.asarray(
         [
@@ -205,9 +209,23 @@ def _octave_interval(
     interpolate = _bilinear if method == "natural" else cell_interval
     values = interpolate(tx, ty, v00, v10, v01, v11)
     low, high = np.full(box_count, np.inf), np.full(box_count, -np.inf)
-    np.minimum.at(low, owners, values.low)
-    np.maximum.at(high, owners, values.high)
+    np.minimum.at(low, plan.owners[owners], values.low)
+    np.maximum.at(high, plan.owners[owners], values.high)
     return Interval(low, high)
+
+
+def validate_bound_controls(amplitude_m: float, offset_m: float, max_cells: int) -> None:
+    if type(max_cells) is not int or not 1 <= max_cells <= MAX_CELLS:
+        raise ValueError("Noise cell budget must be an integer from 1 to 262144.")
+    if (
+        type(amplitude_m) not in (int, float)
+        or type(offset_m) not in (int, float)
+        or not isfinite(amplitude_m)
+        or not isfinite(offset_m)
+        or abs(amplitude_m) > 1e20
+        or abs(offset_m) > 1e20
+    ):
+        raise ValueError("Noise field amplitude and offset must be finite and at most 1e20 metres.")
 
 
 def enclose_noise(
@@ -238,20 +256,9 @@ def enclose_noise(
         or np.any(boxes[:, :2] > boxes[:, 2:])
     ):
         raise ValueError("Noise boxes must be 1-65536 finite ordered xmin/ymin/xmax/ymax rows.")
-    if type(max_cells) is not int or not 1 <= max_cells <= MAX_CELLS:
-        raise ValueError("Noise cell budget must be an integer from 1 to 262144.")
-    if (
-        type(amplitude_m) not in (int, float)
-        or type(offset_m) not in (int, float)
-        or not isfinite(amplitude_m)
-        or not isfinite(offset_m)
-        or abs(amplitude_m) > 1e20
-        or abs(offset_m) > 1e20
-    ):
-        raise ValueError("Noise field amplitude and offset must be finite and at most 1e20 metres.")
+    validate_bound_controls(amplitude_m, offset_m, max_cells)
 
-    plans: list[_OctavePlan] = []
-    requested = 0
+    plans: list[OctavePlan] = []
     with np.errstate(over="ignore", under="ignore"):
         for octave in range(parameters.detail_levels):
             spacing = parameters.largest_feature_km / float(1 << octave)
@@ -267,15 +274,39 @@ def enclose_noise(
                 (int(b[0]) - int(a[0]) + 1) * (int(b[1]) - int(a[1]) + 1)
                 for a, b in zip(first, last, strict=True)
             )
-            requested += count
-            plans.append(_OctavePlan(x, y, first, last, count))
+            plans.append(
+                OctavePlan(x, y, first, last, count, np.arange(len(boxes), dtype=np.int64))
+            )
+    return enclose_plans(
+        plans,
+        parameters,
+        len(boxes),
+        amplitude_m=amplitude_m,
+        offset_m=offset_m,
+        max_cells=max_cells,
+        method=method,
+    )
+
+
+def enclose_plans(
+    plans: list[OctavePlan],
+    parameters: NoiseParameters,
+    interval_count: int,
+    *,
+    amplitude_m: float,
+    offset_m: float,
+    max_cells: int,
+    method: BoundMethod = "monotone_cell",
+) -> NoiseEnclosure:
+    """Evaluate complete prepared cell plans; both geometry policies share this kernel."""
+    requested = sum(plan.cell_count for plan in plans)
     if requested > max_cells:
         return NoiseEnclosure("cell_budget_exceeded", requested, 0)
 
-    result = Interval.point(np.zeros(len(boxes), dtype=np.float64))
+    result = Interval.point(np.zeros(interval_count, dtype=np.float64))
     amplitude, total_amplitude = 1.0, 0.0
     for octave, plan in enumerate(plans):
-        value = _octave_interval(plan, parameters.seed, octave, len(boxes), method)
+        value = _octave_interval(plan, parameters.seed, octave, interval_count, method)
         result = result.add(Interval.point(amplitude).multiply(value))
         # Match the runtime's known binary64 constants, including accumulated sum.
         total_amplitude += amplitude

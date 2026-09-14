@@ -301,7 +301,7 @@ def test_runner_repeats_evidence_and_never_overwrites_a_report(tmp_path: Path) -
     assert first["input_sha256"] == second["input_sha256"]
     assert first["evidence_sha256"] == second["evidence_sha256"]
     assert all(t["enclosure"]["reference_outside_count"] == 0 for t in first["evidence"]["trials"])
-    trials = first["evidence"]["trials"]
+    trials = [t for t in first["evidence"]["trials"] if t["method"] != "profile_slabs"]
     for natural, polynomial in zip(trials[::2], trials[1::2], strict=True):
         assert natural["method"] == "natural" and polynomial["method"] == "monotone_cell"
         assert natural["positions_sha256"] == polynomial["positions_sha256"]

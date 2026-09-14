@@ -6,6 +6,9 @@ R01-R47 register and the [strategy](../strategy/README.md) owns execution order.
 Dated reports preserve measurements at their recorded revision, not timeless
 performance claims. A source audit is not a successfully run engine comparison.
 
+The noise-profile research slice was updated and validated on 2026-09-14; the
+external-engine inventory below retains the 2026-09-13 audit date.
+
 ## Implemented baseline
 
 | Area | Implemented behavior | Remaining boundary |
@@ -47,7 +50,13 @@ natural and polynomial/cell enclosures with explicit rounding allowances, a
 Float32 field boundary and complete cell-work budgets. These bound the isolated
 noise component under the documented arithmetic assumptions. They do not cover
 coast weights, regional/constraint blending, longitudinal profiles or incision,
-and have not been adopted for runtime water decisions.
+and have not been adopted for runtime water decisions. The subsequent
+[profile-strip experiment](2026-09-14-noise-profile-bounds.md) restricts cell work
+along the rounded affine path and adds conservative ordered-rise bounds. All
+864 profile trials fit the current limits, including broad diagonal cases that
+exhaust rectangle bounds. Fine spans are slower and the roughest tested field
+still has a 66.43 m uphill gap at 4096 subdivisions. Geometry clipping alone
+therefore does not supply a practical full-field stopping rule.
 
 Local RBF/screened-Poisson replacement, time-stepped erosion, bedrock/sediment
 transport, coupled ridge/drainage generation, specialized glacial/wind/volcanic
@@ -70,6 +79,10 @@ measured benefit and packaging/workflow evidence; it is not the next prerequisit
 
 ## Evidence and next experiments
 
+- [Rounded profile bounds](2026-09-14-noise-profile-bounds.md) compare three
+  policies across 216 fresh-process runs. They preserve all previous control
+  evidence, bound rises within and across intervals, and separate saved cell
+  work from remaining local uncertainty and strip-planning overhead.
 - [Procedural-noise bounds](2026-09-13-noise-component-bounds.md) compare component
   tightness and cost, verify rounding/finite-reference inclusion and fix the
   twelfth-octave hash overflow warning without changing generated noise values.
@@ -112,8 +125,9 @@ The [water-budget command](../terrain-water-budget.md) now exposes shoreline
 and potential internal-network demand using shared planning; the
 [forecast report](2026-09-13-water-budget-forecast.md) measures its cost and verifies
 unchanged terrain/evidence. It does not estimate whole-project or export cost.
-Next, assess local interval/ordered-rise uncertainty and compose conservative
-bounds beyond the isolated noise term. Measure whole-project sampling cost, then
+Next, compare rectangle/strip selection and bound-driven refinement against
+local interval/ordered-rise uncertainty, then compose conservative bounds beyond
+the isolated noise term. Measure whole-project sampling cost, then
 define sill/storage semantics before lake chains. Five detail octaves keep the public flat-routing example within budget;
 its six-octave regression deliberately retains every dry donor after exhaustion.
 Do not present denser probes as continuous clearance or a physical lake model.

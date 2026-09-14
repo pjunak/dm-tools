@@ -87,11 +87,14 @@ bounds on unseen terrain heights.
    it as a research control; evaluate conservative component/combined-field
    bounds, including Float32 rounding, before choosing a certified adaptive
    method. The [noise-component comparison](../research/2026-09-13-noise-component-bounds.md)
-   now supplies rounded natural and polynomial/cell enclosures for one term.
-   Next assess segment/cell work and local interval/ordered-rise uncertainty;
-   then compose coast/region/constraint weights, profiles and incision with
-   valid rounding bounds. Component success
-   alone does not close the full-field contract. Regional, procedural and context
+   supplies rounded natural and polynomial/cell enclosures for one term. The
+   [profile-strip comparison](../research/2026-09-14-noise-profile-bounds.md) adds
+   rounded path clipping and ordered-rise bounds: broad diagonals fit the cell
+   cap, but fine spans cost more and rough fields retain large uncertainty.
+   Next compare rectangle/strip geometry selection and bound-driven refinement
+   under complete limits. Then compose coast/region/constraint weights, profiles
+   and incision with valid rounding bounds. Component success alone does not
+   close the full-field contract. Regional, procedural and context
    guidance remain the runtime policy.
    Retain explicit unresolved results for complete-budget exhaustion. Define
    controlling-sill/storage assumptions before introducing explicit lake chains

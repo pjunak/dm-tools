@@ -12,6 +12,11 @@ in the current status or a new dated report.
 
 ## Implemented and measured work
 
+- [Rounded noise-profile bounds - 2026-09-14](2026-09-14-noise-profile-bounds.md)
+  measures grid-strip clipping, complete work limits and ordered uphill bounds;
+  broad diagonals cost fewer cells, while fine-path overhead and full-field
+  uncertainty remain open.
+
 - [Rounded bounds for procedural noise - 2026-09-13](2026-09-13-noise-component-bounds.md)
   compares natural and polynomial/cell enclosures with explicit roundoff,
   finite-reference checks and complete work budgets; full terrain bounds remain open.
