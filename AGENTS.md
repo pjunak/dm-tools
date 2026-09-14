@@ -40,6 +40,13 @@ The first tool is a deterministic, constraint-driven terrain generator. It
 turns authored geographic constraints and a versioned profile into numeric
 elevation data and derived cartographic products.
 
+## Delivery boundary
+
+This is a local application. CI validates the Python tool and retains test
+reports; there is no production Compose stack, image dispatch or server rollout
+in `pjunak/infra`. Keep generated terrain builds local and reviewable. The
+separate TTRPG `addon-dm-tools` package has its own host installation lifecycle.
+
 ## Repository contract
 
 - Use CPython 3.14 for project-owned Python code.
