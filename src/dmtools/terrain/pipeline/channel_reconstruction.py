@@ -12,7 +12,7 @@ from dmtools.terrain.pipeline.reconstruction import BoundedBicubicGrid
 type FloatArray = NDArray[np.float64]
 
 
-def _channel_diagonals(
+def channel_diagonals(
     receivers: NDArray[np.int64], channels: NDArray[np.bool_],
 ) -> NDArray[np.int8]:
     """One selected diagonal per cell; leave ambiguous crossings unmodified."""
@@ -28,7 +28,7 @@ def _channel_diagonals(
     return np.where(down == up, 0, np.where(down, 1, -1)).astype(np.int8)
 
 
-def _smoothstep(value: FloatArray) -> FloatArray:
+def smoothstep(value: FloatArray) -> FloatArray:
     value = np.clip(value, 0., 1.)
     return value*value*(3. - 2.*value)
 
@@ -79,7 +79,7 @@ class ChannelReconstruction:
         return cls(
             BoundedBicubicGrid(x, y, routing.incision_m, routing.incision_limit_m),
             BoundedBicubicGrid(x, y, routing.detail_suppression),
-            _channel_diagonals(routing.receivers, routing.channel_mask),
+            channel_diagonals(routing.receivers, routing.channel_mask),
         )
 
     def sample(self, x: FloatArray, y: FloatArray) -> tuple[FloatArray, FloatArray]:
@@ -103,8 +103,8 @@ class ChannelReconstruction:
         # A compact corridor, tapered over the outer fifth of each cell, leaves
         # all canonical samples/edges intact, including their existing derivatives.
         weight = ((1-across*across)**2
-                  * _smoothstep(np.minimum(tx, 1-tx)/.2)
-                  * _smoothstep(np.minimum(ty, 1-ty)/.2))
+                  * smoothstep(np.minimum(tx, 1-tx)/.2)
+                  * smoothstep(np.minimum(ty, 1-ty)/.2))
         revised = _connect(self.incision.values, incision[active], r, c, down, position, weight)
         limit = self.incision.ceiling
         assert limit is not None  # required during preparation

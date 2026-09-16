@@ -91,10 +91,13 @@ bounds on unseen terrain heights.
    workbench. Bounded reconstruction and compact diagonal connections now
    reduce creases/scalloping while preserving canonical routing and cut limits;
    the [comparison](../research/2026-09-16-connected-diagonal-valleys.md) records
-   visual, channel-profile and performance evidence. Use the repeatable channel
-   harness to classify remaining cardinal/interior climbs and large outliers.
-   Then compare turn smoothing and regional/retention transitions while preserving
-   divides, constraints and existing cut budgets. Inspect regenerated 1025 px results with
+   visual, channel-profile and performance evidence. Source-aware floor fitting
+   now reduces source humps and artificial cut pits on cardinal/diagonal edges;
+   the [follow-up](../research/2026-09-16-source-aware-channel-floors.md) classifies
+   large hidden crests that exceed current cut ceilings. Next compare finer
+   planning or route alternatives for these obstacles, then complete downstream
+   conditioning and turn smoothing. Preserve divides, authored constraints and
+   cut budgets. Inspect regenerated 1025 px results with
    pan/zoom and ground readout; keep authored controls authoritative.
    [ADR-0049](../adr/0049-navigate-and-save-authored-inputs.md) owns the current
    input-editor contract. Cancellation, comparison views and vertex insertion

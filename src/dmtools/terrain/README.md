@@ -321,10 +321,12 @@ recipes and authored guidance. Automatic valleys use contributing area and slope
 on a fixed 257-longest-side routing grid. Regional relief caps bound generated
 cuts; absolute anchors remain authoritative. Bounded cubic reconstruction softens
 interpolation creases between routing samples; compact diagonal connections
-reduce scalloping along selected channels. Regenerate with **Detail (1025 px)**
-to inspect this finer surface; canonical samples and routing stay unchanged.
-Straight/diagonal D8 turns and cap-limited creases can still show. See the
-[comparison](../../../docs/research/2026-09-16-connected-diagonal-valleys.md).
+reduce scalloping along selected channels. Source-aware fitting also adjusts
+cuts along cardinal/diagonal floors to reduce humps and artificial pits within
+the existing cut ceiling. Regenerate with **Detail (1025 px)** to inspect the
+finer surface; canonical samples and routing stay unchanged. D8 turns and hidden
+crests beyond the cut ceiling remain; see the
+[comparison](../../../docs/research/2026-09-16-source-aware-channel-floors.md).
 This is process-informed terrain,
 not a simulation of tectonics, rock, sediment, climate or geological time.
 Read [the pipeline overview](pipeline/README.md) for stage order and algorithms.

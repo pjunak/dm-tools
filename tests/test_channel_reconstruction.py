@@ -8,9 +8,10 @@ from numpy.typing import NDArray
 from benchmarks.channel_profiles import measure_channels
 from benchmarks.terrain import fixture
 from dmtools.terrain.pipeline import generate as generation
+from dmtools.terrain.pipeline.channel_floor import ChannelFloorReconstruction
 from dmtools.terrain.pipeline.channel_reconstruction import (
     ChannelReconstruction,
-    _channel_diagonals,
+    channel_diagonals,
 )
 from dmtools.terrain.pipeline.reconstruction import BoundedBicubicGrid
 
@@ -121,17 +122,17 @@ def test_metric_reconstruction_is_symmetric_pointwise_and_owns_topology() -> Non
 def test_only_explicit_selected_diagonal_edges_receive_a_connection() -> None:
     receivers = np.array([[3, -1], [-1, -1]], dtype=np.int64)
     selected = np.array([[True, False], [False, False]])
-    np.testing.assert_array_equal(_channel_diagonals(receivers, selected), [[1]])
-    np.testing.assert_array_equal(_channel_diagonals(receivers, ~selected), [[0]])
+    np.testing.assert_array_equal(channel_diagonals(receivers, selected), [[1]])
+    np.testing.assert_array_equal(channel_diagonals(receivers, ~selected), [[0]])
     # A crossing pair has no unambiguous continuous topology in this cell.
     receivers[0, 1] = 2
     selected[0, 1] = True
-    np.testing.assert_array_equal(_channel_diagonals(receivers, selected), [[0]])
+    np.testing.assert_array_equal(channel_diagonals(receivers, selected), [[0]])
     receivers[0, 0] = 1  # cardinal source does not create a second diagonal
-    np.testing.assert_array_equal(_channel_diagonals(receivers, selected), [[-1]])
+    np.testing.assert_array_equal(channel_diagonals(receivers, selected), [[-1]])
     receivers[0, 0] = 99
     with pytest.raises(ValueError, match="indices"):
-        _channel_diagonals(receivers, selected)
+        channel_diagonals(receivers, selected)
 
 
 @pytest.mark.parametrize("case", ["example", "regional"])
@@ -143,6 +144,14 @@ def test_public_channel_profiles_improve_without_changing_cardinal_edges(
     valley = field.automatic_valleys
     args = (valley.x_km, valley.y_km, valley.drainage.receivers,
             valley.drainage.channel_mask, field.sample_ground)
+    # Isolate the diagonal shaping stage from later source-aware floor fitting.
+    def unchanged_floor(
+        self: ChannelFloorReconstruction, x: NDArray[np.float64], y: NDArray[np.float64],
+        incision: NDArray[np.float64], macro: NDArray[np.float64], detail: NDArray[np.float64],
+    ) -> NDArray[np.float64]:
+        return incision
+
+    monkeypatch.setattr(ChannelFloorReconstruction, "refine", unchanged_floor)
     connected = measure_channels(*args)
 
     def unconnected(

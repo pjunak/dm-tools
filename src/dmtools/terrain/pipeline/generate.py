@@ -26,6 +26,7 @@ from dmtools.terrain.domain import (
 )
 from dmtools.terrain.domain.seeds import RELIEF_STAGE_ID, stage_seed
 from dmtools.terrain.pipeline.basin_flow import BasinOutflow, resolve_basin_outflow
+from dmtools.terrain.pipeline.channel_floor import ChannelFloorReconstruction
 from dmtools.terrain.pipeline.channel_reconstruction import ChannelReconstruction
 from dmtools.terrain.pipeline.diagnostics import (
     ChannelConflicts,
@@ -60,8 +61,8 @@ from dmtools.terrain.pipeline.water_sampling import SamplingDensity, SamplingFea
 
 type ProgressCallback = Callable[[float, str], None]
 
-GENERATOR_ALGORITHM_ID = "coastline-constraint-terrain@10"
-AUTOMATIC_VALLEY_ALGORITHM_ID = "regional-budget-mfd-d8-valleys@8"
+GENERATOR_ALGORITHM_ID = "coastline-constraint-terrain@11"
+AUTOMATIC_VALLEY_ALGORITHM_ID = "regional-budget-mfd-d8-valleys@9"
 NOISE_ALGORITHM_ID = "coordinate-value-noise-normalized@1"
 
 
@@ -116,13 +117,9 @@ class _AutomaticValleyField:
     y_km: NDArray[np.float64]
     drainage: DrainageIncision
     land_mask: NDArray[np.bool_]
+    floor: ChannelFloorReconstruction
+    _reconstruction: ChannelReconstruction = field(repr=False)
     basins: tuple[MetricBasin, ...] = ()
-
-    _reconstruction: ChannelReconstruction = field(init=False, repr=False)
-
-    def __post_init__(self) -> None:
-        object.__setattr__(self, "_reconstruction", ChannelReconstruction.prepare(
-            self.x_km, self.y_km, self.drainage))
 
     def sample_shaping(
         self,
@@ -887,11 +884,21 @@ def _prepare_automatic_valley_field(
         incision_budget_m=budget,
         retention_terminal_mask=retention_terminals,
     )
+    reconstruction = ChannelReconstruction.prepare(x_km, y_km, drainage)
+    nodal_floor = np.maximum(
+        np.maximum(macro_elevation - drainage.incision_m, 0.)
+        + (full_elevation - macro_elevation) * (1. - drainage.detail_suppression), 0.,
+    )
+    floor = ChannelFloorReconstruction.prepare(
+        reconstruction.incision, nodal_floor, drainage.receivers, drainage.channel_mask, land_mask,
+    )
     return _AutomaticValleyField(
         x_km=x_km,
         y_km=y_km,
         drainage=drainage,
         land_mask=land_mask,
+        floor=floor,
+        _reconstruction=reconstruction,
         basins=basins,
     )
 
@@ -1115,11 +1122,15 @@ def _evaluate_land_samples(
     automatic_incision, automatic_detail_suppression = automatic_valleys.sample_shaping(
         x_grid, y_grid,
     )
+    residual_detail = unconditioned_elevation - macro_elevation
+    automatic_incision = automatic_valleys.floor.refine(
+        x_grid, y_grid, automatic_incision, macro_elevation,
+        residual_detail * (1. - automatic_detail_suppression),
+    )
     if automatic_valleys.basins:
         retained = basin_intent_ids(x_grid, y_grid, automatic_valleys.basins) > 0
         automatic_incision[retained] = 0
         automatic_detail_suppression[retained] = 0
-    residual_detail = unconditioned_elevation - macro_elevation
     macro_elevation = np.maximum(macro_elevation - automatic_incision, 0.0)
     unconditioned_elevation = np.maximum(
         macro_elevation + residual_detail * (1.0 - automatic_detail_suppression),

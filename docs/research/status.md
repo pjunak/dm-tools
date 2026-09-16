@@ -20,7 +20,7 @@ updated on 2026-09-16; the external-engine inventory below retains the
 | Zoom-driven local detail | Coordinate-addressed fields, shared-sample/grid foundations and a geographic viewport | Regional build requests, added detail, parent/overlap consistency, inherited hydrology and bounded caching |
 | Coordinates/seeds (R01-R03) | Source/local round trips, endpoint grids, actual spacing metadata and portable named seeds | Planetary CRS, configurable process spacing, cell-average/resampling policy |
 | Authored macro routing (R04-R05) | Authored terrain shapes canonical planning; D8/MFD topology and finished-field conflicts are exported | Filled routes are not validated rivers; unresolved uphill channels remain |
-| Valley reconstruction | Bounded cubic fields plus compact selected-diagonal connections for incision/suppression; canonical nodes, cell edges and cut ceilings preserved | D8 turns, cardinal interiors, cap/retention boundaries, remaining climbs and complete-field error bounds |
+| Valley reconstruction | Bounded cubic fields, selected-diagonal shaping and source-aware cardinal/diagonal floor fitting; canonical nodes and cut ceilings preserved | D8 turns, hidden crests beyond cut limits, endpoint/retention conflicts and complete-field error bounds |
 | Regional landforms | Plain/hill/plateau/mountain recipes, orientation, transitions and regional cut limits | Distribution targets, transition-gradient validation, related geological regions |
 | Structural authoring | Absolute/relative point-anchored profiles, directed valley floors and compatible junctions | Direct per-vertex controls, explicit passes, asymmetric sides and generated branching |
 | Basin intent and flow | Lake/dry footprints retain terrain and captured MFD area; eligible outlets transfer collected area conservatively | Runoff/discharge, equilibrium water levels, controlling sills, lake chains and nested depressions |
@@ -46,8 +46,11 @@ records reduced cell-edge slope breaks. The
 [connected-diagonal follow-up](2026-09-16-connected-diagonal-valleys.md) reduces
 scalloping and sampled climb size on eight baseline and three additional cases.
 Canonical routing matched; water outcomes matched in the eight performance
-cases. Off-grid heights intentionally change. Complete-field clearance, cardinal
-interiors, grid-aligned turns and physical river validity remain open.
+cases. The [source-aware floor follow-up](2026-09-16-source-aware-channel-floors.md)
+then fits cuts to the actual source between nodes, reducing cardinal as well as
+diagonal climbs. Off-grid heights intentionally change; large hidden crests
+beyond the current cut ceiling remain. Complete-field clearance, full downstream
+conditioning, grid-aligned turns and physical river validity remain open.
 
 ## Research that has not been adopted
 

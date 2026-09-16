@@ -497,12 +497,20 @@ execution order.
   [ADR-0051](docs/adr/0051-connect-diagonal-valley-shaping.md) and the
   [comparison](docs/research/2026-09-16-connected-diagonal-valleys.md) record
   reduced scalloping and climb size, including additional dense checks.
-- [ ] **P1 — Complete between-node channel geometry.** The new
+- [x] **P1 — Fit channel cuts to the sampled source.** Classification found
+  source humps, artificial cut pits and large cap-limited mountain crests.
+  Cardinal/diagonal corridors now adjust cuts toward canonical floor targets
+  using the actual macro height and retained detail, within unchanged cut
+  ceilings. [ADR-0052](docs/adr/0052-fit-channel-cuts-to-sampled-terrain.md) and the
+  [measurements](docs/research/2026-09-16-source-aware-channel-floors.md) record
+  profile, canonical-authority, visual and performance checks.
+- [ ] **P1 — Complete between-node channel geometry.** The
   `benchmarks.channel_profiles` harness reports finite 65/257-station evidence,
-  cardinal/diagonal results and unresolved non-land samples. Classify remaining
-  cardinal/interior climbs and large outliers, then compare turn smoothing and
-  complete downstream conditioning. Preserve divides, anchors and cut budgets;
-  finite samples and lower mean excursions do not certify a river.
+  cardinal/diagonal results and unresolved non-land samples. Compare route
+  alternatives or finer planning for cap-limited hidden crests; distinguish
+  them from endpoint-taper and source-pit conflicts before adding more shaping.
+  Complete downstream conditioning and D8 turn smoothing remain open. Preserve
+  divides, anchors and cut budgets; lower mean excursions do not certify a river.
 - [ ] **P1 — Add variable valley cross-sections.** Support narrow V-shaped
   valleys, glacial U-shaped valleys, broad floodplains, terraces, and smooth
   width/depth changes along a line. Generated fluvial valleys now widen and

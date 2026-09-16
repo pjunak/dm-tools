@@ -78,7 +78,10 @@ stations per edge. These were not used to choose correction constants.
 | regional / 104729 | 2585 | 615 / 563 | 4.312 / 1.221 | 30.22 / 6.58 |
 
 Mean excursions fall 71.7-81.9%. Cardinal summaries and canonical hashes still
-match, with no non-finite profiles. The regional maximum remains 383.26 m
+match. Correction on 2026-09-16: both recorded archipelago runs contain three
+non-finite profiles, excluded from the finite summaries and left unresolved;
+the original prose incorrectly said none. The other two cases have none.
+The regional maximum remains 383.26 m
 (before: 408.06 m). This outlier and hundreds of residual climbs need separate
 classification and conditioning. These denser finite checks are not certified
 continuous bounds, whole-route guarantees or a physical hydrology model.

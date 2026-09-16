@@ -15,13 +15,17 @@ Incision and residual-detail suppression start with bounded bicubic Hermite
 patches: shared nodal derivatives soften cell-edge creases. Selected diagonal
 channel connections then receive compact, metric corrections toward their
 endpoint shaping values, reducing scalloping without changing cell edges or
-canonical nodes. Each resulting field stays in its original cell corner range;
+canonical nodes. These initial shaping fields stay in their cell corner ranges;
 see [ADR-0051](../../../../docs/adr/0051-connect-diagonal-valley-shaping.md).
-Incision also obeys the existing
-bilinear interpolation of nodal cut limits; exact basin masks still exclude
-both effects inside retained footprints. Active ceilings may retain slope
-breaks. This preserves routing nodes, not every between-node height, and does
-not add terrain detail or certify flow. See
+A source-aware floor stage then fits cuts inside selected cardinal/diagonal
+corridors using actual macro heights and retained detail. Cuts may increase to
+lower humps or decrease to avoid artificial pits; they remain nonnegative and
+obey the existing bilinear nodal cut ceiling, while canonical nodes stay fixed.
+This final cut is not restricted to the corner cut range. See
+[ADR-0052](../../../../docs/adr/0052-fit-channel-cuts-to-sampled-terrain.md).
+Exact basin masks still exclude both automatic effects inside retained footprints.
+Active ceilings may retain slope breaks. This preserves routing nodes, not every
+between-node height, and does not add terrain detail or certify flow. See
 [ADR-0050](../../../../docs/adr/0050-reconstruct-valleys-with-bounded-cubics.md).
 Final shaping applies authored brush, ridge, valley and height-point responses
 and restores permitted high-frequency residual. Absolute constraints attenuate
