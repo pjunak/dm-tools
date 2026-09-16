@@ -72,3 +72,4 @@ supersedes their legacy compatibility commitments during early development.
 - [ADR-0045: Sample procedural detail and context shoulders](0045-sample-procedural-detail-and-context-shoulders.md)
 
 - [ADR-0046: Forecast water-sampling budgets](0046-forecast-water-sampling-budgets.md)
+- [ADR-0047: Edit generation inputs only](0047-edit-generation-inputs-only.md)

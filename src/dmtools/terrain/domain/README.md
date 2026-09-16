@@ -13,8 +13,7 @@ The format-independent project keeps authored inputs separate from generated
 terrain and review products.
 
 Local frames, endpoint grids and named stage seeds live here. World placement,
-direct per-vertex structure profiles and parent/refinement contracts remain
-future work. Build application/adapters own manifest publication.
+and direct per-vertex structure profiles remain future work. Build application/adapters own manifest publication.
 
 Domain code must not read files, call external tools, render images, or depend on
 CLI and web frameworks.

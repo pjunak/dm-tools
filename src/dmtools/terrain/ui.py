@@ -6,7 +6,8 @@ from __future__ import annotations
 import queue
 import threading
 import tkinter as tk
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
+from functools import partial
 from math import hypot
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
@@ -54,6 +55,7 @@ from dmtools.terrain.domain import (
     landform_preset,
 )
 from dmtools.terrain.pipeline import GeneratedTerrain, generate_terrain
+from dmtools.terrain.workbench import GenerationInputs, InstructionHistory
 
 _INK = "#172225"
 _MUTED = "#65716f"
@@ -96,6 +98,7 @@ class _ProgressEvent:
 
 @dataclass(frozen=True, slots=True)
 class _ResultEvent:
+    inputs: GenerationInputs
     terrain: GeneratedTerrain
     image: Image.Image
 
@@ -162,7 +165,9 @@ class TerrainApp:
         self._image: Image.Image | None = None
         self._preview_photo: ImageTk.PhotoImage | None = None
         self._coast_polygon: Polygon | MultiPolygon | None = None
-        self._constraints: list[TerrainConstraint] = []
+        self._history = InstructionHistory()
+        self._selected_instruction: int | None = None
+        self._generated_inputs: GenerationInputs | None = None
         self._draft_points: list[tuple[float, float]] = []
         self._events: queue.Queue[_UiEvent] = queue.Queue()
         self._variables: dict[str, tk.DoubleVar] = {}
@@ -212,6 +217,8 @@ class TerrainApp:
 
         self._configure_styles()
         self._build_layout()
+        for key, variable in self._variables.items():
+            variable.trace_add("write", partial(self._on_settings_changed, key))
         self.root.after(80, self._poll_events)
 
     def _configure_styles(self) -> None:
@@ -268,17 +275,38 @@ class TerrainApp:
         )
         ttk.Label(
             header,
-            text="Sketch elevation controls, ridges, and valleys before deterministic generation.",
+            text="Edit generation instructions over the last map, then regenerate.",
             style="Eyebrow.TLabel",
         ).grid(row=2, column=0, sticky="w", pady=(3, 0))
 
         controls = ttk.Frame(page, style="Panel.TFrame", padding=(18, 18))
         controls.grid(row=1, column=0, sticky="nsw", padx=(0, 16))
         controls.columnconfigure(0, weight=1)
-        self._build_import_panel(controls)
+        controls.rowconfigure(0, weight=1)
+        settings_shell = ttk.Frame(controls, style="Panel.TFrame")
+        settings_shell.grid(row=0, column=0, sticky="nsew")
+        settings_shell.columnconfigure(0, weight=1)
+        settings_shell.rowconfigure(0, weight=1)
+        settings_canvas = tk.Canvas(
+            settings_shell, width=340, height=1, background=_PANEL, highlightthickness=0)
+        settings_canvas.grid(row=0, column=0, sticky="nsew")
+        def scroll_settings(*args: str) -> None:
+            settings_canvas.yview(*args)
+        settings_scrollbar = ttk.Scrollbar(
+            settings_shell, orient="vertical", command=scroll_settings)
+        settings_scrollbar.grid(row=0, column=1, sticky="ns", padx=(6, 0))
+        settings_canvas.configure(yscrollcommand=settings_scrollbar.set)
+        settings_panel = ttk.Frame(settings_canvas, style="Panel.TFrame")
+        settings_window = settings_canvas.create_window(0, 0, window=settings_panel, anchor="nw")
+        settings_canvas.bind("<Configure>", lambda event: settings_canvas.itemconfigure(
+            settings_window, width=event.width))
+        settings_panel.bind("<Configure>", lambda _event: settings_canvas.configure(
+            scrollregion=settings_canvas.bbox("all")))
+        self._build_import_panel(settings_panel)
         for row, spec in enumerate(_CONTROLS, start=2):
-            self._build_numeric_control(controls, row, spec)
-        self._build_actions(controls, len(_CONTROLS) + 2)
+            self._build_numeric_control(settings_panel, row, spec)
+        # Keep Generate and export visible even when the settings panel needs scrolling.
+        self._build_actions(controls, 1)
 
         preview_shell = tk.Frame(
             page, background=_PREVIEW, highlightthickness=1, highlightbackground="#28383a"
@@ -386,7 +414,7 @@ class TerrainApp:
         toolbar.pack(fill="x")
         tk.Label(
             toolbar,
-            text="ELEVATION PREVIEW",
+            text="GENERATION REFERENCE",
             background=_PREVIEW,
             foreground="#dce8e3",
             font=("Segoe UI", 9, "bold"),
@@ -407,12 +435,22 @@ class TerrainApp:
                   background="#2c3e40", foreground="#dce8e3", relief="flat").pack(side="left")
         self.preview_meta = tk.Label(
             toolbar_container,
-            text="Awaiting land geometry",
+            text="Awaiting land geometry", anchor="w", justify="left",
             background=_PREVIEW,
             foreground="#80918e",
             font=("Consolas", 9),
         )
-        self.preview_meta.pack(anchor="w", pady=(4, 0))
+        self.preview_meta.pack(fill="x", pady=(4, 0))
+        self.reference_label = tk.Label(
+            toolbar_container, text="No generated reference. Draw instructions, then generate.",
+            background=_PREVIEW, foreground="#dce8e3", font=("Segoe UI", 9, "bold"),
+            anchor="w", justify="left",
+        )
+        self.reference_label.pack(fill="x", pady=(5, 0))
+        def wrap_preview_labels(event: tk.Event[tk.Misc]) -> None:
+            for label in (self.preview_meta, self.reference_label):
+                label.configure(wraplength=max(180, event.width - 4))
+        toolbar_container.bind("<Configure>", wrap_preview_labels)
         self.render_style_input = ttk.Combobox(
             toolbar,
             values=tuple(_RENDER_STYLE_LABELS),
@@ -437,7 +475,7 @@ class TerrainApp:
 
         tk.Label(
             authoring,
-            text="DRAW",
+            text="ADD",
             background="#203033",
             foreground="#8fa5a1",
             font=("Consolas", 8, "bold"),
@@ -482,39 +520,13 @@ class TerrainApp:
             font=("Segoe UI", 8),
         )
         self.finish_line_button.pack(side="left", padx=2)
-        self.undo_constraint_button = tk.Button(
-            actions,
-            text="Undo",
-            command=self._undo_constraint,
-            relief="flat",
-            borderwidth=0,
-            padx=8,
-            pady=5,
-            font=("Segoe UI", 8),
-        )
-        self.undo_constraint_button.pack(side="left", padx=2)
-        self.clear_constraints_button = tk.Button(
-            actions,
-            text="Clear",
-            command=self._clear_constraints,
-            relief="flat",
-            borderwidth=0,
-            padx=8,
-            pady=5,
-            font=("Segoe UI", 8),
-        )
-        self.clear_constraints_button.pack(side="left", padx=2)
-        self._authoring_widgets.extend(
-            [
-                self.finish_line_button,
-                self.undo_constraint_button,
-                self.clear_constraints_button,
-            ]
-        )
+        self._authoring_widgets.append(self.finish_line_button)
+        self._build_instruction_controls(authoring)
 
-        parameters = tk.Frame(authoring, background="#203033")
-        self._feature_parameters = parameters
-        parameters.grid(row=1, column=0, columnspan=9, sticky="w", pady=(7, 0))
+        self._feature_parameters = tk.Frame(authoring, background="#203033")
+        self._feature_parameters.grid(row=1, column=0, columnspan=9, sticky="w", pady=(7, 0))
+        parameters = tk.Frame(self._feature_parameters, background="#203033")
+        parameters.pack(anchor="w")
         tk.Label(
             parameters,
             text="Mode",
@@ -559,6 +571,8 @@ class TerrainApp:
             foreground="#a9bab7",
             font=("Segoe UI", 8),
         ).pack(side="left", padx=(3, 12))
+        parameters = tk.Frame(self._feature_parameters, background="#203033")
+        parameters.pack(anchor="w", pady=(5, 0))
         self.width_label = tk.Label(
             parameters,
             text="Influence radius",
@@ -628,7 +642,7 @@ class TerrainApp:
             ("transition_km", "Transition km", 2000),
             ("orientation_deg", "Direction deg", 179),
         )):
-            row, column = divmod(index, 3)
+            row, column = divmod(index, 2)
             frame = tk.Frame(self._region_parameters, background="#203033")
             frame.grid(row=row, column=column + 1, padx=6, pady=3, sticky="w")
             tk.Label(frame, text=label, background="#203033", foreground="#a9bab7",
@@ -648,7 +662,8 @@ class TerrainApp:
                                from_=0, to=12000, increment=10, width=9)
         lake_level.pack(side="left")
         lake_outlet = tk.Checkbutton(
-            self._lake_parameters, text="Outlet at first vertex", variable=self._lake_outlet,
+            self._lake_parameters, text="Outlet enabled (new: first vertex)",
+            variable=self._lake_outlet,
             background="#203033", foreground="#d6e0dd", selectcolor="#142022",
         )
         lake_outlet.pack(side="left", padx=12)
@@ -657,12 +672,14 @@ class TerrainApp:
 
         self.authoring_hint = tk.Label(
             authoring,
-            text="Import land geometry to start drawing.",
+            text="Import land geometry to start drawing.", anchor="w", justify="left",
             background="#203033",
             foreground="#8fa5a1",
             font=("Segoe UI", 8),
         )
-        self.authoring_hint.grid(row=2, column=0, columnspan=9, sticky="w", pady=(6, 0))
+        self.authoring_hint.grid(row=2, column=0, columnspan=9, sticky="ew", pady=(6, 0))
+        authoring.bind("<Configure>", lambda event: self.authoring_hint.configure(
+            wraplength=max(180, event.width - 24)))
 
         content = tk.Frame(parent, background=_PREVIEW)
         content.grid(row=2, column=0, sticky="nsew", padx=(16, 12), pady=(0, 14))
@@ -680,6 +697,7 @@ class TerrainApp:
         )
         self.preview.bind("<Configure>", lambda _event: self._draw_preview())
         self.preview.bind("<ButtonPress-1>", self._on_map_press)
+        self.preview.bind("<Control-Button-1>", self._select_on_map)
         self.preview.bind("<B1-Motion>", self._on_map_drag)
         self.preview.bind("<ButtonRelease-1>", self._on_map_release)
         self.preview.bind("<Motion>", self._on_map_motion)
@@ -708,8 +726,222 @@ class TerrainApp:
             foreground="#9eaaa8",
             font=("Segoe UI", 7, "bold"),
         ).pack(pady=(3, 0))
+        def fit_legend(event: tk.Event[tk.Misc]) -> None:
+            height = max(1, min(34, (event.height - 46) // len(self._legend_swatches)))
+            for swatch in self._legend_swatches:
+                swatch.configure(height=height)
+        content.bind("<Configure>", fit_legend)
         self._set_authoring_enabled(False)
         self._set_authoring_tool("brush")
+
+    @property
+    def _constraints(self) -> tuple[TerrainConstraint, ...]:
+        return self._history.constraints
+
+    def _build_instruction_controls(self, parent: tk.Frame) -> None:
+        row = tk.Frame(parent, background="#203033")
+        row.grid(row=3, column=0, columnspan=9, sticky="ew", pady=(8, 0))
+        row.columnconfigure(0, weight=1)
+        self.instruction_input = ttk.Combobox(row, width=27, state="disabled")
+        self.instruction_input.grid(row=0, column=0, sticky="ew", padx=(0, 6))
+        self.instruction_input.bind("<<ComboboxSelected>>", self._on_instruction_selected)
+        self.apply_instruction_button: tk.Button
+        self.delete_instruction_button: tk.Button
+        self.undo_constraint_button: tk.Button
+        self.redo_constraint_button: tk.Button
+        self.clear_constraints_button: tk.Button
+        for column, (name, label, command) in enumerate((
+            ("apply_instruction_button", "Apply edit", self._apply_instruction),
+            ("delete_instruction_button", "Delete", self._delete_instruction),
+            ("undo_constraint_button", "Undo", self._undo_constraint),
+            ("redo_constraint_button", "Redo", self._redo_constraint),
+            ("clear_constraints_button", "Clear", self._clear_constraints),
+        ), start=1):
+            button = tk.Button(row, text=label, command=command, relief="flat",
+                               background="#2c3e40", foreground="#dce8e3", padx=8, pady=4)
+            button.grid(row=0, column=column, padx=2)
+            setattr(self, name, button)
+            self._authoring_widgets.append(button)
+
+    def _instruction_label(self, index: int, constraint: TerrainConstraint) -> str:
+        if isinstance(constraint, TerrainRegion):
+            description = f"{constraint.settings.character.title()} region"
+        elif isinstance(constraint, TerrainBasin):
+            description = (f"Lake {constraint.water_level_m:,.0f} m"
+                           if constraint.water_level_m is not None else "Dry basin")
+        else:
+            kind = ("Height" if isinstance(constraint, ElevationPoint) else
+                    "Brush" if isinstance(constraint, TerrainBrushStroke)
+                    else constraint.kind.title())
+            description = f"{kind} {constraint.elevation_m:,.0f} m {constraint.elevation_mode}"
+        return f"{index + 1}. {description}"
+
+    def _refresh_instruction_controls(self) -> None:
+        self.instruction_input.configure(
+            values=("New instruction / cancel edit", *(
+                self._instruction_label(index, item) for index, item in enumerate(self._constraints)
+            )), state="readonly" if self._authoring_enabled else "disabled",
+        )
+        index = self._selected_instruction
+        self.instruction_input.current(0 if index is None else index + 1)
+        selected = self._authoring_enabled and index is not None
+        dry_basin = (index is not None and isinstance(self._constraints[index], TerrainBasin)
+                     and self._authoring_tool.get() == "dry_basin")
+        self.apply_instruction_button.configure(
+            state="normal" if selected and not dry_basin else "disabled")
+        self.delete_instruction_button.configure(state="normal" if selected else "disabled")
+        self.redo_constraint_button.configure(
+            state="normal" if self._authoring_enabled and self._history.can_redo
+            and not self._draft_points else "disabled")
+
+    def _on_instruction_selected(self, _event: tk.Event[tk.Misc]) -> None:
+        index = self.instruction_input.current() - 1
+        if index < 0:
+            self._set_authoring_tool(self._authoring_tool.get())
+        else:
+            self._select_instruction(index)
+
+    def _select_instruction(self, index: int) -> None:
+        if not self._authoring_enabled:
+            return
+        self._draft_points.clear()
+        self._active_brush_values = None
+        self._brush_cursor = None
+        self._selected_instruction = index
+        constraint = self._constraints[index]
+        if isinstance(constraint, TerrainRegion):
+            tool = "region"
+            self._region_character.set(constraint.settings.character)
+            for key, value in self._region_values.items():
+                value.set(float(getattr(constraint.settings, key)))
+        elif isinstance(constraint, TerrainBasin):
+            tool = constraint.kind
+            if constraint.water_level_m is not None:
+                self._lake_level.set(constraint.water_level_m)
+            self._lake_outlet.set(constraint.outlet is not None)
+        else:
+            tool = ("height" if isinstance(constraint, ElevationPoint) else
+                    "brush" if isinstance(constraint, TerrainBrushStroke) else constraint.kind)
+            self._tool_modes[tool].set(constraint.elevation_mode.title())
+            self._tool_elevations[tool].set(constraint.elevation_m)
+            self._tool_sizes[tool].set(
+                constraint.influence_radius_km * (2 if tool == "brush" else 1))
+            if isinstance(constraint, TerrainBrushStroke):
+                self._brush_intensity_percent.set(constraint.intensity * 100)
+        self._authoring_tool.set(tool)
+        self._refresh_authoring_controls()
+        self.status_label.configure(
+            text="Change the controls above, then Apply edit and regenerate.")
+        self._draw_preview()
+
+    def _select_on_map(self, event: tk.Event[tk.Misc]) -> str:
+        if not self._authoring_enabled:
+            return "break"
+        point = Point(float(event.x), float(event.y))
+        candidates: list[tuple[float, int]] = []
+        for index, constraint in enumerate(self._constraints):
+            if isinstance(constraint, ElevationPoint):
+                distance = point.distance(Point(self._normalized_to_canvas(constraint.position)))
+            else:
+                points = [self._normalized_to_canvas(p) for p in constraint.points]
+                geometry = (Polygon(points) if isinstance(constraint, (TerrainRegion, TerrainBasin))
+                            else LineString(points) if len(points) > 1 else Point(points[0]))
+                distance = point.distance(geometry)
+            if distance <= 10:
+                candidates.append((distance, -index))
+        if candidates:
+            self._select_instruction(-min(candidates)[1])
+        else:
+            self.status_label.configure(text="Ctrl+click an instruction or choose it in the list.")
+        return "break"
+
+    def _edited_instruction(self) -> TerrainConstraint:
+        index = self._selected_instruction
+        if index is None:
+            raise ValueError("Select an instruction first.")
+        constraint = self._constraints[index]
+        if isinstance(constraint, TerrainRegion):
+            settings = self._read_region_settings()
+            if settings.elevation_m > self._variables["maximum_elevation_m"].get():
+                raise ValueError("Regional base height exceeds the elevation ceiling.")
+            return replace(constraint, settings=settings)
+        if isinstance(constraint, TerrainBasin):
+            if constraint.kind == "dry_basin":
+                return constraint
+            level = float(self._lake_level.get())
+            if level > self._variables["maximum_elevation_m"].get():
+                raise ValueError("Water level exceeds the elevation ceiling.")
+            # Preserve an imported outlet away from the first vertex unless disabled.
+            outlet = ((constraint.outlet or constraint.points[0])
+                      if self._lake_outlet.get() else None)
+            return replace(constraint, water_level_m=level, outlet=outlet)
+        tool = self._authoring_tool.get()
+        elevation = float(self._tool_elevations[tool].get())
+        radius = float(self._tool_sizes[tool].get()) / (2 if tool == "brush" else 1)
+        mode = self._selected_elevation_mode(tool)
+        if isinstance(constraint, TerrainBrushStroke):
+            return replace(constraint, elevation_m=elevation, influence_radius_km=radius,
+                           elevation_mode=mode, intensity=self._brush_intensity_percent.get() / 100)
+        return replace(constraint, elevation_m=elevation, influence_radius_km=radius,
+                       elevation_mode=mode)
+
+    def _has_pending_instruction(self) -> bool:
+        if self._draft_points:
+            return True
+        if self._selected_instruction is None:
+            return False
+        try:
+            return self._edited_instruction() != self._constraints[self._selected_instruction]
+        except (ValueError, tk.TclError):
+            return True
+
+    def _apply_instruction(self) -> None:
+        if not self._authoring_enabled or self._selected_instruction is None:
+            return
+        try:
+            updated = self._edited_instruction()
+        except (ValueError, tk.TclError) as error:
+            messagebox.showerror("Invalid instruction", str(error), parent=self.root)
+            return
+        self._history.replace(self._selected_instruction, updated)
+        self._instructions_changed("Instruction updated. Regenerate to see its effect.")
+
+    def _delete_instruction(self) -> None:
+        if not self._authoring_enabled or self._selected_instruction is None:
+            return
+        self._history.delete(self._selected_instruction)
+        self._selected_instruction = None
+        self._instructions_changed("Instruction deleted. Undo restores it; regenerate to update.")
+
+    def _generation_inputs(self) -> GenerationInputs:
+        if self._coastline is None:
+            raise ValueError("No coastline is loaded.")
+        return GenerationInputs(self._coastline, self._read_settings(), self._constraints)
+
+    def _reference_is_current(self) -> bool:
+        if self._terrain is None or self._generated_inputs is None:
+            return False
+        try:
+            return self._generation_inputs() == self._generated_inputs
+        except (ValueError, tk.TclError):
+            return False
+
+    def _refresh_reference_state(self) -> None:
+        current = self._reference_is_current()
+        if self._terrain is None:
+            text = "No generated reference. Draw instructions, then generate."
+        elif current:
+            text = "Generated map matches the applied inputs. Ctrl+click selects an instruction."
+        else:
+            text = "Previous generation shown as reference. Inputs changed — regenerate to update."
+        self.reference_label.configure(text=text, foreground="#dce8e3" if current else "#f2c14e")
+        self.export_button.configure(
+            state="normal" if current and self._authoring_enabled else "disabled")
+
+    def _on_settings_changed(self, key: str, *_args: str) -> None:
+        self._refresh_reference_state()
+        if key == "object_scale_km":
+            self._draw_preview()
 
     def _selected_render_style(self) -> RenderStyle:
         return _RENDER_STYLE_LABELS.get(self._render_style_label.get(), "cartographic")
@@ -745,10 +977,11 @@ class TerrainApp:
     def _set_authoring_tool(self, tool: str) -> None:
         if tool not in ("brush", "height", "ridge", "valley", "region", "lake", "dry_basin"):
             raise ValueError(f"Unknown authoring tool: {tool}")
-        if self._draft_points and self._authoring_tool.get() != tool:
+        if self._draft_points:
             self._draft_points.clear()
             self._active_brush_values = None
             self.status_label.configure(text="Unfinished structure discarded.")
+        self._selected_instruction = None
         self._authoring_tool.set(tool)
         self._refresh_authoring_controls()
         self._draw_preview()
@@ -765,6 +998,16 @@ class TerrainApp:
         self._draw_brush_cursor()
 
     def _refresh_authoring_controls(self) -> None:
+        self._refresh_tool_controls()
+        if self._selected_instruction is not None:
+            text = ("Dry basin selected. Delete removes its instruction; Undo restores it."
+                    if self._authoring_tool.get() == "dry_basin" else
+                    f"Editing instruction {self._selected_instruction + 1}. "
+                    "Apply edit, then regenerate. Choose New instruction to draw again.")
+            self.authoring_hint.configure(text=text)
+
+    def _refresh_tool_controls(self) -> None:
+        self._refresh_instruction_controls()
         selected = self._authoring_tool.get()
         colours = {
             "brush": _BRUSH_COLOUR,
@@ -795,7 +1038,8 @@ class TerrainApp:
         )
         has_authored_work = bool(self._draft_points or self._constraints)
         self.undo_constraint_button.configure(
-            state="normal" if self._authoring_enabled and has_authored_work else "disabled"
+            state="normal" if (self._authoring_enabled
+                               and (self._draft_points or self._history.can_undo)) else "disabled"
         )
         self.clear_constraints_button.configure(
             state="normal" if self._authoring_enabled and has_authored_work else "disabled"
@@ -818,7 +1062,7 @@ class TerrainApp:
             self._feature_parameters.grid_remove()
             self._region_parameters.grid()
             self.authoring_hint.configure(text=(
-                "Click 3+ corners, then Finish region. Regions affect land only."
+                "Click 3+ corners, then Finish area. Regions affect land only."
                 if self._authoring_enabled else "Import land geometry to start drawing."
             ))
             return
@@ -875,7 +1119,7 @@ class TerrainApp:
             action = (
                 "toward an absolute height"
                 if elevation_mode == "absolute"
-                else "a signed height offset onto the existing terrain"
+                else "a signed height offset for the next generation"
             )
             hint = f"Drag to paint {action}. Wheel: width; Ctrl+wheel: strength."
         elif selected == "height":
@@ -988,6 +1232,9 @@ class TerrainApp:
         return position
 
     def _on_map_press(self, event: tk.Event[tk.Misc]) -> None:
+        if self._selected_instruction is not None:
+            self.status_label.configure(text="Use New instruction or a tool button to draw again.")
+            return
         if self._authoring_tool.get() != "brush":
             self._on_map_click(event)
             return
@@ -1051,7 +1298,7 @@ class TerrainApp:
         if not points:
             self._refresh_authoring_controls()
             return
-        self._constraints.append(
+        self._history.append(
             TerrainBrushStroke(
                 points=points,
                 elevation_m=elevation_m,
@@ -1060,7 +1307,7 @@ class TerrainApp:
                 elevation_mode=elevation_mode,
             )
         )
-        self._invalidate_generated_terrain("Terrain brush stroke added. Generate to apply it.")
+        self._instructions_changed("Terrain brush stroke added. Generate to apply it.")
 
     def _on_map_motion(self, event: tk.Event[tk.Misc]) -> None:
         if self._authoring_tool.get() != "brush" or not self._authoring_enabled:
@@ -1112,7 +1359,7 @@ class TerrainApp:
             if values is None:
                 return
             elevation_m, radius_km, elevation_mode = values
-            self._constraints.append(
+            self._history.append(
                 ElevationPoint(
                     position=position,
                     elevation_m=elevation_m,
@@ -1120,7 +1367,7 @@ class TerrainApp:
                     elevation_mode=elevation_mode,
                 )
             )
-            self._invalidate_generated_terrain("Height point added. Generate to apply it.")
+            self._instructions_changed("Height point added. Generate to apply it.")
         else:
             if self._draft_points:
                 segment = LineString(
@@ -1156,7 +1403,7 @@ class TerrainApp:
         if values is None:
             return
         elevation_m, radius_km, elevation_mode = values
-        self._constraints.append(
+        self._history.append(
             TerrainStructure(
                 kind=tool,
                 points=tuple(self._draft_points),
@@ -1166,7 +1413,7 @@ class TerrainApp:
             )
         )
         self._draft_points.clear()
-        self._invalidate_generated_terrain(f"{tool.capitalize()} added. Generate to apply it.")
+        self._instructions_changed(f"{tool.capitalize()} added. Generate to apply it.")
 
     def _read_region_settings(self) -> LandformSettings:
         character = self._region_character.get()
@@ -1203,9 +1450,9 @@ class TerrainApp:
         except (ValueError, tk.TclError) as error:
             messagebox.showerror("Invalid landform region", str(error), parent=self.root)
             return
-        self._constraints.append(region)
+        self._history.append(region)
         self._draft_points.clear()
-        self._invalidate_generated_terrain("Landform region added. Generate to apply it.")
+        self._instructions_changed("Landform region added. Generate to apply it.")
 
     def _finish_basin(self) -> None:
         tool = self._authoring_tool.get()
@@ -1235,46 +1482,44 @@ class TerrainApp:
         except (ValueError, tk.TclError) as error:
             messagebox.showerror("Invalid basin area", str(error), parent=self.root)
             return
-        self._constraints.append(basin)
+        self._history.append(basin)
         self._draft_points.clear()
-        self._invalidate_generated_terrain("Basin area added. Generate to protect and review it.")
+        self._instructions_changed("Basin area added. Generate to protect and review it.")
 
     def _undo_constraint(self) -> None:
+        if not self._authoring_enabled:
+            return
         if self._draft_points:
             self._draft_points.pop()
-            self.status_label.configure(text="Removed the last unfinished line vertex.")
+            self.status_label.configure(text="Removed the last unfinished vertex.")
             self._refresh_authoring_controls()
             self._draw_preview()
             return
-        if self._constraints:
-            self._constraints.pop()
-            self._invalidate_generated_terrain("Removed the last authored feature.")
+        self._history.undo()
+        self._selected_instruction = None
+        self._instructions_changed("Undid instruction edit.")
+
+    def _redo_constraint(self) -> None:
+        if not self._authoring_enabled or self._draft_points:
+            return
+        self._history.redo()
+        self._selected_instruction = None
+        self._instructions_changed("Redid instruction edit.")
 
     def _clear_constraints(self) -> None:
-        if not self._draft_points and not self._constraints:
-            return
-        if self._constraints and not messagebox.askyesno(
-            "Clear authored topography?",
-            "Remove every terrain brush stroke, height point, ridge, and valley "
-            "landform regions, lakes and dry basins from this coastline?",
-            parent=self.root,
-        ):
+        if not self._authoring_enabled:
             return
         self._draft_points.clear()
         self._active_brush_values = None
-        self._constraints.clear()
-        self._invalidate_generated_terrain("All authored topography cleared.")
+        self._selected_instruction = None
+        self._history.commit(())
+        self._instructions_changed("All instructions cleared. Undo restores them.")
 
-    def _invalidate_generated_terrain(self, status: str) -> None:
-        self._terrain = None
-        self._image = None
-        self._preview_photo = None
-        self.export_button.configure(state="disabled")
+    def _instructions_changed(self, status: str) -> None:
         self.progress.configure(value=0)
         self.status_label.configure(text=status)
-        suffix = "s" if len(self._constraints) != 1 else ""
-        self.preview_meta.configure(text=f"{len(self._constraints)} authored feature{suffix}")
         self._refresh_authoring_controls()
+        self._refresh_reference_state()
         self._draw_preview()
 
     def _refresh_value(self, key: str) -> None:
@@ -1401,10 +1646,10 @@ class TerrainApp:
                 parent=self.root,
             )
             return
-        if self._draft_points:
+        if self._has_pending_instruction():
             messagebox.showinfo(
-                "Finish the current feature",
-                "Finish or undo the current stroke or line before saving.",
+                "Finish the current instruction",
+                "Finish drawing, Apply edit, or cancel the instruction before saving.",
                 parent=self.root,
             )
             return
@@ -1486,7 +1731,9 @@ class TerrainApp:
         if not isinstance(land_geometry, (Polygon, MultiPolygon)):
             raise ValueError("The imported coastlines do not form polygonal land geometry.")
         self._coast_polygon = land_geometry
-        self._constraints.clear()
+        self._history.reset()
+        self._selected_instruction = None
+        self._generated_inputs = None
         self._draft_points.clear()
         self._active_brush_values = None
         self._brush_cursor = None
@@ -1512,6 +1759,7 @@ class TerrainApp:
             )
         )
         self._refresh_authoring_controls()
+        self._refresh_reference_state()
         self._draw_preview()
 
     def _read_settings(self) -> TerrainSettings:
@@ -1586,7 +1834,7 @@ class TerrainApp:
         self._accept_coastline(project.coastline, loaded.coastline_source)
         self._project_path = loaded.path
         self._apply_settings(project.settings)
-        self._constraints[:] = project.constraints
+        self._history.reset(project.constraints)
         self._apply_authoring_state(project.authoring)
         count = len(self._constraints)
         suffix = "s" if count != 1 else ""
@@ -1594,6 +1842,7 @@ class TerrainApp:
             text=f"Opened {loaded.path.name} with {count} authored feature{suffix}."
         )
         self.preview_meta.configure(text=f"{count} authored feature{suffix}")
+        self._refresh_reference_state()
         self._draw_preview()
 
     def _generate(self) -> None:
@@ -1604,8 +1853,13 @@ class TerrainApp:
                 parent=self.root,
             )
             return
+        if self._has_pending_instruction():
+            messagebox.showinfo("Finish the current instruction",
+                                "Finish drawing, Apply edit, or cancel before generating.",
+                                parent=self.root)
+            return
         try:
-            settings = self._read_settings()
+            inputs = self._generation_inputs()
         except (ValueError, tk.TclError) as error:
             messagebox.showerror("Invalid settings", str(error), parent=self.root)
             return
@@ -1620,21 +1874,19 @@ class TerrainApp:
         self.progress.stop()
         self.progress.configure(mode="determinate", value=0)
         self.status_label.configure(text="Starting deterministic generation…")
-        coastline = self._coastline
-        constraints = tuple(self._constraints)
         render_style = self._selected_render_style()
 
         def worker() -> None:
             try:
                 terrain = generate_terrain(
-                    coastline,
-                    settings,
+                    inputs.coastline,
+                    inputs.settings,
                     lambda fraction, message: self._events.put(_ProgressEvent(fraction, message)),
-                    constraints=constraints,
+                    constraints=inputs.constraints,
                 )
                 self._events.put(_ProgressEvent(0.97, "Rendering colour relief"))
                 image = render_height_map(terrain, style=render_style)
-                self._events.put(_ResultEvent(terrain, image))
+                self._events.put(_ResultEvent(inputs, terrain, image))
             except Exception as error:
                 self._events.put(
                     _ErrorEvent(
@@ -1665,12 +1917,11 @@ class TerrainApp:
                     self.open_project_button.configure(state="normal")
                     self.save_project_button.configure(state="normal")
                     self.generate_button.configure(state="normal")
-                    self.export_button.configure(
-                        state="normal" if self._terrain is not None else "disabled"
-                    )
                     self._set_authoring_enabled(True)
+                    self._refresh_reference_state()
                     self.status_label.configure(text=f"Saved project {event.path.name}")
                 elif isinstance(event, _ResultEvent):
+                    self._generated_inputs = event.inputs
                     self._terrain = event.terrain
                     self._image = event.image
                     self.progress.stop()
@@ -1723,9 +1974,9 @@ class TerrainApp:
                         state="normal" if self._coastline_source is not None else "disabled"
                     )
                     self.generate_button.configure(state="normal")
-                    self.export_button.configure(state="normal")
                     self.render_style_input.configure(state="readonly")
                     self._set_authoring_enabled(True)
+                    self._refresh_reference_state()
                     self._draw_preview()
                 else:
                     self.progress.stop()
@@ -1739,9 +1990,6 @@ class TerrainApp:
                     self.generate_button.configure(
                         state="normal" if self._coastline is not None else "disabled"
                     )
-                    self.export_button.configure(
-                        state="normal" if self._terrain is not None else "disabled"
-                    )
                     self.render_style_input.configure(state="readonly")
                     source_name = (
                         self._coastline.source_name
@@ -1749,6 +1997,7 @@ class TerrainApp:
                         else "No land geometry loaded"
                     )
                     self.source_label.configure(text=source_name)
+                    self._refresh_reference_state()
                     self.status_label.configure(text=event.status)
                     messagebox.showerror(event.title, str(event.error), parent=self.root)
         except queue.Empty:
@@ -1993,8 +2242,15 @@ class TerrainApp:
                 left + 8, top + 8, anchor="nw", fill="white",
                 text="\n".join(legends), width=max(1, display_width - 16),
             )
-        for constraint in self._constraints:
+        for index, constraint in enumerate(self._constraints):
             self._draw_constraint(constraint)
+            if index == self._selected_instruction:
+                points = ((constraint.position,) if isinstance(constraint, ElevationPoint)
+                          else constraint.points)
+                for point in points:
+                    x, y = self._normalized_to_canvas(point)
+                    self.preview.create_rectangle(x - 5, y - 5, x + 5, y + 5,
+                                                  outline="white", width=2)
         self._draw_draft_structure()
         self._draw_brush_cursor()
 
@@ -2321,6 +2577,7 @@ class TerrainApp:
             self._authoring_tool.get() != "brush"
             or not self._authoring_enabled
             or self._brush_cursor is None
+            or self._selected_instruction is not None
         ):
             return
         x, y = self._normalized_to_canvas(self._brush_cursor)
@@ -2357,7 +2614,7 @@ class TerrainApp:
         )
 
     def _export(self) -> None:
-        if self._terrain is None or self._image is None:
+        if self._terrain is None or self._image is None or not self._reference_is_current():
             return
         stem = Path(self._terrain.source_name).stem
         selected = filedialog.asksaveasfilename(

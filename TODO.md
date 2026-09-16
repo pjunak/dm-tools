@@ -24,6 +24,8 @@ detail, dissolved multipart SVG land geometry, absolute and relative
 brush/point/line constraints, per-tool settings, project save/open, colour
 preview and PNG export. Numeric builds, regional recipes, authored basin
 retention and sampled outlet transfer are also implemented as recorded below.
+Input editing now retains the last generated reference, supports selection and
+property changes, and provides undo/redo for committed instructions.
 The [research status](docs/research/status.md) separates completed slices from
 partially addressed research goals; unchecked broad items may contain completed
 substeps.
@@ -301,8 +303,9 @@ substeps.
   levels and enclosed-water semantics. Authored lake/dry-basin footprints are
   implemented; an enclosed SVG gap still has no inferred lake level or intent.
 - [ ] **P2 — Edit basin vertices and outlets after drawing.** Add selection,
-  vertex movement and outlet relocation; current area authoring uses undo/redraw
-  and the first vertex as an optional outlet.
+  vertex movement and outlet relocation for pre-generation instructions. Selection
+  and level/outlet-enable edits are implemented; newly enabled outlets use the
+  first vertex while existing imported outlets retain their location.
 - [ ] **P2 — Refine retention boundaries and shoreline products.** Measure
   slopes where automatic incision resumes outside protected areas; soften the
   exterior transition if needed while preserving zero cuts inside. Derive
@@ -315,17 +318,8 @@ substeps.
   versioned authored inputs with their own content hashes and should expose the
   effective values used by a build.
 
-### Scale hierarchy and portability
+### Project portability
 
-- [ ] **P0 — Define regional refinement requests in world coordinates.** A
-  local build must name its parent build, bounds, requested sample spacing, and
-  buffered halo.
-- [ ] **P0 — Define the parent/child consistency test.** Downsampling a refined
-  region must reproduce the parent within a documented numeric tolerance while
-  the added frequency bands contribute only new detail.
-- [ ] **P1 — Build only a selected region at higher resolution.** Avoid
-  allocating a planet- or continent-sized raster when the user needs one local
-  map.
 - [ ] **P2 — Evaluate a portable project bundle.** A bundle could package the
   JSON and authored source assets while retaining readable hashes; plain JSON
   plus relative files remains the default until portability justifies it.
@@ -336,12 +330,22 @@ substeps.
   licenses and distribution implications of every optional scientific engine
   included in a hosted or downloadable build.
 
+### Potential separate feature
+
+Completed-map sculpting or local post-generation refinement could belong in a
+separate module or program. This is a possibility only, with no implementation
+plan or dependency on the active input editor.
+
 ### World climate, ecology, and environmental zones (deferred)
 
 These are backlog entries only. Do not begin implementation until the durable
-terrain-output and regional-refinement contracts needed by the
+terrain-output and world-coordinate contracts needed by the
 [current strategy](docs/strategy/README.md) are proven.
 
+- [ ] **P2 — Author climate-region guidance before generation.** Once climate
+  semantics exist, allow areas such as an intended desert to be drawn over the
+  previous map. Regenerate derived climate/biome outputs from these inputs; do
+  not expose a no-op desert tool before a backend consumes it.
 - [ ] **Research — Define the global climate input and output contract.** Inputs
   should include the fixed world projection and latitude, ocean/land mask,
   accepted DEM, orbital and rotational assumptions, circulation or prevailing
@@ -363,10 +367,10 @@ terrain-output and regional-refinement contracts needed by the
   tundra as a biome, and fields as cultural land use. Include additional
   grassland, forest, desert, marsh, fen, floodplain, alpine, and coastal types
   only within the layer whose semantics fit.
-- [ ] **P2 — Preserve global-to-continent and refinement consistency.** Climate
+- [ ] **P2 — Preserve global-to-continent consistency.** Climate
   and ecology builds must share global boundary conditions while allowing
-  continent and local resolution, authored corrections, rebuildable exports,
-  and parent-build provenance.
+  continent and local resolution, authored pre-generation guidance, rebuildable
+  exports, and source-build provenance.
 
 ## Algorithm and result improvements
 
@@ -380,9 +384,9 @@ execution order.
 
 - [ ] **P0 — Create a quantitative terrain-quality fixture suite.** Include a
   range with two peaks and a pass, a branching mountain system, a high-altitude
-  valley, a broad lowland river valley, an escarpment, and a parent/child
-  refinement window. Record expected invariants rather than subjective image
-  snapshots alone. The two-peak/one-pass ridge, connected-structure junction,
+  valley, a broad lowland river valley, an escarpment, and multiple output
+  resolutions of the same inputs. Record expected invariants rather than
+  subjective image snapshots alone. The two-peak/one-pass ridge, connected-structure junction,
   and authored branch-root fixtures are complete; full branch topology and
   statistics and the other landform fixtures remain.
 - [ ] **Research — Compare surface solvers for the low-frequency base.** Test
@@ -441,8 +445,8 @@ execution order.
 - [ ] **Research — Evaluate diffusion-based feature-curve terrain fitting.**
   The approach in the feature-based terrain research may provide smoother
   networks and explicit slope control, but must be tested for determinism,
-  coastline boundaries, exact anchors, and regional refinement. Start with a
-  regular-grid sparse solve and postpone multigrid until measurements justify
+  coastline boundaries, exact anchors, and output-resolution consistency. Start
+  with a regular-grid sparse solve and postpone multigrid until measurements justify
   the added implementation complexity.
 
 ### Valleys, rivers, and hydrology
@@ -485,20 +489,21 @@ execution order.
   Significant fill components now retain extent labels and representative
   exit/spill/terminal routes, plus raster exterior/enclosed-water boundary context. Authored lake/dry classification, finer outlet/link profiles and
   conservative area transfer are implemented. A full nested depression
-  hierarchy, physical river validation and local refinement diagnostics remain.
+  hierarchy and physical river validation remain.
 - [ ] **Research — Compare a mature hydrology adapter with selected in-project
   primitives.** Candidates already considered include ANUDEM-style
   hydrological conditioning and established GIS flow/depression tooling. Keep
   optional engines behind adapters and measure Python 3.14/platform support,
-  determinism, license implications, and refinement behavior. The dated source audit shortlisted Landlab for a Python experiment, but no
-  local Landlab runtime comparison has run. GRASS and Whitebox remain
+  determinism, license implications, and resolution sensitivity. The dated source
+  audit shortlisted Landlab for a Python experiment, but no local Landlab runtime
+  comparison has run. GRASS and Whitebox remain
   external comparison tools with explicit license/version boundaries.
 
 ### Landscape processes and validation
 
 - [ ] **Research — Prototype deterministic hydraulic or stream-power erosion.**
-  Start with a small post-process that respects fixed coastline and elevation
-  anchors; reject it if it merely adds noisy gullies or makes results
+  Start with an optional generation stage that respects fixed coastline and
+  elevation anchors; reject it if it merely adds noisy gullies or makes results
   resolution-dependent. Prefer stream-power incision plus explicit flow
   routing over a visual particle or droplet erosion filter. The first bounded
   area-and-slope incision proxy is implemented for automatic broad valleys;
@@ -531,9 +536,6 @@ execution order.
   original seed mode, policy selector, old-save loaders, four superseded
   schemas, duplicate example and dual-version tests. Only current project/build
   formats are supported. Keep obsolete code in Git history, not active support paths.
-- [ ] **P1 — Generate refinement halos and crop final tiles.** Evaluate all
-  neighbourhood-dependent solvers and erosion on buffered bounds to avoid
-  seams, then verify overlap and downsample consistency numerically.
 - [ ] **P0 — Profile memory and runtime by stage.** Establish repeatable draft,
   regional and maximum-resolution benchmarks with simple and complex coasts,
   authored constraints and multiple seeds. Separate generation, rendering,
@@ -552,7 +554,7 @@ execution order.
   end-to-end cost estimates.
   The [guide-bounds comparison](docs/research/2026-09-13-water-guide-bounds.md)
   adds larger lake/constraint scenes and separates forecast planning from
-  generation and evidence serialization. Export timing, regional-refinement/4096
+  generation and evidence serialization. Export timing, 4096-output
   cases, larger constraint mixes and agreed latency/memory budgets remain.
 - [ ] **P1 — Optimize measured boundary-distance cost.** Prototype indexed
   coast-segment distance queries on complex coasts before a native rewrite;
@@ -570,7 +572,7 @@ execution order.
 
 ### Realism research register — 2026-09-04
 
-These additions extend the existing region, hydrology, refinement, and
+These additions extend the existing region, hydrology, and
 diagnostic items. They are possible improvements, not a commitment to implement
 every process. `R01`–`R33` are stable references into the
 [landform-diversity research](docs/research/2026-09-04-terrain-realism-and-landform-diversity.md),
@@ -602,13 +604,13 @@ Priorities remain conditional on the current strategy's prerequisites.
   remain unfinished.
 - [ ] **Research — R03: Define point samples versus cell averages.** Choose
   raster registration, integration/resampling, and anti-aliasing policy. Test
-  coordinate round trips and parent restriction separately from existing
+  coordinate round trips and cell integration separately from existing
   bit-identical shared-point tests; do not silently weaken those tests.
-  For endpoint-node grids test `2*(N-1)+1` refinement, not doubled node counts;
+  For endpoint-node grids test `2*(N-1)+1` sampling, not doubled node counts;
   shared-node equality does not imply equal coarse-cell averages.
-  Endpoint registration, interval-based grid refinement, axis-specific spacing
+  Endpoint registration, interval-based grid subdivision, axis-specific spacing
   and current stage shape rounding now have a shared domain implementation and
-  numerical tests. Cell averages, resampling and parent restriction remain open.
+  numerical tests. Cell averages and resampling remain open.
 - [x] **P0 — R04: Route on currently authored macro geography.** Brush, ridge,
   point and prepared valley constraints now participate in canonical routing.
   Relative valley profiles use a stable pre-incision reference, with one
@@ -675,12 +677,6 @@ Priorities remain conditional on the current strategy's prerequisites.
   the 2024 analytical stream-power method as a bounded candidate for fast
   terrain-age control. Test uplift/base-level assumptions, convergence,
   authored anchors and runtime against the current incision baseline.
-- [ ] **Research — R15: Evaluate multi-scale erosion amplification.** Compare
-  the MIT 2024 reference implementation with current residual detail on one
-  refined mountain/valley window. Preserve parent restrictions, inherited
-  upstream inflow and boundary gradients; include deposition and seam checks.
-  Verify actual OpenGL/GLSL requirements, numeric export normalization,
-  finite shader outputs and fixed-step operation before judging its images.
 - [ ] **Research — R16: Prototype bedrock plus mobile sediment.** Start with a
   Landlab SPACE comparison on a channel opening onto a plain. Track erosion,
   storage, deposition and export; verify nonnegative cover and bounded balance
@@ -748,7 +744,7 @@ Priorities remain conditional on the current strategy's prerequisites.
 - [ ] **Research — R29: Evaluate learned terrain as proposals only.** Compare
   MESA and PlanetDiffusion for regional inspiration or global-context research.
   Audit code/weights/data separately, pin the environment and sample settings,
-  preserve the custom planet scale, and validate height/drainage/refinement
+  preserve the custom planet scale, and validate height/drainage/scale
   after conditioning. Do not replace the local deterministic authoring core.
 - [ ] **Research — R30: Define a bounded external-tool comparison adapter.**
   Assess Houdini, Gaea, World Machine, World Creator and HighMap only where
@@ -760,9 +756,9 @@ Priorities remain conditional on the current strategy's prerequisites.
   bottleneck. Record hardware, drivers, precision and repeat-run variance;
   retain an inspectable CPU reference and distinguish numeric tolerances from
   bitwise reproducibility.
-- [ ] **P0 — R32: Audit constraint, process and refinement corrections together.**
+- [ ] **P0 — R32: Audit constraint and generation-process corrections together.**
   Extend the measurement harness with per-stage deltas and material accounting.
-  Recheck drainage after hard-height restoration or parent restriction, and
+  Recheck drainage after hard-height restoration or generation stages, and
   report incompatible requirements. Separate intentional basins from numeric
   sinks and canonical-grid checks from exported-surface checks.
 - [ ] **Research — R33: Weight runoff before assigning river size.** Define an
@@ -777,7 +773,7 @@ Priorities remain conditional on the current strategy's prerequisites.
   fixed versioned band budgets with the current normalized sum. A local default
   2-to-6-band probe reduces existing band coefficients by 28.26%; this is a
   setting-change effect, not broken shared-coordinate determinism. Measure
-  coarse power and parent restriction after nonlinear mapping and processes;
+  coarse power and cell averages after nonlinear mapping and generation stages;
   version deliberate algorithm changes and update current presets; do not
   preserve obsolete presets or output solely for compatibility.
 - [ ] **Research — R35: Constrain regional transition gradients.** Match
@@ -842,7 +838,7 @@ Priorities remain conditional on the current strategy's prerequisites.
   avoiding unnecessary off-land samples against the current GEOS calls.
   Key caches by geometry, coordinates and algorithm identity. Any approximate
   distance field needs an explicit error budget, coastline/constraint checks,
-  and refinement tests; never simplify authored geometry silently.
+  and shared-coordinate tests; never simplify authored geometry silently.
   The first implementation skips ocean samples in the delivered field and
   diagnostic sampling while preserving full canonical routing grids. Exact
   indexed segment queries were slower on the public coastline in a small probe;
@@ -865,14 +861,24 @@ Priorities remain conditional on the current strategy's prerequisites.
 
 ## UI / UX improvements
 
+Current priority: advance pre-generation input editing before generator research.
+[ADR-0047](docs/adr/0047-edit-generation-inputs-only.md) defines the product boundary.
+
 ### Editing and navigation
 
-- [ ] **P0 — Add selection and a property inspector.** Click a brush stroke,
-  point, ridge, or valley to inspect and edit its mode, elevation, size, and
-  strength without deleting and redrawing it.
-- [ ] **P0 — Add command-based undo and redo.** Existing Undo removes draft
-  vertices and committed features in reverse order. Add redo and history for
-  deletion, movement, property edits, project loading and clear-all.
+- [x] **P0 — Keep generated terrain as a read-only authoring background.** Input
+  edits retain the previous map and its review overlays. Exact worker snapshots
+  control current/stale status and PNG export; regeneration uses authored inputs
+  only. No brush, area tool or property edit writes into generated heights.
+
+- [x] **P0 — Select and edit generation instructions.** Choose any instruction
+  from the list or Ctrl+click it on the map. Edit properties with the existing
+  controls, Apply, then regenerate. Regions and lake levels/outlet enablement are
+  included; selection highlights geometry without moving it.
+- [x] **P0 — Add instruction undo and redo.** Immutable input history restores
+  additions, property edits, deletion and clear-all. Draft vertices still use
+  backstep Undo; opening a project/coastline resets history. Generator settings,
+  draft redo and future vertex movement are outside this completed slice.
 - [ ] **P0 — Add pan and zoom.** Keep wheel-based brush sizing predictable by
   assigning zoom to a modifier or dedicated navigation mode; show current map
   scale and cursor coordinates.
@@ -882,12 +888,9 @@ Priorities remain conditional on the current strategy's prerequisites.
 - [ ] **P1 — Add explicit peak and pass handles along ridge profiles.** Show
   their along-line order, elevation mode, influence length, and saddle or peak
   role.
-- [ ] **P1 — Add a constraints/layers panel.** List, name, reorder where order is
-  meaningful, hide/show, lock, duplicate, and delete authored objects; keep
-  generated overlays visually distinct.
-- [ ] **P1 — Add a regional-refinement selection tool.** Draw or enter bounds,
-  choose target sample spacing, show the halo, and preview the parent pixels
-  that must remain consistent.
+- [ ] **P1 — Extend the instruction list into a layers panel.** Selection and
+  deletion are implemented. Add names, reorder where order is meaningful,
+  hide/show, lock and duplication; keep generated overlays visually distinct.
 
 ### Feedback and terrain inspection
 
@@ -957,7 +960,8 @@ Priorities remain conditional on the current strategy's prerequisites.
   and optional structural/topology tools to R40–R44 and existing experiments.
 - [Terrain prototype contracts — 2026-09-04](docs/research/2026-09-04-terrain-prototype-contracts.md)
   records measured noise/grid effects, external source audits, R34–R39 and
-  three bounded mountain-detail, sediment-valley and refinement experiments.
+  historical prototype proposals. The current strategy and ADR-0047 determine
+  which proposals remain in product scope.
 - [Terrain realism and landform diversity — 2026-09-04](docs/research/2026-09-04-terrain-realism-and-landform-diversity.md)
   connects R01–R33 to code limitations, scientific papers, tool/runtime
   boundaries, real-data comparisons and ordered prototype gates.

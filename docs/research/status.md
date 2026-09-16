@@ -1,20 +1,22 @@
 # Current terrain research status
 
 Reconciled on 2026-09-13 against code, tests, schemas and the installed Windows
-Python environment. This is a status map; [TODO](../../TODO.md) owns the complete
-R01-R47 register and the [strategy](../strategy/README.md) owns execution order.
+Python environment. This is a status map; [TODO](../../TODO.md) owns the active
+research register and the [strategy](../strategy/README.md) owns execution order.
+Research IDs remain stable in dated reports when proposals leave the active scope.
 Dated reports preserve measurements at their recorded revision, not timeless
 performance claims. A source audit is not a successfully run engine comparison.
 
-The noise-profile research slice was updated on 2026-09-16; the
+The noise-profile research slice and input-editor scope were updated on 2026-09-16; the
 external-engine inventory below retains the 2026-09-13 audit date.
 
 ## Implemented baseline
 
 | Area | Implemented behavior | Remaining boundary |
 |---|---|---|
+| Input editor | Generated reference retained with input freshness, selection/property edits, delete and instruction undo/redo | Pan/zoom, vertex movement, unsaved-change safeguards, climate-region inputs |
 | Local numeric builds | Saved-project CLI, Float32 NPY/GeoTIFF, review NPZ, previews, diagnostics and completion hashes | World placement, vector products, external desktop GIS acceptance |
-| Coordinates/seeds (R01-R03) | Source/local round trips, endpoint grids, actual spacing metadata and portable named seeds | Planetary CRS, configurable process spacing, parent averages/refinement |
+| Coordinates/seeds (R01-R03) | Source/local round trips, endpoint grids, actual spacing metadata and portable named seeds | Planetary CRS, configurable process spacing, cell-average/resampling policy |
 | Authored macro routing (R04-R05) | Authored terrain shapes canonical planning; D8/MFD topology and finished-field conflicts are exported | Filled routes are not validated rivers; unresolved uphill channels remain |
 | Regional landforms | Plain/hill/plateau/mountain recipes, orientation, transitions and regional cut limits | Distribution targets, transition-gradient validation, related geological regions |
 | Structural authoring | Absolute/relative point-anchored profiles, directed valley floors and compatible junctions | Direct per-vertex controls, explicit passes, asymmetric sides and generated branching |
@@ -33,7 +35,7 @@ R04 and R05 are complete as bounded routing/review slices. Other unchecked R IDs
 may have partial foundations; their broader experiment is not complete merely
 because related controls or exports exist. In particular, the four recipes do
 not close regional distribution/geology research, and shared-point equality does
-not prove parent-cell averaging. R07 remains open: dry-basin retention does not
+not prove cell-average equivalence. R07 remains open: dry-basin retention does not
 enable negative land heights or bathymetry.
 
 ## Research that has not been adopted
@@ -67,8 +69,11 @@ terrain composition and its water decisions remain open.
 Local RBF/screened-Poisson replacement, time-stepped erosion, bedrock/sediment
 transport, coupled ridge/drainage generation, specialized glacial/wind/volcanic
 families, Earth-analogue synthesis and learned proposals remain candidates.
-Global climate/ecology and regional refinement still need their input, scale and
-validation contracts. The complete alternatives and gates remain in TODO.
+Global climate/ecology still needs its input, scale and validation contracts.
+The active product is an input editor followed by regeneration; earlier selected-
+region post-build proposals are outside that scope (see
+[ADR-0047](../adr/0047-edit-generation-inputs-only.md)). The complete alternatives
+and gates remain in TODO.
 
 SciPy, Landlab and Numba are not installed in the environment checked for this
 audit. GRASS, Whitebox, SPACE, HighMap, GPU transport, geological engines and

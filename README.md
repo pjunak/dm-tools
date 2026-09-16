@@ -13,6 +13,8 @@ interface should call the same engine rather than replacing it.
 The desktop workbench imports and dissolves closed SVG land shapes; authors
 absolute/relative brush, point, ridge and valley constraints; draws plain, hill,
 plateau and mountain regions; and saves those inputs as `.dmterrain.json`.
+The editor keeps the last result as a placement reference, supports instruction
+selection/property edits and undo/redo, and marks changed inputs for regeneration.
 Authored lakes and dry basins retain ground and captured contributing area.
 Reviewed lake outlets transfer eligible area downstream, with visible shoreline,
 wet-link and dry-path evidence. Water levels are imposed previews, not simulated
@@ -21,8 +23,7 @@ lake equilibria.
 Generation produces a Float32 ground DEM and separate derived water and drainage
 review products. The workbench exports PNG. Headless builds also write NPY/NPZ,
 local-metric GeoTIFF, both relief styles, diagnostics and a completion manifest.
-World placement, validated river vectors and regional refinement remain future
-work. See the [current research status](docs/research/status.md).
+World placement and validated river vectors remain future work. See the [current research status](docs/research/status.md).
 
 ## Requirements
 
@@ -128,8 +129,9 @@ changing authored projects or introducing machine-dependent test thresholds.
 - Reproduction requires matching inputs, algorithms, runtime and named seeds.
 - User-authored geographic constraints are never silently mutated.
 - Numeric terrain data is authoritative; rendered maps are derived.
-- Future local refinement must preserve its parent; shared-point equality is
-  implemented, while parent averaging and regional build requests remain open.
+- Edit generation inputs over a read-only generated reference, then regenerate.
+  Completed DEMs are never sculpted or patched in the editor.
+- Shared-coordinate values remain consistent across output grid sizes.
 - Scientific language remains honest about what the model does and does not
   prove.
 

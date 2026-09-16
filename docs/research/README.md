@@ -103,3 +103,8 @@ in the current status or a new dated report.
 - [Cartographic relief style — 2026-09-03](2026-09-03-cartographic-relief-style.md)
   decomposes the preferred illustrated relief look and separates it from the
   ordered scientific inspection view.
+
+Scope note: dated proposals preserve the questions studied at their original date.
+[ADR-0047](../adr/0047-edit-generation-inputs-only.md) and the current strategy take
+precedence for the input-only editor; historical post-build editing proposals
+are not active work. Adaptive numerical sampling experiments remain applicable.

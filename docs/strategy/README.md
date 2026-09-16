@@ -51,6 +51,9 @@ authored geography + versioned settings + master seed
 ```
 
 The authored inputs and generated DEM remain authoritative for terrain.
+The editor changes these authored inputs and uses the last map as a read-only
+reference. Regeneration applies changes; no completed-map modification is in the
+active product scope. Numerical adaptive sampling remains generator research.
 Climate, ecological classifications, contours, drainage, and presentation
 layers are derived products that can be rebuilt and inspected independently.
 
@@ -80,7 +83,12 @@ reject distant candidates before geometry queries; the
 16/64-point workloads and broad overlap. These are spatial search bounds, not
 bounds on unseen terrain heights.
 
-1. Establish usable bounds for residual blended/grazing extrema and measure
+1. Advance the input editor before returning to generator research. Retained
+   generation references, selection/property edits, deletion and instruction
+   undo/redo are implemented. Next add pan/zoom for accurate placement, vertex
+   editing, and unsaved-change/Save safeguards. All edits specify a subsequent
+   generation; [ADR-0047](../adr/0047-edit-generation-inputs-only.md) owns the boundary.
+2. Establish usable bounds for residual blended/grazing extrema and measure
    project-scale sampling cost. The
    [adaptive experiment](../research/2026-09-13-adaptive-water-profile-refinement.md)
    shows why a small midpoint residual cannot certify an unseen interval. Keep
@@ -101,12 +109,11 @@ bounds on unseen terrain heights.
    Retain explicit unresolved results for complete-budget exhaustion. Define
    controlling-sill/storage assumptions before introducing explicit lake chains
    with compatible levels and acyclic flow.
-2. Compare retention, constrained breach and reroute proposals using full paths,
+3. Compare retention, constrained breach and reroute proposals using full paths,
    cut depth/length and preserved anchors, then expose reviewable river networks.
-3. Extend point-anchored ridge/valley profiles with direct per-vertex controls,
+4. Extend point-anchored ridge/valley profiles with direct per-vertex controls,
    explicit passes and asymmetric sides.
-4. Add regional drainage-density/runoff controls, then selected-region refinement
-   with explicit parent and halo contracts.
+5. Add regional drainage-density/runoff controls as authored generation inputs.
 
 R04/R05 provide the first drainage correctness slice and review products;
 [ADR-0029](../adr/0029-route-drainage-over-authored-terrain.md) records its limits.
@@ -200,17 +207,10 @@ checks when declaring planetary placement.
 - Compare the in-project routing against Landlab first and GRASS GIS as an
   external reference. Keep Whitebox behind a separately audited optional
   boundary because its product family has mixed licensing.
-- Treat landscape evolution as an optional, deterministic post-process only
-  after hydrology and constraint preservation have quantitative tests.
+- Treat landscape evolution as an optional deterministic stage configured before
+  generation, after hydrology and constraint preservation have quantitative tests.
 
-### 5. Prove regional refinement
-
-- Define parent-build identity, world-coordinate bounds, target spacing, halo,
-  crop, and numeric downsample tolerance.
-- Keep GeoTIFF as the first durable format. Evaluate chunked Zarr storage only
-  after profiling demonstrates a real partial-I/O or large-array need.
-
-### 6. Prototype climate as a separate global-context system
+### 5. Prototype climate as a separate global-context system
 
 Do not implement climate continent by continent without shared global context.
 The first deterministic prototype should consume the fixed world projection,
@@ -230,7 +230,7 @@ water-balance relation are useful scientific components. Climlab and xclim are
 reference or comparison libraries; ExoPlaSim is an external plausibility
 experiment, not an interactive production dependency.
 
-### 7. Derive classifications without collapsing their meanings
+### 6. Derive classifications without collapsing their meanings
 
 Named climate zones should be versioned classification views over continuous
 fields. A familiar Köppen–Geiger-like view and a Holdridge-like ecological
@@ -275,8 +275,8 @@ The [landform-diversity research](../research/2026-09-04-terrain-realism-and-lan
 adds the R01–R33 candidate register in the roadmap without promoting research
 engines to dependencies. The first regional recipes and authored-macro routing are implemented.
 Remaining comparisons concern regional transition gradients, complete final-field
-drainage, sediment-aware valleys and multiscale refinement. Measure final-surface drainage after
-constraint restoration and parent restriction. The 2026 stochastic-transport
+drainage and sediment-aware valleys. Measure final-surface drainage after
+constraint restoration. The 2026 stochastic-transport
 paper merits an isolated comparison; retain the existing reproducibility and
 constraint gates rather than rejecting particle methods as a whole.
 
@@ -286,9 +286,9 @@ regions. Measure spectral-amplitude changes and regional transition gradients
 before judging oriented detail; use separate recipes for plateau tops and
 alluvial floors. Compare SPACE with a single-receiver reference and a sediment
 ledger. Establish numeric exchange, fixed iteration counts and grid registration
-before evaluating external multiscale engines. Shared-node equality and parent
-cell-average consistency need separate tests. Meanderpy and pyDeltaRCM remain
-focused channel/delta comparisons after their prerequisites, not dependencies.
+before evaluating external generation stages. Shared-node equality and
+cell-average consistency are separate numerical properties. Meanderpy and
+pyDeltaRCM remain focused channel/delta comparisons after their prerequisites, not dependencies.
 
 The [geological-composition follow-up](../research/2026-09-05-geological-structure-and-terrain-composition.md)
 adds R40–R44 within those experiments. Compare related regional recipes and a

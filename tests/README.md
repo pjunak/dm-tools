@@ -8,6 +8,8 @@ Current coverage includes:
 
 - strict current project/schema validation, SVG hashes, atomic saves, per-tool
   settings and display-free Tcl control behavior;
+- instruction history plus real Tk selection/property editing, immutable generated
+  references, settings/worker freshness and regeneration from changed inputs;
 - multipart coast dissolution, islands/holes, cross-water rejection, local-frame
   round trips, endpoint grids and portable named stage seeds;
 - absolute/relative anchors, brush strength, shape-preserving point-anchored
@@ -23,13 +25,13 @@ Current coverage includes:
 
 Sampling tests compare the selective evaluator with a dense reference and check
 exact shared local-metric nodes across nested output grids, chunk boundaries,
-regions and authored water. These are point-sample guarantees. Parent cell-average
-restriction, selected-region generation and refinement halos are not implemented
-or proven by those tests.
+regions and authored water. These are point-sample guarantees, not cell-average
+equivalence. No completed-map editing workflow is supported.
 
 Prefer numeric invariants over large binary golden files. Full visible desktop
 flows and external desktop GIS acceptance require separate inspection; Tcl tests
-alone do not establish those workflows.
+alone do not establish those workflows. `test_terrain_ui.py` uses an actual Tk
+root and skips where no display is available; it does not replace visual inspection.
 
 The [benchmark harness](../benchmarks/README.md) measures fresh-process stage
 time, native peak memory and numerical identities separately from correctness

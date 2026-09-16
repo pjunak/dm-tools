@@ -6,8 +6,8 @@ here; they are not automatically discovered from this sibling directory.
 
 ## Product contract
 
-The terrain tool compiles authored constraints into a deterministic hierarchy
-of elevation products. It does not invent or silently change canonical
+The terrain tool compiles authored constraints into a deterministic elevation
+products. It does not invent or silently change canonical
 geography. A run may offer alternatives, but adopting one remains a user
 decision.
 
@@ -37,8 +37,10 @@ dictionaries or global settings.
   surface for a build.
 - Contours, hillshade, colour relief, drainage, catchments, and meshes are
   derived outputs and must identify their source DEM.
-- Local refinements must preserve their parent level when downsampled within a
-  documented tolerance. Generate buffered halos and crop them to avoid seams.
+- Editing changes authored generation inputs only. A generated map may remain
+  visible as a read-only placement reference, with explicit stale/current status.
+  Regenerate from inputs to apply changes; never patch a completed DEM.
+- Keep numerical sampling and shared-coordinate checks separate from user editing.
 
 ## Stage rules
 
@@ -54,7 +56,7 @@ dictionaries or global settings.
 
 - Test hard constraints numerically, not only through image snapshots.
 - Include invariants for finite values, land/sea masks, units, deterministic
-  hashes, drainage connectivity where promised, and refinement boundaries.
+  hashes, drainage connectivity where promised, and shared-coordinate agreement.
 - Use small synthetic fixtures with known intent. Large private world maps are
   not test data.
 - Document changes to schemas, seed derivation, algorithms and numeric

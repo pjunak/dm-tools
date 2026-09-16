@@ -58,7 +58,8 @@ separate TTRPG `addon-dm-tools` package has its own host installation lifecycle.
 - Do not commit generated terrain builds. Small purpose-built fixtures are
   allowed under `tests/fixtures/` when their provenance is documented.
 - Keep user-authored constraints authoritative. Generated output must never
-  silently overwrite an input project.
+  silently overwrite an input project. The editor changes generation inputs;
+  completed maps are read-only references. Changes take effect through a new build.
 - Record architectural decisions under `docs/adr/`; supersede decisions rather
   than rewriting their history.
 
@@ -121,7 +122,7 @@ sharing one mutable random-number generator.
 - Distinguish hard constraints, soft guidance, generated hypotheses, and
   derived display layers.
 - Validate coastline elevation, authored height constraints, finite values,
-  drainage behavior, refinement seams, and parent/child level consistency.
+  drainage behavior, and shared-coordinate consistency across output grids.
 - Describe generated terrain as plausible or process-informed unless the model
   and evidence support a stronger scientific claim.
 

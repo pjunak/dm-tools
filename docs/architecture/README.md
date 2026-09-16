@@ -60,7 +60,7 @@ input/runtime verification; the CLI labels internal demand as conditional.
 
 The next durable-build work adds world georeferencing,
 derived GIS products, explicit hard/soft/inequality projection after optional
-processes, and regional-refinement validation. Climate and ecological products
+generation stages. Climate and ecological products
 are a later derived system that consumes accepted terrain and global world
 context rather than becoming an implicit terrain stage.
 
@@ -111,7 +111,6 @@ layer or path boundaries.
   (lake levels, retention, outlet checks and conservative area transfer are implemented)
 - River/catchment vector products and external hydrology validation
   (numeric routing, footprint collection and basin review archives are implemented)
-- Multiresolution storage and refinement strategy
 - Global climate-field and ecological-classification contracts
 - Web framework, queue, storage, and frontend
 - Public project license
@@ -119,3 +118,14 @@ layer or path boundaries.
 These belong in ADRs when enough evidence exists to make the decision. The
 [current development strategy](../strategy/README.md) gives their recommended
 dependency order; the roadmap remains grouped by product area.
+
+## Input editor and generated reference
+
+The workbench edits immutable domain constraints through a session-local
+`InstructionHistory`. Selection changes the controls; Apply replaces one authored
+instruction, and undo/redo restores input tuples. Opening a project resets history.
+A `GenerationInputs` snapshot accompanies each worker result. The UI compares it
+with current coastline, settings and constraints before treating the result as
+current or enabling PNG export. Retained images and review products belong to the
+last successful build and never feed back into generation as editable surfaces.
+See [ADR-0047](../adr/0047-edit-generation-inputs-only.md).

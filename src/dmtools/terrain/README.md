@@ -1,8 +1,8 @@
 # Terrain tool
 
 The terrain tool generates reproducible elevation data from an authored
-geographic skeleton. It is designed for continent-scale work that can later be
-refined into consistent regional and local maps.
+geographic skeleton. Editing specifies the inputs for the next generation;
+completed terrain is a read-only result.
 
 ## Run the workbench
 
@@ -48,6 +48,41 @@ This is a canonical-grid review, not a guarantee of valid rivers. See
 Use **Region** to draw plains, hills, plateaus and mountain belts.
 The [region guide](../../../docs/terrain-regions.md) explains controls, overlap,
 transitions and the [public example](../../../examples/terrain/landform-regions.dmterrain.json).
+
+## Edit instructions over a generated reference
+
+1. Generate a map from the coastline and current instructions.
+2. Keep that result visible while adding guidance: for example, choose **Region**,
+   select **mountains**, draw the area, then **Finish area**.
+3. To revise an existing instruction, choose it in the list below the controls
+   or **Ctrl+click** its point, line or area. White handles identify the selection.
+   Change its controls and press **Apply edit**. Geometry stays in place.
+4. Choose **New instruction / cancel edit**, or a tool button, to resume drawing.
+   Switching selection/tools discards unapplied property values and unfinished
+   geometry. **Generate** and **Save** require the current edit to be applied or
+   the draft to be finished/cancelled.
+5. Press **Generate terrain** again. The generator uses the revised inputs;
+   it never uses the displayed image or previous DEM as editable terrain.
+
+**Delete**, **Clear**, **Undo**, and **Redo** operate on committed instructions.
+Undo first removes an unfinished vertex when drawing. Committed additions,
+property changes, deletions and clear-all are reversible; draft vertices and
+numeric generator settings do not have redo history. Opening another project or
+coastline starts a new instruction history. Existing lake outlets keep their
+position when editing the water level; a newly enabled outlet uses the first vertex.
+
+The banner distinguishes a matching map from a previous-generation reference.
+Changing generator settings also makes the reference stale. PNG export is enabled
+only when the last successful result matches the applied inputs. Failed generation
+keeps the previous reference, and completion is checked against the worker's exact
+input snapshot. Drainage/catchment overlays and basin details describe that last
+result, even while new instructions are drawn above it.
+
+The reference image and undo history last for the current workbench session.
+Project saves continue to contain authored inputs only; reopening requires
+regeneration to obtain a background. Pan/zoom and vertex movement remain planned.
+Desert/biome instructions require the future climate input contract; the current
+region tool provides plain, hills, plateau and mountains.
 
 ## SVG land-source contract
 
@@ -205,9 +240,8 @@ samples between them. The test suite verifies this with nested 65 and 129 sample
 grids. Arbitrary output dimensions do not necessarily share pixel positions,
 but querying the same kilometre coordinates still gives the same terrain.
 
-This is the basis for later local refinement. It is not yet a complete
-multiresolution storage scheme, nor does it make separately chosen regional
-settings automatically continuous with a parent build.
+This is a sampling guarantee for independently generated output grids. It does
+not imply equal cell averages or continuity between different input settings.
 
 ## Model and review limits
 
@@ -286,7 +320,7 @@ them only when an implemented behavior needs them.
 Follow the [current development strategy](../../../docs/strategy/README.md)
 for the implementation order and evidence gates. The
 [terrain roadmap](../../../TODO.md) tracks the wider backlog, including world
-placement, refinement and contour exports.
+placement, input editing and contour exports.
 
 Additional time-stepped processes need constraint, reproducibility and scale
 validation; the bounded automatic-incision heuristic is already implemented.
