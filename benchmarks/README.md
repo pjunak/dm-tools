@@ -208,16 +208,17 @@ out of runtime clearance checks.
 ### Procedural-noise component and profile bounds
 
 ```powershell
-.\.venv\Scripts\python.exe -m benchmarks.noise_bounds --seed 42 20260913 --detail 1 6 12 --roughness .25 .55 .9 --span .25 2 --direction horizontal diagonal oblique --divisions 1 16 256 4096 --repeats 2 --output artifacts/noise-profiles-matrix-20260914.json
+.\.venv\Scripts\python.exe -m benchmarks.noise_bounds --seed 42 20260913 --detail 1 6 12 --roughness .25 .55 .9 --span .25 2 --direction horizontal diagonal oblique --divisions 1 16 256 4096 --repeats 2 --output artifacts/noise-geometry-matrix-20260916.json
 ```
 
-This research runner compares three policies: `natural`, `monotone_cell` and
-`profile_slabs`. The first two enclose the rectangle around each fixed profile
-interval with outward natural arithmetic or monotone fade/bilinear corner bounds
-plus derived rounding allowances. The third restricts cell work to rounded grid
-strips along the original affine path. All three bound the existing noise
-component transformed to `Float32(2000 + 1000 * noise)` metres. The runner does
-not inspect a saved project or bound the complete coast/region/constraint/incision
+This research runner compares four policies: `natural`, `monotone_cell`,
+`profile_slabs` and `profile_hybrid`. The first two enclose the rectangle around
+each fixed profile interval with outward natural arithmetic or monotone
+fade/bilinear corner bounds plus derived rounding allowances. The third restricts cell work to rounded grid
+strips along the original affine path. The fourth chooses a rectangle when the
+minor axis touches at most two cells, and clipped strips elsewhere. All four
+bound the existing noise component transformed to `Float32(2000 + 1000 * noise)`
+metres. The runner does not inspect a saved project or bound the complete coast/region/constraint/incision
 field. See the [component report](../docs/research/2026-09-13-noise-component-bounds.md)
 for the shared rounding kernel and its original two-policy measurements.
 
@@ -236,17 +237,46 @@ bounds. These limits govern research work, separately from production station ca
 Each case/repeat starts a fresh process. It records source/runtime identity,
 input/bound/sample hashes, required/evaluated cells, strip counts, exhaustion,
 component/reference timings and process high-water memory. All policies share
-endpoint evaluations. Their timing order is fixed: natural, rectangle, profile.
+endpoint evaluations. Their timing order is fixed: natural, rectangle, strips, hybrid.
 A separate 65,537-point finite reference checks every interval and exact shared
 Float32 values without selecting bounds from those heights. Reference agreement
 is an independent check, not the proof of inclusion. Reports reserve a new path
 and publish completion last; changed sources or non-repeatable evidence fail the run.
 
-Report version 2 adds the profile method/source identity and ordered uphill
-bounds/gaps. Ordered-rise summaries assume complete intervals in path order and
-include possible low/high positions within the same interval. These conservative
+Report version 3 records hybrid/refinement identities and optional refinement
+trials alongside the profile method and ordered uphill bounds/gaps. Ordered-rise
+summaries assume complete intervals in path order and include possible low/high
+positions within the same interval. These conservative
 upper bounds can remain loose even when overall extrema are well bounded. They
 are research report fields, not terrain build fields. See the
 [profile report](../docs/research/2026-09-14-noise-profile-bounds.md) for rounding,
 measured work/uncertainty and the remaining full-terrain boundary. Runtime water
 decisions and the existing water-profile benchmark remain separate.
+
+
+### Bound-driven noise refinement
+
+```powershell
+.\.venv\Scripts\python.exe -m benchmarks.noise_bounds --seed 42 20260913 --detail 1 6 12 --roughness .55 .9 --span .25 2 --direction horizontal diagonal oblique --divisions 1 16 256 4096 --adaptive-tolerance 1 .1 --repeats 2 --output artifacts/noise-refinement-matrix-20260916.json
+```
+
+`--adaptive-tolerance` adds positive finite metre thresholds. For each, the runner
+compares uniform refinement with hybrid geometry, adaptive refinement with strips,
+and adaptive refinement with hybrid geometry, in that fixed order. Both refinement
+strategies require conservative local endpoint-envelope and ordered-rise gaps to
+meet the tolerance. This is different from the midpoint-residual heuristic above.
+
+Cell and strip limits apply cumulatively across every refinement wave, including
+superseded parents. `--adaptive-max-samples` defaults to 65536 (allowed 2-65536),
+and `--adaptive-max-depth` defaults to 16 (allowed 0-16). Pending waves are checked
+in full before evaluation. Cells, allocated strips and evaluated sample positions
+are distinct counts. Failure reports keep `accepted: null`; completed-wave metrics
+are diagnostics, not evidence that the requested accuracy was achieved.
+
+The reference never directs refinement. Accepted profiles must enclose every
+independent reference probe, preserve shared Float32 samples and meet the local
+and ordered-rise thresholds. Fresh-process replay and source fingerprints cover
+all four research modules. Refinement timings include planning, enclosure,
+sampling, partition updates and stopping decisions; reference checks are separate.
+The [refinement report](../docs/research/2026-09-16-bounded-noise-refinement.md)
+records the arithmetic argument, paired measurements and remaining full-field work.

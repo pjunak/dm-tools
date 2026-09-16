@@ -222,13 +222,21 @@ substeps.
   uphill bounds include possible rises hidden within one interval. All 864 profile
   trials fit the comparison limits, while fine-path overhead and rough-field
   uncertainty remain; see the [profile report](docs/research/2026-09-14-noise-profile-bounds.md).
-- [ ] **P1 — Compare bound-driven noise refinement and geometry selection.** Measure
-  cheap rectangle bounds on short spans versus clipped strips on broad spans;
-  the strip policy is slower at 4096 subdivisions in the current comparison.
-  Refine original parameter spans using local and ordered-rise uncertainty,
-  with complete work/precision limits and explicit unresolved results. Compare
-  cost and tightness before selecting a method; noise success alone does not
-  authorize full-terrain water clearance.
+- [x] **P1 — Compare bound-driven noise refinement and geometry selection.** Hybrid
+  geometry uses rectangles for spans touching at most two minor-axis cells and
+  clipped strips elsewhere. Adaptive refinement preserves completed intervals,
+  targets local extrema and both contributors to ordered-rise uncertainty, and
+  enforces cumulative cell/strip/sample limits. Uniform and strip-only controls
+  use the same acceptance contract. See the
+  [refinement report](docs/research/2026-09-16-bounded-noise-refinement.md).
+- [ ] **P1 — Reduce unresolved high-detail bound work.** Compare retaining reusable
+  octave/lattice work across refinement waves, intersecting child ranges with
+  retained parent bounds, and tighter within-cell/cross-octave correlation.
+  Measure full cumulative cost and complete profiles,
+  including rough long diagonals; do not reset budgets or accept a prefix.
+  Evaluate rounding floors and exact constant-coordinate cases before lowering
+  requested tolerances. These noise experiments still do not authorize full-field
+  water clearance.
 - [ ] **P1 — Bound residual blended and grazing sampling errors.** Establish
   conservative interval/gradient bounds for the complete field before using
   adaptive stopping to certify clearance. Account for procedural octaves, coast
@@ -237,10 +245,11 @@ substeps.
   Compare their tightness and cost before adopting a branch-and-bound method.
   Sweep roughness, feature scales and grazing distances, including narrow
   off-grid 2D passages. Keep whole-profile/network budgets and explicit unresolved
-  results. Rounded strip clipping and conservative ordered-rise bounds now exist
-  for noise only. Within-cell path correlation, correlated octave bounds, usable
-  local stopping tolerances, coast/region/constraint composition and rounding of
-  distance/exponential operations remain open. Neither component bounds nor the
+  results. Rounded geometry selection and bound-driven local/ordered refinement
+  now exist for noise only, with explicit unresolved outcomes. Within-cell path
+  correlation, correlated octave bounds, full-field stopping tolerances,
+  coast/region/constraint composition and rounding of distance/exponential
+  operations remain open. Neither component bounds nor the
   completed midpoint experiment close the full-field contract.
 - [x] **P1 — Expose sampling demand before high-detail water reviews.**
   `terrain water-budget PROJECT` shares canonical terrain preparation and actual

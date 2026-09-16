@@ -91,8 +91,10 @@ bounds on unseen terrain heights.
    [profile-strip comparison](../research/2026-09-14-noise-profile-bounds.md) adds
    rounded path clipping and ordered-rise bounds: broad diagonals fit the cell
    cap, but fine spans cost more and rough fields retain large uncertainty.
-   Next compare rectangle/strip geometry selection and bound-driven refinement
-   under complete limits. Then compose coast/region/constraint weights, profiles
+   The [bounded-refinement comparison](../research/2026-09-16-bounded-noise-refinement.md)
+   now supplies geometry selection and selective refinement under cumulative
+   limits. Next reduce unresolved high-detail cost with reusable work/tighter
+   component correlation, and compose coast/region/constraint weights, profiles
    and incision with valid rounding bounds. Component success alone does not
    close the full-field contract. Regional, procedural and context
    guidance remain the runtime policy.

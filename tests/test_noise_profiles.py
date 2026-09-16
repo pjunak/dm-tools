@@ -220,7 +220,7 @@ def test_invalid_profile_spans_are_rejected(spans: NDArray[np.float64]) -> None:
         enclose_noise_profile(PATHS[0], spans, NoiseParameters())
 
 
-@pytest.mark.parametrize("budget", [0, True, 262_145])
+@pytest.mark.parametrize("budget", [-1, True, 262_145])
 def test_invalid_slab_budget_is_rejected(budget: int) -> None:
     with pytest.raises(ValueError, match="Noise slab budget"):
         enclose_noise_profile(
@@ -253,10 +253,11 @@ def test_runner_selects_the_path_policy_and_exports_rise_uncertainty(tmp_path: P
     ]
     subprocess.run(command, cwd=ROOT, check=True, capture_output=True, text=True)
     data = json.loads(output.read_text())
-    assert data["complete"] and data["schema_version"] == 2
+    assert data["complete"] and data["schema_version"] == 3
     first, second = data["runs"]
     assert first["evidence_sha256"] == second["evidence_sha256"]
-    natural, box, profile = first["evidence"]["trials"]
+    natural, box, profile, hybrid = first["evidence"]["trials"]
+    assert hybrid["method"] == "profile_hybrid" and hybrid["status"] == "bounded"
     assert natural["status"] == box["status"] == "cell_budget_exceeded"
     assert profile["method"] == "profile_slabs" and profile["status"] == "bounded"
     assert profile["requested_slab_count"] > 0

@@ -6,7 +6,7 @@ R01-R47 register and the [strategy](../strategy/README.md) owns execution order.
 Dated reports preserve measurements at their recorded revision, not timeless
 performance claims. A source audit is not a successfully run engine comparison.
 
-The noise-profile research slice was updated and validated on 2026-09-14; the
+The noise-profile research slice was updated on 2026-09-16; the
 external-engine inventory below retains the 2026-09-13 audit date.
 
 ## Implemented baseline
@@ -56,7 +56,13 @@ along the rounded affine path and adds conservative ordered-rise bounds. All
 864 profile trials fit the current limits, including broad diagonal cases that
 exhaust rectangle bounds. Fine spans are slower and the roughest tested field
 still has a 66.43 m uphill gap at 4096 subdivisions. Geometry clipping alone
-therefore does not supply a practical full-field stopping rule.
+therefore does not supply a practical full-field stopping rule. The
+[bounded-refinement follow-up](2026-09-16-bounded-noise-refinement.md) adds hybrid
+rectangle/strip selection and adaptive subdivision using local extrema and
+ordered-rise gaps. It accounts for every completed wave against cumulative
+cell/strip/sample limits and publishes no accepted profile on exhaustion.
+This is a bounded stopping contract for the isolated noise field; the full
+terrain composition and its water decisions remain open.
 
 Local RBF/screened-Poisson replacement, time-stepped erosion, bedrock/sediment
 transport, coupled ridge/drainage generation, specialized glacial/wind/volcanic
@@ -78,6 +84,13 @@ Rasterio/GDAL inside the export adapter. A future Rust port needs representative
 measured benefit and packaging/workflow evidence; it is not the next prerequisite.
 
 ## Evidence and next experiments
+
+- [Bound-driven refinement](2026-09-16-bounded-noise-refinement.md) compares hybrid
+  geometry and selective subdivision against uniform refinement and strip-only
+  controls across 144 fresh-process runs. Adaptive hybrid accepts 99/144 distinct
+  input/tolerance combinations versus uniform's 80/144; on paired successful
+  six-octave cases it saves about 70% of cell work. Rough/high-detail cases still
+  exhaust cumulative budgets; this is not a full-field water-clearance result.
 
 - [Rounded profile bounds](2026-09-14-noise-profile-bounds.md) compare three
   policies across 216 fresh-process runs. They preserve all previous control
@@ -125,8 +138,8 @@ The [water-budget command](../terrain-water-budget.md) now exposes shoreline
 and potential internal-network demand using shared planning; the
 [forecast report](2026-09-13-water-budget-forecast.md) measures its cost and verifies
 unchanged terrain/evidence. It does not estimate whole-project or export cost.
-Next, compare rectangle/strip selection and bound-driven refinement against
-local interval/ordered-rise uncertainty, then compose conservative bounds beyond
+Next, compare reusable refinement work and tighter component correlation where
+high-detail bounds remain unresolved, and compose conservative bounds beyond
 the isolated noise term. Measure whole-project sampling cost, then
 define sill/storage semantics before lake chains. Five detail octaves keep the public flat-routing example within budget;
 its six-octave regression deliberately retains every dry donor after exhaustion.

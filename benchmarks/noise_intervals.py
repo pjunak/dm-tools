@@ -165,6 +165,8 @@ class NoiseEnclosure:
     noise: Interval | None = None
     field_m: Interval | None = None
     requested_slab_count: int | None = None
+    rectangle_plan_count: int | None = None
+    clipped_plan_count: int | None = None
 
 
 @dataclass(frozen=True, slots=True)
