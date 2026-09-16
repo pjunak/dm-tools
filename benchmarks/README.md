@@ -120,6 +120,30 @@ records earlier coast/regional bottlenecks. The
 the expanded water workload; the [current status](../docs/research/status.md)
 tracks remaining performance and validation gaps.
 
+## Channel-interior profiles
+
+```powershell
+.\.venv\Scripts\python.exe -m benchmarks.channel_profiles --output artifacts/channel-profiles.json
+.\.venv\Scripts\python.exe -m benchmarks.channel_profiles --case archipelago square regional --seed 104729 --stations 257 --output artifacts/channel-profiles-dense.json
+```
+
+This repository-only quality probe prepares the normal deterministic field and
+samples every selected channel-to-receiver edge, independently of display
+resolution. It uses 65 stations by default, accepts 3-1025, and evaluates at most
+256 edges per batch. It does not time generation or modify the field.
+Delivered Float32 heights are promoted to Float64 before measuring ordered
+uphill excursion. Endpoints descending by more than 0.01 m are reported
+separately, as are cardinal and diagonal edges. Non-finite/non-land profiles
+remain unresolved counts, not zero-climb successes. Empty groups have null
+statistics. Profile, canonical-array, input, runtime and harness/fixture hashes
+support comparisons. Outputs must be new files; an interrupted report is not
+complete.
+
+Finite station checks do not certify every point between samples. See the
+[diagonal-connection experiment](../docs/research/2026-09-16-connected-diagonal-valleys.md)
+for measured gains, remaining large excursions and the baseline comparison.
+Use source-isolated runs with matching input hashes when comparing algorithms.
+
 ## Water-profile convergence
 
 ```powershell

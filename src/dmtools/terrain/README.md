@@ -320,10 +320,11 @@ The surface combines coordinate-addressed relief, coastal conditioning, regional
 recipes and authored guidance. Automatic valleys use contributing area and slope
 on a fixed 257-longest-side routing grid. Regional relief caps bound generated
 cuts; absolute anchors remain authoritative. Bounded cubic reconstruction softens
-interpolation creases between routing samples. Regenerate with **Detail (1025 px)**
+interpolation creases between routing samples; compact diagonal connections
+reduce scalloping along selected channels. Regenerate with **Detail (1025 px)**
 to inspect this finer surface; canonical samples and routing stay unchanged.
 Straight/diagonal D8 turns and cap-limited creases can still show. See the
-[comparison](../../../docs/research/2026-09-16-bounded-valley-reconstruction.md).
+[comparison](../../../docs/research/2026-09-16-connected-diagonal-valleys.md).
 This is process-informed terrain,
 not a simulation of tectonics, rock, sediment, climate or geological time.
 Read [the pipeline overview](pipeline/README.md) for stage order and algorithms.

@@ -88,12 +88,13 @@ reject distant candidates before geometry queries; the
 bounds on unseen terrain heights.
 
 1. Continue measured generator-quality improvements using the usable input
-   workbench. Bounded valley reconstruction now reduces interpolation creases
-   while preserving canonical routing and cut limits; the
-   [comparison](../research/2026-09-16-bounded-valley-reconstruction.md) records
-   its visual, between-node profile and performance limits. Next measure D8
-   turns, remaining between-node climbs and regional/retention transition slopes
-   before choosing flow-aware shaping. Inspect regenerated 1025 px results with
+   workbench. Bounded reconstruction and compact diagonal connections now
+   reduce creases/scalloping while preserving canonical routing and cut limits;
+   the [comparison](../research/2026-09-16-connected-diagonal-valleys.md) records
+   visual, channel-profile and performance evidence. Use the repeatable channel
+   harness to classify remaining cardinal/interior climbs and large outliers.
+   Then compare turn smoothing and regional/retention transitions while preserving
+   divides, constraints and existing cut budgets. Inspect regenerated 1025 px results with
    pan/zoom and ground readout; keep authored controls authoritative.
    [ADR-0049](../adr/0049-navigate-and-save-authored-inputs.md) owns the current
    input-editor contract. Cancellation, comparison views and vertex insertion

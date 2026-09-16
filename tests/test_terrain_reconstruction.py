@@ -164,15 +164,15 @@ def test_automatic_valleys_keep_routing_nodes_and_seamless_sampling(case: str) -
     field = generation._prepare_terrain_field(coast, settings, constraints, None)
     valleys = field.automatic_valleys
     xx, yy = np.meshgrid(valleys.x_km, valleys.y_km)
-    np.testing.assert_array_equal(valleys.sample_incision(xx, yy), valleys.drainage.incision_m)
-    np.testing.assert_array_equal(valleys.sample_detail_suppression(xx, yy),
+    np.testing.assert_array_equal(valleys.sample_shaping(xx, yy)[0], valleys.drainage.incision_m)
+    np.testing.assert_array_equal(valleys.sample_shaping(xx, yy)[1],
                                   valleys.drainage.detail_suppression)
     # Suppression has no ceiling: its shared derivatives should remove seams even
     # where generated channels or regional cut limits change abruptly.
     xx, yy = np.meshgrid(valleys.x_km[1:-1:8], valleys.y_km[1:-1:8])
     yy += .371 * (valleys.y_km[1] - valleys.y_km[0])
     h = (valleys.x_km[1] - valleys.x_km[0]) * 1e-4
-    centre = valleys.sample_detail_suppression(xx, yy)
-    jump = (valleys.sample_detail_suppression(xx+h, yy) - 2*centre
-            + valleys.sample_detail_suppression(xx-h, yy)) / h
+    centre = valleys.sample_shaping(xx, yy)[1]
+    jump = (valleys.sample_shaping(xx+h, yy)[1] - 2*centre
+            + valleys.sample_shaping(xx-h, yy)[1]) / h
     assert float(np.max(np.abs(jump))) < 1e-4

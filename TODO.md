@@ -491,11 +491,18 @@ execution order.
   authoritative. [ADR-0050](docs/adr/0050-reconstruct-valleys-with-bounded-cubics.md)
   and the [measurements](docs/research/2026-09-16-bounded-valley-reconstruction.md)
   record improvement, cost and remaining D8/cap artifacts.
-- [ ] **P1 — Improve between-node channel geometry.** Compare flow-aware
-  shaping on straight/diagonal turns and complete downstream profiles. The
-  reconstruction comparison reduces sampled climbs but still finds hundreds
-  on edges whose endpoints descend. Preserve divides, anchors and cut budgets;
-  a smoother field or a finite 17-station check does not certify a river.
+- [x] **P1 — Connect diagonal valley shaping between samples.** Compact,
+  metric corrections now connect incision and suppression along selected D8
+  diagonals while preserving cell edges, canonical nodes and cut ceilings.
+  [ADR-0051](docs/adr/0051-connect-diagonal-valley-shaping.md) and the
+  [comparison](docs/research/2026-09-16-connected-diagonal-valleys.md) record
+  reduced scalloping and climb size, including additional dense checks.
+- [ ] **P1 — Complete between-node channel geometry.** The new
+  `benchmarks.channel_profiles` harness reports finite 65/257-station evidence,
+  cardinal/diagonal results and unresolved non-land samples. Classify remaining
+  cardinal/interior climbs and large outliers, then compare turn smoothing and
+  complete downstream conditioning. Preserve divides, anchors and cut budgets;
+  finite samples and lower mean excursions do not certify a river.
 - [ ] **P1 — Add variable valley cross-sections.** Support narrow V-shaped
   valleys, glacial U-shaped valleys, broad floodplains, terraces, and smooth
   width/depth changes along a line. Generated fluvial valleys now widen and

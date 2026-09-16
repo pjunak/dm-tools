@@ -77,3 +77,4 @@ supersedes their legacy compatibility commitments during early development.
 - [ADR-0048: Keep zoom-driven detail generation in scope](0048-keep-zoom-driven-detail-generation.md)
 - [ADR-0049: Navigate and save authored terrain inputs](0049-navigate-and-save-authored-inputs.md)
 - [ADR-0050: Reconstruct automatic valleys with bounded cubics](0050-reconstruct-valleys-with-bounded-cubics.md)
+- [ADR-0051: Connect diagonal valley shaping](0051-connect-diagonal-valley-shaping.md)

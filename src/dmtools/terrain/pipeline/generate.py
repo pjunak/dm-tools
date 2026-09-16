@@ -26,6 +26,7 @@ from dmtools.terrain.domain import (
 )
 from dmtools.terrain.domain.seeds import RELIEF_STAGE_ID, stage_seed
 from dmtools.terrain.pipeline.basin_flow import BasinOutflow, resolve_basin_outflow
+from dmtools.terrain.pipeline.channel_reconstruction import ChannelReconstruction
 from dmtools.terrain.pipeline.diagnostics import (
     ChannelConflicts,
     DrainageAnalysis,
@@ -47,7 +48,6 @@ from dmtools.terrain.pipeline.landforms import (
 )
 from dmtools.terrain.pipeline.noise import fractal_value_noise
 from dmtools.terrain.pipeline.profile import shape_preserving_profile
-from dmtools.terrain.pipeline.reconstruction import BoundedBicubicGrid
 from dmtools.terrain.pipeline.water import (
     MetricBasin,
     WaterProducts,
@@ -60,8 +60,8 @@ from dmtools.terrain.pipeline.water_sampling import SamplingDensity, SamplingFea
 
 type ProgressCallback = Callable[[float, str], None]
 
-GENERATOR_ALGORITHM_ID = "coastline-constraint-terrain@9"
-AUTOMATIC_VALLEY_ALGORITHM_ID = "regional-budget-mfd-d8-valleys@7"
+GENERATOR_ALGORITHM_ID = "coastline-constraint-terrain@10"
+AUTOMATIC_VALLEY_ALGORITHM_ID = "regional-budget-mfd-d8-valleys@8"
 NOISE_ALGORITHM_ID = "coordinate-value-noise-normalized@1"
 
 
@@ -114,34 +114,22 @@ class _AutomaticValleyField:
 
     x_km: NDArray[np.float64]
     y_km: NDArray[np.float64]
-    incision_m: NDArray[np.float64]
-    detail_suppression: NDArray[np.float64]
     drainage: DrainageIncision
     land_mask: NDArray[np.bool_]
     basins: tuple[MetricBasin, ...] = ()
 
-    _incision: BoundedBicubicGrid = field(init=False, repr=False)
-    _suppression: BoundedBicubicGrid = field(init=False, repr=False)
+    _reconstruction: ChannelReconstruction = field(init=False, repr=False)
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "_incision", BoundedBicubicGrid(
-            self.x_km, self.y_km, self.incision_m, self.drainage.incision_limit_m))
-        object.__setattr__(self, "_suppression", BoundedBicubicGrid(
-            self.x_km, self.y_km, self.detail_suppression))
+        object.__setattr__(self, "_reconstruction", ChannelReconstruction.prepare(
+            self.x_km, self.y_km, self.drainage))
 
-    def sample_incision(
+    def sample_shaping(
         self,
         x_km: NDArray[np.float64],
         y_km: NDArray[np.float64],
-    ) -> NDArray[np.float64]:
-        return self._incision.sample(x_km, y_km)
-
-    def sample_detail_suppression(
-        self,
-        x_km: NDArray[np.float64],
-        y_km: NDArray[np.float64],
-    ) -> NDArray[np.float64]:
-        return self._suppression.sample(x_km, y_km)
+    ) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
+        return self._reconstruction.sample(x_km, y_km)
 
 
 def _report(callback: ProgressCallback | None, fraction: float, message: str) -> None:
@@ -902,8 +890,6 @@ def _prepare_automatic_valley_field(
     return _AutomaticValleyField(
         x_km=x_km,
         y_km=y_km,
-        incision_m=drainage.incision_m,
-        detail_suppression=drainage.detail_suppression,
         drainage=drainage,
         land_mask=land_mask,
         basins=basins,
@@ -1126,10 +1112,8 @@ def _evaluate_land_samples(
         settings,
         regions=regions,
     )
-    automatic_incision = automatic_valleys.sample_incision(x_grid, y_grid)
-    automatic_detail_suppression = automatic_valleys.sample_detail_suppression(
-        x_grid,
-        y_grid,
+    automatic_incision, automatic_detail_suppression = automatic_valleys.sample_shaping(
+        x_grid, y_grid,
     )
     if automatic_valleys.basins:
         retained = basin_intent_ids(x_grid, y_grid, automatic_valleys.basins) > 0

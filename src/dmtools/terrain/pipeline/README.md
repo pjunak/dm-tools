@@ -11,9 +11,13 @@ shape that macro surface before routing. MFD contributing area uses a
 Priority-Flood-conditioned copy on a fixed canonical grid, then drives bounded,
 stream-power-inspired automatic valleys. Incision is sampled in local metric
 coordinates, so changing output resolution does not reroute major valleys.
-Incision and residual-detail suppression use prepared bounded bicubic Hermite
-patches: shared nodal derivatives soften cell-edge creases, while each patch
-stays within its original corner range. Incision also obeys the existing
+Incision and residual-detail suppression start with bounded bicubic Hermite
+patches: shared nodal derivatives soften cell-edge creases. Selected diagonal
+channel connections then receive compact, metric corrections toward their
+endpoint shaping values, reducing scalloping without changing cell edges or
+canonical nodes. Each resulting field stays in its original cell corner range;
+see [ADR-0051](../../../../docs/adr/0051-connect-diagonal-valley-shaping.md).
+Incision also obeys the existing
 bilinear interpolation of nodal cut limits; exact basin masks still exclude
 both effects inside retained footprints. Active ceilings may retain slope
 breaks. This preserves routing nodes, not every between-node height, and does

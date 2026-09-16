@@ -12,6 +12,10 @@ in the current status or a new dated report.
 
 ## Implemented and measured work
 
+- [Connected diagonal valleys - 2026-09-16](2026-09-16-connected-diagonal-valleys.md)
+  reduces between-node scalloping within existing caps and adds repeatable
+  finite channel-profile measurements, including three additional dense checks.
+
 - [Bounded valley reconstruction - 2026-09-16](2026-09-16-bounded-valley-reconstruction.md)
   measures smoother automatic shaping between canonical nodes, preserved cut
   limits and routing, finite channel profiles, runtime and memory.
