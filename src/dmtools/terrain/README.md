@@ -324,9 +324,11 @@ interpolation creases between routing samples; compact diagonal connections
 reduce scalloping along selected channels. Source-aware fitting also adjusts
 cuts along cardinal/diagonal floors to reduce humps and artificial pits within
 the existing cut ceiling. Regenerate with **Detail (1025 px)** to inspect the
-finer surface; canonical samples and routing stay unchanged. D8 turns and hidden
-crests beyond the cut ceiling remain; see the
-[comparison](../../../docs/research/2026-09-16-source-aware-channel-floors.md).
+finer surface. Targeted mountain-crest observations now help routing avoid
+barriers hidden between nodes; this changes the generated network under the new
+algorithm, while display resolution still shares one canonical plan. D8 turns
+and unobserved or unavoidable barriers remain; see the
+[comparison](../../../docs/research/2026-09-16-mountain-crest-routing.md).
 This is process-informed terrain,
 not a simulation of tectonics, rock, sediment, climate or geological time.
 Read [the pipeline overview](pipeline/README.md) for stage order and algorithms.

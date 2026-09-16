@@ -49,6 +49,7 @@ from dmtools.terrain.pipeline.landforms import (
 )
 from dmtools.terrain.pipeline.noise import fractal_value_noise
 from dmtools.terrain.pipeline.profile import shape_preserving_profile
+from dmtools.terrain.pipeline.routing_edges import sample_mountain_barriers
 from dmtools.terrain.pipeline.water import (
     MetricBasin,
     WaterProducts,
@@ -61,8 +62,8 @@ from dmtools.terrain.pipeline.water_sampling import SamplingDensity, SamplingFea
 
 type ProgressCallback = Callable[[float, str], None]
 
-GENERATOR_ALGORITHM_ID = "coastline-constraint-terrain@11"
-AUTOMATIC_VALLEY_ALGORITHM_ID = "regional-budget-mfd-d8-valleys@9"
+GENERATOR_ALGORITHM_ID = "coastline-constraint-terrain@12"
+AUTOMATIC_VALLEY_ALGORITHM_ID = "regional-budget-mfd-d8-valleys@10"
 NOISE_ALGORITHM_ID = "coordinate-value-noise-normalized@1"
 
 
@@ -872,6 +873,22 @@ def _prepare_automatic_valley_field(
     )
     retention_terminals = basin_intent_ids(x_grid, y_grid, basins) > 0
     budget[retention_terminals] = 0
+    def sample_routing_macro(x: NDArray[np.float64], y: NDArray[np.float64]) -> NDArray[np.float64]:
+        points = shapely.points(x, y)
+        coast_distance = np.asarray(shapely.distance(points, boundary), dtype=np.float64)
+        _full, macro, driver = _base_elevation_fields(x, y, coast_distance, settings, regions)
+        conditioned, _influence = _apply_constraints(
+            macro, points, coast_distance, constraints, settings.largest_feature_km,
+            settings.maximum_elevation_m, driver,
+        )
+        # Retain the existing node/coast topology. Non-land interiors are sea
+        # level observations, not newly invented land receivers or coast exits.
+        return np.where(shapely.intersects_xy(polygon, x, y),
+                        np.clip(conditioned, 0., settings.maximum_elevation_m), 0.)
+
+    edge_barriers = sample_mountain_barriers(
+        x_km, y_km, routing_elevation, land_mask, regions, settings.seed, sample_routing_macro,
+    )
     drainage = drainage_incision(
         routing_elevation,
         land_mask,
@@ -883,6 +900,7 @@ def _prepare_automatic_valley_field(
         residual_detail_m=(full_elevation - macro_elevation) * (1.0 - constraint_influence),
         incision_budget_m=budget,
         retention_terminal_mask=retention_terminals,
+        edge_barriers_m=edge_barriers,
     )
     reconstruction = ChannelReconstruction.prepare(x_km, y_km, drainage)
     nodal_floor = np.maximum(

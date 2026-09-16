@@ -65,18 +65,39 @@ def _terminal_cells(
     return terminal_mask
 
 
+
+def _validate_edge_barriers(
+    barriers: NDArray[np.float64] | None, land: NDArray[np.bool_],
+) -> None:
+    if barriers is None:
+        return
+    if barriers.shape != (8, *land.shape):
+        raise ValueError("Edge barriers must have one D8 plane per land-grid cell.")
+    ny, nx = land.shape
+    for index in range(4, 8):
+        dy, dx = D8_NEIGHBOURS[index]
+        source = (slice(0, ny-dy), slice(max(0, -dx), nx-max(0, dx)))
+        target = (slice(dy, ny), slice(max(0, dx), nx-max(0, -dx)))
+        valid = land[source] & land[target]
+        forward, reverse = barriers[index][source][valid], barriers[7-index][target][valid]
+        if not np.all(np.isfinite(forward)) or not np.array_equal(forward, reverse):
+            raise ValueError("Land edge barriers must be finite and symmetric.")
+
+
 def priority_flood_surface(
     elevation_m: NDArray[np.float64],
     land_mask: NDArray[np.bool_],
     *,
     terminal_mask: NDArray[np.bool_] | None = None,
+    edge_barriers_m: NDArray[np.float64] | None = None,
 ) -> NDArray[np.float64]:
     """Return a routing surface reaching a coast or an authored retention terminal.
 
     The returned surface is a temporary hydrology product. It fills accidental
     depressions but never replaces the authored/generated elevation surface.
     Raised cells receive the smallest representable downstream grade so flats
-    have a deterministic route toward their spill point.
+    have a deterministic route toward their spill point. Observed interior edge
+    crests also bound passage; these require relaxation until a node is popped.
     """
 
     if elevation_m.shape != land_mask.shape or elevation_m.ndim != 2:
@@ -84,14 +105,17 @@ def priority_flood_surface(
     if np.any(land_mask & ~np.isfinite(elevation_m)):
         raise ValueError("Land elevations must be finite before drainage routing.")
 
+    _validate_edge_barriers(edge_barriers_m, land_mask)
     height, width = elevation_m.shape
-    filled = elevation_m.copy()
+    filled = np.where(land_mask, np.inf, elevation_m)
     visited = np.zeros_like(land_mask)
     queue: list[tuple[float, int, int]] = []
+    settle_on_pop = edge_barriers_m is not None
 
     terminals = _terminal_cells(land_mask, terminal_mask)
     for row, column in np.argwhere(land_outlet_mask(land_mask) | terminals):
-        visited[row, column] = True
+        filled[row, column] = elevation_m[row, column]
+        visited[row, column] = not settle_on_pop
         heappush(queue, (float(filled[row, column]), int(row), int(column)))
 
     if np.any(land_mask) and not queue:
@@ -99,7 +123,11 @@ def priority_flood_surface(
 
     while queue:
         current_height, row, column = heappop(queue)
-        for row_offset, column_offset in D8_NEIGHBOURS:
+        if settle_on_pop:
+            if visited[row, column]:
+                continue
+            visited[row, column] = True
+        for edge_index, (row_offset, column_offset) in enumerate(D8_NEIGHBOURS):
             neighbour_row = row + row_offset
             neighbour_column = column + column_offset
             if not (
@@ -109,14 +137,19 @@ def priority_flood_surface(
                 and not visited[neighbour_row, neighbour_column]
             ):
                 continue
-            visited[neighbour_row, neighbour_column] = True
-            original_height = float(filled[neighbour_row, neighbour_column])
-            routed_height = max(
-                original_height,
-                float(np.nextafter(current_height, np.inf)),
-            )
-            filled[neighbour_row, neighbour_column] = routed_height
-            heappush(queue, (routed_height, neighbour_row, neighbour_column))
+            if not settle_on_pop:
+                # With node heights only, first discovery is already optimal.
+                visited[neighbour_row, neighbour_column] = True
+            original_height = float(elevation_m[neighbour_row, neighbour_column])
+            barrier = (float(edge_barriers_m[edge_index, row, column])
+                       if edge_barriers_m is not None else original_height)
+            routed_height = max(original_height, barrier,
+                                float(np.nextafter(current_height, np.inf)))
+            # An edge crest can make first discovery non-optimal. Settle only
+            # when popped, so a later lower-saddle path can still relax this node.
+            if routed_height < filled[neighbour_row, neighbour_column]:
+                filled[neighbour_row, neighbour_column] = routed_height
+                heappush(queue, (routed_height, neighbour_row, neighbour_column))
 
     if np.any(land_mask & ~visited):
         raise RuntimeError("Priority-Flood left land disconnected from every outlet.")
@@ -131,12 +164,13 @@ def multiple_flow_accumulation(
     y_spacing_km: float,
     exponent: float = 1.1,
     terminal_mask: NDArray[np.bool_] | None = None,
+    edge_barriers_m: NDArray[np.float64] | None = None,
 ) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
     """Return MFD contributing area in km2 and maximum local downslope grade.
 
-    Flow is divided among every lower D8 neighbour in proportion to
-    ``slope**exponent``. Stable descending ordering and a fixed neighbour order
-    make ties reproducible without introducing a mutable random stream.
+    Flow is divided among lower D8 neighbours reachable over the observed edge
+    crests in proportion to ``slope**exponent``. Stable descending ordering and a
+    fixed neighbour order make ties reproducible without introducing a mutable random stream.
     """
 
     if routing_elevation_m.shape != land_mask.shape or routing_elevation_m.ndim != 2:
@@ -144,6 +178,7 @@ def multiple_flow_accumulation(
     if x_spacing_km <= 0.0 or y_spacing_km <= 0.0 or exponent <= 0.0:
         raise ValueError("Grid spacing and MFD exponent must be positive.")
 
+    _validate_edge_barriers(edge_barriers_m, land_mask)
     height, width = routing_elevation_m.shape
     cell_area_km2 = x_spacing_km * y_spacing_km
     accumulation = np.where(land_mask, cell_area_km2, 0.0).astype(np.float64)
@@ -160,7 +195,7 @@ def multiple_flow_accumulation(
         row, column = divmod(int(flat_index), width)
         current_height = float(routing_elevation_m[row, column])
         recipients: list[tuple[int, int, float, float, float]] = []
-        for row_offset, column_offset in D8_NEIGHBOURS:
+        for edge_index, (row_offset, column_offset) in enumerate(D8_NEIGHBOURS):
             neighbour_row = row + row_offset
             neighbour_column = column + column_offset
             if not (
@@ -168,6 +203,9 @@ def multiple_flow_accumulation(
                 and 0 <= neighbour_column < width
                 and land_mask[neighbour_row, neighbour_column]
             ):
+                continue
+            if (edge_barriers_m is not None
+                    and edge_barriers_m[edge_index, row, column] > current_height):
                 continue
             drop_m = current_height - float(
                 routing_elevation_m[neighbour_row, neighbour_column]
@@ -207,6 +245,7 @@ def steepest_flow_accumulation(
     x_spacing_km: float,
     y_spacing_km: float,
     terminal_mask: NDArray[np.bool_] | None = None,
+    edge_barriers_m: NDArray[np.float64] | None = None,
 ) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
     """Return D8 contributing area and receiver slope for a unique flow tree."""
 
@@ -216,6 +255,7 @@ def steepest_flow_accumulation(
         x_spacing_km=x_spacing_km,
         y_spacing_km=y_spacing_km,
         terminal_mask=terminal_mask,
+        edge_barriers_m=edge_barriers_m,
     )
 
     accumulation = _accumulate_steepest_receivers(
@@ -257,14 +297,16 @@ def steepest_flow_receivers(
     x_spacing_km: float,
     y_spacing_km: float,
     terminal_mask: NDArray[np.bool_] | None = None,
+    edge_barriers_m: NDArray[np.float64] | None = None,
 ) -> tuple[NDArray[np.int64], NDArray[np.float64]]:
-    """Return each cell's steepest lower D8 receiver and corresponding slope."""
+    """Return the steepest lower D8 receiver reachable over the observed crest."""
 
     if routing_elevation_m.shape != land_mask.shape or routing_elevation_m.ndim != 2:
         raise ValueError("Routing elevation and land mask must be equally shaped 2D arrays.")
     if x_spacing_km <= 0.0 or y_spacing_km <= 0.0:
         raise ValueError("Grid spacing must be positive.")
 
+    _validate_edge_barriers(edge_barriers_m, land_mask)
     height, width = routing_elevation_m.shape
     receivers = np.full(routing_elevation_m.shape, -1, dtype=np.int64)
     receiver_slope = np.zeros_like(routing_elevation_m)
@@ -277,7 +319,7 @@ def steepest_flow_receivers(
         receiver: tuple[int, int] | None = None
         steepest_slope = 0.0
         receiver_drop_m, receiver_distance_km = 0.0, 1.0
-        for row_offset, column_offset in D8_NEIGHBOURS:
+        for edge_index, (row_offset, column_offset) in enumerate(D8_NEIGHBOURS):
             neighbour_row = row + row_offset
             neighbour_column = column + column_offset
             if not (
@@ -285,6 +327,9 @@ def steepest_flow_receivers(
                 and 0 <= neighbour_column < width
                 and land_mask[neighbour_row, neighbour_column]
             ):
+                continue
+            if (edge_barriers_m is not None
+                    and edge_barriers_m[edge_index, row, column] > current_height):
                 continue
             drop_m = current_height - float(
                 routing_elevation_m[neighbour_row, neighbour_column]
@@ -729,6 +774,7 @@ def drainage_incision(
     residual_detail_m: NDArray[np.float64] | None = None,
     incision_budget_m: NDArray[np.float64] | None = None,
     retention_terminal_mask: NDArray[np.bool_] | None = None,
+    edge_barriers_m: NDArray[np.float64] | None = None,
 ) -> DrainageIncision:
     """Derive broad valley incision and contributing area from a terrain surface."""
 
@@ -749,13 +795,15 @@ def drainage_incision(
             raise ValueError("Residual detail must share the elevation grid shape.")
         if np.any(land_mask & ~np.isfinite(residual_detail_m)):
             raise ValueError("Land residual detail must be finite.")
-    routing_surface = priority_flood_surface(elevation_m, land_mask, terminal_mask=terminals)
+    routing_surface = priority_flood_surface(
+        elevation_m, land_mask, terminal_mask=terminals, edge_barriers_m=edge_barriers_m)
     accumulation_km2, _mfd_slope = multiple_flow_accumulation(
         routing_surface,
         land_mask,
         x_spacing_km=x_spacing_km,
         y_spacing_km=y_spacing_km,
         terminal_mask=terminals,
+        edge_barriers_m=edge_barriers_m,
     )
     receivers, slope = steepest_flow_receivers(
         routing_surface,
@@ -763,6 +811,7 @@ def drainage_incision(
         x_spacing_km=x_spacing_km,
         y_spacing_km=y_spacing_km,
         terminal_mask=terminals,
+        edge_barriers_m=edge_barriers_m,
     )
     cell_area_km2 = x_spacing_km * y_spacing_km
     tree_accumulation_km2 = _accumulate_steepest_receivers(

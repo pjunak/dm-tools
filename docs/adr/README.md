@@ -79,3 +79,4 @@ supersedes their legacy compatibility commitments during early development.
 - [ADR-0050: Reconstruct automatic valleys with bounded cubics](0050-reconstruct-valleys-with-bounded-cubics.md)
 - [ADR-0051: Connect diagonal valley shaping](0051-connect-diagonal-valley-shaping.md)
 - [ADR-0052: Fit channel cuts to the sampled terrain](0052-fit-channel-cuts-to-sampled-terrain.md)
+- [ADR-0053: Observe mountain crests in the drainage graph](0053-observe-mountain-crests-in-drainage.md)

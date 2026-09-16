@@ -19,7 +19,7 @@ updated on 2026-09-16; the external-engine inventory below retains the
 | Local numeric builds | Saved-project CLI, Float32 NPY/GeoTIFF, review NPZ, previews, diagnostics and completion hashes | World placement, vector products, external desktop GIS acceptance |
 | Zoom-driven local detail | Coordinate-addressed fields, shared-sample/grid foundations and a geographic viewport | Regional build requests, added detail, parent/overlap consistency, inherited hydrology and bounded caching |
 | Coordinates/seeds (R01-R03) | Source/local round trips, endpoint grids, actual spacing metadata and portable named seeds | Planetary CRS, configurable process spacing, cell-average/resampling policy |
-| Authored macro routing (R04-R05) | Authored terrain shapes canonical planning; D8/MFD topology and finished-field conflicts are exported | Filled routes are not validated rivers; unresolved uphill channels remain |
+| Authored macro routing (R04-R05) | Authored macro and targeted mountain-crest probes shape a shared Priority-Flood/D8/MFD graph; topology and finished-field conflicts are exported | Other hidden extrema, filled barriers and unresolved final-ground climbs remain; routes are not validated rivers |
 | Valley reconstruction | Bounded cubic fields, selected-diagonal shaping and source-aware cardinal/diagonal floor fitting; canonical nodes and cut ceilings preserved | D8 turns, hidden crests beyond cut limits, endpoint/retention conflicts and complete-field error bounds |
 | Regional landforms | Plain/hill/plateau/mountain recipes, orientation, transitions and regional cut limits | Distribution targets, transition-gradient validation, related geological regions |
 | Structural authoring | Absolute/relative point-anchored profiles, directed valley floors and compatible junctions | Direct per-vertex controls, explicit passes, asymmetric sides and generated branching |
@@ -49,8 +49,12 @@ Canonical routing matched; water outcomes matched in the eight performance
 cases. The [source-aware floor follow-up](2026-09-16-source-aware-channel-floors.md)
 then fits cuts to the actual source between nodes, reducing cardinal as well as
 diagonal climbs. Off-grid heights intentionally change; large hidden crests
-beyond the current cut ceiling remain. Complete-field clearance, full downstream
-conditioning, grid-aligned turns and physical river validity remain open.
+beyond the current cut ceiling remain. The
+[mountain-crest routing follow-up](2026-09-16-mountain-crest-routing.md) now observes
+selected crest crossings and rebuilds the drainage graph around lower passes.
+Canonical routing and derived cuts can change, under the same budget policy.
+Complete-field clearance, other hidden extrema, full downstream conditioning,
+grid-aligned turns and physical river validity remain open.
 
 ## Research that has not been adopted
 

@@ -504,13 +504,26 @@ execution order.
   ceilings. [ADR-0052](docs/adr/0052-fit-channel-cuts-to-sampled-terrain.md) and the
   [measurements](docs/research/2026-09-16-source-aware-channel-floors.md) record
   profile, canonical-authority, visual and performance checks.
-- [ ] **P1 — Complete between-node channel geometry.** The
-  `benchmarks.channel_profiles` harness reports finite 65/257-station evidence,
-  cardinal/diagonal results and unresolved non-land samples. Compare route
-  alternatives or finer planning for cap-limited hidden crests; distinguish
-  them from endpoint-taper and source-pit conflicts before adding more shaping.
-  Complete downstream conditioning and D8 turn smoothing remain open. Preserve
-  divides, anchors and cut budgets; lower mean excursions do not certify a river.
+- [x] **P1 — Observe hidden mountain crests before routing.** Shared regional
+  carrier signs now select bounded interior probes. Priority-Flood relaxes
+  alternate passes, and both D8 and MFD respect the same sampled barriers.
+  Regional/global cut-budget policy remains unchanged; routing and its derived
+  shaping can change. [ADR-0053](docs/adr/0053-observe-mountain-crests-in-drainage.md)
+  and the [comparison](docs/research/2026-09-16-mountain-crest-routing.md) record
+  rejected local swaps, exhaustive-probe cost and the adopted targeted method.
+- [ ] **P1 — Reduce crest-aware routing overhead and bound region storage.**
+  The repeated regional benchmark adds about 0.19-0.20 s at 513 px; timings vary,
+  and non-mountain cases also need hot-loop profiling. Measure many overlapping
+  regions and avoid retaining one full-grid carrier per mountain region. Keep
+  numeric/provenance invariants while removing deterministic work. See the
+  [measurements and limits](docs/research/2026-09-16-mountain-crest-routing.md).
+- [ ] **P1 — Complete between-node channel geometry.** Extend observation to
+  multiple/tangent carrier crossings, the actual crest position, other recipes,
+  authored features and blended-field extrema. Compare bounded refinement with
+  explicit source-scale/process-grid contracts. Continue whole-route conditioning
+  and D8 turn smoothing; separate remaining cap-limited barriers, source pits,
+  endpoint tapers and retention boundaries. Preserve divides, anchors and budget
+  policy. Finite profile evidence and lower excursions do not certify rivers.
 - [ ] **P1 — Add variable valley cross-sections.** Support narrow V-shaped
   valleys, glacial U-shaped valleys, broad floodplains, terraces, and smooth
   width/depth changes along a line. Generated fluvial valleys now widen and

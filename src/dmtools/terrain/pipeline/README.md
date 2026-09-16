@@ -11,6 +11,15 @@ shape that macro surface before routing. MFD contributing area uses a
 Priority-Flood-conditioned copy on a fixed canonical grid, then drives bounded,
 stream-power-inspired automatic valleys. Incision is sampled in local metric
 coordinates, so changing output resolution does not reroute major valleys.
+Mountain carrier sign changes also select seven-point interior crest probes.
+The authored macro at these positions supplies shared D8 edge barriers to the
+Priority-Flood, MFD and steepest-receiver stages. Priority-Flood can revise a
+queued route through a later lower pass; both flow models reject crossings above
+the source routing level. This can change the canonical network and its derived
+cuts, while retaining the regional/global budget policy and authored authority.
+These finite observations target one recipe, not every hidden terrain extremum;
+see [ADR-0053](../../../../docs/adr/0053-observe-mountain-crests-in-drainage.md).
+
 Incision and residual-detail suppression start with bounded bicubic Hermite
 patches: shared nodal derivatives soften cell-edge creases. Selected diagonal
 channel connections then receive compact, metric corrections toward their

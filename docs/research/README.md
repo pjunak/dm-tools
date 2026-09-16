@@ -12,6 +12,14 @@ in the current status or a new dated report.
 
 ## Implemented and measured work
 
+- [Mountain-crest routing - 2026-09-16](2026-09-16-mountain-crest-routing.md)
+  compares alternate routes and targeted observations, with additional seeds,
+  unchanged budget policy, measured runtime cost and mixed drainage diagnostics.
+
+- [Source-aware channel floors - 2026-09-16](2026-09-16-source-aware-channel-floors.md)
+  fits cuts to actual sampled terrain within existing ceilings and diagnoses
+  hidden mountain crests that reconstruction alone cannot remove.
+
 - [Connected diagonal valleys - 2026-09-16](2026-09-16-connected-diagonal-valleys.md)
   reduces between-node scalloping within existing caps and adds repeatable
   finite channel-profile measurements, including three additional dense checks.

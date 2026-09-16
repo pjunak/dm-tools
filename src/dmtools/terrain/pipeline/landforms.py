@@ -10,7 +10,7 @@ import shapely
 from numpy.typing import NDArray
 from shapely.geometry import MultiPolygon, Polygon
 
-from dmtools.terrain.domain import TerrainRegion, TerrainSettings
+from dmtools.terrain.domain import LandformSettings, TerrainRegion, TerrainSettings
 from dmtools.terrain.domain.seeds import LANDFORM_STAGE_ID, stage_seed
 from dmtools.terrain.pipeline.noise import fractal_value_noise
 
@@ -41,6 +41,21 @@ def prepare_regions(
     return tuple(prepared)
 
 
+
+def regional_noise_basis(
+    x: NDArray[np.float64], y: NDArray[np.float64], controls: LandformSettings, seed: int,
+) -> tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]]:
+    """Shared coordinates/carrier for regional relief and mountain-crest detection."""
+    angle = np.deg2rad(controls.orientation_deg)
+    u = np.cos(angle) * x + np.sin(angle) * y
+    v = -np.sin(angle) * x + np.cos(angle) * y
+    if controls.character == "mountains":
+        u = u / 3.0
+    broad = fractal_value_noise(u, v, seed=seed,
+        largest_feature_km=controls.feature_size_km, detail_levels=2, roughness=0.5)
+    return u, v, broad
+
+
 def regional_elevation_fields(
     x: NDArray[np.float64], y: NDArray[np.float64], coast_distance: NDArray[np.float64],
     full: NDArray[np.float64], macro: NDArray[np.float64],
@@ -55,13 +70,7 @@ def regional_elevation_fields(
     coastal_gate = -np.expm1(-coast_distance / settings.coastal_rise_km)
     for region, inside, weight in _regional_weights(x, y, regions):
         controls = region.source.settings
-        angle = np.deg2rad(controls.orientation_deg)
-        u = np.cos(angle) * x[inside] + np.sin(angle) * y[inside]
-        v = -np.sin(angle) * x[inside] + np.cos(angle) * y[inside]
-        if controls.character == "mountains":
-            u = u / 3.0
-        broad = fractal_value_noise(u, v, seed=seed,
-            largest_feature_km=controls.feature_size_km, detail_levels=2, roughness=0.5)
+        u, v, broad = regional_noise_basis(x[inside], y[inside], controls, seed)
         detail = fractal_value_noise(u, v, seed=seed,
             largest_feature_km=controls.feature_size_km,
             detail_levels=max(2, settings.detail_levels), roughness=settings.roughness) - broad

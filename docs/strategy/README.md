@@ -94,10 +94,15 @@ bounds on unseen terrain heights.
    visual, channel-profile and performance evidence. Source-aware floor fitting
    now reduces source humps and artificial cut pits on cardinal/diagonal edges;
    the [follow-up](../research/2026-09-16-source-aware-channel-floors.md) classifies
-   large hidden crests that exceed current cut ceilings. Next compare finer
-   planning or route alternatives for these obstacles, then complete downstream
-   conditioning and turn smoothing. Preserve divides, authored constraints and
-   cut budgets. Inspect regenerated 1025 px results with
+   large hidden crests that exceed current cut ceilings. Targeted mountain-crest
+   observations now inform Priority-Flood, D8 and MFD together; the
+   [routing comparison](../research/2026-09-16-mountain-crest-routing.md) records
+   improved large outliers, added runtime and mixed remaining drainage metrics.
+   Profile routing overhead and regional storage before widening observations;
+   next extend coverage to multiple/tangent crossings,
+   other recipes and authored features, with explicit source-scale/process-grid
+   limits; continue downstream conditioning and turn smoothing. Preserve divides,
+   authored constraints and cut-budget policy. Inspect regenerated 1025 px results with
    pan/zoom and ground readout; keep authored controls authoritative.
    [ADR-0049](../adr/0049-navigate-and-save-authored-inputs.md) owns the current
    input-editor contract. Cancellation, comparison views and vertex insertion
