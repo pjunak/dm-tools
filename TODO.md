@@ -318,6 +318,32 @@ substeps.
   versioned authored inputs with their own content hashes and should expose the
   effective values used by a build.
 
+### Zoom-driven local detail generation
+
+This is a core planned generation capability. It is separate from directly
+editing a finished DEM; see [ADR-0048](docs/adr/0048-keep-zoom-driven-detail-generation.md).
+
+- [ ] **P0 — Define regional generation requests.** Record the immutable parent
+  build/input identity, window bounds in its coordinate frame, target spacing,
+  detail controls and buffered context. Use the existing local metric frame
+  until world placement is implemented; do not reinterpret the planet's scale.
+- [ ] **P0 — Define parent/child and neighboring-window consistency.** Select a
+  restriction/downsample rule and numeric tolerances; preserve broad geography
+  while adding finer structure. Keep unchanged-field shared-node equality as a
+  separate test. Cover 65/129/257 windows, overlapping requests, boundary slopes
+  and repeat visits in a different order. R34's band-amplitude issue remains open.
+- [ ] **P1 — Generate and cache only the requested window.** Evaluate the context
+  buffer, crop afterwards, and bound work/memory. Identify results by inputs,
+  parent, extent, spacing and algorithm; changed inputs invalidate children.
+- [ ] **P1 — Preserve hydrological context during local enrichment.** Keep
+  authored constraints and inherited upstream flow; a local rectangle or halo
+  must not invent an independent catchment. Validate drainage after detail and
+  constraint/parent consistency corrections.
+- [ ] **P1 — Connect zoom to regional generation requests.** Keep navigation
+  responsive and distinguish image magnification, denser field sampling and
+  newly generated detail. Define automatic thresholds or an explicit generate
+  action, cancellation, result freshness and cache budgets before wiring jobs.
+
 ### Project portability
 
 - [ ] **P2 — Evaluate a portable project bundle.** A bundle could package the
@@ -332,7 +358,7 @@ substeps.
 
 ### Potential separate feature
 
-Completed-map sculpting or local post-generation refinement could belong in a
+Direct sculpting or manual patching of completed maps could belong in a
 separate module or program. This is a possibility only, with no implementation
 plan or dependency on the active input editor.
 
@@ -677,6 +703,12 @@ Priorities remain conditional on the current strategy's prerequisites.
   the 2024 analytical stream-power method as a bounded candidate for fast
   terrain-age control. Test uplift/base-level assumptions, convergence,
   authored anchors and runtime against the current incision baseline.
+- [ ] **Research — R15: Evaluate multi-scale erosion amplification.** Compare
+  the previously researched MIT reference with current residual detail on a
+  generated local mountain/valley window. Preserve the fixed parent, inherited
+  inflow and boundary gradients; measure deposition, seams and repeatability.
+  Verify runtime, numeric height exchange and fixed-step operation before
+  adopting any engine. This is a generation experiment, not an output editor.
 - [ ] **Research — R16: Prototype bedrock plus mobile sediment.** Start with a
   Landlab SPACE comparison on a channel opening onto a plain. Track erosion,
   storage, deposition and export; verify nonnegative cover and bounded balance
@@ -862,7 +894,8 @@ Priorities remain conditional on the current strategy's prerequisites.
 ## UI / UX improvements
 
 Current priority: advance pre-generation input editing before generator research.
-[ADR-0047](docs/adr/0047-edit-generation-inputs-only.md) defines the product boundary.
+[ADR-0047](docs/adr/0047-edit-generation-inputs-only.md) defines input editing;
+[ADR-0048](docs/adr/0048-keep-zoom-driven-detail-generation.md) keeps local enrichment in scope.
 
 ### Editing and navigation
 
@@ -881,7 +914,8 @@ Current priority: advance pre-generation input editing before generator research
   draft redo and future vertex movement are outside this completed slice.
 - [ ] **P0 — Add pan and zoom.** Keep wheel-based brush sizing predictable by
   assigning zoom to a modifier or dedicated navigation mode; show current map
-  scale and cursor coordinates.
+  scale and cursor coordinates. Preserve a geographic viewport that future
+  local detail generation can consume; navigation alone does not add terrain detail.
 - [ ] **P1 — Add draggable line vertices and insertion/removal of vertices.**
   Preserve normalized/world positions exactly and provide numeric entry for
   precise authoring.

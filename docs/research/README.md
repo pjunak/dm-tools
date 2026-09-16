@@ -105,6 +105,7 @@ in the current status or a new dated report.
   ordered scientific inspection view.
 
 Scope note: dated proposals preserve the questions studied at their original date.
-[ADR-0047](../adr/0047-edit-generation-inputs-only.md) and the current strategy take
-precedence for the input-only editor; historical post-build editing proposals
-are not active work. Adaptive numerical sampling experiments remain applicable.
+[ADR-0048](../adr/0048-keep-zoom-driven-detail-generation.md) corrects the overly
+broad regional-generation exclusion in ADR-0047. Zoom-driven local detail and
+adaptive numerical sampling remain active generation work; direct sculpting of
+completed outputs remains outside the product scope.

@@ -111,6 +111,7 @@ layer or path boundaries.
   (lake levels, retention, outlet checks and conservative area transfer are implemented)
 - River/catchment vector products and external hydrology validation
   (numeric routing, footprint collection and basin review archives are implemented)
+- Zoom-driven regional generation, parent consistency, buffers and bounded caching
 - Global climate-field and ecological-classification contracts
 - Web framework, queue, storage, and frontend
 - Public project license
@@ -128,4 +129,10 @@ A `GenerationInputs` snapshot accompanies each worker result. The UI compares it
 with current coastline, settings and constraints before treating the result as
 current or enabling PNG export. Retained images and review products belong to the
 last successful build and never feed back into generation as editable surfaces.
-See [ADR-0047](../adr/0047-edit-generation-inputs-only.md).
+See [ADR-0047](../adr/0047-edit-generation-inputs-only.md), with the regional
+scope correction in [ADR-0048](../adr/0048-keep-zoom-driven-detail-generation.md).
+
+Planned local enrichment is a generation operation. It may consume immutable
+parent boundary and flow context to create a finer regional result, with stable
+coordinates, explicit consistency tests and bounded work. The current whole-map
+worker and input history do not yet implement viewport-driven regional jobs.

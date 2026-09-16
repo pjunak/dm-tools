@@ -27,7 +27,9 @@ coordinates on both axes. For example, five nodes from -10 to 10 km are
 A span with N nodes has N-1 intervals. Subdividing each interval twice produces
 2N-1 nodes: 65 becomes 129, not 130. The domain's `refined` helper computes
 this geometry; it does not generate child terrain or guarantee parent/child
-DEM consistency. Non-dyadic floating-point refinement may need numerical
+DEM consistency. [ADR-0048](adr/0048-keep-zoom-driven-detail-generation.md) keeps
+zoom-driven regional generation in scope and identifies the missing parent and
+window contracts. Non-dyadic floating-point refinement may need numerical
 tolerances even when the abstract positions coincide.
 
 The shape factory retains the existing aspect-ratio calculation and ties-to-

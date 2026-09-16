@@ -16,6 +16,7 @@ external-engine inventory below retains the 2026-09-13 audit date.
 |---|---|---|
 | Input editor | Generated reference retained with input freshness, selection/property edits, delete and instruction undo/redo | Pan/zoom, vertex movement, unsaved-change safeguards, climate-region inputs |
 | Local numeric builds | Saved-project CLI, Float32 NPY/GeoTIFF, review NPZ, previews, diagnostics and completion hashes | World placement, vector products, external desktop GIS acceptance |
+| Zoom-driven local detail | Coordinate-addressed fields and shared-sample/grid foundations only | Geographic viewport, regional build requests, added detail, parent/overlap consistency, inherited hydrology and bounded caching |
 | Coordinates/seeds (R01-R03) | Source/local round trips, endpoint grids, actual spacing metadata and portable named seeds | Planetary CRS, configurable process spacing, cell-average/resampling policy |
 | Authored macro routing (R04-R05) | Authored terrain shapes canonical planning; D8/MFD topology and finished-field conflicts are exported | Filled routes are not validated rivers; unresolved uphill channels remain |
 | Regional landforms | Plain/hill/plateau/mountain recipes, orientation, transitions and regional cut limits | Distribution targets, transition-gradient validation, related geological regions |
@@ -70,10 +71,10 @@ Local RBF/screened-Poisson replacement, time-stepped erosion, bedrock/sediment
 transport, coupled ridge/drainage generation, specialized glacial/wind/volcanic
 families, Earth-analogue synthesis and learned proposals remain candidates.
 Global climate/ecology still needs its input, scale and validation contracts.
-The active product is an input editor followed by regeneration; earlier selected-
-region post-build proposals are outside that scope (see
-[ADR-0047](../adr/0047-edit-generation-inputs-only.md)). The complete alternatives
-and gates remain in TODO.
+The input editor is followed by generation, including planned zoom-driven local
+enrichment. [ADR-0048](../adr/0048-keep-zoom-driven-detail-generation.md) corrects
+the earlier exclusion of regional generation; manual sculpting of completed
+outputs remains out of scope. The complete alternatives and gates remain in TODO.
 
 SciPy, Landlab and Numba are not installed in the environment checked for this
 audit. GRASS, Whitebox, SPACE, HighMap, GPU transport, geological engines and

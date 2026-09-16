@@ -6,7 +6,7 @@ here; they are not automatically discovered from this sibling directory.
 
 ## Product contract
 
-The terrain tool compiles authored constraints into a deterministic elevation
+The terrain tool compiles authored constraints into deterministic elevation
 products. It does not invent or silently change canonical
 geography. A run may offer alternatives, but adopting one remains a user
 decision.
@@ -40,6 +40,10 @@ dictionaries or global settings.
 - Editing changes authored generation inputs only. A generated map may remain
   visible as a read-only placement reference, with explicit stale/current status.
   Regenerate from inputs to apply changes; never patch a completed DEM.
+- Zoom-driven local enrichment remains in scope as a planned generation operation.
+  Its immutable parent context, coordinate frame, overlap/downsample tolerances
+  and inherited hydrology require explicit validation; shared samples alone do
+  not establish the complete contract. See ADR-0048.
 - Keep numerical sampling and shared-coordinate checks separate from user editing.
 
 ## Stage rules

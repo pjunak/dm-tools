@@ -81,6 +81,8 @@ result, even while new instructions are drawn above it.
 The reference image and undo history last for the current workbench session.
 Project saves continue to contain authored inputs only; reopening requires
 regeneration to obtain a background. Pan/zoom and vertex movement remain planned.
+Zoom will also identify regions for the planned local detail generator; that
+generation workflow is not implemented yet.
 Desert/biome instructions require the future climate input contract; the current
 region tool provides plain, hills, plateau and mountains.
 
@@ -242,6 +244,14 @@ but querying the same kilometre coordinates still gives the same terrain.
 
 This is a sampling guarantee for independently generated output grids. It does
 not imply equal cell averages or continuity between different input settings.
+
+Zoom-driven local enrichment remains a core planned feature. It should generate
+finer terrain only for the requested geographic window, preserving parent
+geography, authored intent and neighboring boundaries. Magnifying a PNG or
+increasing output pixels alone does not implement this. Parent-conditioned detail,
+buffers, flow context and consistency tests remain open; see
+[ADR-0048](../../../docs/adr/0048-keep-zoom-driven-detail-generation.md) and the
+[regional prototype](../../../docs/research/2026-09-04-terrain-prototype-contracts.md).
 
 ## Model and review limits
 

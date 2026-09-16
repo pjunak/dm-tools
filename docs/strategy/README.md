@@ -53,7 +53,11 @@ authored geography + versioned settings + master seed
 The authored inputs and generated DEM remain authoritative for terrain.
 The editor changes these authored inputs and uses the last map as a read-only
 reference. Regeneration applies changes; no completed-map modification is in the
-active product scope. Numerical adaptive sampling remains generator research.
+active product scope. Zoom-driven local enrichment remains a core planned
+generation capability: it produces finer regional results while preserving the
+parent geography. [ADR-0048](../adr/0048-keep-zoom-driven-detail-generation.md)
+corrects ADR-0047 on this boundary. Numerical adaptive sampling also remains
+generator research.
 Climate, ecological classifications, contours, drainage, and presentation
 layers are derived products that can be rebuilt and inspected independently.
 
@@ -86,8 +90,10 @@ bounds on unseen terrain heights.
 1. Advance the input editor before returning to generator research. Retained
    generation references, selection/property edits, deletion and instruction
    undo/redo are implemented. Next add pan/zoom for accurate placement, vertex
-   editing, and unsaved-change/Save safeguards. All edits specify a subsequent
-   generation; [ADR-0047](../adr/0047-edit-generation-inputs-only.md) owns the boundary.
+   editing, and unsaved-change/Save safeguards. The viewport must retain geographic
+   coordinates for subsequent local generation. Input edits specify a new build;
+   [ADR-0048](../adr/0048-keep-zoom-driven-detail-generation.md) distinguishes
+   this from generating additional detail under an unchanged parent.
 2. Establish usable bounds for residual blended/grazing extrema and measure
    project-scale sampling cost. The
    [adaptive experiment](../research/2026-09-13-adaptive-water-profile-refinement.md)
@@ -113,7 +119,9 @@ bounds on unseen terrain heights.
    cut depth/length and preserved anchors, then expose reviewable river networks.
 4. Extend point-anchored ridge/valley profiles with direct per-vertex controls,
    explicit passes and asymmetric sides.
-5. Add regional drainage-density/runoff controls as authored generation inputs.
+5. Add regional drainage-density/runoff controls as authored generation inputs
+   and implement bounded local detail generation after its parent, boundary and
+   hydrology consistency gates are defined. Pan/zoom alone is its UI foundation.
 
 R04/R05 provide the first drainage correctness slice and review products;
 [ADR-0029](../adr/0029-route-drainage-over-authored-terrain.md) records its limits.
@@ -210,7 +218,21 @@ checks when declaring planetary placement.
 - Treat landscape evolution as an optional deterministic stage configured before
   generation, after hydrology and constraint preservation have quantitative tests.
 
-### 5. Prototype climate as a separate global-context system
+### 5. Generate consistent local detail on demand
+
+- Define immutable parent identity, geographic window, target spacing, detail
+  policy, context buffer and crop. Preserve the parent frame and broad geography.
+- Prove shared-sample, parent restriction and overlap height/slope properties as
+  separate contracts. Adding detail bands currently changes existing weights;
+  resolve R34 before promising detail-only enrichment.
+- Generate the visible/requested region with required surrounding constraints
+  and upstream flow context. Bound generation and caching rather than allocating
+  the entire continent at local resolution. Returning to a region must be stable.
+- Use the existing [regional prototype C](../research/2026-09-04-terrain-prototype-contracts.md)
+  as the initial fixture. Choose the process, restriction tolerances and zoom job
+  policy through measurement; these are not implemented capabilities yet.
+
+### 6. Prototype climate as a separate global-context system
 
 Do not implement climate continent by continent without shared global context.
 The first deterministic prototype should consume the fixed world projection,
@@ -230,7 +252,7 @@ water-balance relation are useful scientific components. Climlab and xclim are
 reference or comparison libraries; ExoPlaSim is an external plausibility
 experiment, not an interactive production dependency.
 
-### 6. Derive classifications without collapsing their meanings
+### 7. Derive classifications without collapsing their meanings
 
 Named climate zones should be versioned classification views over continuous
 fields. A familiar Köppen–Geiger-like view and a Holdridge-like ecological

@@ -60,6 +60,9 @@ separate TTRPG `addon-dm-tools` package has its own host installation lifecycle.
 - Keep user-authored constraints authoritative. Generated output must never
   silently overwrite an input project. The editor changes generation inputs;
   completed maps are read-only references. Changes take effect through a new build.
+- Zoom-driven local enrichment is planned generation, not manual DEM editing.
+  Preserve its parent identity, coordinate frame and consistency requirements;
+  see ADR-0048. Do not remove this capability when excluding output sculpting.
 - Record architectural decisions under `docs/adr/`; supersede decisions rather
   than rewriting their history.
 
