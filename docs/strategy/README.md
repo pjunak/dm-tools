@@ -87,16 +87,17 @@ reject distant candidates before geometry queries; the
 16/64-point workloads and broad overlap. These are spatial search bounds, not
 bounds on unseen terrain heights.
 
-1. Test the usable input workbench before returning to generator research.
-   Retained references, geographic pan/zoom, property edits, whole-instruction
-   and vertex movement, undo/redo, Save/Save As and unsaved-change guards are
-   implemented. The public example can open at startup; explicit 257/1025 px
-   presets and ground inspection support quick quality checks. Gather placement
-   and quality feedback; next editor gains are cancellation, before/after
-   comparison and vertex insertion/removal. Automatic draft previews remain
-   separate work. [ADR-0049](../adr/0049-navigate-and-save-authored-inputs.md)
-   records the current interaction contract. The viewport exposes coordinates
-   for subsequent local generation; [ADR-0048](../adr/0048-keep-zoom-driven-detail-generation.md)
+1. Continue measured generator-quality improvements using the usable input
+   workbench. Bounded valley reconstruction now reduces interpolation creases
+   while preserving canonical routing and cut limits; the
+   [comparison](../research/2026-09-16-bounded-valley-reconstruction.md) records
+   its visual, between-node profile and performance limits. Next measure D8
+   turns, remaining between-node climbs and regional/retention transition slopes
+   before choosing flow-aware shaping. Inspect regenerated 1025 px results with
+   pan/zoom and ground readout; keep authored controls authoritative.
+   [ADR-0049](../adr/0049-navigate-and-save-authored-inputs.md) owns the current
+   input-editor contract. Cancellation, comparison views and vertex insertion
+   remain separate editor work. [ADR-0048](../adr/0048-keep-zoom-driven-detail-generation.md)
    defines the distinct parent-conditioned enrichment scope.
 2. Establish usable bounds for residual blended/grazing extrema and measure
    project-scale sampling cost. The

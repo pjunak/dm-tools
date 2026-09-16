@@ -21,7 +21,7 @@ It shares actual planning, but does not test terrain clearance or water connecti
 
 Every authored basin footprint excludes automatic incision and automatic detail
 suppression. The canonical incision budget is zero inside it, and exact vector
-membership also gates continuous sampling so bilinear interpolation cannot leak
+membership also gates continuous sampling so reconstructed fields cannot leak
 a cut into the protected area between routing nodes. Authored height points,
 brushes, ridges and valleys still apply; protection is against generated cutting.
 It does not erase an authored valley crossing a dry basin.

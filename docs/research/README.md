@@ -12,6 +12,10 @@ in the current status or a new dated report.
 
 ## Implemented and measured work
 
+- [Bounded valley reconstruction - 2026-09-16](2026-09-16-bounded-valley-reconstruction.md)
+  measures smoother automatic shaping between canonical nodes, preserved cut
+  limits and routing, finite channel profiles, runtime and memory.
+
 - [Bound-driven noise-profile refinement - 2026-09-16](2026-09-16-bounded-noise-refinement.md)
   compares hybrid geometry and adaptive/uniform refinement with local extrema,
   ordered-rise tolerances and cumulative limits; full-field adoption remains open.

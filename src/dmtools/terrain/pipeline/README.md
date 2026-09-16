@@ -11,6 +11,14 @@ shape that macro surface before routing. MFD contributing area uses a
 Priority-Flood-conditioned copy on a fixed canonical grid, then drives bounded,
 stream-power-inspired automatic valleys. Incision is sampled in local metric
 coordinates, so changing output resolution does not reroute major valleys.
+Incision and residual-detail suppression use prepared bounded bicubic Hermite
+patches: shared nodal derivatives soften cell-edge creases, while each patch
+stays within its original corner range. Incision also obeys the existing
+bilinear interpolation of nodal cut limits; exact basin masks still exclude
+both effects inside retained footprints. Active ceilings may retain slope
+breaks. This preserves routing nodes, not every between-node height, and does
+not add terrain detail or certify flow. See
+[ADR-0050](../../../../docs/adr/0050-reconstruct-valleys-with-bounded-cubics.md).
 Final shaping applies authored brush, ridge, valley and height-point responses
 and restores permitted high-frequency residual. Absolute constraints attenuate
 that residual to satisfy absolute metre elevations. Relative constraints are deterministic

@@ -485,6 +485,17 @@ execution order.
   pre-valley metric reference profile plus downstream-only floor correction. Authored
   lake/dry-basin retention limits automatic cuts only; explicit valley floors
   still apply inside those footprints. Water-aware valley exceptions remain open.
+- [x] **P1 — Reduce reconstruction creases in generated valleys.** Shared
+  bounded cubic derivatives now reconstruct incision and detail suppression
+  between unchanged routing nodes. Existing cut ceilings and retention remain
+  authoritative. [ADR-0050](docs/adr/0050-reconstruct-valleys-with-bounded-cubics.md)
+  and the [measurements](docs/research/2026-09-16-bounded-valley-reconstruction.md)
+  record improvement, cost and remaining D8/cap artifacts.
+- [ ] **P1 — Improve between-node channel geometry.** Compare flow-aware
+  shaping on straight/diagonal turns and complete downstream profiles. The
+  reconstruction comparison reduces sampled climbs but still finds hundreds
+  on edges whose endpoints descend. Preserve divides, anchors and cut budgets;
+  a smoother field or a finite 17-station check does not certify a river.
 - [ ] **P1 — Add variable valley cross-sections.** Support narrow V-shaped
   valleys, glacial U-shaped valleys, broad floodplains, terraces, and smooth
   width/depth changes along a line. Generated fluvial valleys now widen and

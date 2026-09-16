@@ -2,7 +2,7 @@
 """First deterministic coastline-conditioned terrain pipeline."""
 
 from collections.abc import Callable, Sequence
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from itertools import pairwise
 from typing import Any, cast
 
@@ -47,6 +47,7 @@ from dmtools.terrain.pipeline.landforms import (
 )
 from dmtools.terrain.pipeline.noise import fractal_value_noise
 from dmtools.terrain.pipeline.profile import shape_preserving_profile
+from dmtools.terrain.pipeline.reconstruction import BoundedBicubicGrid
 from dmtools.terrain.pipeline.water import (
     MetricBasin,
     WaterProducts,
@@ -59,8 +60,8 @@ from dmtools.terrain.pipeline.water_sampling import SamplingDensity, SamplingFea
 
 type ProgressCallback = Callable[[float, str], None]
 
-GENERATOR_ALGORITHM_ID = "coastline-constraint-terrain@8"
-AUTOMATIC_VALLEY_ALGORITHM_ID = "regional-budget-mfd-d8-valleys@6"
+GENERATOR_ALGORITHM_ID = "coastline-constraint-terrain@9"
+AUTOMATIC_VALLEY_ALGORITHM_ID = "regional-budget-mfd-d8-valleys@7"
 NOISE_ALGORITHM_ID = "coordinate-value-noise-normalized@1"
 
 
@@ -119,61 +120,28 @@ class _AutomaticValleyField:
     land_mask: NDArray[np.bool_]
     basins: tuple[MetricBasin, ...] = ()
 
-    def _sample(
-        self,
-        values: NDArray[np.float64],
-        x_km: NDArray[np.float64],
-        y_km: NDArray[np.float64],
-    ) -> NDArray[np.float64]:
-        columns = np.clip(
-            np.searchsorted(self.x_km, x_km, side="right") - 1,
-            0,
-            self.x_km.size - 2,
-        )
-        rows = np.clip(
-            np.searchsorted(self.y_km, y_km, side="right") - 1,
-            0,
-            self.y_km.size - 2,
-        )
-        x0 = self.x_km[columns]
-        x1 = self.x_km[columns + 1]
-        y0 = self.y_km[rows]
-        y1 = self.y_km[rows + 1]
-        x_fraction = np.divide(
-            x_km - x0,
-            x1 - x0,
-            out=np.zeros_like(x_km),
-            where=x1 > x0,
-        )
-        y_fraction = np.divide(
-            y_km - y0,
-            y1 - y0,
-            out=np.zeros_like(y_km),
-            where=y1 > y0,
-        )
-        top = (
-            values[rows, columns] * (1.0 - x_fraction)
-            + values[rows, columns + 1] * x_fraction
-        )
-        bottom = (
-            values[rows + 1, columns] * (1.0 - x_fraction)
-            + values[rows + 1, columns + 1] * x_fraction
-        )
-        return top * (1.0 - y_fraction) + bottom * y_fraction
+    _incision: BoundedBicubicGrid = field(init=False, repr=False)
+    _suppression: BoundedBicubicGrid = field(init=False, repr=False)
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "_incision", BoundedBicubicGrid(
+            self.x_km, self.y_km, self.incision_m, self.drainage.incision_limit_m))
+        object.__setattr__(self, "_suppression", BoundedBicubicGrid(
+            self.x_km, self.y_km, self.detail_suppression))
 
     def sample_incision(
         self,
         x_km: NDArray[np.float64],
         y_km: NDArray[np.float64],
     ) -> NDArray[np.float64]:
-        return self._sample(self.incision_m, x_km, y_km)
+        return self._incision.sample(x_km, y_km)
 
     def sample_detail_suppression(
         self,
         x_km: NDArray[np.float64],
         y_km: NDArray[np.float64],
     ) -> NDArray[np.float64]:
-        return self._sample(self.detail_suppression, x_km, y_km)
+        return self._suppression.sample(x_km, y_km)
 
 
 def _report(callback: ProgressCallback | None, fraction: float, message: str) -> None:

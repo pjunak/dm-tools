@@ -76,3 +76,4 @@ supersedes their legacy compatibility commitments during early development.
   (regional-generation scope corrected by ADR-0048)
 - [ADR-0048: Keep zoom-driven detail generation in scope](0048-keep-zoom-driven-detail-generation.md)
 - [ADR-0049: Navigate and save authored terrain inputs](0049-navigate-and-save-authored-inputs.md)
+- [ADR-0050: Reconstruct automatic valleys with bounded cubics](0050-reconstruct-valleys-with-bounded-cubics.md)

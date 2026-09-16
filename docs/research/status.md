@@ -7,8 +7,9 @@ Research IDs remain stable in dated reports when proposals leave the active scop
 Dated reports preserve measurements at their recorded revision, not timeless
 performance claims. A source audit is not a successfully run engine comparison.
 
-The noise-profile research slice and input-editor scope were updated on 2026-09-16; the
-external-engine inventory below retains the 2026-09-13 audit date.
+The noise-profile research, input editor and bounded valley reconstruction were
+updated on 2026-09-16; the external-engine inventory below retains the
+2026-09-13 audit date.
 
 ## Implemented baseline
 
@@ -19,6 +20,7 @@ external-engine inventory below retains the 2026-09-13 audit date.
 | Zoom-driven local detail | Coordinate-addressed fields, shared-sample/grid foundations and a geographic viewport | Regional build requests, added detail, parent/overlap consistency, inherited hydrology and bounded caching |
 | Coordinates/seeds (R01-R03) | Source/local round trips, endpoint grids, actual spacing metadata and portable named seeds | Planetary CRS, configurable process spacing, cell-average/resampling policy |
 | Authored macro routing (R04-R05) | Authored terrain shapes canonical planning; D8/MFD topology and finished-field conflicts are exported | Filled routes are not validated rivers; unresolved uphill channels remain |
+| Valley reconstruction | Shared-derivative, corner-bounded cubic incision/suppression fields; canonical nodes and cut ceilings preserved | D8 turns, active-cap/retention boundaries, between-node climbs and complete-field error bounds |
 | Regional landforms | Plain/hill/plateau/mountain recipes, orientation, transitions and regional cut limits | Distribution targets, transition-gradient validation, related geological regions |
 | Structural authoring | Absolute/relative point-anchored profiles, directed valley floors and compatible junctions | Direct per-vertex controls, explicit passes, asymmetric sides and generated branching |
 | Basin intent and flow | Lake/dry footprints retain terrain and captured MFD area; eligible outlets transfer collected area conservatively | Runoff/discharge, equilibrium water levels, controlling sills, lake chains and nested depressions |
@@ -38,6 +40,12 @@ because related controls or exports exist. In particular, the four recipes do
 not close regional distribution/geology research, and shared-point equality does
 not prove cell-average equivalence. R07 remains open: dry-basin retention does not
 enable negative land heights or bathymetry.
+
+The [valley reconstruction comparison](2026-09-16-bounded-valley-reconstruction.md)
+records reduced cell-edge slope breaks and sampled uphill excursions on eight
+public/synthetic case-seed combinations. Canonical routing and water outcomes
+matched there. Off-grid heights intentionally change; complete-field clearance
+and physical river validity remain open.
 
 ## Research that has not been adopted
 

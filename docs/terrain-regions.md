@@ -3,8 +3,10 @@
 Select **Region** in the workbench. Choose plain, hills, plateau or
 mountains, adjust its controls, click at least three polygon corners and choose
 **Finish area** (or right-click). Generate to apply it. Undo removes the last
-corner while drawing, then the last committed feature. Region controls apply to
-the next polygon; existing regions are currently replaced through undo/redraw.
+corner while drawing, then reverses the last completed input edit. Use **Select**
+to pick an existing region, change its properties and choose **Apply edit**.
+Drag the selected polygon or one of its vertices to move or reshape the input;
+regenerate to see the result. New-tool controls apply to the next polygon.
 
 Try [the regional example](../examples/terrain/landform-regions.dmterrain.json),
 which references the same small public coastline as the empty example project.
