@@ -87,13 +87,17 @@ reject distant candidates before geometry queries; the
 16/64-point workloads and broad overlap. These are spatial search bounds, not
 bounds on unseen terrain heights.
 
-1. Advance the input editor before returning to generator research. Retained
-   generation references, selection/property edits, deletion and instruction
-   undo/redo are implemented. Next add pan/zoom for accurate placement, vertex
-   editing, and unsaved-change/Save safeguards. The viewport must retain geographic
-   coordinates for subsequent local generation. Input edits specify a new build;
-   [ADR-0048](../adr/0048-keep-zoom-driven-detail-generation.md) distinguishes
-   this from generating additional detail under an unchanged parent.
+1. Test the usable input workbench before returning to generator research.
+   Retained references, geographic pan/zoom, property edits, whole-instruction
+   and vertex movement, undo/redo, Save/Save As and unsaved-change guards are
+   implemented. The public example can open at startup; explicit 257/1025 px
+   presets and ground inspection support quick quality checks. Gather placement
+   and quality feedback; next editor gains are cancellation, before/after
+   comparison and vertex insertion/removal. Automatic draft previews remain
+   separate work. [ADR-0049](../adr/0049-navigate-and-save-authored-inputs.md)
+   records the current interaction contract. The viewport exposes coordinates
+   for subsequent local generation; [ADR-0048](../adr/0048-keep-zoom-driven-detail-generation.md)
+   defines the distinct parent-conditioned enrichment scope.
 2. Establish usable bounds for residual blended/grazing extrema and measure
    project-scale sampling cost. The
    [adaptive experiment](../research/2026-09-13-adaptive-water-profile-refinement.md)

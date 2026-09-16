@@ -13,6 +13,7 @@ from PIL import Image
 
 from benchmarks.terrain import fixture
 from dmtools.terrain import ui
+from dmtools.terrain.adapters import load_terrain_project
 from dmtools.terrain.domain import (
     ElevationPoint,
     TerrainBasin,
@@ -100,7 +101,7 @@ def test_save_and_failure_do_not_relabel_stale_reference(
     monkeypatch.setattr(ui.messagebox, "showerror", showerror)
     app._variables["seed"].set(99)
     image = app._image
-    app._events.put(ui._ProjectSavedEvent(Path("test.dmterrain.json")))
+    app._events.put(ui._ProjectSavedEvent(Path("test.dmterrain.json"), app._generation_inputs()))
     app._poll_events()
     assert str(app.export_button["state"]) == "disabled"
     app._events.put(ui._ErrorEvent("Failed", "Generation failed", ValueError("test")))
@@ -248,3 +249,249 @@ def test_new_instruction_cancels_an_unfinished_draft(app: ui.TerrainApp) -> None
     event: tk.Event[tk.Misc] = tk.Event()
     app._on_instruction_selected(event)
     assert not app._draft_points and not app._has_pending_instruction()
+
+
+def _show_canvas(app: ui.TerrainApp) -> None:
+    app.root.deiconify()
+    app.root.geometry("1280x840")
+    app.root.update()
+
+
+def _map_event(app: ui.TerrainApp, position: tuple[float, float]) -> tk.Event[tk.Misc]:
+    event: tk.Event[tk.Misc] = tk.Event()
+    x, y = app._normalized_to_canvas(position)
+    event.x, event.y = round(x), round(y)
+    event.state = 0
+    return event
+
+
+def _wait_for_operation(app: ui.TerrainApp) -> None:
+    deadline = time.monotonic() + 20
+    while app._busy and time.monotonic() < deadline:
+        app.root.update()
+        time.sleep(0.01)
+    assert not app._busy
+
+
+def test_view_navigation_preserves_inputs_and_reference_and_probe_uses_dem(
+    app: ui.TerrainApp,
+) -> None:
+    _show_canvas(app)
+    inputs, terrain, image = app._generation_inputs(), app._terrain, app._image
+    assert terrain is not None
+    app._saved_inputs = inputs
+    app._zoom_view(4, (app.preview.winfo_width() / 2, app.preview.winfo_height() / 2))
+    event = _map_event(app, (0.5, 0.5))
+    app._begin_pan(event)
+    event.x += 20
+    app._pan_view(event)
+    app._end_pan(event)
+    position = (0.53, 0.47)
+    canvas = app._normalized_to_canvas(position)
+    assert app._canvas_to_normalized(*canvas) == pytest.approx(position)
+    app._inspect_position(*app._normalized_to_canvas((0.5, 0.5)))
+    assert "1,200 m ground" in str(app.cursor_label["text"])
+    assert app._viewport.zoom == 4 and app._viewport.centre != (0.5, 0.5)
+    assert app._generation_inputs() == inputs and app._reference_is_current()
+    assert not app._document_is_dirty() and app._terrain is terrain and app._image is image
+    app._fit_view()
+    assert app._viewport.centre == (0.5, 0.5) and app._viewport.zoom == 1
+
+
+def test_drag_commits_once_and_undo_restores_the_reference(app: ui.TerrainApp) -> None:
+    _show_canvas(app)
+    original = app._constraints
+    terrain = app._terrain
+    app._select_instruction(0)
+    app.root.update()
+    app._zoom_view(2)
+    app._on_map_press(_map_event(app, (0.5, 0.5)))
+    for x in (0.52, 0.54, 0.55):
+        app._on_map_drag(_map_event(app, (x, 0.5)))
+        assert app._constraints == original and not app._history.can_undo
+    app._on_map_release(_map_event(app, (0.55, 0.5)))
+    point = app._constraints[0]
+    assert isinstance(point, ElevationPoint)
+    assert point.position[0] == pytest.approx(0.55, abs=0.003)
+    assert app._history.can_undo and not app._reference_is_current()
+    app._undo_constraint()
+    assert app._constraints == original and not app._history.can_undo
+    assert app._reference_is_current() and app._terrain is terrain
+
+
+def test_crossed_region_drag_is_rejected_and_escape_cancels_preview(app: ui.TerrainApp) -> None:
+    _show_canvas(app)
+    ring = ((0.2, 0.2), (0.8, 0.2), (0.8, 0.8), (0.2, 0.8), (0.2, 0.2))
+    app._history.reset((TerrainRegion(ring),))
+    app._select_instruction(0)
+    app._on_map_press(_map_event(app, ring[1]))
+    app._on_map_drag(_map_event(app, (0.35, 0.9)))
+    app._on_map_release(_map_event(app, (0.35, 0.9)))
+    assert app._constraints == (TerrainRegion(ring),) and not app._history.can_undo
+    assert "rejected" in str(app.status_label["text"])
+    app._on_map_press(_map_event(app, ring[1]))
+    app._on_map_drag(_map_event(app, (0.6, 0.3)))
+    app._cancel_edit()
+    app._on_map_release(_map_event(app, (0.6, 0.3)))
+    assert app._constraints == (TerrainRegion(ring),) and not app._has_pending_instruction()
+
+
+def test_geometry_guard_rejects_basins_touching_and_lines_crossing_water(
+    app: ui.TerrainApp,
+) -> None:
+    ring = ((0.2, 0.2), (0.4, 0.2), (0.4, 0.4), (0.2, 0.4), (0.2, 0.2))
+    basin = TerrainBasin(ring, "lake", 200, ring[0])
+    app._history.reset((basin,))
+    app._validate_instruction_geometry(basin, excluding=0)
+    with pytest.raises(ValueError, match="overlap or touch"):
+        app._validate_instruction_geometry(basin)
+    outer = ((0., 0.), (1., 0.), (1., 1.), (0., 1.), (0., 0.))
+    app._coast_polygon = ui.Polygon(
+        [app._normalized_to_source(p) for p in outer],
+        holes=[[app._normalized_to_source(p) for p in ring]],
+    )
+    for instruction in (ElevationPoint((0.3, 0.3), 100, 20),
+                        TerrainStructure("ridge", ((0.1, 0.3), (0.7, 0.3)), 200, 30)):
+        with pytest.raises(ValueError, match="water holes"):
+            app._validate_instruction_geometry(instruction)
+
+
+def test_review_cache_is_reused_on_navigation_and_hidden_inputs_cannot_be_selected(
+    app: ui.TerrainApp,
+) -> None:
+    _show_canvas(app)
+    app._show_drainage.set(True)
+    app._draw_preview()
+    overlay = app._review_image
+    assert overlay is not None
+    app._zoom_view(32)
+    assert app._review_image is overlay
+    photo = app._review_photo
+    assert photo is not None
+    assert (photo.width(), photo.height()) == (app.preview.winfo_width(),
+                                               app.preview.winfo_height())
+    app._show_instructions.set(False)
+    app._draw_preview()
+    assert app._instruction_at(*app._normalized_to_canvas((0.5, 0.5))) is None
+    app._show_catchments.set(True)
+    app._draw_preview()
+    assert app._review_image is not overlay
+
+
+def test_input_shortcuts_leave_typing_alone_and_busy_workers_lock_inputs(
+    app: ui.TerrainApp,
+) -> None:
+    _show_canvas(app)
+    calls: list[str] = []
+    app.root.focus_force()
+    app.value_input.focus_set()
+    app.root.update()
+    assert app._shortcut(lambda: calls.append("delete"), editing=True) is None
+    assert not calls
+    app._set_busy(True)
+    app._shortcut(lambda: calls.append("generate"))
+    assert not calls
+    assert all(str(widget["state"]) == "disabled" for widget in app._settings_widgets)
+    app._set_busy(False)
+
+
+def test_save_as_then_save_uses_known_path_and_roundtrips_edits(
+    app: ui.TerrainApp, monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+) -> None:
+    source = Path("examples/terrain/landform-regions.dmterrain.json")
+    source_bytes = source.read_bytes()
+    app._accept_project(load_terrain_project(source))
+    assert not app._document_is_dirty()
+    app._set_resolution(257)
+    assert app._document_is_dirty() and app.root.title().startswith("* ")
+    destination = tmp_path / "edited.dmterrain.json"
+    dialogs: list[str] = []
+    def save_dialog(**_kwargs: object) -> str:
+        dialogs.append("save as")
+        return str(destination)
+    monkeypatch.setattr(ui.filedialog, "asksaveasfilename", save_dialog)
+    app._save_project(save_as=True)
+    _wait_for_operation(app)
+    assert not app._document_is_dirty() and app._project_path == destination
+    app._variables["seed"].set(18)
+    app._save_project()
+    _wait_for_operation(app)
+    assert dialogs == ["save as"] and not app._document_is_dirty()
+    loaded = load_terrain_project(destination)
+    assert loaded.project.settings.seed == 18 and loaded.project.settings.resolution_px == 257
+    assert source.read_bytes() == source_bytes
+
+
+@pytest.mark.parametrize("answer, expected", [(None, []), (False, ["continued"])])
+def test_unsaved_guard_can_cancel_or_discard(
+    app: ui.TerrainApp, monkeypatch: pytest.MonkeyPatch,
+    answer: bool | None, expected: list[str],
+) -> None:
+    calls: list[str] = []
+    def ask(*_args: object, **_kwargs: object) -> bool | None:
+        return answer
+    monkeypatch.setattr(ui.messagebox, "askyesnocancel", ask)
+    app._guard_unsaved(lambda: calls.append("continued"))
+    assert calls == expected
+
+
+def test_save_guard_waits_for_success_and_cancelled_dialog_keeps_document_open(
+    app: ui.TerrainApp, monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+) -> None:
+    app._accept_project(load_terrain_project(Path("examples/terrain/landform-regions.dmterrain.json")))
+    app._project_path = None
+    app._variables["seed"].set(24)
+    calls: list[str] = []
+    def ask(*_args: object, **_kwargs: object) -> bool:
+        return True
+    destination = ""
+    def save_dialog(**_kwargs: object) -> str:
+        return destination
+    monkeypatch.setattr(ui.messagebox, "askyesnocancel", ask)
+    monkeypatch.setattr(ui.filedialog, "asksaveasfilename", save_dialog)
+    app._guard_unsaved(lambda: calls.append("continued"))
+    assert not calls and not app._busy and app._document_is_dirty()
+    destination = str(tmp_path / "saved.dmterrain.json")
+    app._guard_unsaved(lambda: calls.append("continued"))
+    assert not calls and app._busy
+    _wait_for_operation(app)
+    assert calls == ["continued"] and not app._document_is_dirty()
+
+
+def test_failed_or_outdated_save_never_runs_destructive_continuation(
+    app: ui.TerrainApp, monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+) -> None:
+    app._accept_project(load_terrain_project(Path("examples/terrain/landform-regions.dmterrain.json")))
+    app._project_path = tmp_path / "saved.dmterrain.json"
+    app._variables["seed"].set(42)
+    calls: list[str] = []
+    errors: list[object] = []
+    def showerror(*args: object, **_kwargs: object) -> None:
+        errors.extend(args)
+    monkeypatch.setattr(ui.messagebox, "showerror", showerror)
+    app._save_project(after_save=lambda: calls.append("continued"))
+    # Programmatic changes can still arrive while widgets are disabled.
+    app._variables["seed"].set(43)
+    _wait_for_operation(app)
+    assert not calls and app._document_is_dirty()
+    assert load_terrain_project(app._project_path).project.settings.seed == 42
+    def fail(*_args: object, **_kwargs: object) -> None:
+        raise OSError("Simulated write failure")
+    monkeypatch.setattr(ui, "save_terrain_project", fail)
+    app._save_project(after_save=lambda: calls.append("continued"))
+    _wait_for_operation(app)
+    assert errors and not calls and app._after_save is None and app._document_is_dirty()
+
+
+def test_select_click_cannot_move_an_instruction_when_the_properties_change_layout(
+    app: ui.TerrainApp,
+) -> None:
+    _show_canvas(app)
+    app._set_selection_mode()
+    app.root.update()
+    original = app._constraints
+    event = _map_event(app, (0.5, 0.5))
+    app._on_map_press(event)
+    app.root.update()
+    app._on_map_release(event)
+    assert app._constraints == original and not app._history.can_undo

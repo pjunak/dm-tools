@@ -54,9 +54,11 @@ transitions and the [public example](../../../examples/terrain/landform-regions.
 1. Generate a map from the coastline and current instructions.
 2. Keep that result visible while adding guidance: for example, choose **Region**,
    select **mountains**, draw the area, then **Finish area**.
-3. To revise an existing instruction, choose it in the list below the controls
-   or **Ctrl+click** its point, line or area. White handles identify the selection.
-   Change its controls and press **Apply edit**. Geometry stays in place.
+3. To revise an existing instruction, choose **Select**, pick it in the list,
+   or **Ctrl+click** its point, line or area. Drag a white handle to move a vertex;
+   drag the line or the interior of an area to move the whole instruction.
+   Change properties and press **Apply edit**. A completed drag is one undo step.
+   Invalid geometry is rejected without changing the instruction.
 4. Choose **New instruction / cancel edit**, or a tool button, to resume drawing.
    Switching selection/tools discards unapplied property values and unfinished
    geometry. **Generate** and **Save** require the current edit to be applied or
@@ -66,10 +68,12 @@ transitions and the [public example](../../../examples/terrain/landform-regions.
 
 **Delete**, **Clear**, **Undo**, and **Redo** operate on committed instructions.
 Undo first removes an unfinished vertex when drawing. Committed additions,
-property changes, deletions and clear-all are reversible; draft vertices and
+property changes, moves, deletions and clear-all are reversible; draft vertices and
 numeric generator settings do not have redo history. Opening another project or
 coastline starts a new instruction history. Existing lake outlets keep their
 position when editing the water level; a newly enabled outlet uses the first vertex.
+Moving a lake moves its outlet too. Moving a boundary corner keeps an existing
+outlet at the same fraction of its edge. Direct outlet relocation is still planned.
 
 The banner distinguishes a matching map from a previous-generation reference.
 Changing generator settings also makes the reference stale. PNG export is enabled
@@ -80,11 +84,67 @@ result, even while new instructions are drawn above it.
 
 The reference image and undo history last for the current workbench session.
 Project saves continue to contain authored inputs only; reopening requires
-regeneration to obtain a background. Pan/zoom and vertex movement remain planned.
-Zoom will also identify regions for the planned local detail generator; that
-generation workflow is not implemented yet.
+regeneration to obtain a background. Pan/zoom preserves normalized map coordinates
+and exposes the visible geographic bounds. It currently magnifies existing samples;
+zoom-driven local enrichment remains planned, with its own generation and parent
+consistency contract in [ADR-0048](../../../docs/adr/0048-keep-zoom-driven-detail-generation.md).
 Desert/biome instructions require the future climate input contract; the current
 region tool provides plain, hills, plateau and mountains.
+
+## Quick testing and navigation
+
+Open the public regional example directly from the repository root:
+
+```powershell
+.\.venv\Scripts\dmtools.exe terrain gui --project examples/terrain/landform-regions.dmterrain.json
+```
+
+Use **Save As** to make a working copy, choose **Quick test · 257 px**, then
+**Generate terrain**. These presets set the actual output resolution saved in the
+project: **Detail · 1025 px** requests a denser whole-map build. Neither button
+adds hidden detail bands or implements a regional generation job.
+
+| Action | Control |
+|---|---|
+| Zoom around the pointer | Mouse wheel; toolbar **+ / -** zoom around the centre |
+| Pan | Middle-button drag, or focus the map and hold **Space** while dragging |
+| Restore the overview | **Fit**, or **F** outside a text field |
+| Inspect terrain without input overlays | Uncheck **Instructions**; painting/selection is suspended |
+| Inspect location and ground | Move the pointer: local x/y km from the map's top-left and the nearest reference DEM sample |
+| Adjust brush width / strength | **Shift+wheel** / **Ctrl+Shift+wheel** |
+| Apply properties / finish a draft | **Enter** with the map focused |
+| Cancel unapplied properties, draft or drag | **Esc** |
+| Delete / undo / redo an instruction | **Delete** / **Ctrl+Z** / **Ctrl+Y** or **Ctrl+Shift+Z**, outside text fields |
+| Open / Save / Save As | **Ctrl+O** / **Ctrl+S** / **Ctrl+Shift+S** |
+| Generate | **Ctrl+Enter** |
+
+The toolbar shows magnification relative to Fit and km per display pixel. This
+is a navigation scale, not the DEM sampling resolution. The ground readout and
+review overlays belong to the last result, including when it is stale; lake
+water surfaces remain separate from the reported ground height. Coordinates are
+local to this coastline, not latitude/longitude.
+
+Pan/zoom renders only the visible window instead of allocating an enlarged
+whole-map image. Drainage/catchment layers are cached per result and toggle
+combination. Zoom can expose coarse review samples; it does not improve their
+accuracy. Inspect **Drainage review** and **Basin details** when evaluating a run.
+
+## Saving and unfinished work
+
+A **\*** in the title marks unsaved generation inputs or an unfinished instruction.
+**Save** updates the known project path atomically; **Save As** chooses another
+path. Open, replacement import and window close offer Save / Discard / Cancel
+when inputs are unsaved. Choosing Save continues only after that exact snapshot
+has saved successfully. Cancelling the file picker or a failed save leaves the
+current project open. Apply/finish or press Esc before saving a staged edit.
+
+Navigation, selection and changing defaults for a new drawing tool do not make
+a saved input project dirty. Tool defaults are nevertheless included when you
+save. Results, navigation and undo history are session-only. A failed load keeps
+the existing project. Worker operations lock input controls; navigation remains
+available during generation. A close request during an operation stays in the
+workbench; close again after it finishes. Cancellation, autosave and before/after
+comparison remain planned.
 
 ## SVG land-source contract
 
@@ -194,11 +254,12 @@ metadata.
 
 ## Saving terrain projects
 
-**Save project** writes the coastline reference, all generator settings, every
+**Save** writes the coastline reference, all generator settings, every
 committed constraint, the active tool, and each tool's independent controls to
 a readable JSON document ending in `.dmterrain.json`. **Open project** restores
-that state. An unfinished line or area must be finished or undone before saving so no
-invisible draft is lost.
+that state. Apply or finish the current instruction, or cancel it with Esc, before
+saving. See [saving and unfinished work](#saving-and-unfinished-work) for dirty
+state, Save As and project-switch safeguards.
 
 The SVG remains the authoritative coastline rather than being duplicated into
 the project. Its path is relative to the project file whenever possible, and

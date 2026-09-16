@@ -1,8 +1,16 @@
 """Input editing state for the workbench; generated surfaces are never editable."""
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
+from itertools import pairwise
 
-from dmtools.terrain.domain import Coastline, TerrainConstraint, TerrainSettings
+from dmtools.terrain.domain import (
+    Coastline,
+    ElevationPoint,
+    TerrainBasin,
+    TerrainConstraint,
+    TerrainRegion,
+    TerrainSettings,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -66,3 +74,44 @@ class InstructionHistory:
         if self._redo:
             self._undo.append(self.constraints)
             self.constraints = self._redo.pop()
+
+
+def move_instruction(
+    instruction: TerrainConstraint, delta: tuple[float, float], vertex: int | None = None,
+) -> TerrainConstraint:
+    """Translate an input or one vertex; closed rings and attached outlets follow it."""
+    def moved(point: tuple[float, float]) -> tuple[float, float]:
+        return point[0] + delta[0], point[1] + delta[1]
+
+    if isinstance(instruction, ElevationPoint):
+        return replace(instruction, position=moved(instruction.position))
+    original = instruction.points
+    closed = isinstance(instruction, (TerrainRegion, TerrainBasin))
+    count = len(original) - int(closed)
+    if vertex is not None and not 0 <= vertex < count:
+        raise IndexError("No vertex at this index.")
+    points = tuple(moved(p) if vertex is None or i == vertex else p
+                   for i, p in enumerate(original[:count]))
+    if closed:
+        points += (points[0],)
+    if not isinstance(instruction, TerrainBasin) or instruction.outlet is None:
+        return replace(instruction, points=points)
+    outlet = instruction.outlet
+    if vertex is None:
+        outlet = moved(outlet)
+    else:
+        # Keep an imported outlet at the same fraction of its boundary edge.
+        # This also handles an outlet coinciding with a dragged corner.
+        for i, (a, b) in enumerate(pairwise(original)):
+            dx, dy = b[0] - a[0], b[1] - a[1]
+            length2 = dx * dx + dy * dy
+            if length2 == 0:
+                continue
+            t = ((outlet[0] - a[0]) * dx + (outlet[1] - a[1]) * dy) / length2
+            if 0 <= t <= 1 and ((a[0] + t * dx - outlet[0]) ** 2
+                               + (a[1] + t * dy - outlet[1]) ** 2) <= 1e-18:
+                start, end = points[i], points[i + 1]
+                outlet = (start[0] + t * (end[0] - start[0]),
+                          start[1] + t * (end[1] - start[1]))
+                break
+    return replace(instruction, points=points, outlet=outlet)

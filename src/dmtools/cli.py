@@ -28,6 +28,7 @@ def create_parser() -> argparse.ArgumentParser:
         help="Open the local land-geometry terrain workbench.",
         description="Import closed SVG land shapes and generate a colour height map.",
     )
+    gui.add_argument("--project", type=Path, help="Open a saved terrain project on startup.")
     gui.set_defaults(_handler=_run_terrain_gui)
     build = terrain_commands.add_parser(
         "build",
@@ -50,10 +51,10 @@ def create_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _run_terrain_gui(_arguments: argparse.Namespace) -> int:
+def _run_terrain_gui(arguments: argparse.Namespace) -> int:
     from dmtools.terrain.ui import run
 
-    run()
+    run(arguments.project)
     return 0
 
 

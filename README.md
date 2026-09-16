@@ -14,7 +14,9 @@ The desktop workbench imports and dissolves closed SVG land shapes; authors
 absolute/relative brush, point, ridge and valley constraints; draws plain, hill,
 plateau and mountain regions; and saves those inputs as `.dmterrain.json`.
 The editor keeps the last result as a placement reference, supports instruction
-selection/property edits and undo/redo, and marks changed inputs for regeneration.
+selection, property/geometry edits and undo/redo, and marks changed inputs for
+regeneration. Pan/zoom, ground inspection, resolution presets and guarded Save /
+Save As support testing without editing a completed DEM.
 Authored lakes and dry basins retain ground and captured contributing area.
 Reviewed lake outlets transfer eligible area downstream, with visible shoreline,
 wet-link and dry-path evidence. Water levels are imposed previews, not simulated
@@ -63,9 +65,13 @@ the complete Git history available.
 Open the public
 [`example.dmterrain.json`](examples/terrain/example.dmterrain.json) project or
 import its [`coastline.svg`](examples/terrain/coastline.svg) directly for a first
-generation. Use **Save project** after adding terrain guidance, then **Open
-project** to restore the coastline, generator settings, constraints, and
-per-tool controls. The workbench explains invalid inputs before generation.
+generation. You can also launch directly with
+`dmtools terrain gui --project examples/terrain/landform-regions.dmterrain.json`.
+Use **Save As** for a working copy and **Quick test · 257 px** for a small first run.
+**Save** updates that copy; **Open project** restores its coastline, generator
+settings, constraints and per-tool controls. The
+[editor guide](src/dmtools/terrain/README.md#quick-testing-and-navigation) lists
+navigation, editing and keyboard controls.
 
 ## Current workflow
 

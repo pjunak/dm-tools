@@ -302,10 +302,11 @@ substeps.
 - [ ] **P1 — Classify SVG water holes and ocean boundaries.** Declare ocean
   levels and enclosed-water semantics. Authored lake/dry-basin footprints are
   implemented; an enclosed SVG gap still has no inferred lake level or intent.
-- [ ] **P2 — Edit basin vertices and outlets after drawing.** Add selection,
-  vertex movement and outlet relocation for pre-generation instructions. Selection
-  and level/outlet-enable edits are implemented; newly enabled outlets use the
-  first vertex while existing imported outlets retain their location.
+- [ ] **P2 — Add direct basin outlet relocation.** Selection, vertex/whole-basin
+  movement and level/outlet-enable edits are implemented for pre-generation
+  instructions. Moving corners keeps existing outlets on their boundary edge;
+  newly enabled outlets use the first vertex. Explicitly choosing another outlet
+  position remains open.
 - [ ] **P2 — Refine retention boundaries and shoreline products.** Measure
   slopes where automatic incision resumes outside protected areas; soften the
   exterior transition if needed while preserving zero cuts inside. Derive
@@ -893,9 +894,11 @@ Priorities remain conditional on the current strategy's prerequisites.
 
 ## UI / UX improvements
 
-Current priority: advance pre-generation input editing before generator research.
+Current priority: test the usable input workbench and collect generation-quality feedback.
 [ADR-0047](docs/adr/0047-edit-generation-inputs-only.md) defines input editing;
 [ADR-0048](docs/adr/0048-keep-zoom-driven-detail-generation.md) keeps local enrichment in scope.
+[ADR-0049](docs/adr/0049-navigate-and-save-authored-inputs.md) records navigation,
+geometry movement and project-saving behavior.
 
 ### Editing and navigation
 
@@ -905,32 +908,40 @@ Current priority: advance pre-generation input editing before generator research
   only. No brush, area tool or property edit writes into generated heights.
 
 - [x] **P0 — Select and edit generation instructions.** Choose any instruction
-  from the list or Ctrl+click it on the map. Edit properties with the existing
+  with Select, the list or Ctrl+click on the map. Edit properties with the existing
   controls, Apply, then regenerate. Regions and lake levels/outlet enablement are
-  included; selection highlights geometry without moving it.
+  included. White handles identify the selected geometry.
 - [x] **P0 — Add instruction undo and redo.** Immutable input history restores
-  additions, property edits, deletion and clear-all. Draft vertices still use
-  backstep Undo; opening a project/coastline resets history. Generator settings,
-  draft redo and future vertex movement are outside this completed slice.
-- [ ] **P0 — Add pan and zoom.** Keep wheel-based brush sizing predictable by
-  assigning zoom to a modifier or dedicated navigation mode; show current map
-  scale and cursor coordinates. Preserve a geographic viewport that future
-  local detail generation can consume; navigation alone does not add terrain detail.
-- [ ] **P1 — Add draggable line vertices and insertion/removal of vertices.**
-  Preserve normalized/world positions exactly and provide numeric entry for
-  precise authoring.
+  additions, property edits, movement, deletion and clear-all. Draft vertices
+  still use backstep Undo; opening a project/coastline resets history. Generator
+  settings and draft redo are outside this completed slice.
+- [x] **P0 — Add pan and zoom.** Pointer-anchored wheel zoom, middle/Space drag,
+  Fit and toolbar buttons preserve the normalized geographic frame. The view
+  exposes visible bounds, km/display-pixel and local cursor coordinates. Brush
+  size uses Shift+wheel; strength uses Ctrl+Shift+wheel. Raster allocation stays
+  bounded to the canvas and diagnostic layers are cached. Navigation alone adds
+  no terrain detail.
+- [x] **P1 — Drag instructions and vertices.** Whole-input moves and individual
+  handles work across all instruction families. Commit once per completed drag;
+  reject off-land, self-crossing or overlapping-basin geometry atomically.
+  Closed rings and attached lake outlets follow their moved boundary edges.
+- [ ] **P1 — Insert/remove vertices and enter precise coordinates.** Extend the
+  implemented dragging with topology-safe vertex insertion/removal and numeric
+  local/normalized coordinates.
 - [ ] **P1 — Add explicit peak and pass handles along ridge profiles.** Show
   their along-line order, elevation mode, influence length, and saddle or peak
   role.
 - [ ] **P1 — Extend the instruction list into a layers panel.** Selection and
   deletion are implemented. Add names, reorder where order is meaningful,
-  hide/show, lock and duplication; keep generated overlays visually distinct.
+  per-instruction hide/show, lock and duplication. A global Instructions toggle
+  now hides input overlays and suspends painting for unobstructed inspection.
 
 ### Feedback and terrain inspection
 
 - [ ] **P0 — Add a fast draft preview.** Debounce edits and regenerate a low-
   resolution preview in the background while retaining an explicit full-quality
-  Generate action.
+  Generate action. Explicit Quick test (257 px) and Detail (1025 px) resolution
+  presets are implemented; these change the saved setting, not a hidden preview.
 - [ ] **P0 — Add stage-aware progress and cancellation.** Show the current
   pipeline stage, elapsed work and cancellation status. Background generation
   already reports progress labels; cancellation and elapsed work remain open.
@@ -939,9 +950,11 @@ Current priority: advance pre-generation input editing before generator research
   slope, curvature, influence extents, hard-constraint residuals, drainage,
   catchments and clipped-elevation warnings. Drainage and basin catchment
   toggles are implemented; the other listed overlays remain open.
-- [ ] **P1 — Improve elevation inspection.** Show elevation under the cursor,
-  local slope, active constraint contributions, and an optional cross-section
-  through the selected ridge or valley.
+- [x] **P1 — Show ground elevation under the cursor.** Read the nearest sample
+  of the last reference DEM, including water/no-ground status and local x/y km.
+  Reference freshness stays visible; water surfaces are not reported as ground.
+- [ ] **P1 — Extend terrain inspection.** Add local slope, active constraint
+  contributions and a cross-section through the selected ridge or valley.
 - [ ] **P1 — Make relative-versus-absolute behavior visible.** Use concise
   tooltips and preview labels that state target height, signed displacement,
   ridge relief, or valley incision in the correct terms.
@@ -955,11 +968,15 @@ Current priority: advance pre-generation input editing before generator research
 
 ### Project safety and everyday workflow
 
-- [ ] **P0 — Track unsaved changes.** Show a dirty marker and ask before closing,
-  opening another project, or importing a replacement coastline.
-- [ ] **P0 — Add Save, Save As, and keyboard shortcuts.** After the first Save
-  As, ordinary Save should update the known project path atomically; include
-  standard undo/redo and open shortcuts.
+- [x] **P0 — Track unsaved changes.** A title marker compares authored inputs
+  against the saved snapshot, including unfinished instructions. Open/import/close
+  offer Save / Discard / Cancel; cancellation, failure or a newer input snapshot
+  prevents a save continuation. Navigation/tool defaults alone do not mark dirty.
+- [x] **P0 — Add Save, Save As, and keyboard shortcuts.** Save updates the known
+  path atomically. Open/save/generate, undo/redo, delete, apply/finish and cancel
+  have shortcuts; instruction undo/delete shortcuts leave text entry alone.
+  GUI --project opens
+  an existing project on startup.
 - [ ] **P1 — Add recoverable autosave.** Keep autosave outside the authored
   project, identify recovery state clearly, and never treat recovery data as a
   completed user save.

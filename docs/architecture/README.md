@@ -124,7 +124,10 @@ dependency order; the roadmap remains grouped by product area.
 
 The workbench edits immutable domain constraints through a session-local
 `InstructionHistory`. Selection changes the controls; Apply replaces one authored
-instruction, and undo/redo restores input tuples. Opening a project resets history.
+instruction, and undo/redo restores input tuples. Geometry dragging previews an
+immutable candidate, validates placement/topology on release and commits once.
+`move_instruction` keeps closed rings and lake outlet edge positions consistent.
+Opening a project resets history.
 A `GenerationInputs` snapshot accompanies each worker result. The UI compares it
 with current coastline, settings and constraints before treating the result as
 current or enabling PNG export. Retained images and review products belong to the
@@ -136,3 +139,15 @@ Planned local enrichment is a generation operation. It may consume immutable
 parent boundary and flow context to create a finer regional result, with stable
 coordinates, explicit consistency tests and bounded work. The current whole-map
 worker and input history do not yet implement viewport-driven regional jobs.
+
+`MapViewport` owns normalized centre, magnification and visible bounds independently
+of the generated raster. All placement/hit testing uses its map transform. The
+image adapter renders only a canvas-sized raster; review overlays are cached by
+result and toggles. Navigation does not invalidate inputs or request new terrain.
+
+A separate saved `GenerationInputs` snapshot owns dirty-state comparison. Drafts
+and pending property/geometry edits also count as unsaved work. Open/import/close
+can continue after saving only when the completed save still matches the current
+inputs. Worker operations disable input controls; save failure clears the pending
+continuation. Tool defaults and navigation alone do not make the document dirty.
+See [ADR-0049](../adr/0049-navigate-and-save-authored-inputs.md).

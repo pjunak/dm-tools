@@ -14,9 +14,9 @@ external-engine inventory below retains the 2026-09-13 audit date.
 
 | Area | Implemented behavior | Remaining boundary |
 |---|---|---|
-| Input editor | Generated reference retained with input freshness, selection/property edits, delete and instruction undo/redo | Pan/zoom, vertex movement, unsaved-change safeguards, climate-region inputs |
+| Input editor | Retained reference with freshness, geographic pan/zoom, property/geometry edits, undo/redo, guarded Save/Save As, resolution presets and ground inspection | Cancellation, automatic draft preview, comparison views, vertex insertion/removal, climate-region inputs |
 | Local numeric builds | Saved-project CLI, Float32 NPY/GeoTIFF, review NPZ, previews, diagnostics and completion hashes | World placement, vector products, external desktop GIS acceptance |
-| Zoom-driven local detail | Coordinate-addressed fields and shared-sample/grid foundations only | Geographic viewport, regional build requests, added detail, parent/overlap consistency, inherited hydrology and bounded caching |
+| Zoom-driven local detail | Coordinate-addressed fields, shared-sample/grid foundations and a geographic viewport | Regional build requests, added detail, parent/overlap consistency, inherited hydrology and bounded caching |
 | Coordinates/seeds (R01-R03) | Source/local round trips, endpoint grids, actual spacing metadata and portable named seeds | Planetary CRS, configurable process spacing, cell-average/resampling policy |
 | Authored macro routing (R04-R05) | Authored terrain shapes canonical planning; D8/MFD topology and finished-field conflicts are exported | Filled routes are not validated rivers; unresolved uphill channels remain |
 | Regional landforms | Plain/hill/plateau/mountain recipes, orientation, transitions and regional cut limits | Distribution targets, transition-gradient validation, related geological regions |

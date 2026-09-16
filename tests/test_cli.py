@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 
 from dmtools.cli import main
@@ -21,3 +23,13 @@ def test_terrain_gui_help_is_available(capsys: pytest.CaptureFixture[str]) -> No
 
     assert exit_info.value.code == 0
     assert "closed SVG land shapes" in capsys.readouterr().out
+
+
+def test_gui_accepts_a_startup_project(monkeypatch: pytest.MonkeyPatch) -> None:
+    from dmtools.terrain import ui
+    opened: list[Path | None] = []
+    def run(project: Path | None = None) -> None:
+        opened.append(project)
+    monkeypatch.setattr(ui, "run", run)
+    assert main(["terrain", "gui", "--project", "example.dmterrain.json"]) == 0
+    assert opened == [Path("example.dmterrain.json")]
