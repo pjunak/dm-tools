@@ -12,6 +12,10 @@ in the current status or a new dated report.
 
 ## Implemented and measured work
 
+- [Refined mountain crests - 2026-09-17](2026-09-17-refined-mountain-crests.md)
+  compares broader candidate selection and bounded crest searches against dense
+  finite references, finished-channel profiles and fresh-process runtime.
+
 - [Drainage routing cost - 2026-09-17](2026-09-17-drainage-routing-cost.md)
   measures faster generation with identical numerical products and bounded
   mountain-carrier working storage through 128 overlapping regions.

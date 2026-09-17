@@ -100,9 +100,13 @@ bounds on unseen terrain heights.
    improved large outliers, added runtime and mixed remaining drainage metrics.
    A [routing optimization](../research/2026-09-17-drainage-routing-cost.md) now
    reduces that cost and bounds carrier storage while preserving numeric outputs.
-   Next extend coverage to multiple/tangent crossings,
-   other recipes and authored features, with explicit source-scale/process-grid
-   limits; continue downstream conditioning and turn smoothing. Preserve divides,
+   [Refined crest observations](../research/2026-09-17-refined-mountain-crests.md)
+   now add same-sign candidate screening and bounded searches for observed roots
+   and tangent approaches. Dense finite references show fewer understated
+   barriers; finished-channel metrics remain mixed. Next address whole-route
+   conditioning and turn smoothing, while extending coverage to unresolved
+   sub-probe extrema, other recipes, authored features and blended maxima.
+   Define explicit source-scale/process-grid limits. Preserve divides,
    authored constraints and cut-budget policy. Inspect regenerated 1025 px results with
    pan/zoom and ground readout; keep authored controls authoritative.
    [ADR-0049](../adr/0049-navigate-and-save-authored-inputs.md) owns the current

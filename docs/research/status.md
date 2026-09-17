@@ -8,8 +8,8 @@ Dated reports preserve measurements at their recorded revision, not timeless
 performance claims. A source audit is not a successfully run engine comparison.
 
 The noise-profile research, input editor and valley work were updated on
-2026-09-16, with routing performance updated on 2026-09-17. The external-engine
-inventory below retains the 2026-09-13 audit date.
+2026-09-16, with routing performance and crest refinement updated on 2026-09-17.
+The external-engine inventory below retains the 2026-09-13 audit date.
 
 ## Implemented baseline
 
@@ -19,7 +19,7 @@ inventory below retains the 2026-09-13 audit date.
 | Local numeric builds | Saved-project CLI, Float32 NPY/GeoTIFF, review NPZ, previews, diagnostics and completion hashes | World placement, vector products, external desktop GIS acceptance |
 | Zoom-driven local detail | Coordinate-addressed fields, shared-sample/grid foundations and a geographic viewport | Regional build requests, added detail, parent/overlap consistency, inherited hydrology and bounded caching |
 | Coordinates/seeds (R01-R03) | Source/local round trips, endpoint grids, actual spacing metadata and portable named seeds | Planetary CRS, configurable process spacing, cell-average/resampling policy |
-| Authored macro routing (R04-R05) | Authored macro and targeted mountain-crest probes shape a shared Priority-Flood/D8/MFD graph; topology and finished-field conflicts are exported | Other hidden extrema, filled barriers and unresolved final-ground climbs remain; routes are not validated rivers |
+| Authored macro routing (R04-R05) | Authored macro, regular crest probes and bounded carrier-root/tangent searches shape a shared Priority-Flood/D8/MFD graph; topology and finished-field conflicts are exported | Other hidden extrema, filled barriers and unresolved final-ground climbs remain; routes are not validated rivers |
 | Valley reconstruction | Bounded cubic fields, selected-diagonal shaping and source-aware cardinal/diagonal floor fitting; canonical nodes and cut ceilings preserved | D8 turns, hidden crests beyond cut limits, endpoint/retention conflicts and complete-field error bounds |
 | Regional landforms | Plain/hill/plateau/mountain recipes, orientation, transitions and regional cut limits | Distribution targets, transition-gradient validation, related geological regions |
 | Structural authoring | Absolute/relative point-anchored profiles, directed valley floors and compatible junctions | Direct per-vertex controls, explicit passes, asymmetric sides and generated branching |
@@ -60,6 +60,12 @@ The [routing-cost follow-up](2026-09-17-drainage-routing-cost.md) reduces repeat
 Python work and bounds temporary carrier storage. All measured numeric products
 and diagnostic summaries match; broader terrain-quality and whole-project scale
 questions remain separate from that optimization.
+
+The [crest-refinement follow-up](2026-09-17-refined-mountain-crests.md) admits
+same-sign candidates and searches observed crossings/tangent approaches. It
+retains every earlier regular observation and sharply reduces understated
+barriers against dense finite references. Finished-channel metrics remain mixed;
+features within one unsampled interval and full-route validity remain open.
 
 ## Research that has not been adopted
 

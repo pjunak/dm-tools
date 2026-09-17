@@ -62,8 +62,8 @@ from dmtools.terrain.pipeline.water_sampling import SamplingDensity, SamplingFea
 
 type ProgressCallback = Callable[[float, str], None]
 
-GENERATOR_ALGORITHM_ID = "coastline-constraint-terrain@12"
-AUTOMATIC_VALLEY_ALGORITHM_ID = "regional-budget-mfd-d8-valleys@10"
+GENERATOR_ALGORITHM_ID = "coastline-constraint-terrain@13"
+AUTOMATIC_VALLEY_ALGORITHM_ID = "regional-budget-mfd-d8-valleys@11"
 NOISE_ALGORITHM_ID = "coordinate-value-noise-normalized@1"
 
 

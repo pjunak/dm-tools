@@ -2,6 +2,7 @@
 """Crest-aware routing must observe barriers without changing authored terrain."""
 
 import weakref
+from dataclasses import replace
 
 import numpy as np
 import pytest
@@ -11,6 +12,7 @@ from shapely.geometry import box
 from benchmarks.channel_profiles import measure_channels
 from benchmarks.terrain import fixture
 from dmtools.terrain.domain import LandformSettings, TerrainRegion
+from dmtools.terrain.domain.seeds import LANDFORM_STAGE_ID, stage_seed
 from dmtools.terrain.pipeline import generate as generation
 from dmtools.terrain.pipeline import routing_edges
 from dmtools.terrain.pipeline.hydrology import (
@@ -202,12 +204,127 @@ def test_region_count_does_not_accumulate_live_carrier_grids(
     ) -> tuple[FloatArray, FloatArray, FloatArray]:
         assert sum(reference() is not None for reference in carriers) <= 1
         broad = x-.5
-        carriers.append(weakref.ref(broad))
+        if x.shape == (65, 65):
+            carriers.append(weakref.ref(broad))
         return x, y, broad
     monkeypatch.setattr(routing_edges, "regional_noise_basis", carrier)
     axis = np.linspace(0., 2., 65)
     ground, land = np.full((65, 65), 100.), np.ones((65, 65), dtype=np.bool_)
+    region = _region()
+    regions = tuple(replace(region, source=replace(region.source, settings=replace(
+        region.source.settings, feature_size_km=150.+i))) for i in range(24))
     barriers = routing_edges.sample_mountain_barriers(
-        axis, axis, ground, land, (_region(),)*24, 42, lambda x, y: np.full_like(x, 140.))
+        axis, axis, ground, land, regions, 42, lambda x, y: np.full_like(x, 140.))
     assert barriers is not None and len(carriers) == 24
     assert all(reference() is None for reference in carriers)
+
+
+@pytest.mark.parametrize("kind", ["crossing", "paired", "tangent"])
+def test_refined_sampling_observes_off_station_and_same_sign_crests(
+    kind: str, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # All extrema are away from the regular eighth-edge stations. In the paired
+    # and tangent cases endpoint signs agree, so the previous policy saw none.
+    def signal(x: FloatArray) -> FloatArray:
+        if kind == "paired":
+            return (x-.31)*(x-.69)
+        if kind == "tangent":
+            return (x-.31)**2
+        return x-.31
+
+    def carrier(x: FloatArray, y: FloatArray, controls: LandformSettings,
+                seed: int) -> tuple[FloatArray, FloatArray, FloatArray]:
+        return x, y, signal(x)
+
+    monkeypatch.setattr(routing_edges, "regional_noise_basis", carrier)
+    region = _region()
+    region = replace(region, source=replace(region.source, settings=replace(
+        region.source.settings, feature_size_km=1.)))
+    axis = np.arange(3, dtype=np.float64)
+    land = np.ones((3, 3), dtype=np.bool_)
+    ground = np.broadcast_to(100.+40.*(1.-np.minimum(np.abs(signal(axis)), 1.)), (3, 3)).copy()
+    calls: list[int] = []
+    def sample(x: FloatArray, y: FloatArray) -> FloatArray:
+        calls.append(x.size)
+        return 100.+40.*(1.-np.minimum(np.abs(signal(x)), 1.))
+
+    barriers = routing_edges.sample_mountain_barriers(
+        axis, axis, ground, land, (region,), 42, sample, batch_edges=1)
+    assert barriers is not None
+    assert max(calls) <= 7
+    assert barriers[4, 0, 0] == pytest.approx(140., abs=.001)
+    assert barriers[4, 0, 0] == barriers[3, 0, 1]
+    repeated = routing_edges.sample_mountain_barriers(
+        axis, axis, ground, land, (region, region), 42, sample, batch_edges=4096)
+    np.testing.assert_array_equal(barriers, repeated)
+    regular = sample(np.arange(1., 8.)[None, :]/8., np.zeros((1, 7)))
+    assert barriers[4, 0, 0] > np.max(regular)+.1
+
+
+def test_observed_paired_roots_are_both_sampled(monkeypatch: pytest.MonkeyPatch) -> None:
+    def carrier(x: FloatArray, y: FloatArray, controls: LandformSettings,
+                seed: int) -> tuple[FloatArray, FloatArray, FloatArray]:
+        return x, y, (x-.31)*(x-.69)
+    monkeypatch.setattr(routing_edges, "regional_noise_basis", carrier)
+    controls = LandformSettings(character="mountains", feature_size_km=1.)
+    zero, one = np.zeros(1), np.ones(1)
+    observed, edges, fractions = routing_edges._crest_locations(
+        zero, zero, one, zero, np.full(1, .31*.69), np.full(1, .31*.69), controls, 42)
+    assert observed.tolist() == [True] and edges.tolist() == [0, 0]
+    np.testing.assert_allclose(fractions, [.31, .69], rtol=0., atol=1/65536)
+
+
+
+def test_rotated_carriers_and_overlaps_are_batch_and_order_independent() -> None:
+    region = _region()
+    regions = tuple(replace(region, source=replace(region.source, settings=replace(
+        region.source.settings, feature_size_km=size, orientation_deg=angle)))
+        for size, angle in ((.8, 37.), (1.3, 84.)))
+    x = np.array([0., .04, .27, .41, .68, 1.2, 1.7, 2.])
+    y = np.linspace(0., 2., 7)
+    xx, yy = np.meshgrid(x, y)
+    calls: list[int] = []
+    land = np.ones_like(xx, dtype=np.bool_)
+    land[3, 3] = False
+    # Use the same named seed in the actual procedural source and observer.
+    named_seed = stage_seed(81, LANDFORM_STAGE_ID)
+    def macro(qx: FloatArray, qy: FloatArray) -> FloatArray:
+        calls.append(qx.size)
+        result = np.full_like(qx, 100.)
+        for item in regions:
+            _, _, broad = routing_edges.regional_noise_basis(
+                qx, qy, item.source.settings, named_seed)
+            result += 40.*(1.-np.abs(broad))**3
+        return result
+    ground = macro(xx, yy)
+    ground[~land] = np.nan
+    original = ground.copy()
+    calls.clear()
+    first = routing_edges.sample_mountain_barriers(
+        x, y, ground, land, regions, 81, macro, batch_edges=2)
+    assert first is not None and max(calls) <= 14
+    second = routing_edges.sample_mountain_barriers(
+        x, y, ground, land, regions[::-1], 81, macro)
+    np.testing.assert_array_equal(first, second)
+    np.testing.assert_array_equal(ground, original)
+    for index in range(8):
+        r, c = np.nonzero(np.isfinite(first[index]))
+        dy, dx = D8_NEIGHBOURS[index]
+        assert np.all(land[r, c] & land[r+dy, c+dx])
+        np.testing.assert_array_equal(first[index, r, c], first[7-index, r+dy, c+dx])
+        assert np.all(first[index, r, c] >= np.maximum(ground[r, c], ground[r+dy, c+dx]))
+
+
+def test_same_sign_screen_without_observed_extrema_avoids_macro_queries(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def carrier(x: FloatArray, y: FloatArray, controls: LandformSettings,
+                seed: int) -> tuple[FloatArray, FloatArray, FloatArray]:
+        return x, y, .001+.001*x
+    def unused(x: FloatArray, y: FloatArray) -> FloatArray:
+        raise AssertionError("The monotone positive carrier has no observed crest")
+    monkeypatch.setattr(routing_edges, "regional_noise_basis", carrier)
+    axis = np.arange(3, dtype=np.float64)
+    assert routing_edges.sample_mountain_barriers(
+        axis, axis, np.full((3, 3), 100.), np.ones((3, 3), dtype=np.bool_),
+        (_region(),), 42, unused) is None

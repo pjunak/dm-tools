@@ -80,3 +80,4 @@ supersedes their legacy compatibility commitments during early development.
 - [ADR-0051: Connect diagonal valley shaping](0051-connect-diagonal-valley-shaping.md)
 - [ADR-0052: Fit channel cuts to the sampled terrain](0052-fit-channel-cuts-to-sampled-terrain.md)
 - [ADR-0053: Observe mountain crests in the drainage graph](0053-observe-mountain-crests-in-drainage.md)
+- [ADR-0054: Refine observed mountain crests](0054-refine-observed-mountain-crests.md)

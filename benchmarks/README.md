@@ -147,6 +147,9 @@ Finite station checks do not certify every point between samples. See the
 [diagonal-connection experiment](../docs/research/2026-09-16-connected-diagonal-valleys.md)
 for measured gains, remaining large excursions and the baseline comparison.
 Use source-isolated runs with matching input hashes when comparing algorithms.
+The [crest-refinement comparison](../docs/research/2026-09-17-refined-mountain-crests.md)
+separates dense macro-barrier observations from finished-channel profiles:
+more accurate routing barriers alone do not make every river metric improve.
 
 ## Water-profile convergence
 

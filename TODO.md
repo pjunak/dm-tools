@@ -517,13 +517,22 @@ execution order.
   records 8-28% faster generation on ten case/seed pairs and an 83.7% reduction
   in observed peak allocation at 128 overlapping regions. Full many-region
   builds and larger grids remain performance work; see R46 below.
+- [x] **P1 — Refine observed mountain-crest positions.** Source-scale screening
+  now admits same-sign endpoints; bounded carrier searches target observed
+  crossings and tangent approaches before full macro evaluation. Shared regular
+  probes remain, with streamed regions and bounded batches. The
+  [comparison](docs/research/2026-09-17-refined-mountain-crests.md) records fewer
+  underestimated barriers, mixed finished-channel outcomes and added cost;
+  [ADR-0054](docs/adr/0054-refine-observed-mountain-crests.md) owns the policy.
 - [ ] **P1 — Complete between-node channel geometry.** Extend observation to
-  multiple/tangent carrier crossings, the actual crest position, other recipes,
-  authored features and blended-field extrema. Compare bounded refinement with
-  explicit source-scale/process-grid contracts. Continue whole-route conditioning
+  unresolved sub-probe extrema, other recipes, authored features and blended-field
+  maxima. Define explicit source-scale/process-grid contracts beyond the current
+  bounded finite carrier search. Continue whole-route conditioning
   and D8 turn smoothing; separate remaining cap-limited barriers, source pits,
   endpoint tapers and retention boundaries. Preserve divides, anchors and budget
-  policy. Finite profile evidence and lower excursions do not certify rivers.
+  policy. The refined observer's seed-7 edge 9958 -> 9702 retains an 85.47 m
+  climb at 1025 stations; track it during whole-route work. Finite profiles and
+  lower barrier deficits do not certify rivers.
 - [ ] **P1 — Add variable valley cross-sections.** Support narrow V-shaped
   valleys, glacial U-shaped valleys, broad floodplains, terraces, and smooth
   width/depth changes along a line. Generated fluvial valleys now widen and
