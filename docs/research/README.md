@@ -12,6 +12,10 @@ in the current status or a new dated report.
 
 ## Implemented and measured work
 
+- [Network floor conditioning - 2026-09-17](2026-09-17-network-floor-conditioning.md)
+  carries cut-limited floors through tributaries, measures large-climb reductions
+  and smaller-rise regressions, and retains path alternatives as research.
+
 - [Attainable channel floors - 2026-09-17](2026-09-17-attainable-channel-floors.md)
   diagnoses a cut-limited route and compares sparse floor profiles that reduce
   extra dips while retaining canonical routing, pins and budgets.

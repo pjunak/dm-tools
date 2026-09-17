@@ -139,7 +139,10 @@ Delivered Float32 heights are promoted to Float64 before measuring ordered
 uphill excursion. Endpoints descending by more than 0.01 m are reported
 separately, as are cardinal and diagonal edges. Non-finite/non-land profiles
 remain unresolved counts, not zero-climb successes. Empty groups have null
-statistics. Profile, canonical-array, input, runtime and harness/fixture hashes
+statistics. Report version 2 also records counts of excursions strictly greater
+than 1, 10, 50 and 100 m for each group. Compare the all-finite population when a
+change moves edges into or out of the descending-endpoint subset. Profile,
+canonical-array, input, runtime and harness/fixture hashes
 support comparisons. Outputs must be new files; an interrupted report is not
 complete.
 
@@ -150,6 +153,8 @@ Use source-isolated runs with matching input hashes when comparing algorithms.
 The [crest-refinement comparison](../docs/research/2026-09-17-refined-mountain-crests.md)
 separates dense macro-barrier observations from finished-channel profiles:
 more accurate routing barriers alone do not make every river metric improve.
+The [network-floor comparison](../docs/research/2026-09-17-network-floor-conditioning.md)
+records why severity, individual regressions and the compared population matter.
 
 ## Water-profile convergence
 

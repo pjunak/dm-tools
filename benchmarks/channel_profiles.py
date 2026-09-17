@@ -72,6 +72,10 @@ def measure_channels(
         return {
             "edge_count": int(np.count_nonzero(mask)),
             "uphill_edge_count": int(np.count_nonzero(values > .01)),
+            "excursion_threshold_counts": {
+                str(threshold): int(np.count_nonzero(values > threshold))
+                for threshold in (1, 10, 50, 100)
+            },
             "mean_excursion_m": float(values.mean()) if values.size else None,
             "p95_excursion_m": float(np.quantile(values, .95)) if values.size else None,
             "maximum_excursion_m": float(values.max()) if values.size else None,
@@ -147,7 +151,7 @@ def main() -> None:
                 or fixture_hash != file_sha256(Path(terrain_benchmark.__file__))):
             raise RuntimeError("Source/runtime changed during channel-profile measurement")
         stream.write(canonical_json({
-            "schema": "dmtools.channel-profile-experiment", "schema_version": 1,
+            "schema": "dmtools.channel-profile-experiment", "schema_version": 2,
             "complete": True, "continuous_clearance_certified": False,
             "runtime": runtime, "benchmark_source_sha256": harness_hash,
             "fixture_source_sha256": fixture_hash, "cases": results,

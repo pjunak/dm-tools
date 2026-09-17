@@ -8,7 +8,7 @@ Dated reports preserve measurements at their recorded revision, not timeless
 performance claims. A source audit is not a successfully run engine comparison.
 
 The noise-profile research, input editor and valley work were updated on
-2026-09-16, with routing, crest and attainable-floor work updated on 2026-09-17.
+2026-09-16, with routing, crest and network-floor work updated on 2026-09-17.
 The external-engine inventory below retains the 2026-09-13 audit date.
 
 ## Implemented baseline
@@ -20,6 +20,7 @@ The external-engine inventory below retains the 2026-09-13 audit date.
 | Zoom-driven local detail | Coordinate-addressed fields, shared-sample/grid foundations and a geographic viewport | Regional build requests, added detail, parent/overlap consistency, inherited hydrology and bounded caching |
 | Coordinates/seeds (R01-R03) | Source/local round trips, endpoint grids, actual spacing metadata and portable named seeds | Planetary CRS, configurable process spacing, cell-average/resampling policy |
 | Authored macro routing (R04-R05) | Authored macro, regular crest probes and bounded carrier-root/tangent searches shape a shared Priority-Flood/D8/MFD graph; topology and finished-field conflicts are exported | Other hidden extrema, filled barriers and unresolved final-ground climbs remain; routes are not validated rivers |
+| Network floor conditioning | Downstream cut limits propagate upstream before receiver cuts; finite nodal feasibility and signed cut corrections | Between-node conflicts, impossible source/cut intervals and route alternatives |
 | Valley reconstruction | Bounded cubic fields, selected-diagonal shaping and sampled attainable floor targets; canonical nodes and cut ceilings preserved | D8 turns, hidden crests beyond cut limits, endpoint/retention conflicts and complete-field error bounds |
 | Regional landforms | Plain/hill/plateau/mountain recipes, orientation, transitions and regional cut limits | Distribution targets, transition-gradient validation, related geological regions |
 | Structural authoring | Absolute/relative point-anchored profiles, directed valley floors and compatible junctions | Direct per-vertex controls, explicit passes, asymmetric sides and generated branching |
@@ -72,6 +73,12 @@ extra dips ahead of unremovable barriers and carries sampled source pits forward
 It preserves canonical routing/floors and cut ceilings. Seed 7's diagnosed climb
 falls to its approximately 50.93 m sampled constraint limit; complete route
 alternatives and interactions across fixed canonical pins remain open.
+
+The [network-floor follow-up](2026-09-17-network-floor-conditioning.md) now
+recovers unnecessary upstream cuts before conditioning receivers. Canonical
+cuts/heights may change, while routing and ceilings remain fixed. Large sampled
+climbs decrease overall, but some smaller rises and individual segments worsen;
+full-path alternatives and joint nodal/interior conditioning remain open.
 
 ## Research that has not been adopted
 

@@ -26,6 +26,9 @@ def test_profiles_report_interior_rises_nonland_and_chunk_independence() -> None
     assert result["descending"]["edge_count"] == 2
     assert result["descending"]["uphill_edge_count"] == 1
     assert result["descending"]["maximum_excursion_m"] == 7.5
+    assert result["descending"]["excursion_threshold_counts"] == {
+        "1": 1, "10": 0, "50": 0, "100": 0,
+    }
     assert result["worst_descending_edges"][0]["source_flat_index"] == 2
     combined = measure_channels(x, y, receivers, channels, sample, stations=5, batch_edges=3)
     assert combined["profile_sha256"] == result["profile_sha256"]
@@ -48,3 +51,20 @@ def test_profile_work_controls_and_empty_network() -> None:
     assert report["selected_edge_count"] == 0
     assert report["requested_sample_count"] == 0
     assert report["descending"]["mean_excursion_m"] is None
+    assert report["all_finite"]["excursion_threshold_counts"] == {
+        "1": 0, "10": 0, "50": 0, "100": 0,
+    }
+
+
+def test_severity_counts_use_strict_metre_thresholds() -> None:
+    x, y = np.array([0., 1.]), np.arange(4, dtype=np.float64)
+    receivers = np.array([[1, -1], [3, -1], [5, -1], [7, -1]], dtype=np.int64)
+    levels = np.array([1., 10., 50., 100.])
+
+    def sample(qx: NDArray[np.float64], qy: NDArray[np.float64]) -> NDArray[np.float32]:
+        return (levels[qy.astype(np.int64)]*(1.-np.abs(2*qx-1))).astype(np.float32)
+
+    report = measure_channels(x, y, receivers, receivers >= 0, sample, stations=3)
+    assert report["all_finite"]["excursion_threshold_counts"] == {
+        "1": 3, "10": 2, "50": 1, "100": 0,
+    }

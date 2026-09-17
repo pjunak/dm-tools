@@ -531,16 +531,26 @@ execution order.
   to its approximately 50.93 m sampled constraint limit; see
   [ADR-0055](docs/adr/0055-prepare-attainable-channel-floor-profiles.md) and the
   [comparison](docs/research/2026-09-17-attainable-channel-floors.md).
+- [x] **P1 — Condition network floors in both directions.** Propagate downstream
+  cut limits through tributaries before adjusting receivers; recover unnecessary
+  upstream excavation within source bounds. Routing and cut ceilings stay fixed,
+  while generated nodal cuts can change. Compare large-climb reductions and new
+  smaller rises with severity counts; see
+  [ADR-0056](docs/adr/0056-condition-network-floors-in-both-directions.md) and the
+  [comparison](docs/research/2026-09-17-network-floor-conditioning.md).
 - [ ] **P1 — Complete between-node channel geometry.** Extend observation to
   unresolved sub-probe extrema, other recipes, authored features and blended-field
   maxima. Define explicit source-scale/process-grid contracts beyond the current
-  bounded finite carrier search. Continue whole-route conditioning
-  and D8 turn smoothing; separate remaining cap-limited barriers, source pits,
+  bounded finite carrier search. Couple nodal and interior floor decisions
+  and smooth D8 turns; separate remaining cap-limited barriers, source pits,
   endpoint tapers and retention boundaries. Preserve divides, anchors and budget
   policy. Seed-7 edge 9958 -> 9702 still requires about 50.93 m of ascent with
   its current pins and cut ceiling; compare whole-path alternatives instead of
   exceeding the cap. Segment envelopes do not condition across fixed canonical
-  pins. Finite profiles and lower barrier deficits do not certify rivers.
+  pins. The nodal network correction can introduce new interior rises, so measure
+  full profiles and individual regressions. Compare breach/reroute candidates
+  using complete path depth/length, source limits and retained basin boundaries;
+  preserve authored anchors. Finite profiles do not certify rivers.
 - [ ] **P1 — Add variable valley cross-sections.** Support narrow V-shaped
   valleys, glacial U-shaped valleys, broad floodplains, terraces, and smooth
   width/depth changes along a line. Generated fluvial valleys now widen and

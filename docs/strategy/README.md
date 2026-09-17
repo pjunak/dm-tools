@@ -106,9 +106,12 @@ bounds on unseen terrain heights.
    barriers; finished-channel metrics remain mixed. Prepared
    [attainable floor profiles](../research/2026-09-17-attainable-channel-floors.md)
    now reduce extra dips before obstacles and carry sampled source pits forward
-   without changing canonical pins or budgets. Next compare whole-route
-   alternatives for infeasible pins/crests and address turn smoothing, while
-   extending coverage to unresolved
+   without changing canonical pins or budgets. Subsequent
+   [network floor conditioning](../research/2026-09-17-network-floor-conditioning.md)
+   now recovers unnecessary nodal cuts across tributaries under unchanged ceilings.
+   Large climbs decrease overall, but new between-node rises require joint
+   nodal/interior conditioning. Compare whole-route alternatives for infeasible
+   sources/crests and address turn smoothing, while extending coverage to unresolved
    sub-probe extrema, other recipes, authored features and blended maxima.
    Define explicit source-scale/process-grid limits. Preserve divides,
    authored constraints and cut-budget policy. Inspect regenerated 1025 px results with

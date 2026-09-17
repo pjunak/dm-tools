@@ -31,6 +31,16 @@ This bounds working grid storage as region count grows. The
 [performance comparison](../../../../docs/research/2026-09-17-drainage-routing-cost.md)
 records unchanged numeric output, measured cost and remaining scaling limits.
 
+Before reconstruction, the canonical channel network carries downstream
+minimum floor requirements upstream through every tributary. It recovers
+unnecessary cuts without raising above the uncut source, then lowers receivers
+within their existing ceilings. Feasible nodal intervals descend; impossible
+ones retain explicit conflicts. Subsequent steepness correction remains bounded.
+Routing, area, terminals and ceilings stay fixed; generated cuts can change.
+The internal floor-correction array is the signed net incision change, negative
+for cut recovery. See
+[ADR-0056](../../../../docs/adr/0056-condition-network-floors-in-both-directions.md).
+
 Incision and residual-detail suppression start with bounded bicubic Hermite
 patches: shared nodal derivatives soften cell-edge creases. Selected diagonal
 channel connections then receive compact, metric corrections toward their

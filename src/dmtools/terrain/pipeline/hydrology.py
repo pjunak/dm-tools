@@ -35,7 +35,7 @@ class DrainageIncision:
     channel_mask: NDArray[np.bool_]
     channel_head_mask: NDArray[np.bool_]
     stream_order: NDArray[np.uint16]
-    floor_correction_m: NDArray[np.float64]
+    floor_correction_m: NDArray[np.float64]  # Signed net cut change, including steepness.
     steepness_correction_m: NDArray[np.float64]
     unresolved_uphill_channel_edge_count: int
     unresolved_steepening_edge_count: int
@@ -475,7 +475,7 @@ def strahler_stream_order(
     return order.reshape(channel_mask.shape)
 
 
-def _condition_downstream_channel_floors(
+def condition_channel_floors(
     source_elevation_m: NDArray[np.float64],
     incision_m: NDArray[np.float64],
     maximum_incision_m: NDArray[np.float64],
@@ -485,61 +485,66 @@ def _condition_downstream_channel_floors(
     *,
     minimum_drop_m: float = 0.01,
 ) -> tuple[NDArray[np.float64], NDArray[np.float64], int]:
-    """Lower generated channel floors just enough to maintain downstream descent."""
+    """Fit cuts to the selected network's attainable nodal floor intervals.
 
+    Carry downstream lower bounds upstream before lowering receivers. Feasible
+    intervals yield descending nodes; conflicts remain bounded and reported.
+    Returned corrections are signed incision changes, negative for recovered
+    cuts. No node is filled above its source, and receivers stay unchanged.
+    """
     shape = source_elevation_m.shape
-    if any(
-        values.shape != shape
-        for values in (
-            incision_m,
-            maximum_incision_m,
-            channel_mask,
-            receivers,
-            routing_surface_m,
-        )
-    ):
-        raise ValueError("Channel-floor conditioning arrays must share a shape.")
-    if minimum_drop_m < 0.0:
-        raise ValueError("Minimum downstream drop must not be negative.")
+    if source_elevation_m.ndim != 2 or any(values.shape != shape for values in (
+        incision_m, maximum_incision_m, channel_mask, receivers, routing_surface_m,
+    )):
+        raise ValueError("Channel-floor conditioning arrays must share a 2D shape.")
+    if not np.isfinite(minimum_drop_m) or minimum_drop_m < 0.:
+        raise ValueError("Minimum downstream drop must be finite and nonnegative.")
+    if any(np.any(~np.isfinite(values[channel_mask])) for values in (
+        source_elevation_m, incision_m, maximum_incision_m, routing_surface_m,
+    )) or np.any(channel_mask & ((incision_m < 0.) | (incision_m > maximum_incision_m))):
+        raise ValueError("Channel floors need finite sources and cuts within their limits.")
 
-    conditioned = np.minimum(incision_m, maximum_incision_m).copy()
-    flat_source = source_elevation_m.ravel()
-    flat_conditioned = conditioned.ravel()
-    flat_maximum = maximum_incision_m.ravel()
-    flat_channel = channel_mask.ravel()
-    flat_receivers = receivers.ravel()
-    channel_indices = np.flatnonzero(flat_channel)
-    order = channel_indices[
-        np.argsort(-routing_surface_m.ravel()[channel_indices], kind="stable")
-    ]
+    selected = channel_mask.ravel()
+    indices = np.flatnonzero(selected)
+    receiver = receivers.ravel()
+    if np.any((receiver[indices] < -1) | (receiver[indices] >= selected.size)):
+        raise ValueError("Channel receiver index falls outside the grid.")
+    links = indices[receiver[indices] >= 0]
+    links = links[selected[receiver[links]]]
+    routing = routing_surface_m.ravel()
+    if np.any(routing[links] <= routing[receiver[links]]):
+        raise ValueError("Channel receivers must descend on the routing surface.")
+    upstream_first = indices[np.argsort(-routing[indices], kind="stable")]
 
-    for donor_value in order:
-        donor = int(donor_value)
-        receiver = int(flat_receivers[donor])
-        if receiver < 0 or not flat_channel[receiver]:
-            continue
-        donor_floor_m = flat_source[donor] - flat_conditioned[donor]
-        maximum_receiver_floor_m = donor_floor_m - minimum_drop_m
-        receiver_floor_m = flat_source[receiver] - flat_conditioned[receiver]
-        if receiver_floor_m <= maximum_receiver_floor_m:
-            continue
-        required_incision_m = flat_source[receiver] - maximum_receiver_floor_m
-        flat_conditioned[receiver] = min(
-            flat_maximum[receiver],
-            max(flat_conditioned[receiver], required_incision_m),
-        )
+    conditioned = incision_m.copy()
+    source = source_elevation_m.ravel()
+    maximum = maximum_incision_m.ravel()
+    floor = (source_elevation_m-incision_m).ravel()
+    lowest = source-maximum
+    required = lowest.copy()
+    # Every node has one receiver, so reverse topological order carries the
+    # complete downstream cut limit to each tributary without repeated passes.
+    for value in upstream_first[::-1]:
+        donor = int(value)
+        target = int(receiver[donor])
+        if target >= 0 and selected[target]:
+            required[donor] = max(required[donor], required[target]+minimum_drop_m)
+    floor[indices] = np.minimum(source[indices], np.maximum(floor[indices], required[indices]))
 
-    unresolved = 0
-    for donor_value in channel_indices:
-        donor = int(donor_value)
-        receiver = int(flat_receivers[donor])
-        if receiver < 0 or not flat_channel[receiver]:
-            continue
-        donor_floor_m = flat_source[donor] - flat_conditioned[donor]
-        receiver_floor_m = flat_source[receiver] - flat_conditioned[receiver]
-        if receiver_floor_m > donor_floor_m - minimum_drop_m + 1e-9:
-            unresolved += 1
-    return conditioned, np.maximum(conditioned - incision_m, 0.0), unresolved
+    # At a junction the lowest incoming floor constrains the receiver. Its
+    # local cut ceiling still wins when the complete path cannot descend.
+    for value in upstream_first:
+        donor = int(value)
+        target = int(receiver[donor])
+        if target >= 0 and selected[target]:
+            floor[target] = max(lowest[target], min(floor[target], floor[donor]-minimum_drop_m))
+    conditioned.ravel()[indices] = np.clip(source[indices]-floor[indices], 0., maximum[indices])
+    correction = np.zeros_like(incision_m)
+    correction.ravel()[indices] = conditioned.ravel()[indices]-incision_m.ravel()[indices]
+    final_floor = source-conditioned.ravel()
+    unresolved = np.count_nonzero(
+        final_floor[receiver[links]] > final_floor[links]-minimum_drop_m+1e-9)
+    return conditioned, correction, int(unresolved)
 
 
 def _normalized_downstream_steepening_ratio(
@@ -940,7 +945,7 @@ def drainage_incision(
     # Corrections can use the remaining local budget, but cannot exceed it.
     maximum_incision_m = np.minimum(maximum_incision_m, budget_m)
     incision_m, floor_correction_m, unresolved_uphill_edges = (
-        _condition_downstream_channel_floors(
+        condition_channel_floors(
             source_elevation_m,
             incision_m,
             maximum_incision_m,
