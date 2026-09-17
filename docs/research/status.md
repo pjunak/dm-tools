@@ -7,9 +7,9 @@ Research IDs remain stable in dated reports when proposals leave the active scop
 Dated reports preserve measurements at their recorded revision, not timeless
 performance claims. A source audit is not a successfully run engine comparison.
 
-The noise-profile research, input editor and connected valley reconstruction were
-updated on 2026-09-16; the external-engine inventory below retains the
-2026-09-13 audit date.
+The noise-profile research, input editor and valley work were updated on
+2026-09-16, with routing performance updated on 2026-09-17. The external-engine
+inventory below retains the 2026-09-13 audit date.
 
 ## Implemented baseline
 
@@ -27,7 +27,7 @@ updated on 2026-09-16; the external-engine inventory below retains the
 | Finer water review | Shoreline/contact/full-route profiles, regional transitions, procedural density, context shoulders, wet-link separation and dry-path checks | Residual blended/grazing extrema, continuous error bounds, complete-budget cost and off-grid/path alternatives |
 | Measurements (R41) | Elevation min/max/mean/deviation and masked X/Y differences/semivariances at physical lags | Detrending, arbitrary direction, terrain atlas, multiscale/topological descriptors |
 | Water demand forecast | Saved-project shoreline and potential internal-network plans, exact counts or bounded lower bounds, verified source identity | External routes/contacts, actual eligibility, whole-project cost and workbench access |
-| Performance (R45-R47) | Selective land sampling, exact water-sample reuse, prepared guide bounds and 13 default plus three scaling benchmark cases | Larger workload/index crossover, export cost, 4096/memory budgets and native migration evidence |
+| Performance (R45-R47) | Selective sampling, exact water/guide reuse, ordered D8 array sweeps, streamed regional carriers and repeatable public-fixture benchmarks | Full many-region builds, larger grid/index crossover, export cost and native migration evidence |
 
 The current format inventory lives in [schemas](../../schemas/README.md), and
 algorithm identities, sample budgets and numeric evidence belong to the
@@ -55,6 +55,11 @@ selected crest crossings and rebuilds the drainage graph around lower passes.
 Canonical routing and derived cuts can change, under the same budget policy.
 Complete-field clearance, other hidden extrema, full downstream conditioning,
 grid-aligned turns and physical river validity remain open.
+
+The [routing-cost follow-up](2026-09-17-drainage-routing-cost.md) reduces repeated
+Python work and bounds temporary carrier storage. All measured numeric products
+and diagnostic summaries match; broader terrain-quality and whole-project scale
+questions remain separate from that optimization.
 
 ## Research that has not been adopted
 

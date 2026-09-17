@@ -511,12 +511,12 @@ execution order.
   shaping can change. [ADR-0053](docs/adr/0053-observe-mountain-crests-in-drainage.md)
   and the [comparison](docs/research/2026-09-16-mountain-crest-routing.md) record
   rejected local swaps, exhaustive-probe cost and the adopted targeted method.
-- [ ] **P1 — Reduce crest-aware routing overhead and bound region storage.**
-  The repeated regional benchmark adds about 0.19-0.20 s at 513 px; timings vary,
-  and non-mountain cases also need hot-loop profiling. Measure many overlapping
-  regions and avoid retaining one full-grid carrier per mountain region. Keep
-  numeric/provenance invariants while removing deterministic work. See the
-  [measurements and limits](docs/research/2026-09-16-mountain-crest-routing.md).
+- [x] **P1 — Reduce crest-aware routing overhead and bound region storage.**
+  Ordered D8 array sweeps, shared metric/scalar work and streamed regional
+  candidate masks preserve numeric outputs. The [comparison](docs/research/2026-09-17-drainage-routing-cost.md)
+  records 8-28% faster generation on ten case/seed pairs and an 83.7% reduction
+  in observed peak allocation at 128 overlapping regions. Full many-region
+  builds and larger grids remain performance work; see R46 below.
 - [ ] **P1 — Complete between-node channel geometry.** Extend observation to
   multiple/tangent carrier crossings, the actual crest position, other recipes,
   authored features and blended-field extrema. Compare bounded refinement with
@@ -924,6 +924,11 @@ Priorities remain conditional on the current strategy's prerequisites.
   a bounded Numba experiment and an optional Rust proof using identical inputs.
   Include cold/warm latency, memory, transfer costs and complete-generation
   speedup. Verify Python/NumPy/Windows compatibility before installing anything.
+  Profiled D8 selection now uses ordered NumPy sweeps, MFD/Priority-Flood reuse
+  scalar work, and crest observation streams regional carriers. The current
+  [Python optimization](docs/research/2026-09-17-drainage-routing-cost.md) preserves
+  numeric products; full many-region builds and larger grids still need scaling
+  measurements before selecting another kernel or native-language experiment.
 - [ ] **Research — R47: Define the evidence gate for a Rust migration.**
   Stabilize units, grids, constraint priority, seeds, stage boundaries and
   numerical tolerances first. Require representative fixtures, an end-to-end

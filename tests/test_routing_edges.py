@@ -1,6 +1,8 @@
 # pyright: reportPrivateUsage=false
 """Crest-aware routing must observe barriers without changing authored terrain."""
 
+import weakref
+
 import numpy as np
 import pytest
 from numpy.typing import NDArray
@@ -189,3 +191,23 @@ def test_regional_crest_routes_improve_with_unchanged_source_and_budget_policy(
     assert isinstance(before_desc, dict) and isinstance(after_desc, dict)
     assert before_desc["maximum_excursion_m"] > 200.
     assert after_desc["maximum_excursion_m"] < 90.
+
+
+def test_region_count_does_not_accumulate_live_carrier_grids(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    carriers: list[weakref.ReferenceType[FloatArray]] = []
+    def carrier(
+        x: FloatArray, y: FloatArray, controls: LandformSettings, seed: int,
+    ) -> tuple[FloatArray, FloatArray, FloatArray]:
+        assert sum(reference() is not None for reference in carriers) <= 1
+        broad = x-.5
+        carriers.append(weakref.ref(broad))
+        return x, y, broad
+    monkeypatch.setattr(routing_edges, "regional_noise_basis", carrier)
+    axis = np.linspace(0., 2., 65)
+    ground, land = np.full((65, 65), 100.), np.ones((65, 65), dtype=np.bool_)
+    barriers = routing_edges.sample_mountain_barriers(
+        axis, axis, ground, land, (_region(),)*24, 42, lambda x, y: np.full_like(x, 140.))
+    assert barriers is not None and len(carriers) == 24
+    assert all(reference() is None for reference in carriers)

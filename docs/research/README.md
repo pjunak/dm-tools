@@ -12,6 +12,10 @@ in the current status or a new dated report.
 
 ## Implemented and measured work
 
+- [Drainage routing cost - 2026-09-17](2026-09-17-drainage-routing-cost.md)
+  measures faster generation with identical numerical products and bounded
+  mountain-carrier working storage through 128 overlapping regions.
+
 - [Mountain-crest routing - 2026-09-16](2026-09-16-mountain-crest-routing.md)
   compares alternate routes and targeted observations, with additional seeds,
   unchanged budget policy, measured runtime cost and mixed drainage diagnostics.

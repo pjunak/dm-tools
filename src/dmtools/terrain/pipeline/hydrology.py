@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 from heapq import heappop, heappush
-from math import hypot
+from math import hypot, inf, nextafter
 
 import numpy as np
 from numpy.typing import NDArray
@@ -63,7 +63,6 @@ def _terminal_cells(
     if terminal_mask.shape != land_mask.shape or np.any(terminal_mask & ~land_mask):
         raise ValueError("Retention terminals must share the grid and lie on land.")
     return terminal_mask
-
 
 
 def _validate_edge_barriers(
@@ -127,6 +126,8 @@ def priority_flood_surface(
             if visited[row, column]:
                 continue
             visited[row, column] = True
+        # The same scalar successor applies to every outward edge of this node.
+        next_height = nextafter(current_height, inf)
         for edge_index, (row_offset, column_offset) in enumerate(D8_NEIGHBOURS):
             neighbour_row = row + row_offset
             neighbour_column = column + column_offset
@@ -143,8 +144,7 @@ def priority_flood_surface(
             original_height = float(elevation_m[neighbour_row, neighbour_column])
             barrier = (float(edge_barriers_m[edge_index, row, column])
                        if edge_barriers_m is not None else original_height)
-            routed_height = max(original_height, barrier,
-                                float(np.nextafter(current_height, np.inf)))
+            routed_height = max(original_height, barrier, next_height)
             # An edge crest can make first discovery non-optimal. Settle only
             # when popped, so a later lower-saddle path can still relax this node.
             if routed_height < filled[neighbour_row, neighbour_column]:
@@ -189,13 +189,18 @@ def multiple_flow_accumulation(
     ]
 
     terminals = _terminal_cells(land_mask, terminal_mask).ravel()
+    neighbours = tuple(
+        (index, dy, dx, hypot(dx*x_spacing_km, dy*y_spacing_km))
+        for index, (dy, dx) in enumerate(D8_NEIGHBOURS)
+    )
     for flat_index in order:
         if terminals[flat_index]:
             continue
         row, column = divmod(int(flat_index), width)
         current_height = float(routing_elevation_m[row, column])
         recipients: list[tuple[int, int, float, float, float]] = []
-        for edge_index, (row_offset, column_offset) in enumerate(D8_NEIGHBOURS):
+        largest_slope = 0.0
+        for edge_index, row_offset, column_offset, distance_km in neighbours:
             neighbour_row = row + row_offset
             neighbour_column = column + column_offset
             if not (
@@ -212,14 +217,11 @@ def multiple_flow_accumulation(
             )
             if drop_m <= 0.0:
                 continue
-            distance_km = hypot(
-                column_offset * x_spacing_km,
-                row_offset * y_spacing_km,
-            )
             slope = drop_m / (1_000.0 * distance_km)
             recipients.append((neighbour_row, neighbour_column, slope**exponent,
                                drop_m, distance_km))
-            maximum_slope[row, column] = max(maximum_slope[row, column], slope)
+            largest_slope = max(largest_slope, slope)
+        maximum_slope[row, column] = largest_slope
         if not recipients:
             continue
         total_weight = sum(weight for _row, _column, weight, _drop, _distance in recipients)
@@ -230,10 +232,9 @@ def multiple_flow_accumulation(
             recipients = [(row, column, ((drop / scale) / distance) ** exponent, drop, distance)
                           for row, column, _weight, drop, distance in recipients]
             total_weight = sum(weight for _row, _column, weight, _drop, _distance in recipients)
+        source_area = accumulation[row, column]
         for neighbour_row, neighbour_column, weight, _drop, _distance in recipients:
-            accumulation[neighbour_row, neighbour_column] += (
-                accumulation[row, column] * weight / total_weight
-            )
+            accumulation[neighbour_row, neighbour_column] += source_area * weight / total_weight
 
     return accumulation, maximum_slope
 
@@ -311,51 +312,41 @@ def steepest_flow_receivers(
     receivers = np.full(routing_elevation_m.shape, -1, dtype=np.int64)
     receiver_slope = np.zeros_like(routing_elevation_m)
     terminals = _terminal_cells(land_mask, terminal_mask)
-    flat_indices = np.flatnonzero(land_mask & ~terminals)
+    indices = np.arange(land_mask.size, dtype=np.int64).reshape(land_mask.shape)
+    receiver_drop = np.zeros_like(routing_elevation_m)
+    receiver_distance = np.ones_like(routing_elevation_m)
 
-    for flat_index in flat_indices:
-        row, column = divmod(int(flat_index), width)
-        current_height = float(routing_elevation_m[row, column])
-        receiver: tuple[int, int] | None = None
-        steepest_slope = 0.0
-        receiver_drop_m, receiver_distance_km = 0.0, 1.0
-        for edge_index, (row_offset, column_offset) in enumerate(D8_NEIGHBOURS):
-            neighbour_row = row + row_offset
-            neighbour_column = column + column_offset
-            if not (
-                0 <= neighbour_row < height
-                and 0 <= neighbour_column < width
-                and land_mask[neighbour_row, neighbour_column]
-            ):
-                continue
-            if (edge_barriers_m is not None
-                    and edge_barriers_m[edge_index, row, column] > current_height):
-                continue
-            drop_m = current_height - float(
-                routing_elevation_m[neighbour_row, neighbour_column]
-            )
-            if drop_m <= 0.0:
-                continue
-            distance_km = hypot(
-                column_offset * x_spacing_km,
-                row_offset * y_spacing_km,
-            )
-            slope = drop_m / (1_000.0 * distance_km)
-            better = slope > steepest_slope
-            if slope == steepest_slope == 0.0:
-                scale = max(drop_m, receiver_drop_m)
-                better = (drop_m / scale) / distance_km > (
-                    receiver_drop_m / scale
-                ) / receiver_distance_km
-            if better:
-                steepest_slope = slope
-                receiver_drop_m, receiver_distance_km = drop_m, distance_km
-                receiver = neighbour_row, neighbour_column
-        if receiver is None:
+    # Nodes choose independently. Sweep directions in the original order so
+    # exact ties still retain the first neighbour, including subnormal grades.
+    for edge_index, (dy, dx) in enumerate(D8_NEIGHBOURS):
+        source = (slice(max(0, -dy), height-max(0, dy)),
+                  slice(max(0, -dx), width-max(0, dx)))
+        target = (slice(max(0, dy), height-max(0, -dy)),
+                  slice(max(0, dx), width-max(0, -dx)))
+        active = land_mask[source] & ~terminals[source] & land_mask[target]
+        if edge_barriers_m is not None:
+            active &= edge_barriers_m[edge_index][source] <= routing_elevation_m[source]
+        drop = np.subtract(routing_elevation_m[source], routing_elevation_m[target],
+                           out=np.zeros_like(routing_elevation_m[source]), where=active)
+        active &= drop > 0.0
+        if not np.any(active):
             continue
-        receiver_row, receiver_column = receiver
-        receivers[row, column] = receiver_row * width + receiver_column
-        receiver_slope[row, column] = steepest_slope
+        distance = hypot(dx*x_spacing_km, dy*y_spacing_km)
+        previous_slope = receiver_slope[source]
+        previous_drop = receiver_drop[source]
+        previous_distance = receiver_distance[source]
+        with np.errstate(under="ignore"):
+            slope = drop / (1_000.0 * distance)
+            better = active & (slope > previous_slope)
+            underflow = active & (slope == 0.0) & (previous_slope == 0.0)
+            if np.any(underflow):
+                scale = np.maximum(drop[underflow], previous_drop[underflow])
+                better[underflow] = (drop[underflow]/scale)/distance > (
+                    previous_drop[underflow]/scale)/previous_distance[underflow]
+        receivers[source][better] = indices[target][better]
+        previous_slope[better] = slope[better]
+        previous_drop[better] = drop[better]
+        previous_distance[better] = distance
 
     return receivers, receiver_slope
 

@@ -39,14 +39,25 @@ def sample_mountain_barriers(
         return None
     xx, yy = np.meshgrid(x, y)
     radius = float(np.hypot(np.max(np.diff(x)), np.max(np.diff(y))))
-    carriers: list[tuple[FloatArray, NDArray[np.bool_]]] = []
+    ny, nx = land.shape
+    candidates = np.zeros((4, ny, nx), dtype=np.bool_)
+    seed = stage_seed(master_seed, LANDFORM_STAGE_ID)
+    # Fold each carrier into four shared edge masks, then release it. Working
+    # grid storage must not grow with the number of authored mountain regions.
     for region in mountains:
-        _u, _v, broad = regional_noise_basis(
-            xx, yy, region.source.settings, stage_seed(master_seed, LANDFORM_STAGE_ID))
+        _u, _v, broad = regional_noise_basis(xx, yy, region.source.settings, seed)
         nearby = np.asarray(shapely.intersects_xy(region.geometry.buffer(radius), xx, yy),
                             dtype=np.bool_)
-        carriers.append((broad, nearby))
-    ny, nx = land.shape
+        for index in range(4, 8):
+            dy, dx = D8_NEIGHBOURS[index]
+            source = (slice(0, ny-dy), slice(max(0, -dx), nx-max(0, dx)))
+            target = (slice(dy, ny), slice(max(0, dx), nx-max(0, -dx)))
+            first, last = broad[source], broad[target]
+            candidates[index-4][source] |= (
+                (np.signbit(first) != np.signbit(last)) | (first == 0.) | (last == 0.)
+            ) & (nearby[source] | nearby[target])
+            del first, last  # These views also retain the full carrier.
+        del broad, nearby, _u, _v
     rows, columns = np.indices(land.shape, dtype=np.int64)
     barriers = np.full((8, ny, nx), np.inf)
     fractions = np.arange(1, 8, dtype=np.float64)[None, :]/8.
@@ -63,11 +74,7 @@ def sample_mountain_barriers(
         endpoints = np.maximum(elevation_m[r, c], elevation_m[tr, tc])
         barriers[index, r, c] = endpoints
         barriers[7-index, tr, tc] = endpoints
-        selected = np.zeros(r.size, dtype=np.bool_)
-        for broad, nearby in carriers:
-            first, last = broad[r, c], broad[tr, tc]
-            selected |= ((np.signbit(first) != np.signbit(last)) | (first == 0.) | (last == 0.)) & (
-                nearby[r, c] | nearby[tr, tc])
+        selected = candidates[index-4, r, c]
         r, c, tr, tc = r[selected], c[selected], tr[selected], tc[selected]
         for start in range(0, r.size, batch_edges):
             part = slice(start, start+batch_edges)

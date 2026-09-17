@@ -98,8 +98,9 @@ bounds on unseen terrain heights.
    observations now inform Priority-Flood, D8 and MFD together; the
    [routing comparison](../research/2026-09-16-mountain-crest-routing.md) records
    improved large outliers, added runtime and mixed remaining drainage metrics.
-   Profile routing overhead and regional storage before widening observations;
-   next extend coverage to multiple/tangent crossings,
+   A [routing optimization](../research/2026-09-17-drainage-routing-cost.md) now
+   reduces that cost and bounds carrier storage while preserving numeric outputs.
+   Next extend coverage to multiple/tangent crossings,
    other recipes and authored features, with explicit source-scale/process-grid
    limits; continue downstream conditioning and turn smoothing. Preserve divides,
    authored constraints and cut-budget policy. Inspect regenerated 1025 px results with

@@ -20,6 +20,13 @@ cuts, while retaining the regional/global budget policy and authored authority.
 These finite observations target one recipe, not every hidden terrain extremum;
 see [ADR-0053](../../../../docs/adr/0053-observe-mountain-crests-in-drainage.md).
 
+Receiver selection uses eight ordered array sweeps, preserving ties and tiny
+positive drops. MFD retains its stable accumulation order while reusing metric
+work; each mountain carrier folds into shared candidate masks and is released.
+This bounds working grid storage as region count grows. The
+[performance comparison](../../../../docs/research/2026-09-17-drainage-routing-cost.md)
+records unchanged numeric output, measured cost and remaining scaling limits.
+
 Incision and residual-detail suppression start with bounded bicubic Hermite
 patches: shared nodal derivatives soften cell-edge creases. Selected diagonal
 channel connections then receive compact, metric corrections toward their

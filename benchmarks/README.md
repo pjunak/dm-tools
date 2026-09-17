@@ -113,6 +113,10 @@ earlier exploratory repeated generations within one warmed Python process.
 The [language assessment](../docs/research/2026-09-05-language-and-performance.md)
 records why optimization begins in Python and the evidence required before a
 native-language migration.
+The [routing-cost comparison](../docs/research/2026-09-17-drainage-routing-cost.md)
+records the later NumPy D8 optimization, exact product equality and a separate
+allocation probe with up to 128 overlapping mountain regions. That isolated
+observer probe is not a full many-region generation benchmark.
 
 The [2026-09-10 review](../docs/maintenance/2026-09-10-sanity-and-performance.md)
 records earlier coast/regional bottlenecks. The
