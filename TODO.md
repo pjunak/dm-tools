@@ -524,15 +524,23 @@ execution order.
   [comparison](docs/research/2026-09-17-refined-mountain-crests.md) records fewer
   underestimated barriers, mixed finished-channel outcomes and added cost;
   [ADR-0054](docs/adr/0054-refine-observed-mountain-crests.md) owns the policy.
+- [x] **P1 — Avoid extra channel dips around unattainable floors.** Seventeen
+  source/ceiling observations per eligible segment now carry obstacles upstream
+  and unfillable pits downstream. Sparse cubic targets preserve canonical pins,
+  routing, cut ceilings and authored authority. The diagnosed seed-7 climb falls
+  to its approximately 50.93 m sampled constraint limit; see
+  [ADR-0055](docs/adr/0055-prepare-attainable-channel-floor-profiles.md) and the
+  [comparison](docs/research/2026-09-17-attainable-channel-floors.md).
 - [ ] **P1 — Complete between-node channel geometry.** Extend observation to
   unresolved sub-probe extrema, other recipes, authored features and blended-field
   maxima. Define explicit source-scale/process-grid contracts beyond the current
   bounded finite carrier search. Continue whole-route conditioning
   and D8 turn smoothing; separate remaining cap-limited barriers, source pits,
   endpoint tapers and retention boundaries. Preserve divides, anchors and budget
-  policy. The refined observer's seed-7 edge 9958 -> 9702 retains an 85.47 m
-  climb at 1025 stations; track it during whole-route work. Finite profiles and
-  lower barrier deficits do not certify rivers.
+  policy. Seed-7 edge 9958 -> 9702 still requires about 50.93 m of ascent with
+  its current pins and cut ceiling; compare whole-path alternatives instead of
+  exceeding the cap. Segment envelopes do not condition across fixed canonical
+  pins. Finite profiles and lower barrier deficits do not certify rivers.
 - [ ] **P1 — Add variable valley cross-sections.** Support narrow V-shaped
   valleys, glacial U-shaped valleys, broad floodplains, terraces, and smooth
   width/depth changes along a line. Generated fluvial valleys now widen and

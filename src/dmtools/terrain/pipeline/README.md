@@ -43,6 +43,13 @@ lower humps or decrease to avoid artificial pits; they remain nonnegative and
 obey the existing bilinear nodal cut ceiling, while canonical nodes stay fixed.
 This final cut is not restricted to the corner cut range. See
 [ADR-0052](../../../../docs/adr/0052-fit-channel-cuts-to-sampled-terrain.md).
+Before evaluation, eligible segments also observe 17 source/ceiling positions.
+Downstream obstacle envelopes and upstream uncut-source envelopes adjust their
+floor targets, reducing avoidable dips within the same limits. Sparse cubic
+profiles retain fixed canonical pins and use the existing corridor blending;
+missing-land/retained profiles are omitted completely. The shared PCHIP slope
+kernel remains numerically unchanged. See
+[ADR-0055](../../../../docs/adr/0055-prepare-attainable-channel-floor-profiles.md).
 Exact basin masks still exclude both automatic effects inside retained footprints.
 Active ceilings may retain slope breaks. This preserves routing nodes, not every
 between-node height, and does not add terrain detail or certify flow. See

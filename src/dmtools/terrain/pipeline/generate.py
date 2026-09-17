@@ -62,8 +62,8 @@ from dmtools.terrain.pipeline.water_sampling import SamplingDensity, SamplingFea
 
 type ProgressCallback = Callable[[float, str], None]
 
-GENERATOR_ALGORITHM_ID = "coastline-constraint-terrain@13"
-AUTOMATIC_VALLEY_ALGORITHM_ID = "regional-budget-mfd-d8-valleys@11"
+GENERATOR_ALGORITHM_ID = "coastline-constraint-terrain@14"
+AUTOMATIC_VALLEY_ALGORITHM_ID = "regional-budget-mfd-d8-valleys@12"
 NOISE_ALGORITHM_ID = "coordinate-value-noise-normalized@1"
 
 
@@ -907,8 +907,21 @@ def _prepare_automatic_valley_field(
         np.maximum(macro_elevation - drainage.incision_m, 0.)
         + (full_elevation - macro_elevation) * (1. - drainage.detail_suppression), 0.,
     )
+    def sample_channel_source(
+        x: NDArray[np.float64], y: NDArray[np.float64],
+    ) -> tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.bool_]]:
+        points = shapely.points(x, y)
+        coast_distance = np.asarray(shapely.distance(points, boundary), dtype=np.float64)
+        full, macro, _driver = _base_elevation_fields(x, y, coast_distance, settings, regions)
+        _incision, suppression = reconstruction.sample(x, y)
+        available = np.asarray(shapely.intersects_xy(polygon, x, y), dtype=np.bool_)
+        if basins:
+            available &= basin_intent_ids(x, y, basins) == 0
+        return macro, (full-macro)*(1-suppression), available
+
     floor = ChannelFloorReconstruction.prepare(
         reconstruction.incision, nodal_floor, drainage.receivers, drainage.channel_mask, land_mask,
+        sample_source=sample_channel_source,
     )
     return _AutomaticValleyField(
         x_km=x_km,

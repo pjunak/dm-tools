@@ -10,32 +10,10 @@ from dataclasses import dataclass, field
 import numpy as np
 from numpy.typing import NDArray
 
+from dmtools.terrain.pipeline.profile import monotone_grid_slopes
+
 type FloatArray = NDArray[np.float64]
 
-
-def _monotone_slopes(values: FloatArray, positions: FloatArray, axis: int) -> FloatArray:
-    data = np.moveaxis(values, axis, 0)
-    spans = np.diff(positions).reshape((-1, 1))
-    gradients = np.diff(data, axis=0) / spans
-    slopes = np.zeros_like(data)
-    if data.shape[0] == 2:
-        slopes[:] = gradients[0]
-    else:
-        before, after = gradients[:-1], gradients[1:]
-        same_sign = (np.sign(before) == np.sign(after)) & (before != 0) & (after != 0)
-        # Fritsch-Butland harmonic slopes, evaluated without dividing by zero.
-        w1, w2 = 2 * spans[1:] + spans[:-1], spans[1:] + 2 * spans[:-1]
-        numerator = (w1 + w2) * before * after
-        denominator = w1 * after + w2 * before
-        np.divide(numerator, denominator, out=slopes[1:-1], where=same_sign)
-        for index, first, second, h0, h1 in (
-            (0, gradients[0], gradients[1], spans[0], spans[1]),
-            (-1, gradients[-1], gradients[-2], spans[-1], spans[-2]),
-        ):
-            end = ((2 * h0 + h1) * first - h0 * second) / (h0 + h1)
-            end = np.where(np.sign(end) == np.sign(first), end, 0.)
-            slopes[index] = np.sign(end) * np.minimum(np.abs(end), 3 * np.abs(first))
-    return np.moveaxis(slopes, 0, axis)
 
 
 def _basis(t: FloatArray) -> tuple[FloatArray, FloatArray, FloatArray, FloatArray]:
@@ -80,8 +58,8 @@ class BoundedBicubicGrid:
                 copied = np.array(original, dtype=np.float64, copy=True)
                 copied.flags.writeable = False
                 object.__setattr__(self, name, copied)
-        dx = _monotone_slopes(self.values, self.x, axis=1)
-        dy = _monotone_slopes(self.values, self.y, axis=0)
+        dx = monotone_grid_slopes(self.values, self.x, axis=1)
+        dy = monotone_grid_slopes(self.values, self.y, axis=0)
         dxy = (np.gradient(dx, self.y, axis=0) + np.gradient(dy, self.x, axis=1)) * .5
         scale = np.ones_like(self.values)
         hx, hy = np.diff(self.x)[None, :], np.diff(self.y)[:, None]

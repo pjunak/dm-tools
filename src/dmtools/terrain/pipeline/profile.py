@@ -1,4 +1,4 @@
-"""Shape-preserving one-dimensional profiles for authored terrain structures."""
+"""Shape-preserving profiles for authored structures and generated terrain."""
 
 import numpy as np
 from numpy.typing import NDArray
@@ -86,3 +86,32 @@ def shape_preserving_profile(
         + right_slope_basis * segment_spans * slopes[segment_indices + 1]
     )
     return result.reshape(queries_km.shape)
+
+
+type FloatArray = NDArray[np.float64]
+
+
+def monotone_grid_slopes(values: FloatArray, positions: FloatArray, axis: int) -> FloatArray:
+    """Shared PCHIP derivatives for rows or columns of a two-dimensional field."""
+    data = np.moveaxis(values, axis, 0)
+    spans = np.diff(positions).reshape((-1, 1))
+    gradients = np.diff(data, axis=0) / spans
+    slopes = np.zeros_like(data)
+    if data.shape[0] == 2:
+        slopes[:] = gradients[0]
+    else:
+        before, after = gradients[:-1], gradients[1:]
+        same_sign = (np.sign(before) == np.sign(after)) & (before != 0) & (after != 0)
+        # Fritsch-Butland harmonic slopes, evaluated without dividing by zero.
+        w1, w2 = 2 * spans[1:] + spans[:-1], spans[1:] + 2 * spans[:-1]
+        numerator = (w1 + w2) * before * after
+        denominator = w1 * after + w2 * before
+        np.divide(numerator, denominator, out=slopes[1:-1], where=same_sign)
+        for index, first, second, h0, h1 in (
+            (0, gradients[0], gradients[1], spans[0], spans[1]),
+            (-1, gradients[-1], gradients[-2], spans[-1], spans[-2]),
+        ):
+            end = ((2 * h0 + h1) * first - h0 * second) / (h0 + h1)
+            end = np.where(np.sign(end) == np.sign(first), end, 0.)
+            slopes[index] = np.sign(end) * np.minimum(np.abs(end), 3 * np.abs(first))
+    return np.moveaxis(slopes, 0, axis)

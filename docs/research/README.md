@@ -12,6 +12,10 @@ in the current status or a new dated report.
 
 ## Implemented and measured work
 
+- [Attainable channel floors - 2026-09-17](2026-09-17-attainable-channel-floors.md)
+  diagnoses a cut-limited route and compares sparse floor profiles that reduce
+  extra dips while retaining canonical routing, pins and budgets.
+
 - [Refined mountain crests - 2026-09-17](2026-09-17-refined-mountain-crests.md)
   compares broader candidate selection and bounded crest searches against dense
   finite references, finished-channel profiles and fresh-process runtime.
