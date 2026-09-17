@@ -27,17 +27,19 @@ from dmtools.terrain.adapters import (
     elevation_legend_colours,
     load_svg_coastline_source,
     load_terrain_project,
-    render_height_map,
     save_height_map,
     save_terrain_project,
 )
 from dmtools.terrain.adapters.render import (
+    compose_height_map,
     render_basin_catchment_overlay,
     render_basin_outflow_overlay,
     render_basin_overlay,
     render_drainage_overlay,
+    render_height_map_layers,
 )
 from dmtools.terrain.adapters.viewport import render_viewport
+from dmtools.terrain.adapters.water_display import WaterDisplay
 from dmtools.terrain.domain import (
     BrushToolSettings,
     Coastline,
@@ -104,6 +106,7 @@ class _ResultEvent:
     inputs: GenerationInputs
     terrain: GeneratedTerrain
     image: Image.Image
+    water_display: WaterDisplay | None
 
 
 @dataclass(frozen=True, slots=True)
@@ -167,6 +170,7 @@ class TerrainApp:
         self._project_path: Path | None = None
         self._terrain: GeneratedTerrain | None = None
         self._image: Image.Image | None = None
+        self._water_display: WaterDisplay | None = None
         self._preview_photo: ImageTk.PhotoImage | None = None
         self._coast_polygon: Polygon | MultiPolygon | None = None
         self._history = InstructionHistory()
@@ -490,7 +494,7 @@ class TerrainApp:
             tk.Button(navigation, text=text, command=command, width=3, relief="flat",
                       background="#2c3e40", foreground="#dce8e3").pack(side="left", padx=2)
         self.zoom_label = tk.Label(navigation, text="1x fit", background=_PREVIEW,
-                                   foreground="#dce8e3", font=("Consolas", 9))
+                                   foreground="#dce8e3", font=("Consolas", 9), justify="left")
         self.zoom_label.pack(side="left", padx=8)
         tk.Checkbutton(navigation, text="Instructions", variable=self._show_instructions,
                        command=self._draw_preview, background=_PREVIEW, foreground="#dce8e3",
@@ -1153,7 +1157,7 @@ class TerrainApp:
             swatch.configure(background=colour)
         if self._terrain is None:
             return
-        self._image = render_height_map(self._terrain, style=style)
+        self._image, self._water_display = render_height_map_layers(self._terrain, style=style)
         self.status_label.configure(
             text=(
                 "Cartographic relief ready."
@@ -1922,7 +1926,9 @@ class TerrainApp:
             return
         _, world = self._view_dimensions()
         try:
-            scale = self._variables["object_scale_km"].get() / max(world)
+            extent_km = (self._terrain.settings.object_scale_km if self._terrain is not None
+                         else self._variables["object_scale_km"].get())
+            scale = extent_km / max(world)
         except tk.TclError:
             return
         text = (f"x {position[0] * world[0] * scale:,.1f} · "
@@ -2129,6 +2135,7 @@ class TerrainApp:
         self._brush_cursor = None
         self._terrain = None
         self._image = None
+        self._water_display = None
         self.progress.stop()
         self.progress.configure(mode="determinate", value=0)
         self._set_busy(False)
@@ -2268,8 +2275,8 @@ class TerrainApp:
                     constraints=inputs.constraints,
                 )
                 self._events.put(_ProgressEvent(0.97, "Rendering colour relief"))
-                image = render_height_map(terrain, style=render_style)
-                self._events.put(_ResultEvent(inputs, terrain, image))
+                image, water = render_height_map_layers(terrain, style=render_style)
+                self._events.put(_ResultEvent(inputs, terrain, image, water))
             except Exception as error:
                 self._events.put(
                     _ErrorEvent(
@@ -2308,6 +2315,7 @@ class TerrainApp:
                     self._generated_inputs = event.inputs
                     self._terrain = event.terrain
                     self._image = event.image
+                    self._water_display = event.water_display
                     self._review_image = None
                     self._review_key = None
                     self.progress.stop()
@@ -2576,13 +2584,22 @@ class TerrainApp:
         left, top, right, bottom = rect
         scale_label = ""
         try:
-            scale = self._variables["object_scale_km"].get() / max(right - left, bottom - top)
+            extent_km = (self._terrain.settings.object_scale_km if self._terrain is not None
+                         else self._variables["object_scale_km"].get())
+            scale = extent_km / max(right - left, bottom - top)
             scale_label = f" · {scale:,.2f} km/px"
+            if self._terrain is not None:
+                grid = self._terrain.grid
+                spacing = max(grid.x_spacing_km, grid.y_spacing_km)
+                scale_label += f"\nground {spacing:,.2f} km/sample"
         except tk.TclError:
             pass
         self.zoom_label.configure(text=f"{self._viewport.zoom:.1f}x fit{scale_label}")
         if self._image is not None:
             with render_viewport(self._image, rect, size) as display:
+                if self._water_display is not None:
+                    with self._water_display.render(rect, size) as water:
+                        display.alpha_composite(water)
                 self._preview_photo = ImageTk.PhotoImage(display)
             self.preview.create_image(0, 0, image=self._preview_photo, anchor="nw")
         else:
@@ -3000,7 +3017,8 @@ class TerrainApp:
         if not selected:
             return
         try:
-            save_height_map(self._image, self._terrain, Path(selected))
+            with compose_height_map(self._image, self._water_display) as image:
+                save_height_map(image, self._terrain, Path(selected))
         except OSError as error:
             messagebox.showerror("Export failed", str(error), parent=self.root)
             return

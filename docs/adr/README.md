@@ -83,3 +83,4 @@ supersedes their legacy compatibility commitments during early development.
 - [ADR-0054: Refine observed mountain crests](0054-refine-observed-mountain-crests.md)
 - [ADR-0055: Prepare attainable channel-floor profiles](0055-prepare-attainable-channel-floor-profiles.md)
 - [ADR-0056: Condition network floors in both directions](0056-condition-network-floors-in-both-directions.md)
+- [ADR-0057: Display water at the appropriate scale](0057-display-water-at-the-appropriate-scale.md)

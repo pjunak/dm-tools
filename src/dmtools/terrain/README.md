@@ -118,9 +118,10 @@ adds hidden detail bands or implements a regional generation job.
 | Open / Save / Save As | **Ctrl+O** / **Ctrl+S** / **Ctrl+Shift+S** |
 | Generate | **Ctrl+Enter** |
 
-The toolbar shows magnification relative to Fit and km per display pixel. This
-is a navigation scale, not the DEM sampling resolution. The ground readout and
-review overlays belong to the last result, including when it is stale; lake
+The toolbar shows magnification relative to Fit, km per display pixel and the
+current ground sample spacing. Zoom changes display scale; ground spacing stays
+fixed until a new generation. The ground readout and review overlays belong to
+the last result, including when it is stale; lake
 water surfaces remain separate from the reported ground height. Coordinates are
 local to this coastline, not latitude/longitude.
 
@@ -128,6 +129,16 @@ Pan/zoom renders only the visible window instead of allocating an enlarged
 whole-map image. Drainage/catchment layers are cached per result and toggle
 combination. Zoom can expose coarse review samples; it does not improve their
 accuracy. Inspect **Drainage review** and **Basin details** when evaluating a run.
+
+In cartographic relief, small lake pools fade out in distant views and become
+visible as you zoom closer. Panning preserves their visibility, including when
+most of a large lake leaves the screen. All generated water remains available
+in numeric outputs; the ground readout still reports the lake bed. PNG exports apply visibility at the
+exported image size, independently of the current zoom; scientific elevation
+continues to show the lake bed. The blue/red planned channels and teal outlet
+lines are diagnostic overlays, available at every scale. Small cartographic
+rivers await finer local terrain and hydrology generation; see
+[the scale-aware water plan](../../../docs/adr/0057-display-water-at-the-appropriate-scale.md).
 
 ## Saving and unfinished work
 

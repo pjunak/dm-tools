@@ -16,6 +16,11 @@ from dmtools.terrain.adapters.palettes import (
     OLERON_LAND_RGB,
     SCIENTIFIC_ELEVATION_PALETTE_ID,
 )
+from dmtools.terrain.adapters.water_display import (
+    WATER_DISPLAY_ID,
+    WaterDisplay,
+    prepare_water_display,
+)
 from dmtools.terrain.domain import (
     ElevationPoint,
     TerrainBrushStroke,
@@ -114,12 +119,12 @@ def _hillshade(terrain: GeneratedTerrain, style: RenderStyle) -> np.ndarray:
     return np.clip(0.72 + 0.38 * illumination, 0.55, 1.08)
 
 
-def render_height_map(
+def render_height_map_layers(
     terrain: GeneratedTerrain,
     *,
     style: RenderStyle = "cartographic",
-) -> Image.Image:
-    """Create a cartographic or scientific elevation tint with fixed hillshade."""
+) -> tuple[Image.Image, WaterDisplay | None]:
+    """Prepare immutable relief and scale-aware water separately for navigation."""
 
     colour_scale_maximum_m = (
         CARTOGRAPHIC_RELIEF_MAX_ELEVATION_M
@@ -134,8 +139,6 @@ def render_height_map(
     rgb = elevation_palette_rgb(normalized, style=style) * 255.0
     rgb *= _hillshade(terrain, style)[..., np.newaxis]
     rgb_uint8 = np.clip(rgb, 0, 255).astype(np.uint8)
-    if style == "cartographic":
-        rgb_uint8[np.isfinite(terrain.water.surface_m)] = (49, 133, 175)
     alpha = np.where(terrain.land_mask, 255, 0).astype(np.uint8)
     rgba = np.dstack((rgb_uint8, alpha))
     image = Image.fromarray(rgba, mode="RGBA")
@@ -143,7 +146,32 @@ def render_height_map(
     image.info["dmtools.render_style"] = style
     image.info["dmtools.colour_palette"] = palette_id
     image.info["dmtools.colour_scale_maximum_m"] = f"{colour_scale_maximum_m:g}"
-    return image
+    image.info["dmtools.water_visibility"] = WATER_DISPLAY_ID if style == "cartographic" else "none"
+    water = (prepare_water_display(terrain.water.surface_m, terrain.land_mask)
+             if style == "cartographic" else None)
+    return image, water
+
+
+def compose_height_map(image: Image.Image, water: WaterDisplay | None) -> Image.Image:
+    """Compose a full-size export; current viewport magnification has no effect."""
+    result = image.copy()
+    if water is not None:
+        with water.render((0., 0., float(image.width), float(image.height)), image.size) as overlay:
+            result.alpha_composite(overlay)
+    return result
+
+
+def render_height_map(
+    terrain: GeneratedTerrain, *, style: RenderStyle = "cartographic",
+) -> Image.Image:
+    """Render derived relief with lake visibility at this output's pixel scale."""
+    image, water = render_height_map_layers(terrain, style=style)
+    try:
+        return compose_height_map(image, water)
+    finally:
+        image.close()
+        if water is not None:
+            water.pool_area.close()
 
 
 def _constraint_payload(constraint: TerrainConstraint) -> dict[str, object]:
@@ -186,6 +214,8 @@ def save_height_map(image: Image.Image, terrain: GeneratedTerrain, destination: 
             )
         ),
     )
+    metadata.add_text("dmtools.water_visibility",
+                      str(image.info.get("dmtools.water_visibility", "none")))
     metadata.add_text(
         "dmtools.constraints",
         json.dumps(

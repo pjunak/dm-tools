@@ -12,6 +12,9 @@ in the current status or a new dated report.
 
 ## Implemented and measured work
 
+- [Water display scale — 2026-09-17](2026-09-17-water-display-scale.md)
+  checks scale-aware sampled lake visibility, viewport caching and local
+  rendering cost; small rivers remain gated on future regional detail.
 - [Network floor conditioning - 2026-09-17](2026-09-17-network-floor-conditioning.md)
   carries cut-limited floors through tributaries, measures large-climb reductions
   and smaller-rise regressions, and retains path alternatives as research.

@@ -45,7 +45,7 @@ def app(generated: tuple[GenerationInputs, GeneratedTerrain]) -> Iterator[ui.Ter
     workbench._accept_coastline(inputs.coastline)
     workbench._apply_settings(inputs.settings)
     workbench._history.reset(inputs.constraints)
-    workbench._events.put(ui._ResultEvent(inputs, terrain, Image.new("RGB", (65, 65))))
+    workbench._events.put(ui._ResultEvent(inputs, terrain, Image.new("RGBA", (65, 65)), None))
     workbench._poll_events()
     yield workbench
     for callback in root.tk.splitlist(root.tk.call("after", "info")):
@@ -82,7 +82,7 @@ def test_settings_and_late_results_use_exact_snapshot(app: ui.TerrainApp) -> Non
     assert terrain is not None and image is not None
     app._variables["seed"].set(1234)
     assert not app._reference_is_current()
-    app._events.put(ui._ResultEvent(request, terrain, image))
+    app._events.put(ui._ResultEvent(request, terrain, image, app._water_display))
     app._poll_events()
     assert not app._reference_is_current()
     assert str(app.export_button["state"]) == "disabled"
@@ -495,3 +495,69 @@ def test_select_click_cannot_move_an_instruction_when_the_properties_change_layo
     app.root.update()
     app._on_map_release(event)
     assert app._constraints == original and not app._history.can_undo
+
+
+def test_water_visibility_tracks_zoom_and_style_without_changing_or_exporting_viewport(
+    app: ui.TerrainApp, monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+) -> None:
+    from dmtools.terrain.adapters.render import render_height_map, render_height_map_layers
+    from dmtools.terrain.adapters.water_display import WATER_COLOUR, WATER_DISPLAY_ID
+
+    terrain = app._terrain
+    assert terrain is not None
+    surface = np.full_like(terrain.water.surface_m, np.nan)
+    surface[32, 32] = 2000.
+    terrain = replace(terrain, water=replace(terrain.water, surface_m=surface))
+    image, water = render_height_map_layers(terrain)
+    app._events.put(ui._ResultEvent(app._generation_inputs(), terrain, image, water))
+    app._poll_events()
+    _show_canvas(app)
+    app._show_instructions.set(False)
+    before = terrain.elevation_m.copy(), terrain.water.surface_m.copy()
+    assert app._water_display is water and water is not None
+    app._zoom_view(4)
+    assert app._water_display is water
+    assert "km/sample" in str(app.zoom_label["text"])
+    assert app._reference_is_current()
+    photo = app._preview_photo
+    assert photo is not None
+    centre = (photo.width() // 2, photo.height() // 2)
+    assert app.root.tk.call(str(photo), "get", *centre) == WATER_COLOUR
+    export = tmp_path / "water.png"
+    def choose_export(**_kwargs: object) -> str:
+        return str(export)
+    monkeypatch.setattr(ui.filedialog, "asksaveasfilename", choose_export)
+    app._export()
+    with Image.open(export) as exported, render_height_map(terrain) as expected:
+        assert exported.size == image.size
+        assert exported.tobytes() == expected.tobytes()
+        assert exported.info["dmtools.water_visibility"] == WATER_DISPLAY_ID
+    app._render_style_label.set("Scientific elevation")
+    app._on_render_style_changed()
+    assert app._water_display is None
+    app._render_style_label.set("Cartographic relief")
+    app._on_render_style_changed()
+    assert app._water_display is not None
+    for actual, expected in zip((terrain.elevation_m, terrain.water.surface_m),
+                                 before, strict=True):
+        np.testing.assert_array_equal(actual, expected)
+    # Pending scale edits do not relabel the old generated map with the new scale.
+    label = str(app.zoom_label["text"])
+    app._inspect_position(*app._normalized_to_canvas((0.5, 0.5)))
+    probe = str(app.cursor_label["text"])
+    app._variables["object_scale_km"].set(terrain.settings.object_scale_km * 2)
+    assert str(app.zoom_label["text"]) == label
+    app._inspect_position(*app._normalized_to_canvas((0.5, 0.5)))
+    assert str(app.cursor_label["text"]) == probe
+    assert not app._reference_is_current()
+
+
+def test_resolution_readout_keeps_navigation_available_in_small_window(app: ui.TerrainApp) -> None:
+    _show_canvas(app)
+    app.root.geometry("1040x700")
+    app.root.update()
+    app._draw_preview()
+    app.root.update()
+    for widget in app.zoom_label.master.winfo_children():
+        assert widget.winfo_ismapped()
+        assert widget.winfo_width() >= widget.winfo_reqwidth()

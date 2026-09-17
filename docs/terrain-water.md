@@ -33,10 +33,15 @@ remains exposed. A lake can therefore contain islands or multiple pools.
 Changing only water level or outlet leaves its ground DEM unchanged. Changing
 a footprint changes its automatic-cut protection and may change nearby terrain.
 
-Cartographic relief displays wet samples in blue. Scientific elevation continues
-to show ground height, including the lake bed. The generated Float32 DEM and
-GeoTIFF remain ground elevations; a water surface never replaces an exact height
-anchor or bathymetry sample.
+Cartographic relief displays sampled lake pools in blue according to their
+screen area: hidden at or below 9 output pixels squared, fading to full opacity
+at 36. Small pools appear as the view moves closer; native-size exports use their
+own pixel scale. This only filters presentation; numeric water stays complete.
+Scientific elevation continues to show ground height, including the lake bed.
+The generated Float32 DEM and GeoTIFF remain ground elevations; a water surface never replaces an exact height
+anchor or bathymetry sample. The separate drainage/outlet review remains visible
+at all scales. Physical river products and their zoom-driven local generation
+are planned in [ADR-0057](adr/0057-display-water-at-the-appropriate-scale.md).
 
 ## Authored and derived data
 

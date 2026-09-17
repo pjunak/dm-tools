@@ -48,8 +48,12 @@ The current implemented path is:
    `wet_links.py` and `dry_links.py` own path/link checks. `basin_flow.py` conserves captured
    area while transferring only eligible collections. These checks do not
    establish physical lake equilibrium, discharge or a complete river network.
-7. The workbench renders derived relief/review overlays and exports PNG. The
-   shared headless build operation writes NPY/NPZ, local-metric GeoTIFF, both
+7. The workbench renders derived relief/review overlays and exports PNG.
+   Cartographic water is a separate scale-aware layer: cached whole-pool areas
+   drive visibility independently of viewport clipping; scientific ground and
+   numeric water remain unchanged. [ADR-0057](../adr/0057-display-water-at-the-appropriate-scale.md)
+   also specifies future resolution-gated river visibility during local generation.
+   The shared headless build operation writes NPY/NPZ, local-metric GeoTIFF, both
    preview styles, diagnostics and a completion-last manifest through adapters.
 
 The read-only [water-budget operation](../terrain-water-budget.md) shares field

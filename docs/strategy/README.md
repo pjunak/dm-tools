@@ -119,7 +119,10 @@ bounds on unseen terrain heights.
    [ADR-0049](../adr/0049-navigate-and-save-authored-inputs.md) owns the current
    input-editor contract. Cancellation, comparison views and vertex insertion
    remain separate editor work. [ADR-0048](../adr/0048-keep-zoom-driven-detail-generation.md)
-   defines the distinct parent-conditioned enrichment scope.
+   defines the distinct parent-conditioned enrichment scope. Scale-aware lake
+   visibility now separates whole-pool importance from viewport cropping, with
+   explicit display/ground spacing in the workbench; see
+   [ADR-0057](../adr/0057-display-water-at-the-appropriate-scale.md).
 2. Establish usable bounds for residual blended/grazing extrema and measure
    project-scale sampling cost. The
    [adaptive experiment](../research/2026-09-13-adaptive-water-profile-refinement.md)
@@ -147,7 +150,12 @@ bounds on unseen terrain heights.
    explicit passes and asymmetric sides.
 5. Add regional drainage-density/runoff controls as authored generation inputs
    and implement bounded local detail generation after its parent, boundary and
-   hydrology consistency gates are defined. Pan/zoom alone is its UI foundation.
+   hydrology consistency gates are defined. Couple small-river appearance to
+   adequately resolved local terrain and hydrology, retaining parent trunks,
+   upstream flow, outlets and lake identity across windows. Define water-size
+   evidence and screen thresholds; only major water should survive distant views.
+   Keep unresolved/pending detail explicit. Pan/zoom and sampled-lake filtering
+   are implemented display foundations, not completed regional generation.
 
 R04/R05 provide the first drainage correctness slice and review products;
 [ADR-0029](../adr/0029-route-drainage-over-authored-terrain.md) records its limits.

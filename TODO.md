@@ -345,6 +345,24 @@ editing a finished DEM; see [ADR-0048](docs/adr/0048-keep-zoom-driven-detail-gen
   newly generated detail. Define automatic thresholds or an explicit generate
   action, cancellation, result freshness and cache budgets before wiring jobs.
 
+- [x] **P1 — Make sampled lake visibility follow display scale.** Classify
+  each connected wet pool independently; hide pools at or below 9 output pixels
+  squared and fade to full opacity at 36. Cache whole-pool areas before viewport
+  clipping; retain small pools in numeric water and show ground sample spacing.
+  Scientific ground, authored instructions and diagnostic overlays remain
+  complete. Native-size PNG exports use the same rule independently of zoom.
+  See [ADR-0057](docs/adr/0057-display-water-at-the-appropriate-scale.md).
+- [ ] **P1 — Couple small-river visibility to local generation.** Distant views
+  should show only major water bodies and accepted trunk rivers. Define physical
+  width/runoff or explicitly ranked size evidence, screen-size thresholds and
+  connected network selection. Smaller rivers require finer local terrain and
+  hydrology, inherited upstream flow/outlets, parent/neighbor consistency and
+  explicit ready/insufficient-detail status; enlarged coarse pixels do not
+  qualify. Preserve whole-lake identity/importance across cropped child results.
+  Test overview-to-local transitions, tributary joins, repeat visits and request
+  order without modifying completed terrain. Current blue/red D8 and teal
+  outflow lines remain all-scale diagnostics, not this cartographic river layer.
+
 ### Project portability
 
 - [ ] **P2 — Evaluate a portable project bundle.** A bundle could package the
