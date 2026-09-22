@@ -155,11 +155,19 @@ def test_regional_regression_keeps_canonical_ground_and_preparation_is_batch_ind
     x = np.linspace(float(valley.x_km[192]), float(valley.x_km[193]), 1025)
     y = np.linspace(float(valley.y_km[38]), float(valley.y_km[37]), 1025)
     heights = field.sample_ground(x, y).astype(np.float64)
-    assert np.max(heights-np.minimum.accumulate(heights)) < 52.
     xx, yy = np.meshgrid(valley.x_km, valley.y_km)
     canonical = field.sample_ground(xx, yy)
     unprofiled = replace(valley, floor=replace(floor, profiles=None))
     original = replace(field, automatic_valleys=unprofiled)
+    plain = original.sample_ground(x, y).astype(np.float64)
+    # This cut-limited crest still climbs; its old 52 m baseline belonged to
+    # the superseded normalized-noise field. Check the reconstruction contract
+    # on the current source instead of granting an arbitrary larger tolerance.
+    assert floor.profiles.edge_ids[3, 38, 192] >= 0
+    assert np.max(heights - plain) > 1.
+    assert (np.max(heights - np.minimum.accumulate(heights))
+            <= np.max(plain - np.minimum.accumulate(plain)) + .01)
+    np.testing.assert_array_equal(heights[[0, -1]], plain[[0, -1]])
     np.testing.assert_array_equal(canonical, original.sample_ground(xx, yy))
     calls: list[int] = []
     def sample(qx: FloatArray, qy: FloatArray) -> tuple[FloatArray, FloatArray, NDArray[np.bool_]]:

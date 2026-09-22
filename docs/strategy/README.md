@@ -266,8 +266,10 @@ preparation, and publishes bounded numeric samples with provenance. Exact
   policy. Preserve the parent frame and broad geography; input-field sampling
   does not yet condition against a parent DEM.
 - Prove shared-sample, parent restriction and overlap height/slope properties as
-  separate contracts. Adding detail bands currently changes existing weights;
-  resolve R34 before promising detail-only enrichment.
+  separate contracts. [Fixed band budgets](../adr/0059-preserve-noise-band-amplitudes.md)
+  now preserve existing coefficients, but finished-ground cell means and some
+  authored drainage routes still change. Complete R34's parent restriction and
+  coarse-power checks before promising detail-only enrichment.
 - Generate the visible/requested region with required surrounding constraints
   and upstream flow context. Bound generation and caching rather than allocating
   the entire continent at local resolution. Returning to a region must be stable.

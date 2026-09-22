@@ -12,9 +12,12 @@ import numpy as np
 from numpy.typing import NDArray
 
 # Inspect the existing lattice primitive without promoting a research API.
-from dmtools.terrain.pipeline.noise import _lattice_values  # pyright: ignore[reportPrivateUsage]
+from dmtools.terrain.pipeline.noise import (
+    _lattice_values,  # pyright: ignore[reportPrivateUsage]
+    noise_band_amplitudes,
+)
 
-METHOD_ID = "rounded-cell-value-noise@1"
+METHOD_ID = "rounded-cell-value-noise@2"
 type BoundMethod = Literal["natural", "monotone_cell"]
 METHODS: tuple[BoundMethod, ...] = ("natural", "monotone_cell")
 # Absolute bounds derived for the current seven-op fade and nine-op lerp tree.
@@ -306,13 +309,10 @@ def enclose_plans(
         return NoiseEnclosure("cell_budget_exceeded", requested, 0)
 
     result = Interval.point(np.zeros(interval_count, dtype=np.float64))
-    amplitude, total_amplitude = 1.0, 0.0
+    amplitudes = noise_band_amplitudes(parameters.detail_levels, parameters.roughness)
     for octave, plan in enumerate(plans):
         value = _octave_interval(plan, parameters.seed, octave, interval_count, method)
-        result = result.add(Interval.point(amplitude).multiply(value))
-        # Match the runtime's known binary64 constants, including accumulated sum.
-        total_amplitude += amplitude
-        amplitude *= parameters.roughness
-    result = result.divide_positive(total_amplitude)
+        # Bound the runtime operations using its exact rounded band coefficients.
+        result = result.add(Interval.point(amplitudes[octave]).multiply(value))
     field = Interval.point(offset_m).add(Interval.point(amplitude_m).multiply(result)).float32()
     return NoiseEnclosure("bounded", requested, requested, result, field)

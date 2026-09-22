@@ -47,7 +47,9 @@ For `named-stage-sha256@1`, concatenate:
 
 Calculate SHA-256, take its first four digest bytes, and interpret them as an
 unsigned integer, most significant byte first. No Python `hash()` or RNG is
-involved. The existing coordinate noise and octave hashing are unchanged.
+involved. Coordinate lattice and octave hashing are separate from amplitude
+weighting: [ADR-0059](adr/0059-preserve-noise-band-amplitudes.md) changes the latter
+without changing these seeds or lattice addresses.
 The result has 32 bits; collisions are possible, so this is deterministic
 stream separation rather than a guarantee that every name has a unique seed.
 

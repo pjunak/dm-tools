@@ -1,5 +1,7 @@
 """Coordinate-addressed deterministic noise functions."""
 
+from math import isfinite
+
 import numpy as np
 from numpy.typing import NDArray
 
@@ -41,6 +43,25 @@ def _lattice_values(
     return unit * 2.0 - 1.0
 
 
+def noise_band_amplitudes(detail_levels: int, roughness: float) -> tuple[float, ...]:
+    """Reserve a unit budget across the infinite geometric series of detail bands.
+
+    Band k owns (1-r)*r**k irrespective of how many bands are evaluated. Missing
+    bands keep their budget; evaluating more detail never renormalizes a prefix.
+    Return the same rounded recurrence used by noise and component enclosures.
+    """
+    if type(detail_levels) is not int or not 1 <= detail_levels <= 12:
+        raise ValueError("Noise detail levels must be an integer from 1 to 12.")
+    if isinstance(roughness, bool) or not isfinite(roughness) or not 0 < roughness < 1:
+        raise ValueError("Noise roughness must be finite and between zero and one.")
+    weights: list[float] = []
+    amplitude = 1.0 - roughness
+    for _ in range(detail_levels):
+        weights.append(amplitude)
+        amplitude *= roughness
+    return tuple(weights)
+
+
 def fractal_value_noise(
     x_km: NDArray[np.float64],
     y_km: NDArray[np.float64],
@@ -49,22 +70,29 @@ def fractal_value_noise(
     largest_feature_km: float,
     detail_levels: int,
     roughness: float,
+    start_band: int = 0,
 ) -> NDArray[np.float64]:
     """Evaluate stable multi-scale value noise at arbitrary world coordinates.
 
     The result depends on coordinates and settings, never on requested raster
     dimensions or evaluation order. Sampling the same coordinates at another
-    resolution therefore produces exactly the same values.
+    resolution therefore produces exactly the same values. Each band has a fixed
+    share of a unit amplitude budget, so adding bands preserves existing weights.
+    The resulting terrain's nonlinear mapping/conditioning still needs separate
+    parent-consistency checks. ``start_band`` selects a tail with the same
+    coefficients and octave addresses; it never rescales the selected bands.
     """
 
+    amplitudes = noise_band_amplitudes(detail_levels, roughness)
+    if type(start_band) is not int or not 0 <= start_band <= detail_levels:
+        raise ValueError("Noise start band must be an integer from zero through detail levels.")
     x_values = np.asarray(x_km, dtype=np.float64)
     y_values = np.asarray(y_km, dtype=np.float64)
     x_grid, y_grid = np.broadcast_arrays(x_values, y_values)
     result = np.zeros(x_grid.shape, dtype=np.float64)
-    total_amplitude = 0.0
-    amplitude = 1.0
 
-    for octave in range(detail_levels):
+    for octave in range(start_band, detail_levels):
+        amplitude = amplitudes[octave]
         spacing = largest_feature_km / float(1 << octave)
         scaled_x = x_grid / spacing
         scaled_y = y_grid / spacing
@@ -81,7 +109,4 @@ def fractal_value_noise(
         bottom = v01 + tx * (v11 - v01)
         result += amplitude * (top + ty * (bottom - top))
 
-        total_amplitude += amplitude
-        amplitude *= roughness
-
-    return result / total_amplitude
+    return result

@@ -297,9 +297,18 @@ and its rationale is recorded in
 | Elevation ceiling | Upper bound used by the synthetic relief model | 4,500 m |
 | Largest feature | Wavelength of the broadest noise band | 450 km |
 | Detail levels | Number of successively halved spatial bands | 6 |
-| Fine-detail strength | Amplitude retained at each finer band | 0.55 |
+| Fine-detail strength | Ratio of each band amplitude to the preceding band | 0.55 |
 | Coastal rise distance | Distance over which relief rises from sea level | 180 km |
 | Elevation variability | Mix between an even interior and generated relief | 0.75 |
+
+Each noise band has a fixed share of the amplitude budget: band `k` has weight
+`(1-r) * r^k`, where `r` is Fine-detail strength and `k` starts at zero. Selecting
+more levels adds smaller bands without weakening existing ones. Unevaluated
+bands keep their share: `N` levels use `1-r^N` of the budget. High fine-detail
+strength with few levels therefore resolves less of the total variation.
+Regional shape carriers remain fixed; finer texture starts at the third band.
+This policy deliberately changes generated terrain. See
+[ADR-0059](../../../docs/adr/0059-preserve-noise-band-amplitudes.md).
 
 ## Determinism and resolution
 
@@ -308,8 +317,9 @@ the seed, detail band, and absolute kilometre lattice coordinate to a value.
 It does not consume a mutable random-number stream and does not depend on raster
 dimensions or evaluation order.
 
-Consequently, if a finer grid includes the same local-metric coordinate samples as a
-coarser grid, their values are bit-for-bit equal; the finer grid only adds
+With unchanged inputs and detail settings, if a finer grid includes the same
+local-metric coordinate samples as a coarser grid, their values are bit-for-bit
+equal; the finer grid only adds
 samples between them. The test suite verifies this with nested 65 and 129 sample
 grids. Arbitrary output dimensions do not necessarily share pixel positions,
 but querying the same kilometre coordinates still gives the same terrain.

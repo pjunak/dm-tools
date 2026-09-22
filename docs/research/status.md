@@ -9,7 +9,8 @@ performance claims. A source audit is not a successfully run engine comparison.
 
 The noise-profile research, input editor and valley work were updated on
 2026-09-16, with routing, crest, network-floor and water-display work updated on 2026-09-17.
-Bounded unchanged-field regional sampling was added on 2026-09-22.
+Bounded unchanged-field regional sampling and fixed detail-band budgets were
+added on 2026-09-22.
 The external-engine inventory below retains the 2026-09-13 audit date.
 
 ## Implemented baseline
@@ -20,6 +21,7 @@ The external-engine inventory below retains the 2026-09-13 audit date.
 | Local numeric builds | Saved-project CLI, Float32 NPY/GeoTIFF, review NPZ, previews, diagnostics and completion hashes | World placement, vector products, external desktop GIS acceptance |
 | Scale-aware water display | Cached sampled-pool screen areas, fading small lakes, fixed-size viewport rendering, native PNG policy and actual ground-spacing readout ([ADR-0057](../adr/0057-display-water-at-the-appropriate-scale.md)) | River size/width model, connected network selection and resolution-gated visibility; diagnostic channels remain complete |
 | Zoom-driven local detail | Geographic viewport and bounded unchanged-field regional CLI/API samples, reusable global context, exact nested/overlap values and provenance ([ADR-0058](../adr/0058-sample-bounded-regional-windows.md)) | Finished-parent identity/restriction, added detail, boundary slopes, finer inherited hydrology, small-river resolution gates, zoom jobs and bounded caching |
+| Detail-band amplitudes (R34) | Fixed geometric coefficients, explicit finer-band tails and fixed regional shape carriers; base macro fields agree exactly across 2/6/12 bands ([ADR-0059](../adr/0059-preserve-noise-band-amplitudes.md)) | Coarse-cell averages and authored drainage still change; finished-parent restriction, coarse spectral power and route inheritance remain open |
 | Coordinates/seeds (R01-R03) | Source/local round trips, endpoint grids, actual spacing metadata and portable named seeds | Planetary CRS, configurable process spacing, cell-average/resampling policy |
 | Authored macro routing (R04-R05) | Authored macro, regular crest probes and bounded carrier-root/tangent searches shape a shared Priority-Flood/D8/MFD graph; topology and finished-field conflicts are exported | Other hidden extrema, filled barriers and unresolved final-ground climbs remain; routes are not validated rivers |
 | Network floor conditioning | Downstream cut limits propagate upstream before receiver cuts; finite nodal feasibility and signed cut corrections | Between-node conflicts, impossible source/cut intervals and route alternatives |
@@ -72,9 +74,12 @@ features within one unsampled interval and full-route validity remain open.
 
 The [attainable-floor follow-up](2026-09-17-attainable-channel-floors.md) reduces
 extra dips ahead of unremovable barriers and carries sampled source pits forward.
-It preserves canonical routing/floors and cut ceilings. Seed 7's diagnosed climb
-falls to its approximately 50.93 m sampled constraint limit; complete route
-alternatives and interactions across fixed canonical pins remain open.
+That change preserved canonical routing/floors and cut ceilings. At the recorded
+revision, seed 7's diagnosed climb fell to approximately 50.93 m. The later
+[band-policy change](2026-09-22-stable-detail-band-amplitudes.md) changes the source
+terrain and that climb is now approximately 133.9 m in a 1025-station check.
+Complete route alternatives and interactions across fixed canonical pins remain
+open; the old height is not a current quality guarantee.
 
 The [network-floor follow-up](2026-09-17-network-floor-conditioning.md) now
 recovers unnecessary upstream cuts before conditioning receivers. Canonical
@@ -93,13 +98,16 @@ remain an open prerequisite for certified adaptive stopping.
 
 The [noise-component experiment](2026-09-13-noise-component-bounds.md) now provides
 natural and polynomial/cell enclosures with explicit rounding allowances, a
-Float32 field boundary and complete cell-work budgets. These bound the isolated
-noise component under the documented arithmetic assumptions. They do not cover
+Float32 field boundary and complete cell-work budgets. The current enclosure
+method uses the same rounded fixed-band coefficients as production noise
+([policy update](2026-09-22-stable-detail-band-amplitudes.md)); the earlier reports'
+measurements retain their original normalized-noise revision. These bound the
+isolated noise component under the documented arithmetic assumptions. They do not cover
 coast weights, regional/constraint blending, longitudinal profiles or incision,
 and have not been adopted for runtime water decisions. The subsequent
 [profile-strip experiment](2026-09-14-noise-profile-bounds.md) restricts cell work
-along the rounded affine path and adds conservative ordered-rise bounds. All
-864 profile trials fit the current limits, including broad diagonal cases that
+along the rounded affine path and adds conservative ordered-rise bounds. At that
+recorded revision, all 864 profile trials fit its limits, including broad diagonal cases that
 exhaust rectangle bounds. Fine spans are slower and the roughest tested field
 still has a 66.43 m uphill gap at 4096 subdivisions. Geometry clipping alone
 therefore does not supply a practical full-field stopping rule. The
@@ -133,6 +141,13 @@ Rasterio/GDAL inside the export adapter. A future Rust port needs representative
 measured benefit and packaging/workflow evidence; it is not the next prerequisite.
 
 ## Evidence and next experiments
+
+- [Stable detail-band amplitudes](2026-09-22-stable-detail-band-amplitudes.md)
+  removes count-dependent coefficient shrinkage, separates broad regional shapes
+  from fine texture, and updates isolated-noise enclosures. Four settings-growth
+  cases still show coarse-cell drift; eight before/after terrain cases and dense
+  regional profiles show mixed drainage effects, including a larger known crest.
+  Finished-parent preservation and route validity remain separate work.
 
 - [Bounded regional field sampling](2026-09-22-regional-field-sampling.md) records
   exact 65/129/257 nested and repeat results, complete-source context reuse and

@@ -30,6 +30,14 @@ crest heights and stronger small-scale detail; direction controls their long
 axis. Other recipes rotate their texture without imposing a preferred axis.
 These are controllable procedural landforms, not tectonic or erosion simulations.
 
+Regional shapes and mountain summit variation use a fixed two-band carrier with
+weights 2/3 and 1/3. Fine texture uses only bands three and above, with fixed
+geometric amplitudes. At two detail levels the regional full and macro fields
+match; increasing levels adds texture without changing the base macro field.
+Blending, authored constraints and drainage still affect finished terrain. See
+[ADR-0059](adr/0059-preserve-noise-band-amplitudes.md) for the current recipe and
+[measured changes](research/2026-09-22-stable-detail-band-amplitudes.md).
+
 Changing character loads its starting values. Each saved polygon stores its
 complete effective settings. The defaults are:
 

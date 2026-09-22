@@ -12,6 +12,10 @@ in the current status or a new dated report.
 
 ## Implemented and measured work
 
+- [Stable detail-band amplitudes - 2026-09-22](2026-09-22-stable-detail-band-amplitudes.md)
+  removes count-dependent noise normalization, separates regional shapes from
+  finer bands, and measures remaining coarse-cell and drainage changes.
+
 - [Bounded regional field sampling — 2026-09-22](2026-09-22-regional-field-sampling.md)
   verifies unchanged-field 65/129/257 windows, overlap/repeat consistency,
   completion provenance and the cost of local versus complete finer sampling.

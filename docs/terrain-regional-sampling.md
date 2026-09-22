@@ -85,9 +85,13 @@ DEM. It adds samples, with no additional noise/detail bands or refined local
 hydrology. Canonical routing still uses its complete-source 257-longest-side
 grid. Its extent remains the whole source even when a window is far smaller.
 
-Next work must define parent restriction/downsampling and height/slope tolerances,
-resolve the existing detail-band amplitude issue (R34), preserve upstream flow
+Noise bands now retain their amplitudes when more bands are selected
+([ADR-0059](adr/0059-preserve-noise-band-amplitudes.md)). This command still uses
+unchanged settings; it does not add bands. Next work must define parent
+restriction/downsampling and height/slope tolerances, preserve upstream flow
 and outlet boundaries during finer hydrology, and keep whole-lake identity.
+R34 remains open because stable coefficients do not preserve finished terrain
+or its coarse-cell averages.
 Small cartographic rivers require that finer terrain/hydrology evidence.
 Workbench zoom scheduling, cancellation, freshness and bounded caching are also
 still open. See [TODO](../TODO.md), [ADR-0058](adr/0058-sample-bounded-regional-windows.md)

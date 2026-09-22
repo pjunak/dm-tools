@@ -333,6 +333,13 @@ editing a finished DEM; see [ADR-0048](docs/adr/0048-keep-zoom-driven-detail-gen
   provenance. Public 65/129/257 windows, overlaps and repeat visits agree exactly.
   See [ADR-0058](docs/adr/0058-sample-bounded-regional-windows.md) and the
   [measurements](docs/research/2026-09-22-regional-field-sampling.md).
+- [x] **P0 — Keep existing noise-band weights when adding detail.** Each band
+  owns a fixed geometric amplitude share. Regional shapes use a separate fixed
+  two-band carrier and add only finer bands as texture. Base macro fields stay
+  exact when moving from 2 to 6 or 12 bands. This does not preserve a finished
+  parent DEM: measured coarse-cell averages still change, and authored guidance
+  can redirect drainage. See [ADR-0059](docs/adr/0059-preserve-noise-band-amplitudes.md)
+  and [the comparison](docs/research/2026-09-22-stable-detail-band-amplitudes.md).
 - [ ] **P0 — Extend sampling requests to parent-conditioned generation.** The
   current reference is an input-defined field, not a finished parent DEM.
   Record the immutable parent build/input identity, window bounds in its
@@ -343,7 +350,9 @@ editing a finished DEM; see [ADR-0048](docs/adr/0048-keep-zoom-driven-detail-gen
   restriction/downsample rule and numeric tolerances; preserve broad geography
   while adding finer structure. Keep unchanged-field shared-node equality as a
   separate test. Cover 65/129/257 windows, overlapping requests, boundary slopes
-  and repeat visits in a different order. R34's band-amplitude issue remains open.
+  and repeat visits in a different order. R34's raw band weights are now stable;
+  nonlinear terrain, cell-average restriction and inherited drainage still need
+  their own preservation rules.
 - [ ] **P1 — Add bounded regional enrichment and caching.** Unchanged-field
   sampling now evaluates a halo, crops its preview afterwards and bounds finer
   output arrays and evaluation batches. Full-source preparation remains global;
@@ -560,8 +569,8 @@ execution order.
 - [x] **P1 — Avoid extra channel dips around unattainable floors.** Seventeen
   source/ceiling observations per eligible segment now carry obstacles upstream
   and unfillable pits downstream. Sparse cubic targets preserve canonical pins,
-  routing, cut ceilings and authored authority. The diagnosed seed-7 climb falls
-  to its approximately 50.93 m sampled constraint limit; see
+  routing, cut ceilings and authored authority. At that implementation revision,
+  the diagnosed seed-7 climb fell to approximately 50.93 m; see
   [ADR-0055](docs/adr/0055-prepare-attainable-channel-floor-profiles.md) and the
   [comparison](docs/research/2026-09-17-attainable-channel-floors.md).
 - [x] **P1 — Condition network floors in both directions.** Propagate downstream
@@ -577,9 +586,12 @@ execution order.
   bounded finite carrier search. Couple nodal and interior floor decisions
   and smooth D8 turns; separate remaining cap-limited barriers, source pits,
   endpoint tapers and retention boundaries. Preserve divides, anchors and budget
-  policy. Seed-7 edge 9958 -> 9702 still requires about 50.93 m of ascent with
-  its current pins and cut ceiling; compare whole-path alternatives instead of
-  exceeding the cap. Segment envelopes do not condition across fixed canonical
+  policy. After the fixed-band change, seed-7 edge 9958 -> 9702 requires about
+  133.9 m of ascent with its current pins and cut ceiling; even releasing the
+  complete upstream cut leaves a sampled 12.95 m obstruction. See the
+  [current measurement](docs/research/2026-09-22-stable-detail-band-amplitudes.md).
+  Compare joint nodal/interior and whole-path alternatives instead of exceeding
+  the cap. Segment envelopes do not condition across fixed canonical
   pins. The nodal network correction can introduce new interior rises, so measure
   full profiles and individual regressions. Compare breach/reroute candidates
   using complete path depth/length, source limits and retained basin boundaries;
@@ -901,13 +913,16 @@ Priorities remain conditional on the current strategy's prerequisites.
 
 #### Prototype findings and additional improvement candidates
 
-- [ ] **Research — R34: Stabilize amplitudes when adding detail bands.** Compare
-  fixed versioned band budgets with the current normalized sum. A local default
-  2-to-6-band probe reduces existing band coefficients by 28.26%; this is a
-  setting-change effect, not broken shared-coordinate determinism. Measure
-  coarse power and cell averages after nonlinear mapping and generation stages;
-  version deliberate algorithm changes and update current presets; do not
-  preserve obsolete presets or output solely for compatibility.
+- [ ] **Research — R34: Preserve coarse terrain while adding detail.** Fixed
+  geometric band budgets now replace count-dependent normalization; the former
+  default 2-to-6-band coefficient loss of 28.26% is removed. Regional broad
+  carriers and finer texture are separate. The
+  [measured comparison](docs/research/2026-09-22-stable-detail-band-amplitudes.md)
+  still finds 43-91 m RMS coarse-cell changes across four public fixtures, and
+  some drainage regressions. Next define the restriction operator and tolerances,
+  measure coarse spectral power after nonlinear mapping/conditioning, and bind
+  new detail to the immutable parent and inherited routes. Stable weights alone
+  do not close this research item.
 - [ ] **Research — R35: Constrain regional transition gradients.** Match
   province reference levels and budget the extra slope from blending surfaces
   at different heights. Measure slope/curvature across flat, plateau and

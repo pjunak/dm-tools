@@ -330,3 +330,18 @@ complete finer sampling at the same spacing, reusing one prepared full context.
 The harness checks exact nested, repeat-order and full-field values, records
 runtime/input/source identities and excludes export and full-build review costs.
 See the [2026-09-22 measurements](../docs/research/2026-09-22-regional-field-sampling.md).
+
+## Detail-band growth
+
+```powershell
+.\.venv\Scripts\python.exe -m benchmarks.detail_bands --case example regional authored water --seed 42 --output artifacts/detail-growth.json
+```
+
+This research probe generates each public case on a 257-longest-side grid with
+2, 6 and 12 bands. It records fixed coefficients, numeric/source/input hashes,
+pointwise differences, changed canonical receivers, and trapezoidal averages
+over central 16x16 cells with 8x8 fine intervals each. Only fully land-covered
+cells count. This is a whole-map settings comparison, not a local enrichment
+operation or a promise of parent consistency. The output must be a new file in
+an existing directory; no timing or speedup claim is made. See the
+[policy comparison](../docs/research/2026-09-22-stable-detail-band-amplitudes.md).

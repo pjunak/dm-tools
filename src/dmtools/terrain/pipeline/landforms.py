@@ -14,7 +14,7 @@ from dmtools.terrain.domain import LandformSettings, TerrainRegion, TerrainSetti
 from dmtools.terrain.domain.seeds import LANDFORM_STAGE_ID, stage_seed
 from dmtools.terrain.pipeline.noise import fractal_value_noise
 
-LANDFORM_ALGORITHM_ID = "regional-landforms@1"
+LANDFORM_ALGORITHM_ID = "regional-landforms@2"
 
 
 @dataclass(frozen=True, slots=True)
@@ -41,6 +41,14 @@ def prepare_regions(
     return tuple(prepared)
 
 
+def _broad_noise(
+    x: NDArray[np.float64], y: NDArray[np.float64], seed: int, feature_size_km: float,
+) -> NDArray[np.float64]:
+    # The fixed two-band shape carrier uses its full scale. It is not a growing
+    # detail prefix: its weights stay 2/3 and 1/3 at every selected detail count.
+    return fractal_value_noise(x, y, seed=seed, largest_feature_km=feature_size_km,
+                               detail_levels=2, roughness=0.5) / 0.75
+
 
 def regional_noise_basis(
     x: NDArray[np.float64], y: NDArray[np.float64], controls: LandformSettings, seed: int,
@@ -51,8 +59,7 @@ def regional_noise_basis(
     v = -np.sin(angle) * x + np.cos(angle) * y
     if controls.character == "mountains":
         u = u / 3.0
-    broad = fractal_value_noise(u, v, seed=seed,
-        largest_feature_km=controls.feature_size_km, detail_levels=2, roughness=0.5)
+    broad = _broad_noise(u, v, seed, controls.feature_size_km)
     return u, v, broad
 
 
@@ -73,15 +80,13 @@ def regional_elevation_fields(
         u, v, broad = regional_noise_basis(x[inside], y[inside], controls, seed)
         detail = fractal_value_noise(u, v, seed=seed,
             largest_feature_km=controls.feature_size_km,
-            detail_levels=max(2, settings.detail_levels), roughness=settings.roughness) - broad
+            detail_levels=max(2, settings.detail_levels),
+            roughness=settings.roughness, start_band=2)
         if controls.character == "mountains":
             # A second coordinate window varies summit heights along the belt;
             # a single ridged carrier would give every crest the same height.
-            crest = fractal_value_noise(
-                u + 5 * controls.feature_size_km, v - 7 * controls.feature_size_km,
-                seed=seed, largest_feature_km=1.8 * controls.feature_size_km,
-                detail_levels=2, roughness=0.5,
-            )
+            crest = _broad_noise(u + 5 * controls.feature_size_km, v - 7 * controls.feature_size_km,
+                                 seed, 1.8 * controls.feature_size_km)
             shape = np.power(1 - np.abs(broad), 3) * (0.25 + 0.75 * (0.5 + 0.5 * crest))
             texture = 0.45 * detail * (0.3 + 0.7 * shape)
         elif controls.character == "plateau":
