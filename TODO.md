@@ -119,7 +119,7 @@ substeps.
   [ADR-0036](docs/adr/0036-connect-lake-outflow-with-area-transfer.md).
 - [x] **P1 — Show collected and retained basin nodes.** The workbench and
   finished-ground review now map collected water, collected dry ground and
-  retained nodes. Build v16 exports the classification and retained contribution
+  retained nodes. Build v17 exports the classification and retained contribution
   at each footprint node; sample counts and area accounting remain distinct.
   Exact outlet ground minus water level is reported, including submerged outlets,
   without treating a clear sampled route as proof of a stable lake level. See
@@ -127,7 +127,7 @@ substeps.
 - [x] **P1 — Route internal flats with known exits.** Integer ranks now route
   exact flats without editing the DEM. Every link is vector-contained, real
   downhill alternatives take precedence, and paths to closed pits stay retained.
-  Build v16 exports internal receivers and ranks; details separate resolved flat
+  Build v17 exports internal receivers and ranks; details separate resolved flat
   donors from those reaching lake water. The public flat-outlet fixture covers
   both outcomes. See [ADR-0038](docs/adr/0038-route-basin-flats-with-integer-gradients.md)
   and the [measured rundown](docs/research/2026-09-11-basin-flat-routing.md).
@@ -162,7 +162,7 @@ substeps.
 - [x] **P1 — Check dry collection links between canonical nodes.** Batched
   profiles now reject dry-to-dry, dry-to-water and exact-flat climbs before
   routing; clear alternatives and lower closed pits remain eligible. Complete
-  chosen paths also check cumulative rises before collecting area. Build v16
+  chosen paths also check cumulative rises before collecting area. Build v17
   exports per-link evidence and path excursions. A public narrow point catches
   a 131.44 m climb and reroutes without changing ground. See
   [ADR-0043](docs/adr/0043-review-dry-collection-paths.md) and the
@@ -347,30 +347,35 @@ editing a finished DEM; see [ADR-0048](docs/adr/0048-keep-zoom-driven-detail-gen
   authored heights move by up to 29.161 m, shared coordinates drift across
   densities and eight sampled channel edges worsen. See the
   [experiment](docs/research/2026-09-23-parent-cell-preservation.md).
-- [ ] **P0 — Extend sampling requests to parent-conditioned generation.** The
-  current reference is an input-defined field, not a finished parent DEM.
-  Record the immutable parent build/input identity, window bounds in its
-  coordinate frame, target spacing,
-  detail controls and buffered context. Use the existing local metric frame
-  until world placement is implemented; do not reinterpret the planet's scale.
-- [ ] **P0 — Define parent/child and neighboring-window consistency.** Select a
-  restriction/downsample rule and numeric tolerances; preserve broad geography
-  while adding finer structure. Keep unchanged-field shared-node equality as a
-  separate test. Cover 65/129/257 windows, overlapping requests, boundary slopes
-  and repeat visits in a different order. R34's raw band weights are now stable;
-  nonlinear terrain, cell-average restriction and inherited drainage still need
-  their own preservation rules. The first bilinear-cell candidate is rejected.
-  Bind a prepared parent reference that reproduces the authoritative DEM nodes
-  and retains existing structure; define its cell moments explicitly. Condition
-  only added residuals using support/quadrature independent of output density,
-  protect authored heights and water, and rerun paired inherited-channel checks.
-- [ ] **P1 — Add bounded regional enrichment and caching.** Unchanged-field
-  sampling now evaluates a halo, crops its preview afterwards and bounds finer
-  output arrays and evaluation batches. Full-source preparation remains global;
-  the Python sampler can reuse it across windows. Add prepared-context/result
-  cache budgets and eviction, plus bounds for added generation work. Identify
-  enriched results by inputs, parent, extent, spacing and algorithm; changed
-  inputs invalidate children.
+- [x] **P0 — Bind regional requests to a verified immutable parent.** Build v17
+  contains typed portable inputs; `sample-parent` verifies completion, hashes,
+  frame, runtime and all delivered ground/water values plus reused routing.
+  Original source files are no longer needed. Requests and separate output
+  artifacts bind the parent ID and preserve its frame. See
+  [ADR-0061](docs/adr/0061-verify-parents-and-isolate-local-detail.md).
+- [x] **P0 — Add a bounded experimental residual on the retained reference.**
+  `enrich-region --experimental` conditions only an added smooth cell residual,
+  with globally addressed coefficients, fixed 17-by-17 preparation probes,
+  parent-node/edge equality and measured zero-added-mean moments. Authored cores,
+  basin footprints, coastal margins and planned channel corridors are protected.
+  65/129/257, overlap/revisit, water and bounds checks pass on public fixtures.
+  [The measurements](docs/research/2026-09-23-verified-parent-detail.md) also expose
+  regular cell support and windows completely excluded by protection. This is
+  an executable experiment, not accepted cartographic terrain or finer hydrology.
+- [ ] **P0 — Complete parent/child and neighboring-window acceptance.** Replace
+  regular cell-stamped appearance with terrain-aware residual support; measure
+  coarse spectral power and final Float32 height/slope tolerances. Preserve the
+  original prepared reference and density-independent moments/protections.
+  Define arbitrary partial-cell transitions to the unchanged parent; only parent
+  cell edges currently have zero residual. Cover seeds, oblique boundaries and
+  extreme detail scales. Fixed probe bounds do not certify unseen extrema;
+  observed violations reject a request. R34 remains open.
+- [ ] **P1 — Add bounded prepared-context and result caching.** Finer arrays,
+  evaluation batches and experimental cell work are bounded. Python callers can
+  reuse verified parents and protected detail context across requests. Add cache
+  budgets/eviction, cell preparation reuse and result freshness. Identify entries
+  by inputs, parent/runtime, extent, spacing and detail algorithm/settings;
+  changed identities invalidate children. Recursive enrichment is not implemented.
 - [ ] **P1 — Preserve hydrological context during local enrichment.** Keep
   authored constraints and inherited upstream flow; a local rectangle or halo
   must not invent an independent catchment. Validate drainage after detail and
@@ -946,8 +951,10 @@ Priorities remain conditional on the current strategy's prerequisites.
   [parent-cell experiment](docs/research/2026-09-23-parent-cell-preservation.md)
   now rejects a bilinear/trapezoidal candidate despite precise node/mean results:
   it loses parent structure and authored heights, depends on output density and
-  worsens inherited channels. Next bind the prepared reference and its moments,
-  constrain only added residuals independently of display sampling, protect
+  worsens inherited channels. The verified-parent residual experiment now binds
+  the prepared reference and fixed moments; visual/coarse-power and finer-flow
+  acceptance remain open. Continue with terrain-aware support: constrain only
+  added residuals independently of display sampling, protect
   authored/water/channel constraints, and measure coarse spectral power after
   conditioning. Stable weights or preserved cell means alone do not close R34.
 - [ ] **Research — R35: Constrain regional transition gradients.** Match

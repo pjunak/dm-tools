@@ -15,7 +15,8 @@
 6. To generate and compare numeric output, use the
    [headless build guide](terrain-builds.md); estimate shoreline/internal sampling
    with the [water-budget forecast](terrain-water-budget.md). Sample a bounded
-   finer window with the [regional sampling command](terrain-regional-sampling.md).
+   finer window with the [regional sampling command](terrain-regional-sampling.md),
+   or try [verified parents and experimental local detail](terrain-parent-regions.md).
 7. For source/local conversion, endpoint grids and world-positioning limits,
    read the [coordinate contract](terrain-coordinates.md).
 8. For portable named stage seeds, read the

@@ -3,11 +3,15 @@
 Only the current terrain formats are supported:
 
 - [Project v5](terrain/project-v5.schema.json): authored `.dmterrain.json` inputs.
-- [Build v16](terrain/build-v16.schema.json): numeric products, coordinates,
+- [Build v17](terrain/build-v17.schema.json): numeric products, coordinates,
   algorithm identities, named stage seeds and output hashes.
 - [Regional samples v1](terrain/regional-samples-v1.schema.json): bounded
   unchanged-field windows, source/runtime identity, halo/crop coordinates and
   explicit capability limits.
+- [Input snapshot v1](terrain/input-snapshot-v1.schema.json): portable effective
+  geometry, typed constraints, settings and authoring state for current builds.
+- [Parent region v1](terrain/parent-region-v1.schema.json): verified-parent samples
+  or explicit experimental detail, fixed cell moments and hydrology limits.
 
 Register all current schemas locally by `$id` for validation. The build
 references project settings; regional samples reuse current project settings

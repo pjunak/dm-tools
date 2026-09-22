@@ -94,6 +94,11 @@ class TerrainRegionSampler:
     reference_grid: EndpointGrid
     _field: PreparedTerrainField = field(repr=False)
 
+    @property
+    def prepared_field(self) -> PreparedTerrainField:
+        """Complete-source context for verified replay and separately generated detail."""
+        return self._field
+
     def sample(
         self, request: RegionalSamplingRequest, progress: ProgressCallback | None = None,
     ) -> RegionalTerrainSamples:

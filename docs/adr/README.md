@@ -87,3 +87,5 @@ supersedes their legacy compatibility commitments during early development.
 - [ADR-0058: Sample bounded regional windows](0058-sample-bounded-regional-windows.md)
 - [ADR-0059: Preserve noise-band amplitudes](0059-preserve-noise-band-amplitudes.md)
 - [ADR-0060: Interpolate overlapping absolute height points](0060-interpolate-overlapping-height-points.md)
+
+- [ADR-0061: Verify saved parents and isolate experimental local detail](0061-verify-parents-and-isolate-local-detail.md)

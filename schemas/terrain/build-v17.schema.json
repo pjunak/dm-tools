@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:dmtools:schema:terrain-build:16",
-  "title": "DM Tools terrain build version 16",
-  "description": "Completion manifest for local terrain, drainage, and feature-guided shoreline, outlet paths and internal wet/dry-link and cumulative collection-path evidence.",
+  "$id": "urn:dmtools:schema:terrain-build:17",
+  "title": "DM Tools terrain build version 17",
+  "description": "Completed local terrain and water evidence with a typed, portable effective-input snapshot.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -25,7 +25,7 @@
       "const": "dmtools.terrain-build"
     },
     "schema_version": {
-      "const": 16
+      "const": 17
     },
     "status": {
       "const": "complete"
@@ -39,7 +39,8 @@
       "required": [
         "project_sha256",
         "svg_sha256",
-        "project_schema_version"
+        "project_schema_version",
+        "snapshot_schema_version"
       ],
       "properties": {
         "project_sha256": {
@@ -50,6 +51,9 @@
         },
         "project_schema_version": {
           "const": 5
+        },
+        "snapshot_schema_version": {
+          "const": 1
         }
       }
     },

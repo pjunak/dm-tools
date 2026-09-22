@@ -1,7 +1,7 @@
 """Bounded regional requests on subdivisions of one reference endpoint grid."""
 
 from dataclasses import dataclass
-from math import ceil, floor, ulp
+from math import ceil, floor, isfinite, ulp
 
 from dmtools.terrain.domain.coordinates import Bounds, EndpointGrid
 
@@ -38,8 +38,8 @@ def _axis_position(start: float, stop: float, count: int, index: int, factor: in
 class RegionalSamplingRequest:
     """Inclusive global fine-grid addresses; a source identity binds the full field.
 
-    The reference is a source field and its grid, not an edited or loaded parent
-    DEM. A halo supplies neighboring point samples, not a new local catchment.
+    The source is either an input-defined field or a verified immutable parent.
+    A halo supplies neighboring point samples, not a new local catchment.
     """
 
     source_id: str
@@ -135,3 +135,35 @@ class RegionalSamplingRequest:
         left, right = cover(a, c, reference_grid.width, x0, x1)
         top, bottom = cover(b, d, reference_grid.height, y0, y1)
         return cls(source_id, reference_grid, refinement, (left, top, right, bottom), halo_cells)
+
+
+DETAIL_CELL_LIMIT = 4096
+DETAIL_PROBE_INTERVALS = 16
+
+
+@dataclass(frozen=True, slots=True)
+class RegionalDetailSettings:
+    """An explicit experimental residual budget; it never changes parent settings."""
+
+    amplitude_m: float = 12.
+
+    def __post_init__(self) -> None:
+        if (isinstance(self.amplitude_m, bool) or not isfinite(self.amplitude_m)
+                or not 0 < self.amplitude_m <= 100):
+            raise ValueError("Experimental detail amplitude must be finite and in (0, 100] metres.")
+
+
+def detail_cell_window(request: RegionalSamplingRequest) -> tuple[int, int, int, int]:
+    """Bound preparation to cells with an interval inside the buffered window."""
+    if request.refinement < 8:
+        raise ValueError("Experimental detail requires refinement of at least 8.")
+    x0, y0, x1, y1 = request.sample_window
+    factor = request.refinement
+    left, top = x0 // factor, y0 // factor
+    right = (x1 - 1) // factor
+    bottom = (y1 - 1) // factor
+    count = (right - left + 1) * (bottom - top + 1)
+    if count > DETAIL_CELL_LIMIT:
+        raise ValueError(f"Detail preparation needs {count:,} parent cells; limit is "
+                         f"{DETAIL_CELL_LIMIT:,}. Use a smaller window.")
+    return left, top, right, bottom

@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:dmtools:schema:terrain-input-snapshot:1",
+  "title": "Portable terrain input snapshot version 1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "schema_version",
+    "coastline",
+    "settings",
+    "constraints",
+    "authoring"
+  ],
+  "properties": {
+    "schema": {
+      "const": "dmtools.terrain-input-snapshot"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "coastline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "points",
+        "holes",
+        "additional_components",
+        "source_name"
+      ],
+      "properties": {
+        "points": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "minItems": 4
+        },
+        "holes": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "minItems": 4
+          }
+        },
+        "additional_components": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "exterior",
+              "holes"
+            ],
+            "properties": {
+              "exterior": {
+                "type": "array",
+                "items": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  },
+                  "minItems": 2,
+                  "maxItems": 2
+                },
+                "minItems": 4
+              },
+              "holes": {
+                "type": "array",
+                "items": {
+                  "type": "array",
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "number"
+                    },
+                    "minItems": 2,
+                    "maxItems": 2
+                  },
+                  "minItems": 4
+                }
+              }
+            }
+          }
+        },
+        "source_name": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "settings": {
+      "$ref": "urn:dmtools:schema:terrain-project:5#/$defs/generatorSettings"
+    },
+    "constraints": {
+      "$ref": "urn:dmtools:schema:terrain-project:5#/properties/constraints"
+    },
+    "authoring": {
+      "$ref": "urn:dmtools:schema:terrain-project:5#/$defs/authoringState"
+    }
+  }
+}

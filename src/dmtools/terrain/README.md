@@ -86,8 +86,10 @@ The reference image and undo history last for the current workbench session.
 Project saves continue to contain authored inputs only; reopening requires
 regeneration to obtain a background. Pan/zoom preserves normalized map coordinates
 and exposes the visible geographic bounds. It currently magnifies existing samples;
-zoom-driven local enrichment remains planned, with its own generation and parent
-consistency contract in [ADR-0048](../../../docs/adr/0048-keep-zoom-driven-detail-generation.md).
+automatic zoom-driven enrichment remains planned. Separate
+[verified-parent CLI commands](../../../docs/terrain-parent-regions.md) now provide
+regional replay and explicitly experimental added detail, under
+[ADR-0061](../../../docs/adr/0061-verify-parents-and-isolate-local-detail.md).
 Desert/biome instructions require the future climate input contract; the current
 region tool provides plain, hills, plateau and mountains.
 
@@ -340,10 +342,13 @@ routing context; the numeric samples and cropped ground preview have their own
 provenance manifest. Public 65/129/257 windows, overlaps and repeat visits retain
 exact shared values.
 
-Zoom-driven local enrichment remains a core planned feature. Adding new detail
-must preserve parent geography, authored intent and neighboring boundaries.
-Parent-DEM conditioning, restriction/slope tolerances after added detail, finer
-inherited hydrology and GUI request scheduling remain open. See
+The [verified-parent workflow](../../../docs/terrain-parent-regions.md) now loads
+current completed builds, replays every delivered sample and reused routing
+field, and provides a separate experimental residual with fixed cell moments.
+Nested coordinates and parent nodes/edges remain exact; authored cores, basins
+and planned channel corridors are protected. The formula still has visible cell
+support and lacks cartographic acceptance. Terrain-aware detail, coarse spectral
+power, finer inherited hydrology and GUI request scheduling remain open. See
 [ADR-0048](../../../docs/adr/0048-keep-zoom-driven-detail-generation.md),
 [ADR-0058](../../../docs/adr/0058-sample-bounded-regional-windows.md) and the
 [regional prototype](../../../docs/research/2026-09-04-terrain-prototype-contracts.md).

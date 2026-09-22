@@ -22,6 +22,11 @@ soft polygon recipes to the public terrain coastline. See the
 [region guide](../docs/terrain-regions.md) for controls and limitations.
 
 
+The [local-detail example](terrain/local-detail.dmterrain.json) uses the public
+landform inputs at 65 longest-side parent nodes and two detail bands. Follow the
+[verified-parent guide](../docs/terrain-parent-regions.md) to sample the completed
+parent or create a separate experimental detail result.
+
 The [authored-water example](terrain/basin-water.dmterrain.json) adds a lake and
 a dry-basin footprint, preserving their ground while exporting water separately.
 It demonstrates closed-basin retention and review.

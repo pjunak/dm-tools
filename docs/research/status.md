@@ -12,8 +12,10 @@ The noise-profile research, input editor and valley work were updated on
 Bounded unchanged-field regional sampling and fixed detail-band budgets were
 added on 2026-09-22. A parent-cell projection was measured and rejected for
 runtime use on 2026-09-23. The overlapping absolute-height defect it exposed
-was subsequently fixed in the global pointwise field; local-detail generation
-and parent restriction remain unimplemented.
+was subsequently fixed in the global pointwise field. Verified saved-parent
+replay and a bounded opt-in residual experiment were then implemented; its
+visual/spectral acceptance and finer hydrology remain open. See the
+[2026-09-23 measurements](2026-09-23-verified-parent-detail.md).
 The external-engine inventory below retains the 2026-09-13 audit date.
 
 ## Implemented baseline
@@ -23,7 +25,7 @@ The external-engine inventory below retains the 2026-09-13 audit date.
 | Input editor | Retained reference with freshness, geographic pan/zoom, property/geometry edits, undo/redo, guarded Save/Save As, resolution presets and ground inspection | Cancellation, automatic draft preview, comparison views, vertex insertion/removal, climate-region inputs |
 | Local numeric builds | Saved-project CLI, Float32 NPY/GeoTIFF, review NPZ, previews, diagnostics and completion hashes | World placement, vector products, external desktop GIS acceptance |
 | Scale-aware water display | Cached sampled-pool screen areas, fading small lakes, fixed-size viewport rendering, native PNG policy and actual ground-spacing readout ([ADR-0057](../adr/0057-display-water-at-the-appropriate-scale.md)) | River size/width model, connected network selection and resolution-gated visibility; diagnostic channels remain complete |
-| Zoom-driven local detail | Geographic viewport and bounded unchanged-field regional CLI/API samples, reusable global context, exact nested/overlap values and provenance ([ADR-0058](../adr/0058-sample-bounded-regional-windows.md)) | Finished-parent identity/restriction, added detail, boundary slopes, finer inherited hydrology, small-river resolution gates, zoom jobs and bounded caching |
+| Zoom-driven local detail | Unchanged-field sampling, verified saved-parent replay and explicit experimental residual CLI/API; fixed reference moments, exact parent nodes/edges/nested samples and protected authored/water/channel context ([ADR-0061](../adr/0061-verify-parents-and-isolate-local-detail.md)) | Cell-pattern removal, visual/coarse-power acceptance, final-field slopes/bounds, finer inherited hydrology, small-river readiness, zoom jobs and bounded caching |
 | Detail-band amplitudes (R34) | Fixed geometric coefficients, explicit finer-band tails and fixed regional shape carriers; base macro fields agree exactly across 2/6/12 bands ([ADR-0059](../adr/0059-preserve-noise-band-amplitudes.md)) | Coarse-cell averages and authored drainage still change; finished-parent restriction, coarse spectral power and route inheritance remain open |
 | Coordinates/seeds (R01-R03) | Source/local round trips, endpoint grids, actual spacing metadata and portable named seeds | Planetary CRS, configurable process spacing, cell-average/resampling policy |
 | Authored macro routing (R04-R05) | Authored macro, regular crest probes and bounded carrier-root/tangent searches shape a shared Priority-Flood/D8/MFD graph; topology and finished-field conflicts are exported | Other hidden extrema, filled barriers and unresolved final-ground climbs remain; routes are not validated rivers |
@@ -145,6 +147,13 @@ measured benefit and packaging/workflow evidence; it is not the next prerequisit
 
 ## Evidence and next experiments
 
+- [Verified-parent detail](2026-09-23-verified-parent-detail.md) implements portable
+  build v17 snapshots, complete parent replay and separate sampling/enrichment
+  commands. Fixed support avoids output-density drift; original reference
+  structure, parent nodes/edges, water and authored/channel cores are retained.
+  Regular cell support remains visible and fully protected windows can contain
+  no additions. R34 and finer hydrology remain open; this is an opt-in experiment.
+
 - [Exact overlapping height points](2026-09-23-exact-height-points.md) corrects
   ordinary target averaging at authored centres. Interpolating shares preserve
   individual targets, independent of point order and sampling density; coincident
@@ -156,9 +165,9 @@ measured benefit and packaging/workflow evidence; it is not the next prerequisit
   a research-only bilinear/trapezoidal projection. All 18 density/case runs keep
   parent nodes and near-exact means, but authored heights move by up to 29.161 m,
   output density changes shared values and eight sampled channel edges worsen.
-  Visible grid structure reinforces rejection. Next preserve a verified parent
-  reference and condition only added residuals with density-independent support,
-  explicit authored/water/channel protection and paired validation. R34 stays open.
+  Visible grid structure reinforces rejection. The later verified-parent
+  experiment retains the reference and adds protected density-independent
+  residuals. Its visual/coarse-power and finer-flow gates keep R34 open.
 
 - [Stable detail-band amplitudes](2026-09-22-stable-detail-band-amplitudes.md)
   removes count-dependent coefficient shrinkage, separates broad regional shapes
@@ -170,7 +179,8 @@ measured benefit and packaging/workflow evidence; it is not the next prerequisit
 - [Bounded regional field sampling](2026-09-22-regional-field-sampling.md) records
   exact 65/129/257 nested and repeat results, complete-source context reuse and
   regional versus full finer-field cost. This closes the unchanged-field request
-  foundation; parent-conditioned enrichment and finer hydrology remain open.
+  foundation. The later parent-region operation adds saved-build replay and
+  experimental residuals; accepted local enrichment and finer hydrology remain open.
 
 - [Bound-driven refinement](2026-09-16-bounded-noise-refinement.md) compares hybrid
   geometry and selective subdivision against uniform refinement and strip-only

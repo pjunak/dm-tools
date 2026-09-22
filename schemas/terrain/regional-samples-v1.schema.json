@@ -68,7 +68,7 @@
       "$ref": "urn:dmtools:schema:terrain-project:5#/$defs/generatorSettings"
     },
     "runtime": {
-      "$ref": "urn:dmtools:schema:terrain-build:16#/properties/runtime"
+      "$ref": "urn:dmtools:schema:terrain-build:17#/properties/runtime"
     },
     "algorithms": {
       "type": "object",
@@ -103,10 +103,10 @@
           "const": "regional-unchanged-field-sampling@1"
         },
         "seed_policy": {
-          "$ref": "urn:dmtools:schema:terrain-build:16#/properties/algorithms/properties/seed_policy"
+          "$ref": "urn:dmtools:schema:terrain-build:17#/properties/algorithms/properties/seed_policy"
         },
         "stage_seeds": {
-          "$ref": "urn:dmtools:schema:terrain-build:16#/properties/algorithms/properties/stage_seeds"
+          "$ref": "urn:dmtools:schema:terrain-build:17#/properties/algorithms/properties/stage_seeds"
         }
       }
     },
@@ -294,7 +294,7 @@
         "samples.npz": {
           "allOf": [
             {
-              "$ref": "urn:dmtools:schema:terrain-build:16#/$defs/product"
+              "$ref": "urn:dmtools:schema:terrain-build:17#/$defs/product"
             },
             {
               "properties": {
@@ -308,7 +308,7 @@
         "inputs.json": {
           "allOf": [
             {
-              "$ref": "urn:dmtools:schema:terrain-build:16#/$defs/product"
+              "$ref": "urn:dmtools:schema:terrain-build:17#/$defs/product"
             },
             {
               "properties": {
@@ -322,7 +322,7 @@
         "scientific.png": {
           "allOf": [
             {
-              "$ref": "urn:dmtools:schema:terrain-build:16#/$defs/product"
+              "$ref": "urn:dmtools:schema:terrain-build:17#/$defs/product"
             },
             {
               "properties": {

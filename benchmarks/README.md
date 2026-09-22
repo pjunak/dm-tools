@@ -368,3 +368,26 @@ protected authored constraints, refined routing or boundary inflow transfer.
 Single projection timings exclude global preparation and other job costs.
 The [2026-09-23 report](../docs/research/2026-09-23-parent-cell-preservation.md)
 rejects this candidate for runtime use and records the next preservation gates.
+
+
+## Verified-parent local detail
+
+```powershell
+.\.venv\Scripts\python.exe -m benchmarks.local_detail --case example regional water --seed 42 7 --output artifacts/local-detail-measurements.json
+```
+
+The JSON and its sibling directory named after the JSON stem must both be new.
+Each public project is built with 65 longest-side nodes and two detail bands,
+then decoded and numerically replayed before detail at 65/129/257 core samples.
+The fixed window is not selected for successful detail: lake-heavy cases can be
+fully protected and add no heights. A 40 m residual budget makes differences
+inspectable. Every child includes numeric/reference/moment arrays and a
+reference/detail/difference PNG, with completion provenance and false hydrology
+readiness. Nested samples, overlaps, repeat visits, parent nodes and water must
+agree. Runtime and benchmark source changes abort publication of the report.
+
+Stage timings are serial observations, not fresh-process speedup comparisons.
+They separate parent build, file loading, complete replay, protection preparation,
+regional generation and publication. See the
+[measured report](../docs/research/2026-09-23-verified-parent-detail.md) and
+[usage contract](../docs/terrain-parent-regions.md).

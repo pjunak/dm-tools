@@ -26,6 +26,14 @@ Regional recipes use `terrain.landforms`, a separate stream shared by all
 regions. Geometry and settings determine the regional field; list order does
 not seed it. Both streams are recorded in builds, even when no regions are used.
 
+[Experimental local detail](terrain-parent-regions.md) uses `terrain.local-detail`.
+Its parent-region manifest records this resolved seed separately from the parent
+build. Cell coefficients hash ASCII `dmtools.local-detail-cell@1` plus a zero
+byte, the four-byte big-endian stage seed, and eight-byte big-endian unsigned
+column then row. The first three four-byte digest chunks, divided by
+4,294,967,295 and mapped through `(2*u-1)/3`, give the three mode coefficients.
+The parent interval grid therefore belongs to this experimental detail identity.
+
 Future stochastic processes must use distinct stable names. Derivation takes
 no stage index, execution order, resolution, mutable random generator, time or
 process environment. Inserting or reordering an unrelated stage cannot change

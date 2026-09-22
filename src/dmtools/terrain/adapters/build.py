@@ -18,7 +18,12 @@ from dmtools.terrain.adapters.geotiff import (
     rasterio_native_versions,
     write_terrain_geotiff,
 )
-from dmtools.terrain.adapters.project import PROJECT_SCHEMA_VERSION, settings_to_json
+from dmtools.terrain.adapters.project import (
+    INPUT_SNAPSHOT_VERSION,
+    PROJECT_SCHEMA_VERSION,
+    project_snapshot_to_json,
+    settings_to_json,
+)
 from dmtools.terrain.adapters.render import (
     render_drainage_review,
     render_height_map,
@@ -40,7 +45,7 @@ from dmtools.terrain.pipeline.generate import (
 from dmtools.terrain.pipeline.landforms import LANDFORM_ALGORITHM_ID
 from dmtools.terrain.pipeline.quality import TerrainQuality
 
-BUILD_SCHEMA_VERSION = 16
+BUILD_SCHEMA_VERSION = 17
 
 
 def file_sha256(path: Path) -> str:
@@ -170,7 +175,7 @@ def write_build_products(
     with render_drainage_review(terrain) as review:
         review.save(destination / "drainage.png")
     paths.append(("drainage.png", "derived"))
-    _write_json(destination / "inputs.json", asdict(project))
+    _write_json(destination / "inputs.json", project_snapshot_to_json(project))
     paths.append(("inputs.json", "input-snapshot"))
     _write_json(
         destination / "diagnostics.json",
@@ -240,6 +245,7 @@ def publish_build_manifest(
             "project_sha256": project_sha256,
             "svg_sha256": svg_sha256,
             "project_schema_version": PROJECT_SCHEMA_VERSION,
+            "snapshot_schema_version": INPUT_SNAPSHOT_VERSION,
         },
         "settings": settings_to_json(settings),
         "runtime": runtime,

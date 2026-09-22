@@ -64,6 +64,24 @@ def create_parser() -> argparse.ArgumentParser:
     region.add_argument("--refine", type=int, required=True,
                         help="Power-of-two subdivision of reference intervals; 1 through 65536.")
     region.set_defaults(_handler=_run_terrain_region)
+    for command in ("sample-parent", "enrich-region"):
+        experimental = command == "enrich-region"
+        parent = terrain_commands.add_parser(
+            command, help=("Generate experimental protected detail from a verified parent build."
+                           if experimental else "Sample a verified completed parent build."),
+        )
+        parent.add_argument("parent", type=Path, help="Completed current terrain build directory.")
+        parent.add_argument("--output", type=Path, required=True, help="New independent directory.")
+        parent.add_argument("--bounds-km", type=float, nargs=4, required=True,
+                            metavar=("X0", "Y0", "X1", "Y1"))
+        parent.add_argument("--refine", type=int, required=True,
+                            help="Power of two; experimental detail needs at least 8.")
+        if experimental:
+            parent.add_argument("--experimental", action="store_true", required=True,
+                                help="Acknowledge detail is experimental and hydrology unreviewed.")
+            parent.add_argument("--amplitude-m", type=float, default=12.,
+                                help="Maximum residual budget in metres, (0, 100], default 12.")
+        parent.set_defaults(_handler=_run_parent_region, _experimental_detail=experimental)
     return parser
 
 
@@ -98,6 +116,25 @@ def _run_terrain_region(arguments: argparse.Namespace) -> int:
         return 1
     print(f"Regional samples complete: {manifest}")
     print("Denser unchanged-field samples; no new detail bands or refined hydrology.")
+    return 0
+
+
+def _run_parent_region(arguments: argparse.Namespace) -> int:
+    from dmtools.terrain.application.parent_region import sample_parent_region
+    from dmtools.terrain.domain.regional import RegionalDetailSettings
+
+    try:
+        x0, y0, x1, y1 = arguments.bounds_km
+        detail = (RegionalDetailSettings(arguments.amplitude_m)
+                  if arguments._experimental_detail else None)
+        manifest = sample_parent_region(arguments.parent, arguments.output, (x0, y0, x1, y1),
+                                        arguments.refine, detail_settings=detail)
+    except (OSError, ValueError, RuntimeError) as error:
+        print(f"Parent regional generation failed: {error}", file=sys.stderr)
+        return 1
+    print(f"Parent regional result complete: {manifest}")
+    print("Experimental added detail; hydrology unreviewed, small rivers unavailable."
+          if detail else "Verified parent field; no new detail or refined hydrology.")
     return 0
 
 

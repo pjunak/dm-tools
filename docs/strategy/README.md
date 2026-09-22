@@ -157,7 +157,9 @@ bounds on unseen terrain heights.
    Keep unresolved/pending detail explicit. Pan/zoom and sampled-lake filtering
    provide display foundations. Bounded unchanged-field regional sampling now
    provides a CLI/API request foundation with shared context and provenance;
-   parent-conditioned detail and finer hydrology remain the next local-generation gates.
+   verified-parent replay and an experimental protected residual now extend it.
+   Visual/coarse-power acceptance, inherited finer hydrology and bounded job/cache
+   scheduling remain the next local-generation gates.
 
 R04/R05 provide the first drainage correctness slice and review products;
 [ADR-0029](../adr/0029-route-drainage-over-authored-terrain.md) records its limits.
@@ -262,26 +264,32 @@ preparation, and publishes bounded numeric samples with provenance. Exact
 65/129/257/overlap/revisit evidence and measured costs are recorded in the
 [implementation report](../research/2026-09-22-regional-field-sampling.md).
 
-- Extend this foundation with an immutable finished-parent identity and detail
-  policy. Preserve the parent frame and broad geography; input-field sampling
-  does not yet condition against a parent DEM.
-- Prove shared-sample, parent restriction and overlap height/slope properties as
-  separate contracts. [Fixed band budgets](../adr/0059-preserve-noise-band-amplitudes.md)
-  now preserve existing coefficients, but finished-ground cell means and some
-  authored drainage routes still change. The
-  [parent-cell experiment](../research/2026-09-23-parent-cell-preservation.md)
-  rejects bilinear reconstruction plus per-density mean correction: exact nodes
-  and means still lose terrain structure, authored heights and channel quality.
-  Next bind an immutable prepared reference that reproduces the parent DEM,
-  define its moments, and condition only added residuals with support independent
-  of requested sampling density. Protect authored heights, water and inherited
-  channels; complete R34's restriction and coarse-power checks before integration.
-- Generate the visible/requested region with required surrounding constraints
-  and upstream flow context. Bound generation and caching rather than allocating
-  the entire continent at local resolution. Returning to a region must be stable.
-- Use the existing [regional prototype C](../research/2026-09-04-terrain-prototype-contracts.md)
-  to choose the added-detail process, restriction tolerances and zoom job policy
-  through measurement. These remain open beyond the implemented sampling foundation.
+The [verified-parent workflow](../terrain-parent-regions.md) now adds build v17
+portable snapshots, exact runtime/file verification, full numeric replay and an
+explicit experimental additive residual. It retains the prepared field instead
+of replacing it with sparse bilinear terrain. Fixed cell probes/modes preserve
+shared values across 65/129/257 outputs, original nodes/edges and protected
+water/authored/channel ground. The [measurements](../research/2026-09-23-verified-parent-detail.md)
+record the remaining visible cell pattern and conservative exclusions.
+
+- Replace regular cell-stamped appearance with terrain-aware support before
+  cartographic adoption. Preserve exact overlap/order, authored heights, water
+  and inherited channels while measuring coarse spectral power and final-field
+  boundary slopes. Fixed quadrature is a measured moment rule, not a certified
+  bound on all unseen blended-field extrema. R34 remains open.
+- Define how arbitrary partial-cell view boundaries transition to the unchanged
+  parent. The residual meets the parent at parent-cell edges; an arbitrary crop
+  boundary is not automatically a zero-residual seam.
+- Introduce inherited inflow/outlet context and finer routing, including reviewed
+  basin outflow paths outside protected footprints, before enabling small rivers.
+  Keeping planned channel corridors unchanged alone does not validate new runoff.
+- Reuse prepared parents/detail context under explicit cache budgets and eviction;
+  then add cancellation, freshness and workbench requests. Do not repeat full
+  replay for every pointer move or silently turn a successful experimental result
+  into accepted cartographic detail.
+- Extend the existing [regional prototype C](../research/2026-09-04-terrain-prototype-contracts.md)
+  with these acceptance gates. No automatic zoom job or recursive child-parent
+  enrichment is currently implemented.
 
 ### 6. Prototype climate as a separate global-context system
 

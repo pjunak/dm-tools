@@ -57,7 +57,7 @@ def test_headless_build_preserves_dem_and_has_repeatable_verified_products(
     build_module.build_terrain_project(project_path, second)
     document: dict[str, Any] = json.loads((first / "manifest.json").read_text())
     schema_dir = EXAMPLES.parents[1] / "schemas" / "terrain"
-    assert document["schema_version"] == 16
+    assert document["schema_version"] == 17
     assert document["inputs"]["project_schema_version"] == 5
     assert document["algorithms"]["seed_policy"] == SEED_POLICY_ID
     resolved_seed = stage_seed(loaded.project.settings.seed, RELIEF_STAGE_ID)
@@ -75,7 +75,7 @@ def test_headless_build_preserves_dem_and_has_repeatable_verified_products(
     )
     schema = next(
         item for item in schemas
-        if item["$id"] == "urn:dmtools:schema:terrain-build:16"
+        if item["$id"] == "urn:dmtools:schema:terrain-build:17"
     )
     validate(document, schema, cls=Draft202012Validator, registry=registry)
     invalid = {**document, "coordinates": {**document["coordinates"], "world_crs": "EPSG:4326"}}

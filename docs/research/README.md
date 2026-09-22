@@ -12,6 +12,11 @@ in the current status or a new dated report.
 
 ## Implemented and measured work
 
+- [Verified parent and experimental local detail - 2026-09-23](2026-09-23-verified-parent-detail.md)
+  adds portable completed-parent replay, separate regional artifacts and bounded
+  residual generation; measures consistency/cost while retaining explicit visual
+  and hydrological acceptance limits.
+
 - [Exact overlapping height points - 2026-09-23](2026-09-23-exact-height-points.md)
   fixes the authored-height defect found during parent-preservation research,
   validates smooth approach to each target and records numerical/performance

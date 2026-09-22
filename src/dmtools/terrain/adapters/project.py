@@ -18,10 +18,12 @@ from dmtools.terrain.adapters.svg import (
 )
 from dmtools.terrain.domain import (
     BrushToolSettings,
+    Coastline,
     ElevationMode,
     ElevationPoint,
     FeatureToolSettings,
     LakeToolSettings,
+    LandComponent,
     LandformSettings,
     TerrainAuthoringState,
     TerrainBasin,
@@ -457,3 +459,49 @@ def load_terrain_project(source: Path) -> LoadedTerrainProject:
         authoring=authoring,
     )
     return LoadedTerrainProject(project=project, coastline_source=coastline_source, path=resolved)
+
+
+INPUT_SNAPSHOT_SCHEMA = "dmtools.terrain-input-snapshot"
+INPUT_SNAPSHOT_VERSION = 1
+
+
+def project_snapshot_to_json(project: TerrainProject) -> dict[str, object]:
+    """Portable effective inputs; no external source paths or ambiguous constraint types."""
+    return {
+        "schema": INPUT_SNAPSHOT_SCHEMA, "schema_version": INPUT_SNAPSHOT_VERSION,
+        "coastline": asdict(project.coastline), "settings": settings_to_json(project.settings),
+        "constraints": [_constraint_to_json(c) for c in project.constraints],
+        "authoring": _authoring_to_json(project.authoring),
+    }
+
+
+def project_snapshot_from_json(value: object) -> TerrainProject:
+    """Read only the current effective-input contract without reopening authored files."""
+    data = _mapping(value, "input snapshot")
+    _require_keys(data, {"schema", "schema_version", "coastline", "settings", "constraints",
+                         "authoring"}, "input snapshot")
+    if (data["schema"] != INPUT_SNAPSHOT_SCHEMA
+            or _integer(data["schema_version"], "snapshot version") != INPUT_SNAPSHOT_VERSION):
+        raise TerrainProjectInputError("Unsupported terrain input snapshot; rebuild the parent.")
+    coast = _mapping(data["coastline"], "snapshot coastline")
+    _require_keys(coast, {"points", "holes", "additional_components", "source_name"},
+                  "snapshot coastline")
+
+    def holes(value: object) -> tuple[tuple[tuple[float, float], ...], ...]:
+        return tuple(_points(ring, "hole") for ring in _sequence(value, "holes"))
+
+    components: list[LandComponent] = []
+    for item in _sequence(coast["additional_components"], "additional components"):
+        part = _mapping(item, "land component")
+        _require_keys(part, {"exterior", "holes"}, "land component")
+        components.append(LandComponent(_points(part["exterior"], "exterior"),
+                                        holes(part["holes"])))
+    return TerrainProject(
+        Coastline(_points(coast["points"], "coastline points"),
+                  _string(coast["source_name"], "source name"), holes(coast["holes"]),
+                  tuple(components)),
+        _settings_from_json(data["settings"]),
+        tuple(_constraint_from_json(c, i)
+              for i, c in enumerate(_sequence(data["constraints"], "constraints"))),
+        _authoring_from_json(data["authoring"]),
+    )

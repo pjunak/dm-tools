@@ -69,7 +69,12 @@ The pipeline evaluates only bounded regional arrays while retaining complete
 canonical context. Separate adapters publish numeric samples and a cropped
 scientific ground preview; no full-build reviews or finer hydrology are implied.
 Prepared samplers can be reused across requests, but GUI jobs and caches remain
-future work.
+future work. The [parent-region operation](../terrain-parent-regions.md) adds
+portable snapshot decoding and file/runtime checks in adapters/application,
+complete numeric replay in `pipeline/parent.py`, and an opt-in protected residual
+in `pipeline/detail.py`. Detail only changes a new regional result. File formats
+and publication stay outside those numerical stages; experimental acceptance
+and hydrology capability flags stay explicit in the artifact contract.
 
 The next durable-build work adds world georeferencing,
 derived GIS products, explicit hard/soft/inequality projection after optional
@@ -86,7 +91,8 @@ metadata. NumPy axis construction stays in the pipeline. Read the
 Each stage receives explicit inputs and configuration. It must not obtain
 randomness, time, environment settings, or coordinate assumptions implicitly.
 The [named seed policy](../terrain-seeds.md) resolves stable stage identifiers
-from a master without mutable RNG state. Both coarse and detailed relief remain views of the same stage.
+from a master without mutable RNG state. Base coarse and detailed relief remain views of the same stage. The experimental
+added cell residual owns a distinct `terrain.local-detail` stage.
 There is no alternative seed mode.
 
 Completed-field sampling separates the pointwise evaluator from land masking
@@ -124,7 +130,8 @@ layer or path boundaries.
   (lake levels, retention, outlet checks and conservative area transfer are implemented)
 - River/catchment vector products and external hydrology validation
   (numeric routing, footprint collection and basin review archives are implemented)
-- Zoom-driven regional generation, parent consistency, buffers and bounded caching
+- Visual/spectral acceptance of experimental regional detail, inherited finer
+  hydrology, zoom scheduling and bounded caching
 - Global climate-field and ecological-classification contracts
 - Web framework, queue, storage, and frontend
 - Public project license

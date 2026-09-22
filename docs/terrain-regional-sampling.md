@@ -4,7 +4,9 @@ The `sample-region` command evaluates the existing terrain field more densely
 inside a chosen source-local rectangle. It reuses the complete coastline,
 authored constraints, regional recipes, prepared valley profiles and canonical
 routing context. This is the first executable foundation for zoom-driven local
-generation; automatic workbench requests and new detail generation remain planned.
+generation. Automatic workbench requests remain planned. A separate
+[verified-parent operation](terrain-parent-regions.md) now provides finished-build
+replay and opt-in experimental added detail.
 
 ## Try the public example
 
@@ -95,8 +97,10 @@ or its coarse-cell averages. The
 [parent-cell experiment](research/2026-09-23-parent-cell-preservation.md) rejects
 one bilinear/trapezoidal conditioning candidate: exact parent nodes and means
 still alter existing structure, authored heights and channel profiles. The next
-candidate must preserve a verified parent reference and constrain only added
-residuals independently of output sampling density. It is not part of this API.
+candidate now retains a verified parent reference and constrains only added
+residuals independently of output sampling density in the separate
+[parent-region experiment](terrain-parent-regions.md). It is not part of this
+unchanged-field API; visual/spectral acceptance and finer hydrology remain open.
 Small cartographic rivers require that finer terrain/hydrology evidence.
 Workbench zoom scheduling, cancellation, freshness and bounded caching are also
 still open. See [TODO](../TODO.md), [ADR-0058](adr/0058-sample-bounded-regional-windows.md)

@@ -18,6 +18,8 @@ from dmtools.terrain.pipeline.hydrology import (
     steepest_flow_receivers,
 )
 
+DRAINAGE_DIAGNOSTICS_ALGORITHM_ID = "canonical-d8-priority-flood-diagnostics@4"
+
 
 @dataclass(frozen=True, slots=True)
 class RoutingAgreement:
@@ -293,7 +295,7 @@ def analyze_drainage(
     )
     fill_volume_km3 = float(np.sum(fill_depth_m)) * cell_area_km2 / 1_000.0
     summary = DrainageDiagnostics(
-        algorithm_id="canonical-d8-priority-flood-diagnostics@4",
+        algorithm_id=DRAINAGE_DIAGNOSTICS_ALGORITHM_ID,
         grid_width=elevation_m.shape[1],
         grid_height=elevation_m.shape[0],
         x_spacing_km=x_spacing_km,
