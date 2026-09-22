@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Literal
 
 import numpy as np
+from numpy.typing import NDArray
 from PIL import Image, ImageDraw, PngImagePlugin
 
 from dmtools.terrain.adapters.palettes import (
@@ -23,6 +24,7 @@ from dmtools.terrain.adapters.water_display import (
 )
 from dmtools.terrain.domain import (
     ElevationPoint,
+    EndpointGrid,
     TerrainBrushStroke,
     TerrainConstraint,
     TerrainRegion,
@@ -88,9 +90,10 @@ def elevation_legend_colours(
     return tuple(f"#{red:02x}{green:02x}{blue:02x}" for red, green, blue in rgb)
 
 
-def _illumination(terrain: GeneratedTerrain, vertical_exaggeration: float) -> np.ndarray:
-    elevation_km = np.nan_to_num(terrain.elevation_m, nan=0.0).astype(np.float64) / 1_000.0
-    grid = terrain.grid
+def _illumination(
+    elevation_m: NDArray[np.float32], grid: EndpointGrid, vertical_exaggeration: float,
+) -> np.ndarray:
+    elevation_km = np.nan_to_num(elevation_m, nan=0.0).astype(np.float64) / 1_000.0
     y_spacing = grid.y_spacing_km
     x_spacing = grid.x_spacing_km
     gradient_y, gradient_x = np.gradient(elevation_km, y_spacing, x_spacing)
@@ -111,41 +114,52 @@ def _illumination(terrain: GeneratedTerrain, vertical_exaggeration: float) -> np
     return normal_x * light_x + normal_y * light_y + normal_z * light_z
 
 
-def _hillshade(terrain: GeneratedTerrain, style: RenderStyle) -> np.ndarray:
+def _hillshade(
+    elevation_m: NDArray[np.float32], grid: EndpointGrid, style: RenderStyle,
+) -> np.ndarray:
     if style == "cartographic":
-        illumination = _illumination(terrain, vertical_exaggeration=18.0)
+        illumination = _illumination(elevation_m, grid, vertical_exaggeration=18.0)
         return np.clip(0.52 + 0.72 * illumination, 0.22, 1.20)
-    illumination = _illumination(terrain, vertical_exaggeration=1.0)
+    illumination = _illumination(elevation_m, grid, vertical_exaggeration=1.0)
     return np.clip(0.72 + 0.38 * illumination, 0.55, 1.08)
 
 
-def render_height_map_layers(
-    terrain: GeneratedTerrain,
-    *,
-    style: RenderStyle = "cartographic",
-) -> tuple[Image.Image, WaterDisplay | None]:
-    """Prepare immutable relief and scale-aware water separately for navigation."""
+def render_ground_map(
+    elevation_m: NDArray[np.float32], land_mask: NDArray[np.bool_], grid: EndpointGrid,
+    maximum_elevation_m: float, *, style: RenderStyle = "scientific",
+) -> Image.Image:
+    """Render a sampled ground grid; callers crop their halo after shading."""
 
     colour_scale_maximum_m = (
         CARTOGRAPHIC_RELIEF_MAX_ELEVATION_M
         if style == "cartographic"
-        else terrain.settings.maximum_elevation_m
+        else maximum_elevation_m
     )
     normalized = np.clip(
-        np.nan_to_num(terrain.elevation_m, nan=0.0) / colour_scale_maximum_m,
+        np.nan_to_num(elevation_m, nan=0.0) / colour_scale_maximum_m,
         0.0,
         1.0,
     )
     rgb = elevation_palette_rgb(normalized, style=style) * 255.0
-    rgb *= _hillshade(terrain, style)[..., np.newaxis]
+    rgb *= _hillshade(elevation_m, grid, style)[..., np.newaxis]
     rgb_uint8 = np.clip(rgb, 0, 255).astype(np.uint8)
-    alpha = np.where(terrain.land_mask, 255, 0).astype(np.uint8)
+    alpha = np.where(land_mask, 255, 0).astype(np.uint8)
     rgba = np.dstack((rgb_uint8, alpha))
     image = Image.fromarray(rgba, mode="RGBA")
     _stops, _colours, palette_id = _palette(style)
     image.info["dmtools.render_style"] = style
     image.info["dmtools.colour_palette"] = palette_id
     image.info["dmtools.colour_scale_maximum_m"] = f"{colour_scale_maximum_m:g}"
+    image.info["dmtools.water_visibility"] = "none"
+    return image
+
+
+def render_height_map_layers(
+    terrain: GeneratedTerrain, *, style: RenderStyle = "cartographic",
+) -> tuple[Image.Image, WaterDisplay | None]:
+    """Prepare relief and scale-aware water separately for navigation."""
+    image = render_ground_map(terrain.elevation_m, terrain.land_mask, terrain.grid,
+                              terrain.settings.maximum_elevation_m, style=style)
     image.info["dmtools.water_visibility"] = WATER_DISPLAY_ID if style == "cartographic" else "none"
     water = (prepare_water_display(terrain.water.surface_m, terrain.land_mask)
              if style == "cartographic" else None)

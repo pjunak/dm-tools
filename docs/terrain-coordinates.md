@@ -45,6 +45,15 @@ Both use the same local extent. Increasing delivered resolution does not
 increase the shared process/review grid's resolution. Generator arrays, hillshade,
 quality measurements and exported metadata share the same grid description.
 
+## Regional subdivisions
+
+[Regional sampling](terrain-regional-sampling.md) now subdivides each reference
+interval by a power of two. Integer window addresses belong to that complete
+fine grid even though only local arrays are allocated. Original nodes are reused
+exactly; exported axes own the precise rounded positions. Bounds round outwards
+and the halo clips only at the full source boundary. The manifest distinguishes
+reference, core, buffered and complete-source canonical routing grids.
+
 ## World positioning remains explicit future work
 
 Current projects have no declared source-to-world correspondence, working CRS

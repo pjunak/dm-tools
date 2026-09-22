@@ -167,12 +167,12 @@ def test_regional_crest_routes_improve_with_unchanged_source_and_budget_policy(
     seed: int, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     coast, settings, constraints = fixture("regional", 257, seed)
-    revised = generation._prepare_terrain_field(coast, settings, constraints, None)
+    revised = generation.prepare_terrain_field(coast, settings, constraints, None)
     def no_observations(*args: object, **kwargs: object) -> None:
         return None
     with monkeypatch.context() as patch:
         patch.setattr(generation, "sample_mountain_barriers", no_observations)
-        baseline = generation._prepare_terrain_field(coast, settings, constraints, None)
+        baseline = generation.prepare_terrain_field(coast, settings, constraints, None)
     old, new = baseline.automatic_valleys, revised.automatic_valleys
     np.testing.assert_array_equal(old.drainage.source_elevation_m, new.drainage.source_elevation_m)
     np.testing.assert_array_equal(old.land_mask, new.land_mask)
@@ -182,7 +182,7 @@ def test_regional_crest_routes_improve_with_unchanged_source_and_budget_policy(
         settings.maximum_elevation_m, settings.variability), revised.regions)
     assert np.all(new.drainage.incision_m <= new.drainage.incision_limit_m)
     assert np.all(new.drainage.incision_limit_m <= budget)
-    def profiles(field: generation._PreparedTerrainField) -> dict[str, object]:
+    def profiles(field: generation.PreparedTerrainField) -> dict[str, object]:
         valley = field.automatic_valleys
         return measure_channels(valley.x_km, valley.y_km, valley.drainage.receivers,
                                 valley.drainage.channel_mask, field.sample_ground, stations=65)

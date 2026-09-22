@@ -148,7 +148,7 @@ def test_sparse_cubic_profiles_are_bounded_owned_and_query_order_independent() -
 
 def test_regional_regression_keeps_canonical_ground_and_preparation_is_batch_independent() -> None:
     coast, settings, constraints = fixture("regional", 257, 7)
-    field = generation._prepare_terrain_field(coast, settings, constraints, None)
+    field = generation.prepare_terrain_field(coast, settings, constraints, None)
     valley = field.automatic_valleys
     floor = valley.floor
     assert floor.profiles is not None

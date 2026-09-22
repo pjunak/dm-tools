@@ -161,7 +161,7 @@ def test_invalid_queries_are_rejected() -> None:
 @pytest.mark.parametrize("case", ["regional", "outlet"])
 def test_automatic_valleys_keep_routing_nodes_and_seamless_sampling(case: str) -> None:
     coast, settings, constraints = fixture(case, 65, 42)
-    field = generation._prepare_terrain_field(coast, settings, constraints, None)
+    field = generation.prepare_terrain_field(coast, settings, constraints, None)
     valleys = field.automatic_valleys
     xx, yy = np.meshgrid(valleys.x_km, valleys.y_km)
     np.testing.assert_array_equal(valleys.sample_shaping(xx, yy)[0], valleys.drainage.incision_m)

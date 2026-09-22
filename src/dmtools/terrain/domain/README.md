@@ -12,9 +12,11 @@ Regional recipes have their own base-height, relief and transition controls.
 The format-independent project keeps authored inputs separate from generated
 terrain and review products.
 
-Local frames, endpoint grids and named stage seeds live here. World placement,
-direct per-vertex structure profiles and explicit parent/child contracts for
-zoom-driven local generation remain future work. Build application/adapters own
+Local frames, endpoint grids, named stage seeds and bounded regional sampling
+requests live here. Requests bind an input-defined full field and reference grid
+to nested fine addresses and a halo, with sample and precision limits. World
+placement, direct per-vertex structure profiles and finished-parent restriction
+contracts for added local detail remain future work. Application/adapters own
 manifest publication.
 
 Domain code must not read files, call external tools, render images, or depend on

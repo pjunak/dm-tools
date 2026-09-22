@@ -126,7 +126,7 @@ def test_public_floor_profiles_reduce_excursions_and_keep_canonical_ground(
     case: str, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     coast, settings, constraints = fixture(case, 257, 42)
-    field = generation._prepare_terrain_field(coast, settings, constraints, None)
+    field = generation.prepare_terrain_field(coast, settings, constraints, None)
     valley = field.automatic_valleys
     args = (valley.x_km, valley.y_km, valley.drainage.receivers,
             valley.drainage.channel_mask, field.sample_ground)

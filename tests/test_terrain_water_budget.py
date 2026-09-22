@@ -75,17 +75,17 @@ def test_forecast_uses_only_canonical_finished_ground_and_is_resolution_independ
 ) -> None:
     coast, settings, constraints = fixture("flat", 64, 42)
     expected = generate.forecast_water_sampling(coast, settings, constraints=constraints)
-    original = generate._PreparedTerrainField.evaluate  # pyright: ignore[reportPrivateUsage]
+    original = generate.PreparedTerrainField.evaluate
     shapes: list[tuple[int, ...]] = []
     def observed(
-        self: generate._PreparedTerrainField,  # pyright: ignore[reportPrivateUsage]
+        self: generate.PreparedTerrainField,
         x: NDArray[np.float64], y: NDArray[np.float64],
     ) -> tuple[NDArray[np.float64], NDArray[np.bool_]]:
         shapes.append(x.shape)
         return original(self, x, y)
     def unexpected(*args: object, **kwargs: object) -> None:
         pytest.fail("Forecast must not evaluate fine profiles or generate delivered products.")
-    monkeypatch.setattr(generate._PreparedTerrainField, "evaluate", observed)  # pyright: ignore[reportPrivateUsage]
+    monkeypatch.setattr(generate.PreparedTerrainField, "evaluate", observed)
     for name in ("resolve_basin_outflow", "review_drainage_routing", "water_products"):
         monkeypatch.setattr(generate, name, unexpected)
     monkeypatch.setattr("dmtools.terrain.pipeline.water_sampling.profile_positions", unexpected)

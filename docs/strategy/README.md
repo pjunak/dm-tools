@@ -155,7 +155,9 @@ bounds on unseen terrain heights.
    upstream flow, outlets and lake identity across windows. Define water-size
    evidence and screen thresholds; only major water should survive distant views.
    Keep unresolved/pending detail explicit. Pan/zoom and sampled-lake filtering
-   are implemented display foundations, not completed regional generation.
+   provide display foundations. Bounded unchanged-field regional sampling now
+   provides a CLI/API request foundation with shared context and provenance;
+   parent-conditioned detail and finer hydrology remain the next local-generation gates.
 
 R04/R05 provide the first drainage correctness slice and review products;
 [ADR-0029](../adr/0029-route-drainage-over-authored-terrain.md) records its limits.
@@ -254,8 +256,15 @@ checks when declaring planetary placement.
 
 ### 5. Generate consistent local detail on demand
 
-- Define immutable parent identity, geographic window, target spacing, detail
-  policy, context buffer and crop. Preserve the parent frame and broad geography.
+The [regional sampling operation](../terrain-regional-sampling.md) now binds an
+input-defined reference field, nested window/spacing and halo, reuses global
+preparation, and publishes bounded numeric samples with provenance. Exact
+65/129/257/overlap/revisit evidence and measured costs are recorded in the
+[implementation report](../research/2026-09-22-regional-field-sampling.md).
+
+- Extend this foundation with an immutable finished-parent identity and detail
+  policy. Preserve the parent frame and broad geography; input-field sampling
+  does not yet condition against a parent DEM.
 - Prove shared-sample, parent restriction and overlap height/slope properties as
   separate contracts. Adding detail bands currently changes existing weights;
   resolve R34 before promising detail-only enrichment.
@@ -263,8 +272,8 @@ checks when declaring planetary placement.
   and upstream flow context. Bound generation and caching rather than allocating
   the entire continent at local resolution. Returning to a region must be stable.
 - Use the existing [regional prototype C](../research/2026-09-04-terrain-prototype-contracts.md)
-  as the initial fixture. Choose the process, restriction tolerances and zoom job
-  policy through measurement; these are not implemented capabilities yet.
+  to choose the added-detail process, restriction tolerances and zoom job policy
+  through measurement. These remain open beyond the implemented sampling foundation.
 
 ### 6. Prototype climate as a separate global-context system
 

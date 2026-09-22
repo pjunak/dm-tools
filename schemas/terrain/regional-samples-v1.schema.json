@@ -1,0 +1,396 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:dmtools:schema:terrain-regional-samples:1",
+  "title": "DM Tools unchanged-field regional samples v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "schema_version",
+    "status",
+    "artifact_id",
+    "source",
+    "settings",
+    "runtime",
+    "algorithms",
+    "request",
+    "coordinates",
+    "reference_grid",
+    "core_grid",
+    "sample_grid",
+    "canonical_routing_grid",
+    "core_slice",
+    "capabilities",
+    "outputs"
+  ],
+  "properties": {
+    "schema": {
+      "const": "dmtools.terrain-regional-samples"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "status": {
+      "const": "complete"
+    },
+    "artifact_id": {
+      "$ref": "#/$defs/hash"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "field_id",
+        "project_sha256",
+        "svg_sha256",
+        "project_schema_version"
+      ],
+      "properties": {
+        "kind": {
+          "const": "input-defined-field"
+        },
+        "field_id": {
+          "$ref": "#/$defs/hash"
+        },
+        "project_sha256": {
+          "$ref": "#/$defs/hash"
+        },
+        "svg_sha256": {
+          "$ref": "#/$defs/hash"
+        },
+        "project_schema_version": {
+          "const": 5
+        }
+      }
+    },
+    "settings": {
+      "$ref": "urn:dmtools:schema:terrain-project:5#/$defs/generatorSettings"
+    },
+    "runtime": {
+      "$ref": "urn:dmtools:schema:terrain-build:16#/properties/runtime"
+    },
+    "algorithms": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "generator",
+        "automatic_valleys",
+        "noise",
+        "landforms",
+        "regional_sampling",
+        "seed_policy",
+        "stage_seeds"
+      ],
+      "properties": {
+        "generator": {
+          "type": "string",
+          "minLength": 1
+        },
+        "automatic_valleys": {
+          "type": "string",
+          "minLength": 1
+        },
+        "noise": {
+          "type": "string",
+          "minLength": 1
+        },
+        "landforms": {
+          "type": "string",
+          "minLength": 1
+        },
+        "regional_sampling": {
+          "const": "regional-unchanged-field-sampling@1"
+        },
+        "seed_policy": {
+          "$ref": "urn:dmtools:schema:terrain-build:16#/properties/algorithms/properties/seed_policy"
+        },
+        "stage_seeds": {
+          "$ref": "urn:dmtools:schema:terrain-build:16#/properties/algorithms/properties/stage_seeds"
+        }
+      }
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requested_bounds_km",
+        "refinement",
+        "window_inclusive",
+        "halo_cells",
+        "sample_window_inclusive",
+        "sample_limit"
+      ],
+      "properties": {
+        "requested_bounds_km": {
+          "$ref": "#/$defs/bounds"
+        },
+        "refinement": {
+          "enum": [
+            1,
+            2,
+            4,
+            8,
+            16,
+            32,
+            64,
+            128,
+            256,
+            512,
+            1024,
+            2048,
+            4096,
+            8192,
+            16384,
+            32768,
+            65536
+          ]
+        },
+        "window_inclusive": {
+          "$ref": "#/$defs/window"
+        },
+        "halo_cells": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 32
+        },
+        "sample_window_inclusive": {
+          "$ref": "#/$defs/window"
+        },
+        "sample_limit": {
+          "const": 2000000
+        }
+      }
+    },
+    "coordinates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "model",
+        "world_crs",
+        "source_bounds",
+        "km_per_source_unit",
+        "origin",
+        "x_direction",
+        "y_direction",
+        "registration",
+        "horizontal_units",
+        "elevation_units",
+        "elevation_dtype",
+        "nodata"
+      ],
+      "properties": {
+        "model": {
+          "const": "local-svg-plane@1"
+        },
+        "world_crs": {
+          "const": null
+        },
+        "source_bounds": {
+          "$ref": "#/$defs/bounds"
+        },
+        "km_per_source_unit": {
+          "$ref": "#/$defs/positive"
+        },
+        "origin": {
+          "const": "minimum source x and y"
+        },
+        "x_direction": {
+          "const": "source-right"
+        },
+        "y_direction": {
+          "const": "source-down"
+        },
+        "registration": {
+          "const": "endpoint-nodes"
+        },
+        "horizontal_units": {
+          "const": "km"
+        },
+        "elevation_units": {
+          "const": "m"
+        },
+        "elevation_dtype": {
+          "const": "float32"
+        },
+        "nodata": {
+          "const": "NaN outside land mask"
+        }
+      }
+    },
+    "reference_grid": {
+      "$ref": "#/$defs/grid"
+    },
+    "core_grid": {
+      "$ref": "#/$defs/grid"
+    },
+    "sample_grid": {
+      "$ref": "#/$defs/grid"
+    },
+    "canonical_routing_grid": {
+      "$ref": "#/$defs/grid"
+    },
+    "core_slice": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rows",
+        "columns"
+      ],
+      "properties": {
+        "rows": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "columns": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "minItems": 2,
+          "maxItems": 2
+        }
+      }
+    },
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "adds_detail_bands",
+        "conditions_on_parent_dem",
+        "refines_hydrology",
+        "water"
+      ],
+      "properties": {
+        "adds_detail_bands": {
+          "const": false
+        },
+        "conditions_on_parent_dem": {
+          "const": false
+        },
+        "refines_hydrology": {
+          "const": false
+        },
+        "water": {
+          "const": "authored-level-samples-without-local-flow-review"
+        }
+      }
+    },
+    "outputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "samples.npz",
+        "inputs.json",
+        "scientific.png"
+      ],
+      "properties": {
+        "samples.npz": {
+          "allOf": [
+            {
+              "$ref": "urn:dmtools:schema:terrain-build:16#/$defs/product"
+            },
+            {
+              "properties": {
+                "role": {
+                  "const": "authoritative"
+                }
+              }
+            }
+          ]
+        },
+        "inputs.json": {
+          "allOf": [
+            {
+              "$ref": "urn:dmtools:schema:terrain-build:16#/$defs/product"
+            },
+            {
+              "properties": {
+                "role": {
+                  "const": "input-snapshot"
+                }
+              }
+            }
+          ]
+        },
+        "scientific.png": {
+          "allOf": [
+            {
+              "$ref": "urn:dmtools:schema:terrain-build:16#/$defs/product"
+            },
+            {
+              "properties": {
+                "role": {
+                  "const": "derived"
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  "$defs": {
+    "hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "positive": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "bounds": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "minItems": 4,
+      "maxItems": 4
+    },
+    "window": {
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "minItems": 4,
+      "maxItems": 4
+    },
+    "grid": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "extent_km",
+        "width",
+        "height",
+        "x_spacing_km",
+        "y_spacing_km"
+      ],
+      "properties": {
+        "extent_km": {
+          "$ref": "#/$defs/bounds"
+        },
+        "width": {
+          "type": "integer",
+          "minimum": 2
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 2
+        },
+        "x_spacing_km": {
+          "$ref": "#/$defs/positive"
+        },
+        "y_spacing_km": {
+          "$ref": "#/$defs/positive"
+        }
+      }
+    }
+  }
+}

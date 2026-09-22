@@ -214,6 +214,22 @@ def review_water(
                        width, height, tolerance, tuple(records))
 
 
+def sampled_basin_water(
+    elevation_m: NDArray[np.float32], x_km: NDArray[np.float64], y_km: NDArray[np.float64],
+    basins: tuple[MetricBasin, ...],
+) -> tuple[NDArray[np.float32], NDArray[np.uint32]]:
+    """Pointwise authored water; no connectivity or stable-level claim is made."""
+    labels = basin_intent_ids(x_km, y_km, basins)
+    surface = np.full(elevation_m.shape, np.nan, dtype=np.float32)
+    for basin_id, basin in enumerate(basins, start=1):
+        level = basin.source.water_level_m
+        if level is not None:
+            wet = ((labels == basin_id)
+                   & (elevation_m < level - WATER_ELEVATION_TOLERANCE_M))
+            surface[wet] = level
+    return surface, labels
+
+
 def water_products(
     elevation_m: NDArray[np.float32], x_km: NDArray[np.float64], y_km: NDArray[np.float64],
     basins: tuple[MetricBasin, ...], routing_ids: NDArray[np.uint32], review: WaterReview,
@@ -225,12 +241,5 @@ def water_products(
         for start in range(0, y_km.size, 128):
             rows = slice(start, start + 128)
             x, y = np.meshgrid(x_km, y_km[rows])
-            chunk = basin_intent_ids(x, y, basins)
-            labels[rows] = chunk
-            for basin_id, basin in enumerate(basins, start=1):
-                level = basin.source.water_level_m
-                if level is not None:
-                    wet = ((chunk == basin_id)
-                           & (elevation_m[rows] < level - WATER_ELEVATION_TOLERANCE_M))
-                    surface[rows][wet] = level
+            surface[rows], labels[rows] = sampled_basin_water(elevation_m[rows], x, y, basins)
     return WaterProducts(surface, labels, routing_ids, review)

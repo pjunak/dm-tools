@@ -324,8 +324,19 @@ substeps.
 This is a core planned generation capability. It is separate from directly
 editing a finished DEM; see [ADR-0048](docs/adr/0048-keep-zoom-driven-detail-generation.md).
 
-- [ ] **P0 — Define regional generation requests.** Record the immutable parent
-  build/input identity, window bounds in its coordinate frame, target spacing,
+- [x] **P0 — Add bounded unchanged-field regional sampling.** The saved-project
+  `sample-region` command binds full input/algorithm identity, reference grid,
+  power-of-two subdivision, a globally aligned window and a clipped halo. It
+  rejects over-budget requests before preparing the shared field; samples only
+  the requested finer nodes; preserves global constraints, routing context and
+  basin IDs; and publishes numeric products, ground preview and completion-last
+  provenance. Public 65/129/257 windows, overlaps and repeat visits agree exactly.
+  See [ADR-0058](docs/adr/0058-sample-bounded-regional-windows.md) and the
+  [measurements](docs/research/2026-09-22-regional-field-sampling.md).
+- [ ] **P0 — Extend sampling requests to parent-conditioned generation.** The
+  current reference is an input-defined field, not a finished parent DEM.
+  Record the immutable parent build/input identity, window bounds in its
+  coordinate frame, target spacing,
   detail controls and buffered context. Use the existing local metric frame
   until world placement is implemented; do not reinterpret the planet's scale.
 - [ ] **P0 — Define parent/child and neighboring-window consistency.** Select a
@@ -333,9 +344,13 @@ editing a finished DEM; see [ADR-0048](docs/adr/0048-keep-zoom-driven-detail-gen
   while adding finer structure. Keep unchanged-field shared-node equality as a
   separate test. Cover 65/129/257 windows, overlapping requests, boundary slopes
   and repeat visits in a different order. R34's band-amplitude issue remains open.
-- [ ] **P1 — Generate and cache only the requested window.** Evaluate the context
-  buffer, crop afterwards, and bound work/memory. Identify results by inputs,
-  parent, extent, spacing and algorithm; changed inputs invalidate children.
+- [ ] **P1 — Add bounded regional enrichment and caching.** Unchanged-field
+  sampling now evaluates a halo, crops its preview afterwards and bounds finer
+  output arrays and evaluation batches. Full-source preparation remains global;
+  the Python sampler can reuse it across windows. Add prepared-context/result
+  cache budgets and eviction, plus bounds for added generation work. Identify
+  enriched results by inputs, parent, extent, spacing and algorithm; changed
+  inputs invalidate children.
 - [ ] **P1 — Preserve hydrological context during local enrichment.** Keep
   authored constraints and inherited upstream flow; a local rectangle or halo
   must not invent an independent catchment. Validate drainage after detail and

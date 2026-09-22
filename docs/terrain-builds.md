@@ -16,6 +16,10 @@ Before a detailed water build, use the read-only
 potential internal-network sample demand. It does not create a build or replace
 its water review.
 
+For a finer bounded window of the unchanged field, use the separate
+[regional sampling command](terrain-regional-sampling.md). Its artifact is not a
+full terrain build and does not include the reviews listed below.
+
 ## Products
 
 | File | Meaning |

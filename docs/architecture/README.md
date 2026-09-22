@@ -9,7 +9,7 @@ operations later.
 ```text
 Tk UI / CLI
      |
-     +--> application build / water-budget operations
+     +--> application build / water-budget / regional-sampling operations
      |           |
      +-----------+--> numeric generation pipeline --> domain values
                  |
@@ -61,6 +61,15 @@ preparation and finished canonical ground with generation. Its pipeline planner
 uses the same shoreline/candidate/profile plans, then returns demand without
 fine evaluation, transfer, raster output or exports. Application code owns saved
 input/runtime verification; the CLI labels internal demand as conditional.
+
+The [regional sampling operation](../terrain-regional-sampling.md) also reuses
+full field preparation. Its dependency-light request binds a source identity,
+reference endpoint grid, nested fine window and halo before any expensive work.
+The pipeline evaluates only bounded regional arrays while retaining complete
+canonical context. Separate adapters publish numeric samples and a cropped
+scientific ground preview; no full-build reviews or finer hydrology are implied.
+Prepared samplers can be reused across requests, but GUI jobs and caches remain
+future work.
 
 The next durable-build work adds world georeferencing,
 derived GIS products, explicit hard/soft/inequality projection after optional

@@ -25,9 +25,11 @@ lake equilibria.
 Generation produces a Float32 ground DEM and separate derived water and drainage
 review products. The workbench exports PNG. Headless builds also write NPY/NPZ,
 local-metric GeoTIFF, both relief styles, diagnostics and a completion manifest.
-Zoom-driven local detail generation is a core planned capability; the current
-build still covers the whole coastline. World placement and validated river
-vectors also remain future work. See the [current research status](docs/research/status.md).
+A [regional sampling command](docs/terrain-regional-sampling.md) now evaluates
+bounded windows more densely using the unchanged full-source field. Zoom-driven
+local enrichment remains planned: parent-conditioned detail, finer hydrology and
+workbench jobs are still open. World placement and validated river vectors also
+remain future work. See the [current research status](docs/research/status.md).
 
 ## Requirements
 

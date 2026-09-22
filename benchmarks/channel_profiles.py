@@ -107,7 +107,7 @@ def probe(case: str, seed: int, stations: int) -> dict[str, Any]:
         "coastline": asdict(coast), "settings": asdict(settings),
         "constraints": [asdict(item) for item in constraints],
     })).hexdigest()
-    field = generation._prepare_terrain_field(coast, settings, constraints, None)
+    field = generation.prepare_terrain_field(coast, settings, constraints, None)
     valley = field.automatic_valleys
     routing = valley.drainage
     return {

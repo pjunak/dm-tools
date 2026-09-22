@@ -317,12 +317,19 @@ but querying the same kilometre coordinates still gives the same terrain.
 This is a sampling guarantee for independently generated output grids. It does
 not imply equal cell averages or continuity between different input settings.
 
-Zoom-driven local enrichment remains a core planned feature. It should generate
-finer terrain only for the requested geographic window, preserving parent
-geography, authored intent and neighboring boundaries. Magnifying a PNG or
-increasing output pixels alone does not implement this. Parent-conditioned detail,
-buffers, flow context and consistency tests remain open; see
-[ADR-0048](../../../docs/adr/0048-keep-zoom-driven-detail-generation.md) and the
+The [regional sampling command](../../../docs/terrain-regional-sampling.md) now
+samples bounded windows on nested finer coordinates, using a clipped halo and
+the unchanged full-source field. It reuses global constraints and canonical
+routing context; the numeric samples and cropped ground preview have their own
+provenance manifest. Public 65/129/257 windows, overlaps and repeat visits retain
+exact shared values.
+
+Zoom-driven local enrichment remains a core planned feature. Adding new detail
+must preserve parent geography, authored intent and neighboring boundaries.
+Parent-DEM conditioning, restriction/slope tolerances after added detail, finer
+inherited hydrology and GUI request scheduling remain open. See
+[ADR-0048](../../../docs/adr/0048-keep-zoom-driven-detail-generation.md),
+[ADR-0058](../../../docs/adr/0058-sample-bounded-regional-windows.md) and the
 [regional prototype](../../../docs/research/2026-09-04-terrain-prototype-contracts.md).
 
 ## Model and review limits

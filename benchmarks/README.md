@@ -316,3 +316,17 @@ all four research modules. Refinement timings include planning, enclosure,
 sampling, partition updates and stopping decisions; reference checks are separate.
 The [refinement report](../docs/research/2026-09-16-bounded-noise-refinement.md)
 records the arithmetic argument, paired measurements and remaining full-field work.
+
+## Bounded regional sampling
+
+```powershell
+.\.venv\Scripts\python.exe -m benchmarks.regional --output artifacts/regional-measurements.json
+```
+
+Create the output's parent directory first; the JSON output must not exist.
+The default four public/synthetic fixtures compare 65/129/257 core windows and
+complete finer sampling at the same spacing, reusing one prepared full context.
+`--case`, `--seed` and `--repeats` select fixtures, seed and local timing repeats.
+The harness checks exact nested, repeat-order and full-field values, records
+runtime/input/source identities and excludes export and full-build review costs.
+See the [2026-09-22 measurements](../docs/research/2026-09-22-regional-field-sampling.md).

@@ -9,6 +9,7 @@ performance claims. A source audit is not a successfully run engine comparison.
 
 The noise-profile research, input editor and valley work were updated on
 2026-09-16, with routing, crest, network-floor and water-display work updated on 2026-09-17.
+Bounded unchanged-field regional sampling was added on 2026-09-22.
 The external-engine inventory below retains the 2026-09-13 audit date.
 
 ## Implemented baseline
@@ -18,7 +19,7 @@ The external-engine inventory below retains the 2026-09-13 audit date.
 | Input editor | Retained reference with freshness, geographic pan/zoom, property/geometry edits, undo/redo, guarded Save/Save As, resolution presets and ground inspection | Cancellation, automatic draft preview, comparison views, vertex insertion/removal, climate-region inputs |
 | Local numeric builds | Saved-project CLI, Float32 NPY/GeoTIFF, review NPZ, previews, diagnostics and completion hashes | World placement, vector products, external desktop GIS acceptance |
 | Scale-aware water display | Cached sampled-pool screen areas, fading small lakes, fixed-size viewport rendering, native PNG policy and actual ground-spacing readout ([ADR-0057](../adr/0057-display-water-at-the-appropriate-scale.md)) | River size/width model, connected network selection and resolution-gated visibility; diagnostic channels remain complete |
-| Zoom-driven local detail | Coordinate-addressed fields, shared-sample/grid foundations and a geographic viewport | Regional build requests, added detail, parent/overlap consistency, inherited hydrology, small-river resolution gates and bounded caching |
+| Zoom-driven local detail | Geographic viewport and bounded unchanged-field regional CLI/API samples, reusable global context, exact nested/overlap values and provenance ([ADR-0058](../adr/0058-sample-bounded-regional-windows.md)) | Finished-parent identity/restriction, added detail, boundary slopes, finer inherited hydrology, small-river resolution gates, zoom jobs and bounded caching |
 | Coordinates/seeds (R01-R03) | Source/local round trips, endpoint grids, actual spacing metadata and portable named seeds | Planetary CRS, configurable process spacing, cell-average/resampling policy |
 | Authored macro routing (R04-R05) | Authored macro, regular crest probes and bounded carrier-root/tangent searches shape a shared Priority-Flood/D8/MFD graph; topology and finished-field conflicts are exported | Other hidden extrema, filled barriers and unresolved final-ground climbs remain; routes are not validated rivers |
 | Network floor conditioning | Downstream cut limits propagate upstream before receiver cuts; finite nodal feasibility and signed cut corrections | Between-node conflicts, impossible source/cut intervals and route alternatives |
@@ -132,6 +133,11 @@ Rasterio/GDAL inside the export adapter. A future Rust port needs representative
 measured benefit and packaging/workflow evidence; it is not the next prerequisite.
 
 ## Evidence and next experiments
+
+- [Bounded regional field sampling](2026-09-22-regional-field-sampling.md) records
+  exact 65/129/257 nested and repeat results, complete-source context reuse and
+  regional versus full finer-field cost. This closes the unchanged-field request
+  foundation; parent-conditioned enrichment and finer hydrology remain open.
 
 - [Bound-driven refinement](2026-09-16-bounded-noise-refinement.md) compares hybrid
   geometry and selective subdivision against uniform refinement and strip-only

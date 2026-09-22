@@ -12,6 +12,10 @@ in the current status or a new dated report.
 
 ## Implemented and measured work
 
+- [Bounded regional field sampling — 2026-09-22](2026-09-22-regional-field-sampling.md)
+  verifies unchanged-field 65/129/257 windows, overlap/repeat consistency,
+  completion provenance and the cost of local versus complete finer sampling.
+
 - [Water display scale — 2026-09-17](2026-09-17-water-display-scale.md)
   checks scale-aware sampled lake visibility, viewport caching and local
   rendering cost; small rivers remain gated on future regional detail.

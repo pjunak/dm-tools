@@ -1221,7 +1221,7 @@ def _water_sampling_guides(
 
 
 @dataclass(frozen=True, slots=True)
-class _PreparedTerrainField:
+class PreparedTerrainField:
     """One prepared pointwise field shared by raster generation and budget planning."""
 
     polygon: LandGeometry
@@ -1249,10 +1249,10 @@ class _PreparedTerrainField:
         return np.where(on_land, values, np.nan).astype(np.float32)
 
 
-def _prepare_terrain_field(
+def prepare_terrain_field(
     coastline: Coastline, settings: TerrainSettings, constraints: Sequence[TerrainConstraint],
     progress: ProgressCallback | None,
-) -> _PreparedTerrainField:
+) -> PreparedTerrainField:
     _report(progress, 0.02, "Preparing metric grid")
     polygon, width_km, height_km = _metric_polygon(coastline, settings.object_scale_km)
     authored_constraints = tuple(constraints)
@@ -1282,7 +1282,7 @@ def _prepare_terrain_field(
         regions=regions, basins=basins,
     )
 
-    return _PreparedTerrainField(polygon, boundary, width_km, height_km, settings,
+    return PreparedTerrainField(polygon, boundary, width_km, height_km, settings,
                                  metric_constraints, regions, basins, automatic_valleys)
 
 
@@ -1291,7 +1291,7 @@ def forecast_water_sampling(
     constraints: Sequence[TerrainConstraint] = (),
 ) -> WaterSamplingBudget:
     """Plan shoreline and potential internal-network demand without fine water evaluation."""
-    field = _prepare_terrain_field(coastline, settings, constraints, None)
+    field = prepare_terrain_field(coastline, settings, constraints, None)
     automatic = field.automatic_valleys
     x, y = np.meshgrid(automatic.x_km, automatic.y_km)
     ground, _mask = field.evaluate(x, y)
@@ -1312,7 +1312,7 @@ def generate_terrain(
     """Generate a deterministic Float32 elevation grid inside a coastline."""
 
     authored_constraints = tuple(constraints)
-    field = _prepare_terrain_field(coastline, settings, authored_constraints, progress)
+    field = prepare_terrain_field(coastline, settings, authored_constraints, progress)
     polygon, width_km, height_km = field.polygon, field.width_km, field.height_km
     metric_constraints, regions, basins = field.constraints, field.regions, field.basins
     automatic_valleys = field.automatic_valleys
