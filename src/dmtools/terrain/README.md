@@ -216,6 +216,12 @@ mode it scales the signed height offset. Overlapping absolute strokes combine as
 weighted targets; overlapping relative strokes add their displacements. Both
 behaviours are independent of stroke list order. Structural lines are applied
 after brush guidance, and exact absolute points remain the final authority.
+Overlapping absolute points retain their individual target heights at their
+coordinates, with surrounding terrain approaching those values smoothly. Sampling
+the point itself in a saved raster requires a grid node at that coordinate.
+Conflicting absolute heights at the same location, and nonzero heights exactly on
+a sea-level land boundary, are rejected. See
+[ADR-0060](../../../docs/adr/0060-interpolate-overlapping-height-points.md).
 
 Set the tool's elevation value and radius before placing a point or finishing a
 line. The core radius is the half-width of the strongest response, not a hard

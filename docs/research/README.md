@@ -12,6 +12,11 @@ in the current status or a new dated report.
 
 ## Implemented and measured work
 
+- [Exact overlapping height points - 2026-09-23](2026-09-23-exact-height-points.md)
+  fixes the authored-height defect found during parent-preservation research,
+  validates smooth approach to each target and records numerical/performance
+  effects before returning to local-detail generation.
+
 - [Parent-cell preservation - 2026-09-23](2026-09-23-parent-cell-preservation.md)
   measures a research-only projection and rejects runtime adoption despite exact
   parent nodes: the reference loses terrain structure, authored heights drift,

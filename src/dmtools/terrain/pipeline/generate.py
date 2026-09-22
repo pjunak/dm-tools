@@ -62,7 +62,7 @@ from dmtools.terrain.pipeline.water_sampling import SamplingDensity, SamplingFea
 
 type ProgressCallback = Callable[[float, str], None]
 
-GENERATOR_ALGORITHM_ID = "coastline-constraint-terrain@16"
+GENERATOR_ALGORITHM_ID = "coastline-constraint-terrain@17"
 AUTOMATIC_VALLEY_ALGORITHM_ID = "regional-budget-mfd-d8-valleys@13"
 NOISE_ALGORITHM_ID = "coordinate-value-noise-fixed-budget@2"
 
@@ -255,6 +255,7 @@ def _metric_constraints(
     maximum_elevation_m: float,
 ) -> tuple[_MetricConstraint, ...]:
     converted: list[_MetricConstraint] = []
+    absolute_points: dict[tuple[float, float], float] = {}
     for constraint in constraints:
         if isinstance(constraint, (TerrainRegion, TerrainBasin)):
             continue
@@ -269,6 +270,16 @@ def _metric_constraints(
         if isinstance(constraint, ElevationPoint):
             x, y = constraint.position
             geometry: Point | LineString = Point(x * width_km, y * height_km)
+            if constraint.elevation_mode == "absolute":
+                position = (geometry.x, geometry.y)
+                existing = absolute_points.get(position)
+                if existing is not None and existing != constraint.elevation_m:
+                    raise ValueError(
+                        "Conflicting height points: absolute targets differ at the same location.")
+                absolute_points[position] = constraint.elevation_m
+                if constraint.elevation_m != 0. and polygon.boundary.intersects(geometry):
+                    raise ValueError(
+                        "An absolute height point on the sea-level boundary must be 0 m.")
             kind = "point"
             intensity = 1.0
         elif isinstance(constraint, TerrainBrushStroke):
@@ -792,11 +803,19 @@ def _apply_constraints(
         relative_point_delta += weight * constraint.elevation_m
     elevation += relative_point_delta
 
+    absolute_points = sorted(
+        (c for c in constraints if c.kind == "point" and c.elevation_mode == "absolute"),
+        key=lambda c: (cast(Point, c.geometry).x, cast(Point, c.geometry).y,
+                       c.elevation_m, c.influence_radius_km),
+    )
+    if not absolute_points:
+        return elevation, np.clip(detail_suppression, 0.0, 1.0)
     point_weight = np.zeros_like(elevation)
     point_targets = np.zeros_like(elevation)
-    for constraint in constraints:
-        if constraint.kind != "point" or constraint.elevation_mode != "absolute":
-            continue
+    target_weight = np.zeros_like(elevation)
+    target_scale = np.ones_like(elevation)
+    exact_targets = np.full_like(elevation, np.nan)
+    for constraint in absolute_points:
         raw_distance = cast(Any, shapely.distance(sample_points, constraint.geometry))
         distance = cast(NDArray[np.float64], np.asarray(raw_distance, dtype=np.float64))
         weight = _constraint_weight(
@@ -813,17 +832,34 @@ def _apply_constraints(
         weight = _coast_conditioned_weight(weight, distance, distance_to_coast_km)
         detail_suppression = np.maximum(detail_suppression, weight)
         point_weight += weight
-        point_targets += weight * constraint.elevation_m
-    affected = point_weight > 0.0
+        # Target shares w/(1-w) interpolate each hard point, instead of
+        # averaging its height with neighboring targets at its own centre.
+        # Rescale all shares by the smallest (1-w) seen so far. This keeps
+        # every contribution <= 1 without a singular divide or an epsilon cap.
+        gap = 1. - weight
+        scale = np.minimum(target_scale, gap)
+        previous_share = np.divide(scale, target_scale, out=np.ones_like(scale),
+                                   where=target_scale > 0.)
+        share = np.divide(weight*scale, gap, out=weight.copy(), where=gap > 0.)
+        target_weight = target_weight*previous_share + share
+        point_targets = point_targets*previous_share + share*constraint.elevation_m
+        target_scale = scale
+        np.copyto(exact_targets, constraint.elevation_m, where=distance == 0.)
+    affected = target_weight > 0.0
     if np.any(affected):
         target = np.divide(
             point_targets,
-            point_weight,
+            target_weight,
             out=np.zeros_like(point_targets),
             where=affected,
         )
         blend = np.clip(point_weight, 0.0, 1.0)
         elevation = elevation * (1.0 - blend) + target * blend
+    # Distinct extremely close points can both round to w=1. Resolve the
+    # actual authored coordinate exactly, including a zero-height target.
+    exact = np.isfinite(exact_targets)
+    elevation = np.where(exact, exact_targets, elevation)
+    detail_suppression = np.where(exact, 1., detail_suppression)
 
     return elevation, np.clip(detail_suppression, 0.0, 1.0)
 

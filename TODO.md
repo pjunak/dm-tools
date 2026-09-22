@@ -480,11 +480,16 @@ execution order.
 - [ ] **P0 — Separate hard constraints, soft guidance, and inequalities in the
   solver contract.** Exact spot heights and water levels must remain exact;
   ridge minima, valley maxima, relative displacement, and brush guidance should
-  retain their different meanings. Diagnose the public water fixture's nominal
-  250 m point evaluating to 331.149811 m in the unchanged parent field in the
-  [parent experiment](docs/research/2026-09-23-parent-cell-preservation.md); this
-  predates enrichment. Check authored/basin precedence before choosing a
-  preservation target.
+  retain their different meanings. The overlapping absolute-point defect
+  exposed by parent-preservation research is fixed separately below; a complete
+  mixed-constraint solver and its conflict diagnostics remain open.
+- [x] **P0 — Preserve overlapping absolute height points.** Interpolating
+  target shares now keep every point exact and make nearby terrain converge to
+  it. Conflicting coincident targets and nonzero sea-level-boundary targets fail
+  before routing. The public lake fixture's 250 m point is now 250 m; its former
+  331.149811 m value came from point averaging, not basin precedence. See
+  [ADR-0060](docs/adr/0060-interpolate-overlapping-height-points.md) and
+  [the measurements](docs/research/2026-09-23-exact-height-points.md).
 - [ ] **P1 — Make transitions aware of surrounding terrain.** Estimate the
   stable low-frequency reference surface entering a stage, then adapt shoulder
   reach and blending to local slope and relief without using an order-dependent
@@ -777,6 +782,9 @@ Priorities remain conditional on the current strategy's prerequisites.
   overlay and headless review image expose planned channel conflicts.
 - [ ] **P1 — Reconcile remaining planned/final channel conflicts.** Quantify
   hard-anchor conflicts separately from residual-detail and depression effects.
+  Compare matched directed edges separately from changed channel selection:
+  [the exact-point fix](docs/research/2026-09-23-exact-height-points.md) produces
+  both a Float32 threshold crossing and newly selected edges with reduced rises.
   Preserve authored intent; do not treat filled routes as validated rivers.
   ADR-0029 recorded 390 uphill edges among 2455 planned channel edges
   (maximum rise 135.07 m) for its seed-42 authored baseline. Re-measure the

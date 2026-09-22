@@ -11,7 +11,9 @@ The noise-profile research, input editor and valley work were updated on
 2026-09-16, with routing, crest, network-floor and water-display work updated on 2026-09-17.
 Bounded unchanged-field regional sampling and fixed detail-band budgets were
 added on 2026-09-22. A parent-cell projection was measured and rejected for
-runtime use on 2026-09-23; the product sampling contract is unchanged.
+runtime use on 2026-09-23. The overlapping absolute-height defect it exposed
+was subsequently fixed in the global pointwise field; local-detail generation
+and parent restriction remain unimplemented.
 The external-engine inventory below retains the 2026-09-13 audit date.
 
 ## Implemented baseline
@@ -142,6 +144,13 @@ Rasterio/GDAL inside the export adapter. A future Rust port needs representative
 measured benefit and packaging/workflow evidence; it is not the next prerequisite.
 
 ## Evidence and next experiments
+
+- [Exact overlapping height points](2026-09-23-exact-height-points.md) corrects
+  ordinary target averaging at authored centres. Interpolating shares preserve
+  individual targets, independent of point order and sampling density; coincident
+  conflicts and nonzero sea-level-boundary targets are rejected. The public
+  lake's 250 m target now evaluates to 250 m. This repairs the parent reference
+  used by future enrichment; it does not implement that enrichment.
 
 - [Parent-cell preservation](2026-09-23-parent-cell-preservation.md) implements
   a research-only bilinear/trapezoidal projection. All 18 density/case runs keep
