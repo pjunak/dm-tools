@@ -91,7 +91,12 @@ unchanged settings; it does not add bands. Next work must define parent
 restriction/downsampling and height/slope tolerances, preserve upstream flow
 and outlet boundaries during finer hydrology, and keep whole-lake identity.
 R34 remains open because stable coefficients do not preserve finished terrain
-or its coarse-cell averages.
+or its coarse-cell averages. The
+[parent-cell experiment](research/2026-09-23-parent-cell-preservation.md) rejects
+one bilinear/trapezoidal conditioning candidate: exact parent nodes and means
+still alter existing structure, authored heights and channel profiles. The next
+candidate must preserve a verified parent reference and constrain only added
+residuals independently of output sampling density. It is not part of this API.
 Small cartographic rivers require that finer terrain/hydrology evidence.
 Workbench zoom scheduling, cancellation, freshness and bounded caching are also
 still open. See [TODO](../TODO.md), [ADR-0058](adr/0058-sample-bounded-regional-windows.md)

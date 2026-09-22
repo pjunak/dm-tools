@@ -12,6 +12,11 @@ in the current status or a new dated report.
 
 ## Implemented and measured work
 
+- [Parent-cell preservation - 2026-09-23](2026-09-23-parent-cell-preservation.md)
+  measures a research-only projection and rejects runtime adoption despite exact
+  parent nodes: the reference loses terrain structure, authored heights drift,
+  density changes shared values and inherited channel profiles worsen.
+
 - [Stable detail-band amplitudes - 2026-09-22](2026-09-22-stable-detail-band-amplitudes.md)
   removes count-dependent noise normalization, separates regional shapes from
   finer bands, and measures remaining coarse-cell and drainage changes.

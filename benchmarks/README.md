@@ -345,3 +345,26 @@ cells count. This is a whole-map settings comparison, not a local enrichment
 operation or a promise of parent consistency. The output must be a new file in
 an existing directory; no timing or speedup claim is made. See the
 [policy comparison](../docs/research/2026-09-22-stable-detail-band-amplitudes.md).
+
+## Parent-cell preservation experiment
+
+```powershell
+.\.venv\Scripts\python.exe -m benchmarks.parent_detail --case regional authored water --seed 42 7 --save-grids --output artifacts/parent-cell-results.json
+```
+
+Create the output's parent directory first. The JSON and, with `--save-grids`,
+its sibling directory named after the JSON stem must not already exist. Defaults
+cover three public fixtures and two seeds. Each run prepares a complete two-band
+field, freezes an interior 5x5 parent snapshot and adds two bands with the same
+prepared profiles/routing. Whole parent cells are conditioned at 65/129/257 nodes.
+The report records nodes, trapezoidal means, overlap/order, density drift, finite
+boundary secant slopes, authored points, wet classification and paired inherited
+channel profiles, with source/runtime/input/output hashes. Saved grids include
+NPZ arrays and ground-only PNG controls.
+
+This is an all-land research kernel, not a finished-build loader or product
+regional-enrichment operation. It does not implement partial coastal cells,
+protected authored constraints, refined routing or boundary inflow transfer.
+Single projection timings exclude global preparation and other job costs.
+The [2026-09-23 report](../docs/research/2026-09-23-parent-cell-preservation.md)
+rejects this candidate for runtime use and records the next preservation gates.

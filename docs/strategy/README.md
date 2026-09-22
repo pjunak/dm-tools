@@ -268,8 +268,14 @@ preparation, and publishes bounded numeric samples with provenance. Exact
 - Prove shared-sample, parent restriction and overlap height/slope properties as
   separate contracts. [Fixed band budgets](../adr/0059-preserve-noise-band-amplitudes.md)
   now preserve existing coefficients, but finished-ground cell means and some
-  authored drainage routes still change. Complete R34's parent restriction and
-  coarse-power checks before promising detail-only enrichment.
+  authored drainage routes still change. The
+  [parent-cell experiment](../research/2026-09-23-parent-cell-preservation.md)
+  rejects bilinear reconstruction plus per-density mean correction: exact nodes
+  and means still lose terrain structure, authored heights and channel quality.
+  Next bind an immutable prepared reference that reproduces the parent DEM,
+  define its moments, and condition only added residuals with support independent
+  of requested sampling density. Protect authored heights, water and inherited
+  channels; complete R34's restriction and coarse-power checks before integration.
 - Generate the visible/requested region with required surrounding constraints
   and upstream flow context. Bound generation and caching rather than allocating
   the entire continent at local resolution. Returning to a region must be stable.

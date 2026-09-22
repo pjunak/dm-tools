@@ -10,7 +10,8 @@ performance claims. A source audit is not a successfully run engine comparison.
 The noise-profile research, input editor and valley work were updated on
 2026-09-16, with routing, crest, network-floor and water-display work updated on 2026-09-17.
 Bounded unchanged-field regional sampling and fixed detail-band budgets were
-added on 2026-09-22.
+added on 2026-09-22. A parent-cell projection was measured and rejected for
+runtime use on 2026-09-23; the product sampling contract is unchanged.
 The external-engine inventory below retains the 2026-09-13 audit date.
 
 ## Implemented baseline
@@ -141,6 +142,14 @@ Rasterio/GDAL inside the export adapter. A future Rust port needs representative
 measured benefit and packaging/workflow evidence; it is not the next prerequisite.
 
 ## Evidence and next experiments
+
+- [Parent-cell preservation](2026-09-23-parent-cell-preservation.md) implements
+  a research-only bilinear/trapezoidal projection. All 18 density/case runs keep
+  parent nodes and near-exact means, but authored heights move by up to 29.161 m,
+  output density changes shared values and eight sampled channel edges worsen.
+  Visible grid structure reinforces rejection. Next preserve a verified parent
+  reference and condition only added residuals with density-independent support,
+  explicit authored/water/channel protection and paired validation. R34 stays open.
 
 - [Stable detail-band amplitudes](2026-09-22-stable-detail-band-amplitudes.md)
   removes count-dependent coefficient shrinkage, separates broad regional shapes

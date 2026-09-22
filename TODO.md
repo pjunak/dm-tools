@@ -340,6 +340,13 @@ editing a finished DEM; see [ADR-0048](docs/adr/0048-keep-zoom-driven-detail-gen
   parent DEM: measured coarse-cell averages still change, and authored guidance
   can redirect drainage. See [ADR-0059](docs/adr/0059-preserve-noise-band-amplitudes.md)
   and [the comparison](docs/research/2026-09-22-stable-detail-band-amplitudes.md).
+- [x] **P0 — Measure an explicit parent-cell preservation candidate.** The
+  all-land projection keeps parent nodes, bilinear edges and cell means within
+  Float32 rounding, with exact same-density overlaps. Public 65/129/257 trials
+  reject it for runtime use: the bilinear reference loses existing structure,
+  authored heights move by up to 29.161 m, shared coordinates drift across
+  densities and eight sampled channel edges worsen. See the
+  [experiment](docs/research/2026-09-23-parent-cell-preservation.md).
 - [ ] **P0 — Extend sampling requests to parent-conditioned generation.** The
   current reference is an input-defined field, not a finished parent DEM.
   Record the immutable parent build/input identity, window bounds in its
@@ -352,7 +359,11 @@ editing a finished DEM; see [ADR-0048](docs/adr/0048-keep-zoom-driven-detail-gen
   separate test. Cover 65/129/257 windows, overlapping requests, boundary slopes
   and repeat visits in a different order. R34's raw band weights are now stable;
   nonlinear terrain, cell-average restriction and inherited drainage still need
-  their own preservation rules.
+  their own preservation rules. The first bilinear-cell candidate is rejected.
+  Bind a prepared parent reference that reproduces the authoritative DEM nodes
+  and retains existing structure; define its cell moments explicitly. Condition
+  only added residuals using support/quadrature independent of output density,
+  protect authored heights and water, and rerun paired inherited-channel checks.
 - [ ] **P1 — Add bounded regional enrichment and caching.** Unchanged-field
   sampling now evaluates a halo, crops its preview afterwards and bounds finer
   output arrays and evaluation batches. Full-source preparation remains global;
@@ -469,7 +480,11 @@ execution order.
 - [ ] **P0 — Separate hard constraints, soft guidance, and inequalities in the
   solver contract.** Exact spot heights and water levels must remain exact;
   ridge minima, valley maxima, relative displacement, and brush guidance should
-  retain their different meanings.
+  retain their different meanings. Diagnose the public water fixture's nominal
+  250 m point evaluating to 331.149811 m in the unchanged parent field in the
+  [parent experiment](docs/research/2026-09-23-parent-cell-preservation.md); this
+  predates enrichment. Check authored/basin precedence before choosing a
+  preservation target.
 - [ ] **P1 — Make transitions aware of surrounding terrain.** Estimate the
   stable low-frequency reference surface entering a stage, then adapt shoulder
   reach and blending to local slope and relief without using an order-dependent
@@ -919,10 +934,14 @@ Priorities remain conditional on the current strategy's prerequisites.
   carriers and finer texture are separate. The
   [measured comparison](docs/research/2026-09-22-stable-detail-band-amplitudes.md)
   still finds 43-91 m RMS coarse-cell changes across four public fixtures, and
-  some drainage regressions. Next define the restriction operator and tolerances,
-  measure coarse spectral power after nonlinear mapping/conditioning, and bind
-  new detail to the immutable parent and inherited routes. Stable weights alone
-  do not close this research item.
+  some drainage regressions. The
+  [parent-cell experiment](docs/research/2026-09-23-parent-cell-preservation.md)
+  now rejects a bilinear/trapezoidal candidate despite precise node/mean results:
+  it loses parent structure and authored heights, depends on output density and
+  worsens inherited channels. Next bind the prepared reference and its moments,
+  constrain only added residuals independently of display sampling, protect
+  authored/water/channel constraints, and measure coarse spectral power after
+  conditioning. Stable weights or preserved cell means alone do not close R34.
 - [ ] **Research — R35: Constrain regional transition gradients.** Match
   province reference levels and budget the extra slope from blending surfaces
   at different heights. Measure slope/curvature across flat, plateau and
