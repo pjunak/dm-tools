@@ -17,6 +17,10 @@ authored constraints, or import the SVG alone to begin a fresh project.
 The example always uses the current project format and named stage seeds.
 Update it with implementation changes; do not keep legacy variants.
 
+Saved projects verify the exact SVG bytes with SHA-256. The repository
+[Git attributes](../.gitattributes) preserve LF line endings for SVG files,
+including fresh Windows checkouts with `core.autocrlf=true`.
+
 The [landform region example](terrain/landform-regions.dmterrain.json) adds four
 soft polygon recipes to the public terrain coastline. See the
 [region guide](../docs/terrain-regions.md) for controls and limitations.

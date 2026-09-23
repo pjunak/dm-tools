@@ -691,6 +691,10 @@ execution order.
 - [x] **P0 — Record algorithm and stage identifiers in each build.** Record
   generator, noise, automatic-valley and diagnostic IDs plus source hashes.
   Deliberate improvements may change outputs; update identifiers and tests.
+- [x] **P0 — Preserve hashed SVG inputs across Git checkouts.** Explicit LF
+  attributes keep public project coastline hashes valid on Windows. Regression
+  tests load every example after real Git checkout conversion with automatic
+  line-ending conversion enabled and disabled.
 - [x] **P0 — Derive stable named seeds.** All generation uses
   `named-stage-sha256@1` with `terrain.relief` and `terrain.landforms`. Macro/full detail stay
   views of one relief field. Portable reference values and current generation

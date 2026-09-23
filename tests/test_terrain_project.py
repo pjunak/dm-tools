@@ -1,5 +1,7 @@
 import json
+import os
 import shutil
+import subprocess
 from pathlib import Path
 from typing import Any, cast
 
@@ -104,6 +106,48 @@ def test_committed_example_project_loads() -> None:
     assert loaded.project.settings == TerrainSettings()
     assert loaded.project.authoring == TerrainAuthoringState()
     assert loaded.project.constraints == ()
+
+
+@pytest.mark.parametrize("autocrlf", ["true", "false"])
+def test_committed_projects_load_after_git_checkout(tmp_path: Path, autocrlf: str) -> None:
+    repository = tmp_path / "repository"
+    repository.mkdir()
+    shutil.copytree(EXAMPLES, repository / "examples" / "terrain")
+    attributes = EXAMPLES.parents[1] / ".gitattributes"
+    if attributes.is_file():
+        shutil.copyfile(attributes, repository / ".gitattributes")
+
+    def git(*arguments: str) -> None:
+        subprocess.run(
+            [
+                "git",
+                "-c",
+                f"core.autocrlf={autocrlf}",
+                "-c",
+                "core.eol=lf",
+                "-c",
+                "core.safecrlf=false",
+                "-c",
+                f"core.attributesFile={os.devnull}",
+                *arguments,
+            ],
+            cwd=repository,
+            check=True,
+            capture_output=True,
+            timeout=30,
+        )
+
+    git("init", "--quiet", "--template=")
+    git("add", "--all")
+    checkout = tmp_path / "checkout"
+    checkout.mkdir()
+    git("checkout-index", "--all", f"--prefix={checkout.as_posix()}/")
+
+    # Exercise Git's checkout conversion, which does not run on a simple file copy.
+    projects = sorted((checkout / "examples" / "terrain").glob("*.dmterrain.json"))
+    assert projects
+    for project in projects:
+        assert load_terrain_project(project).path == project.resolve()
 
 
 def test_project_load_rejects_modified_coastline(tmp_path: Path) -> None:
