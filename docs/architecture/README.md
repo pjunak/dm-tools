@@ -1,8 +1,8 @@
 # Architecture overview
 
 DM Tools is a modular Python application with local desktop and command-line
-interfaces. Hosting will add an HTTP adapter around the same application
-operations later.
+interfaces. A future service could wrap the same application operations, but
+hosting is not a committed delivery step for the current local tool.
 
 ## System boundary
 
@@ -189,16 +189,22 @@ worker and input history do not yet implement viewport-driven regional jobs.
 
 `MapViewport` owns normalized centre, magnification and visible bounds independently
 of the generated raster. All placement/hit testing uses its map transform. The
-image adapter renders only a canvas-sized raster; review overlays are cached by
-result and toggles. Navigation does not invalidate inputs or request new terrain.
-The UI explicitly owns ground and cached pool-area images until a successful
-replacement, project reset or shutdown. Review caches close on replacement or
-when both review toggles are off; temporary viewport images close after Tk copies
-them. Old Tk photo references and the owned poll callback are released as well.
+image adapter renders only a canvas-sized raster. Basin review rasters and the
+prepared channel graph are cached by result and review toggles; channel paths
+are redrawn at viewport scale, with a separate All channels inspection option.
+Navigation does not invalidate inputs or request new terrain. The UI explicitly
+owns ground and cached pool-area images until a successful replacement, project
+reset or shutdown. Review caches clear on replacement or when Drainage review,
+Depressions and Basin catchments are all off; temporary viewport images close
+after Tk copies them. Old Tk photo references and the owned poll callback are
+released as well.
 A failed style render preserves the previous image, water and legend. Water
 colour scratch is tiled, and native composition avoids a full overlay. One-shot
 rendering returns its owned ground; export of a retained reference makes one
-copy. See [ADR-0067](../adr/0067-own-preview-images-and-tile-water.md).
+copy. See [ADR-0067](../adr/0067-own-preview-images-and-tile-water.md) and
+[the drainage review contract](../terrain-drainage.md). These graph paths still
+follow D8; the [strategy](../strategy/README.md) proposes shared terrain-guided
+geometry but does not describe it as implemented.
 
 A separate saved `GenerationInputs` snapshot owns dirty-state comparison. Drafts
 and pending property/geometry edits also count as unsaved work. Open/import/close

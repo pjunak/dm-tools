@@ -10,6 +10,13 @@ Notes are newest first. Measurements and package-support claims belong to their
 recorded revision/date. Keep historical findings intact and record later changes
 in the current status or a new dated report.
 
+## Current reassessment
+
+- [Progress and generation strategy — 2026-09-24](2026-09-24-progress-and-generation-strategy.md)
+  audits the working product, measures hidden channel-profile rises on eight
+  current public cases, refreshes primary sources and platform/license evidence,
+  and reorders work around terrain quality. No external engine was run or adopted.
+
 ## Implemented and measured work
 
 - [Connected drainage review and authored density - 2026-09-24](2026-09-24-connected-drainage-review.md)

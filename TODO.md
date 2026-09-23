@@ -13,7 +13,7 @@ or UI work.
 
 Priority labels:
 
-- **P0** — next foundation or prerequisite;
+- **P0** — prerequisite within its feature; only the active strategy batch is next;
 - **P1** — high-value work after the relevant P0 contract exists;
 - **P2** — useful later extension; and
 - **Research** — compare approaches and validate with small synthetic terrain
@@ -30,7 +30,30 @@ The [research status](docs/research/status.md) separates completed slices from
 partially addressed research goals; unchecked broad items may contain completed
 substeps.
 
-## Drainage improvement checkpoint — 2026-09-24
+## Current execution focus — 2026-09-24
+
+The [progress reassessment](docs/research/2026-09-24-progress-and-generation-strategy.md)
+finds strong workbench/build foundations but unaccepted drainage and landform
+quality. A fresh eight-case probe finds internal rises of 32–132 m on some
+endpoint-descending planned channels. This is sampled diagnostic evidence,
+not a physical river-water validation or a private-map result.
+
+| Order | Outcome and existing backlog owners | Gate |
+|---|---|---|
+| **A — next** | Quality fixtures, paired maps/profiles, process-scale warnings; convergent-flat comparison (R02/R25/R27/R41/R43) | Fixed comparison set and a measured accept/reject result; no new benchmark framework |
+| **B — next major generation change** | Shared terrain-guided channel paths and whole-route feasibility (R48/R32) | Improved final-ground profiles and reduced grid bias with preserved anchors, cuts, junctions, terminals and coverage |
+| **C** | One coherent range/pass/tributary/lowland system (R08/R09/R14/R40/R44) | Better structural/visual results across fixed seeds and physical scales |
+| **D** | Accepted parent-conditioned detail and inherited fine hydrology, then zoom jobs (R15/R34) | Overlap, coarse-scale, boundary/flow and visual acceptance before real small rivers |
+| **E** | Runoff, river size, lake hierarchy and sediment (R16/R18/R33) | Explicit flux, storage and material accounting |
+| **F** | Source-world placement, continuous climate and derived ecological layers (R01) | Geographic scale/context before climate claims |
+
+The [strategy](docs/strategy/README.md#next-implementation-order) owns detailed
+acceptance criteria and stopping rules. P0 items below remain prerequisites in
+their own feature areas; they are not all immediate work. Preserve historical
+research and completed substeps. Full-field bound research remains separate
+from the current quality milestone; no stronger clearance claims are implied.
+
+### Drainage inspection checkpoint
 
 - [x] Add an authored automatic drainage-density multiplier with deterministic,
   downstream-connected channel initiation and current-format persistence.
@@ -41,7 +64,7 @@ substeps.
   Depressions toggle keeps coarse basin polygons out of the default channel view.
 - [x] Record public-fixture density, connectivity, unchanged-default-reference,
   zoom-rendering and performance evidence before accepting the changes.
-- [ ] **P0 — Reduce D8 direction bias in actual terrain generation.** Compare
+- [ ] **P0 — Reduce D8 direction bias in actual terrain generation (R48).** Compare
   terrain-guided subgrid paths shared by routing, floor fitting and rendering;
   preserve junctions, authored divides, incision limits and lake terminals.
   Display-only smoothing cannot satisfy this requirement.
@@ -559,7 +582,11 @@ execution order.
   resolutions of the same inputs. Record expected invariants rather than
   subjective image snapshots alone. The two-peak/one-pass ridge, connected-structure junction,
   and authored branch-root fixtures are complete; full branch topology and
-  statistics and the other landform fixtures remain.
+  statistics and the other landform fixtures remain. Batch A adds paired physical-
+  scale views and rotated oblique-valley/flat/coastal controls. Reuse the existing
+  harness; freeze cases, seeds, tolerances and coverage before tuning candidates.
+  The new [profile baseline](docs/research/2026-09-24-progress-and-generation-strategy.md#current-drainage-evidence)
+  exposes between-node rises that endpoint checks miss.
 - [ ] **Research — Compare surface solvers for the low-frequency base.** Test
   the current smooth-response model against feature-curve diffusion/Poisson
   solving, radial-basis interpolation, and hydrologically conditioned
@@ -914,6 +941,9 @@ Priorities remain conditional on the current strategy's prerequisites.
   authored structure profiles and junctions; generated ridge branching remains open.
   Preserve the distinct surface-ridge, divide, thalweg and channel meanings
   described by R42 rather than assuming the two skeletons are exact duals.
+  Batch C compares one connected range-to-lowland system. Use hydrology-led and
+  orometric synthesis as references; a completely river-first world generator
+  remains a larger alternative if the bounded hybrid fails, not an adopted rewrite.
 - [ ] **Research — R10: Add layered substrate to lithology regions.** Evaluate
   resistant caps, bed thickness, dip and differential erodibility for mesas,
   cuestas, escarpments and canyon walls. Distinguish geometry from decorative
@@ -930,7 +960,9 @@ Priorities remain conditional on the current strategy's prerequisites.
 - [ ] **Research — R12: Prototype contour-guided authoring.** Compare the 2026
   iso-contour approach for plateaus, basin margins and elevation bands. Reject
   crossing/contradictory contours and quantify DEM reconstruction, river-floor
-  and hard-anchor errors. Exported contours remain derived products.
+  and hard-anchor errors. Exported contours remain derived products. The
+  refreshed 2026 source review finds useful pre-generation controls, but the
+  method's river-width/slope limitations keep it outside the first drainage batch.
 - [ ] **Research — R13: Prototype skeleton-preserving deformation.** Use the
   2025 vector-terrain work to assess moving/stretching a range while retaining
   internal structure. Preview changes, keep authoring editable, and measure
@@ -941,7 +973,10 @@ Priorities remain conditional on the current strategy's prerequisites.
 - [ ] **Research — R14: Compare analytical erosion with time stepping.** Use
   the 2024 analytical stream-power method as a bounded candidate for fast
   terrain-age control. Test uplift/base-level assumptions, convergence,
-  authored anchors and runtime against the current incision baseline.
+  authored anchors and runtime against the current incision baseline. Its 2D
+  network/surface coupling still iterates; changing age can relocate valleys and
+  deposition is not covered generally. Start with one constrained fixture after
+  the shared-path contract, and check drainage after hard-constraint restoration.
 - [ ] **Research — R15: Evaluate multi-scale erosion amplification.** Compare
   the previously researched MIT reference with current residual detail on a
   generated local mountain/valley window. Preserve the fixed parent, inherited
@@ -993,21 +1028,27 @@ Priorities remain conditional on the current strategy's prerequisites.
 
 #### Comparison tools, rendering, and scientific limits
 
-- [ ] **P1 — R25: Build an Earth-analogue descriptor atlas.** Use small,
+- [ ] **P0 — R25: Build an Earth-analogue descriptor atlas.** Use small,
   provenance-recorded USGS 3DEP and optional Copernicus samples at matched
   extent/resolution. Compare relief, curvature, hypsometry, prominence,
   directional spectrum and drainage; use terrain-descriptors/GRASS as
   references. Separate DSM vegetation/buildings from desired terrain texture.
+  Batch A starts with a small licensed/provenance-recorded bare-earth set and
+  the 2025 descriptor reference. Do not block B on a comprehensive atlas or use
+  histogram matching as a substitute for connected landscape structure.
 - [ ] **Research — R26: Compare example-based residual synthesis.** Transfer
   selected terrain character from reference patches after fitting broad relief
   and boundaries to authored geography. Measure repeated motifs, seams,
   constraint errors and drainage changes; retain source data rights/hashes.
-- [ ] **P1 — R27: Add a reproducible candidate comparison gallery.** Build on
+- [ ] **P0 — R27: Add a reproducible candidate comparison gallery.** Build on
   benchmark fixtures and relief styles with fixed-seed ensembles,
   before/after views, region descriptors and multiple valid alternatives.
   The workbench has no seed/before-after comparison view yet. Keep visual
   interest separate from hard
   validity; adoption is an explicit author choice, not one opaque quality score.
+  Pair fixed lighting, elevation colours, extents and physical sampling. Report
+  worst cases, unresolved routes and affected catchment coverage alongside
+  matched-path ascent/shape; do not improve scores by removing troublesome rivers.
 - [ ] **P1 — R28: Compare multiscale and multidirectional relief rendering.**
   Use GDAL hillshade variants and coarse/fine shading at the same DEM and fixed
   elevation colours. Record exaggeration; test rotated ranges, flat areas and
@@ -1097,6 +1138,9 @@ Priorities remain conditional on the current strategy's prerequisites.
   Local builds now report masked X/Y semivariances and height differences at
   requested 25/100/400 km lags, including effective rounded distances and pair
   counts. Rotation-normalized, arbitrary-angle and detrended comparisons remain.
+  Batch A prioritizes controlled oblique valleys, network direction/turn bias and
+  scale-specific sinuosity. Real straight valleys should remain straight; visual
+  waviness alone is not an acceptance criterion.
 - [ ] **Research — R42: Type terrain and drainage graph relationships.** Keep
   authored lines, morphological ridges/thalwegs, divides and active channels
   distinct, with source-surface and depression-policy provenance. Compare
@@ -1139,6 +1183,9 @@ Priorities remain conditional on the current strategy's prerequisites.
   [Python optimization](docs/research/2026-09-17-drainage-routing-cost.md) preserves
   numeric products; full many-region builds and larger grids still need scaling
   measurements before selecting another kernel or native-language experiment.
+  The 2026-09-24 metadata audit finds matching SciPy/Numba/llvmlite Python 3.14
+  Windows wheels; no package was installed or kernel comparison run. Include
+  dependency resolution and cold compilation in any future experiment.
 - [ ] **Research — R47: Define the evidence gate for a Rust migration.**
   Stabilize units, grids, constraint priority, seeds, stage boundaries and
   numerical tolerances first. Require representative fixtures, an end-to-end
@@ -1146,9 +1193,26 @@ Priorities remain conditional on the current strategy's prerequisites.
   choose a temporary Python/Rust bridge or a complete runtime replacement;
   a kernel port does not establish full project, CLI or desktop workflow parity.
 
+#### Shared channel geometry — 2026-09-24
+
+- [ ] **P0 — R48: Generate terrain and channels from the same prepared paths.**
+  Compare bounded terrain-guided subgrid paths against D8, retaining coarse
+  catchment context, exact junctions, terminals, divides and incision budgets.
+  Share geometry across source probes, longitudinal floor fitting, actual DEM
+  shaping, diagnostics and rendering; viewport-only smoothing does not qualify.
+  Classify whole-route feasibility and compare rerouting, retention and moving
+  automatic heads before excessive cuts. Authored contradictions stay visible.
+  Use fixed physical station spacing, matched source-to-terminal routes and
+  complete-network coverage when segmentation changes. Batch B's acceptance
+  targets and fallback to network-led surface construction are in the strategy.
+  Process spacing remains independent of output pixels. Remove superseded runtime
+  paths after acceptance; preserve current inputs/contracts without legacy support.
+
 ## UI / UX improvements
 
-Current priority: test the usable input workbench and collect generation-quality feedback.
+Current priority: paired generation comparisons, selected-channel profiles and
+process-resolution/conflict feedback to support batches A/B. The workbench is
+already usable; further polish should serve the current quality decision.
 [ADR-0047](docs/adr/0047-edit-generation-inputs-only.md) defines input editing;
 [ADR-0048](docs/adr/0048-keep-zoom-driven-detail-generation.md) keeps local enrichment in scope.
 [ADR-0049](docs/adr/0049-navigate-and-save-authored-inputs.md) records navigation,
@@ -1192,10 +1256,12 @@ geometry movement and project-saving behavior.
 
 ### Feedback and terrain inspection
 
-- [ ] **P0 — Add a fast draft preview.** Debounce edits and regenerate a low-
-  resolution preview in the background while retaining an explicit full-quality
+- [ ] **P1 — Add a fast draft preview after measuring complete draft cost.**
+  Debounce edits and regenerate a low-resolution preview in the background while retaining an explicit full-quality
   Generate action. Explicit Quick test (257 px) and Detail (1025 px) resolution
   presets are implemented; these change the saved setting, not a hidden preview.
+  Lower output resolution does not reduce fixed canonical routing or all water
+  work. Debounce/cancel only after a useful latency budget is demonstrated.
 - [x] **P0 — Add stage-aware progress and cancellation.** The workbench shows
   elapsed time, stage and Cancel/Esc status. It retains the previous map, waits
   for worker acknowledgement and rejects cancelled/old queued results. Headless
@@ -1209,12 +1275,14 @@ geometry movement and project-saving behavior.
 - [x] **P1 — Show ground elevation under the cursor.** Read the nearest sample
   of the last reference DEM, including water/no-ground status and local x/y km.
   Reference freshness stays visible; water surfaces are not reported as ground.
-- [ ] **P1 — Extend terrain inspection.** Add local slope, active constraint
-  contributions and a cross-section through the selected ridge or valley.
+- [ ] **P0 — Extend terrain inspection for quality comparisons.**
+  Add local slope, active constraint contributions and a cross-section through the selected ridge or valley.
+  Start with a selected-channel longitudinal profile of actual finished ground,
+  cut limits and unresolved intervals, and show effective process spacing.
 - [ ] **P1 — Make relative-versus-absolute behavior visible.** Use concise
   tooltips and preview labels that state target height, signed displacement,
   ridge relief, or valley incision in the correct terms.
-- [ ] **P1 — Add before/after and seed comparison views.** Compare a changed
+- [ ] **P0 — Add before/after and seed comparison views (R27).** Compare a changed
   constraint, profile, or seed without relying on memory of the previous image.
 - [x] **P2 — Add separate cartographic and scientific elevation styles.** Use
   expressive hypsometric tint and stronger relief for everyday mapping while
@@ -1252,6 +1320,10 @@ geometry movement and project-saving behavior.
   download UX only at the service boundary.
 
 ## Related decisions and research
+
+- [Progress and generation strategy reassessment — 2026-09-24](docs/research/2026-09-24-progress-and-generation-strategy.md)
+  records the current eight-case profile baseline, research/tool refresh and
+  quality-first batches A–F; adds R48 and refines existing candidate gates.
 
 - [ADR-0025](docs/adr/0025-centralize-local-frames-and-endpoint-grids.md) centralizes
   source/local conversion and endpoint grids while preserving existing terrain.

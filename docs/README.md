@@ -63,7 +63,8 @@ For drainage-density inputs and connected scale-aware inspection, read the
 For basin extents, spill candidates and water-boundary limits, read the
 [basin review contract](terrain-basins.md).
 
-For the latest documentation and research reconciliation, read the
-[2026-09-13 audit](maintenance/2026-09-13-documentation-and-research-status.md).
-The [2026-09-10 checkpoint](maintenance/2026-09-10-sanity-and-performance.md)
-records the earlier structure and performance baseline.
+For the current progress, quality gaps, refreshed research and delivery plan,
+read the [2026-09-24 reassessment](research/2026-09-24-progress-and-generation-strategy.md).
+The [2026-09-13 audit](maintenance/2026-09-13-documentation-and-research-status.md)
+and [2026-09-10 checkpoint](maintenance/2026-09-10-sanity-and-performance.md)
+retain earlier documentation, structure and performance evidence.

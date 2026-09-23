@@ -1,47 +1,30 @@
 # Current terrain research status
 
-Reconciled on 2026-09-13 against code, tests, schemas and the installed Windows
-Python environment. This is a status map; [TODO](../../TODO.md) owns the active
-research register and the [strategy](../strategy/README.md) owns execution order.
-Research IDs remain stable in dated reports when proposals leave the active scope.
-Dated reports preserve measurements at their recorded revision, not timeless
-performance claims. A source audit is not a successfully run engine comparison.
+Reconciled on 2026-09-24 against the current implementation, recent validation
+reports, a fresh public-fixture profile run and public scientific-tool metadata.
+This is a status map; [TODO](../../TODO.md) owns the research register and the
+[strategy](../strategy/README.md) owns execution order. Dated reports retain
+their source/runtime context. Source inspection or a compatible wheel is not
+an executed engine comparison.
 
-The noise-profile research, input editor and valley work were updated on
-2026-09-16, with routing, crest, network-floor and water-display work updated on 2026-09-17.
-Bounded unchanged-field regional sampling and fixed detail-band budgets were
-added on 2026-09-22. A parent-cell projection was measured and rejected for
-runtime use on 2026-09-23. The overlapping absolute-height defect it exposed
-was subsequently fixed in the global pointwise field. Verified saved-parent
-replay and a bounded opt-in residual experiment were then implemented; its
-visual/spectral acceptance and finer hydrology remain open. See the
-[2026-09-23 measurements](2026-09-23-verified-parent-detail.md).
-Bounded per-context cell support reuse now avoids repeated fixed probes with
-exact cache/eviction controls; see the [follow-up](2026-09-23-detail-cell-reuse.md).
-Verified application sessions now reuse parent work and byte-bounded numeric
-results while checking freshness on every write; see the
-[session measurements](2026-09-23-parent-region-sessions.md).
-Saved-parent jobs now use shared memory admission estimates, with bounded reads
-and protection-query batches; [measurements](2026-09-23-regional-memory-admission.md)
-keep actual process peaks separate from estimates and remaining calibration.
-The [rendering follow-up](2026-09-23-bounded-terrain-rendering.md) adds bounded
-scratch, review-only panel limits and explicit pixel-buffer release, with
-near-limit square/thin workloads and a 4096-longest-side parent. Native scientific
-pixels and terrain numbers remain unchanged; total application memory remains open.
-The [preview ownership follow-up](2026-09-23-preview-image-ownership.md) tiles water
-colour/composition work and explicitly releases editor/export buffers. Synthetic
-1024/4096 display measurements and real-Tk failure/lifecycle tests cover these
-changes; complete water classification and aggregate worker/editor peaks remain open.
-[Shared-edge detail](2026-09-23-shared-edge-detail.md) now replaces the isolated
-cell-interior residual. Three seeds on three public projects measure exact
-parent/overlap preservation, smoother delivered boundary slopes and some increased
-coarse leakage. Cardinal direction and broad protected gaps remain visible;
-cartographic acceptance, parent-view transitions and finer hydrology stay open.
-The external-engine inventory below retains the 2026-09-13 audit date.
+The [progress reassessment](2026-09-24-progress-and-generation-strategy.md)
+classifies the product as a usable research workbench with strong build
+foundations, before consistently convincing drainage/landforms. Eight current
+public cases still contain 32–132 m sampled internal rises on some planned
+channels whose endpoints descend. Default density/review changes did not replace
+D8 geometry. The next quality milestone is shared terrain/channel paths, with
+convergent-flat routing as an isolated early comparison.
 
-Connected scale-aware channel review and global authored drainage density were
-implemented on 2026-09-24. See the [measurements](2026-09-24-connected-drainage-review.md);
-D8 geometry, runoff, physical river widths and finer local hydrology remain open.
+Verified-parent sampling, bounded sessions and shared-edge residual detail are
+implemented, but cartographic/coarse-scale acceptance, parent-view transitions
+and inherited fine hydrology are still open. Smaller diagnostic channels can
+appear at zoom; real local river generation and automatic viewport jobs cannot
+be claimed from that display behavior.
+
+The fresh audit finds SciPy and Numba Python 3.14 Windows wheels, and a Landlab
+wheel whose dependency inventory includes GPL `py-richdem`. These candidates
+remain uninstalled. The report records versions, licenses, exact audit limits
+and renewed primary sources; the runtime dependency register is unchanged.
 
 ## Implemented baseline
 
@@ -157,13 +140,14 @@ enrichment. [ADR-0048](../adr/0048-keep-zoom-driven-detail-generation.md) correc
 the earlier exclusion of regional generation; manual sculpting of completed
 outputs remains out of scope. The complete alternatives and gates remain in TODO.
 
-SciPy, Landlab and Numba are not installed in the environment checked for this
-audit. GRASS, Whitebox, SPACE, HighMap, GPU transport, geological engines and
-learned tools appearing in older reports are references/candidates, not new
-runtime dependencies or successful end-to-end comparisons. Package/Windows,
-Python, hardware and license claims from those reports retain their original
-dates and require a fresh source/runtime check before use. No external engine
-or paper shortlist was re-evaluated as part of this documentation audit.
+SciPy, Landlab, Fastscapelib and Numba remain uninstalled as checked on
+2026-09-24. The [new source/platform audit](2026-09-24-progress-and-generation-strategy.md#current-tool-and-platform-check)
+updates selected paper, wheel and dependency findings, including Landlab's
+GPL dependency and Fastscapelib's missing compatible wheel. GRASS, Whitebox,
+SPACE, HighMap, GPU transport, geological engines and learned tools remain
+references/candidates, not successful project integrations. Older findings
+retain their original dates. No external engine was installed or executed in
+this reassessment.
 
 [The dependency register](../DEPENDENCIES.md) lists adopted packages. The local
 application remains Python with NumPy/Shapely numerical and geometric work and
@@ -171,6 +155,16 @@ Rasterio/GDAL inside the export adapter. A future Rust port needs representative
 measured benefit and packaging/workflow evidence; it is not the next prerequisite.
 
 ## Evidence and next experiments
+
+Current order is quality comparisons and convergent flats, then shared physical
+channel paths, then coherent landforms and accepted local enrichment. See
+[strategy batches A–F](../strategy/README.md#next-implementation-order). The entries
+below preserve evidence by topic, not a competing execution order.
+
+- [Progress reassessment](2026-09-24-progress-and-generation-strategy.md) records
+  the fresh eight-case 65-station profile probe at `8430d01`. Endpoint descent
+  does not establish an internally descending channel. Full-route feasibility,
+  actual path geometry and final-surface agreement are the immediate priorities.
 
 - [Verified-parent detail](2026-09-23-verified-parent-detail.md) implements portable
   build v18 snapshots, complete parent replay and separate sampling/enrichment
@@ -262,10 +256,12 @@ The [water-budget command](../terrain-water-budget.md) now exposes shoreline
 and potential internal-network demand using shared planning; the
 [forecast report](2026-09-13-water-budget-forecast.md) measures its cost and verifies
 unchanged terrain/evidence. It does not estimate whole-project or export cost.
-Next, compare reusable refinement work and tighter component correlation where
-high-detail bounds remain unresolved, and compose conservative bounds beyond
-the isolated noise term. Measure whole-project sampling cost, then
-define sill/storage semantics before lake chains. Five detail octaves keep the public flat-routing example within budget;
+For the separate continuous-bound research track, compare reusable refinement
+work and tighter component correlation, then compose bounds beyond the isolated
+noise term. This work is required before stronger certification claims; it is
+not the next gate for every terrain/editor improvement. Measure whole-project
+sampling cost and define sill/storage semantics before lake chains. Five detail
+octaves keep the public flat-routing example within budget;
 its six-octave regression deliberately retains every dry donor after exhaustion.
 Do not present denser probes as continuous clearance or a physical lake model.
 Keep the full roadmap instead of promoting every research direction into
