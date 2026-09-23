@@ -32,8 +32,9 @@ bounded windows more densely using the unchanged full-source field.
 [Verified-parent commands](docs/terrain-parent-regions.md) now replay completed
 builds and generate separate regional samples or explicitly experimental added
 detail. Python sessions reuse verified parents and bounded numeric results with
-freshness checks. Visual/spectral acceptance, finer hydrology, workbench zoom jobs
-and total job-memory budgets remain open. World placement and validated river
+freshness checks and [shared memory admission estimates](docs/terrain-regional-memory.md).
+Visual/spectral acceptance, finer hydrology, workbench zoom jobs and broader
+native/application-memory calibration remain open. World placement and validated river
 vectors also remain future work. See the
 [current research status](docs/research/status.md).
 

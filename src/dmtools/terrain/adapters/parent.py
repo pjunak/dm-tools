@@ -2,6 +2,7 @@
 
 import io
 import json
+from collections.abc import Callable
 from dataclasses import dataclass
 from hashlib import sha256
 from math import prod
@@ -76,10 +77,15 @@ def _digest(value: object) -> str:
 def _read(path: Path, limit: int) -> bytes:
     if path.is_symlink() or not path.is_file() or path.stat().st_size > limit:
         raise ValueError(f"Parent file missing, linked or oversized: {path.name}")
-    with path.open("rb") as stream:
-        data = stream.read(limit + 1)
-    if len(data) > limit:
+    size = path.stat().st_size
+    if size > limit:
         raise ValueError(f"Parent file grew beyond its limit: {path.name}")
+    with path.open("rb") as stream:
+        # BufferedReader may allocate the requested size before discovering EOF.
+        # The safety ceiling is not the amount of memory a small file requires.
+        data = stream.read(size + 1)
+    if len(data) != size:
+        raise ValueError(f"Parent file changed size while reading: {path.name}")
     return data
 
 
@@ -126,7 +132,28 @@ class LoadedTerrainParent:
                 raise ValueError(f"Parent product changed or failed hash verification: {name}")
 
 
-def load_terrain_parent(source: Path, runtime: dict[str, object]) -> LoadedTerrainParent:
+@dataclass(frozen=True, slots=True)
+class ParentLoadPlan:
+    """Array bytes plus explicit decoding/input allowances, not an RSS guarantee."""
+
+    input_bytes: int
+    numeric_bytes: int = 0
+    decoding_bytes: int = 0
+
+    @property
+    def input_allowance_bytes(self) -> int:
+        # JSON text, Python containers/coordinates and later snapshot serialization.
+        return 32 * self.input_bytes + 8 * 1024 * 1024
+
+    @property
+    def estimated_peak_bytes(self) -> int:
+        return self.input_allowance_bytes + self.numeric_bytes + self.decoding_bytes
+
+
+def load_terrain_parent(
+    source: Path, runtime: dict[str, object], *,
+    admit: Callable[[ParentLoadPlan], None] | None = None,
+) -> LoadedTerrainParent:
     """Load only a completed current build in this exact runtime; original inputs are unneeded."""
     root = source.resolve(strict=True)
     raw_manifest = _read(root / "manifest.json", 1024 * 1024)
@@ -188,7 +215,7 @@ def load_terrain_parent(source: Path, runtime: dict[str, object]) -> LoadedTerra
         raise ValueError("Unsupported parent input provenance.")
 
     def read_product(name: str, limit: int) -> bytes:
-        data = _read(root / name, limit)
+        data = _read(root / name, min(limit, outputs[name]["bytes"]))
         if (
             len(data) != outputs[name]["bytes"]
             or sha256(data).hexdigest() != outputs[name]["sha256"]
@@ -196,6 +223,11 @@ def load_terrain_parent(source: Path, runtime: dict[str, object]) -> LoadedTerra
             raise ValueError(f"Parent product failed hash verification: {name}")
         return data
 
+    input_bytes = outputs["inputs.json"]["bytes"]
+    if input_bytes > 16 * 1024 * 1024:
+        raise ValueError("Parent input snapshot is oversized.")
+    if admit is not None:
+        admit(ParentLoadPlan(input_bytes))
     project = project_snapshot_from_json(json.loads(read_product("inputs.json", 16 * 1024 * 1024)))
     settings = project.settings
     frame = LocalMetricFrame(project.coastline.bounds, settings.object_scale_km)
@@ -250,6 +282,14 @@ def load_terrain_parent(source: Path, runtime: dict[str, object]) -> LoadedTerra
     ):
         raise ValueError("Parent settings, frame or algorithms disagree with its input snapshot.")
     shape, rshape = (grid.height, grid.width), (canonical.height, canonical.width)
+    if admit is not None:
+        numeric_bytes = (13 * prod(shape) + 8 * (grid.width + grid.height)
+                         + 50 * prod(rshape) + 8 * (canonical.width + canonical.height))
+        # Zip/BytesIO, a decoded entry and NPY/BytesIO copies can coexist. Charge
+        # full declared compressed sizes, never infer expansion from archive size.
+        decoding_bytes = (2 * max(outputs[name]["bytes"] for name in ("water.npz", "routing.npz"))
+                          + 3 * max(4 * prod(shape), 8 * prod(rshape)) + 1024 * 1024)
+        admit(ParentLoadPlan(input_bytes, numeric_bytes, decoding_bytes))
 
     def array(name: str, shape: tuple[int, ...], dtype: str) -> NDArray[Any]:
         limit = prod(shape) * np.dtype(dtype).itemsize + 10_000

@@ -124,7 +124,7 @@ not assumed to meet an unenriched parent there.
 The regular cell support is visible in difference images. Terrain-aware support,
 coarse spectral-power acceptance, derivative checks on the final quantized field,
 partial coastal/basin detail, inherited outlet paths and upstream flow, finer
-routing, total job-memory budgets and workbench requests remain open.
+routing, broader memory calibration and workbench requests remain open.
 [Cooperative cancellation](terrain-generation-control.md) is now implemented. Read
 [ADR-0061](adr/0061-verify-parents-and-isolate-local-detail.md), the
 [measurements](research/2026-09-23-verified-parent-detail.md) and [TODO](../TODO.md).
@@ -208,6 +208,11 @@ original bounds differ; each manifest retains the bounds supplied for that write
 One loaded/prepared parent and one detail context remain resident while open.
 The result byte limit excludes parent/geometry storage, scalar cell records,
 active generation/rendering scratch and Python metadata; it is not a process-wide
-memory limit. Separate CLI invocations use temporary sessions with result
-retention disabled. Read [ADR-0063](adr/0063-reuse-verified-parent-region-sessions.md)
+memory limit. A separate [shared admission budget](terrain-regional-memory.md)
+now reserves estimates for those components before loading and generation/export.
+Default sessions share 1024 MiB; the saved-parent CLI accepts `--memory-mib`.
+Inspect `memory_info()` / `estimate_write()` for estimates and `cache_info()` for
+actual retained numeric results. `clear_cache()` keeps reserved capacity for reuse.
+Separate CLI invocations use temporary sessions with result retention disabled.
+Read [ADR-0063](adr/0063-reuse-verified-parent-region-sessions.md)
 and the [measurements](research/2026-09-23-parent-region-sessions.md).

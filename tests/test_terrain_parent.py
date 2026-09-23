@@ -679,3 +679,183 @@ def test_cancellation_after_publication_does_not_undo_a_completed_artifact(
         assert token.is_cancelled
         assert manifest.is_file()
         assert json.loads(manifest.read_bytes())["status"] == "complete"
+
+
+def test_load_admission_precedes_input_parsing_and_numeric_decoding(
+    saved_parent: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from dmtools.terrain.adapters import parent as adapter
+
+    seen: list[adapter.ParentLoadPlan] = []
+
+    def reject(plan: adapter.ParentLoadPlan) -> None:
+        seen.append(plan)
+        raise ValueError("admission test")
+
+    def forbidden(*_args: object, **_kwargs: object) -> None:
+        pytest.fail("Rejected loads must not allocate the next phase.")
+
+    with monkeypatch.context() as patch:
+        patch.setattr(adapter, "project_snapshot_from_json", forbidden)
+        with pytest.raises(ValueError, match="admission test"):
+            load_terrain_parent(saved_parent, runtime_identity(), admit=reject)
+    assert len(seen) == 1 and seen[0].numeric_bytes == 0
+
+    def reject_arrays(plan: adapter.ParentLoadPlan) -> None:
+        if plan.numeric_bytes:
+            reject(plan)
+
+    monkeypatch.setattr(adapter, "_array", forbidden)
+    with pytest.raises(ValueError, match="admission test"):
+        load_terrain_parent(saved_parent, runtime_identity(), admit=reject_arrays)
+    assert len(seen) == 2 and seen[1].numeric_bytes > 0
+
+
+def test_session_constructor_failure_releases_its_memory(
+    saved_parent: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from dmtools.terrain.application.region_memory import RegionalMemoryBudget
+
+    pool = RegionalMemoryBudget()
+
+    def failed_load(*_args: object, **_kwargs: object) -> None:
+        raise ValueError("decode failed")
+
+    monkeypatch.setattr(application, "load_terrain_parent", failed_load)
+    with pytest.raises(ValueError, match="decode failed"):
+        application.ParentRegionSession(saved_parent, memory_budget=pool)
+    assert pool.info().reserved_bytes == pool.info().reservations == 0
+
+
+def test_admission_rejects_before_preparation_and_can_retry_without_cache_mutation(
+    saved_parent: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from dmtools.terrain.application.region_memory import (
+        RegionalMemoryAdmissionError,
+        RegionalMemoryBudget,
+    )
+
+    pool = RegionalMemoryBudget()
+    bounds = (1100., 1100., 1700., 1700.)
+    with application.ParentRegionSession(saved_parent, memory_budget=pool) as session:
+        estimate = session.estimate_write(bounds, 8)
+        retained = pool.info().reserved_bytes
+        before = session.cache_info()
+        occupied = pool.info().budget_bytes - retained - estimate.total_bytes + 1
+        with pool.reserve(occupied, "another active job"), monkeypatch.context() as patch:
+            def forbidden(*_args: object, **_kwargs: object) -> None:
+                pytest.fail("Denied jobs must not prepare terrain.")
+            patch.setattr(application, "prepare_verified_parent", forbidden)
+            with pytest.raises(RegionalMemoryAdmissionError):
+                session.write(tmp_path / "denied", bounds, 8)
+            assert session.cache_info() == before
+            assert session.memory_info().active_job_bytes == 0
+            assert not (tmp_path / "denied").exists()
+        session.write(tmp_path / "retry", bounds, 8)
+        session.write(tmp_path / "cached", bounds, 8)
+        for path in (tmp_path / "retry").iterdir():
+            assert path.read_bytes() == (tmp_path / "cached" / path.name).read_bytes()
+        assert pool.info().reserved_bytes == retained
+        session.clear_cache()
+        # Reserved capacity remains available for later results and detail support.
+        assert pool.info().reserved_bytes == retained
+    assert pool.info().reserved_bytes == pool.info().reservations == 0
+
+
+@pytest.mark.parametrize("failure", ["cancel", "export", "runtime"])
+def test_job_memory_is_released_on_cancel_export_failure_and_source_drift(
+    saved_parent: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, failure: str,
+) -> None:
+    from dmtools.terrain.application.region_memory import RegionalMemoryBudget
+
+    pool = RegionalMemoryBudget()
+    bounds = (1100., 1100., 1700., 1700.)
+    with application.ParentRegionSession(saved_parent, memory_budget=pool) as session:
+        retained = pool.info().reserved_bytes
+        token = CancellationToken()
+
+        def stop(_fraction: float, _message: str) -> None:
+            info = session.memory_info()
+            assert info.active_job_bytes > 0
+            assert pool.info().reserved_bytes == retained + info.active_job_bytes
+            token.cancel()
+
+        def failed_export(*_args: object, **_kwargs: object) -> None:
+            raise OSError("export test")
+
+        if failure == "export":
+            monkeypatch.setattr(application, "write_parent_region_products", failed_export)
+        if failure == "runtime":
+            def stale_runtime() -> dict[str, object]:
+                return {}
+            monkeypatch.setattr(application, "runtime_identity", stale_runtime)
+        with pytest.raises((GenerationCancelled, OSError, ValueError)):
+            session.write(tmp_path / failure, bounds, 8, cancellation=token,
+                          progress=stop if failure == "cancel" else None)
+        assert session.memory_info().active_job_bytes == 0
+        assert pool.info().reserved_bytes == (0 if failure == "runtime" else retained)
+        assert not (tmp_path / failure / "manifest.json").exists()
+    assert pool.info().reserved_bytes == pool.info().reservations == 0
+
+
+@pytest.mark.parametrize("command", ["sample-parent", "enrich-region"])
+def test_cli_memory_budget_rejects_without_creating_output(
+    saved_parent: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str], command: str,
+) -> None:
+    arguments = ["terrain", command, str(saved_parent), "--output", str(tmp_path / "result"),
+                 "--bounds-km", "1100", "1100", "1700", "1700", "--refine", "8",
+                 "--memory-mib", "1"]
+    if command == "enrich-region":
+        arguments.append("--experimental")
+    assert main(arguments) == 1
+    assert "memory admission rejected" in capsys.readouterr().err
+    assert not (tmp_path / "result").exists()
+
+
+@pytest.mark.parametrize("change", [0, -1, 1])
+def test_bounded_parent_read_uses_actual_file_size_and_detects_changes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, change: int,
+) -> None:
+    from dmtools.terrain.adapters.parent import _read  # pyright: ignore[reportPrivateUsage]
+
+    path = tmp_path / "small.bin"
+    path.write_bytes(b"parent payload")
+    size = path.stat().st_size
+    reads: list[int | None] = []
+
+    class ObservedStream(io.BytesIO):
+        def read(self, size: int | None = -1, /) -> bytes:
+            reads.append(size)
+            return super().read(size)
+
+    def opened(*_args: object, **_kwargs: object) -> ObservedStream:
+        return ObservedStream(b"x" * (size + change))
+
+    monkeypatch.setattr(Path, "open", opened)
+    if change:
+        with pytest.raises(ValueError, match="changed size"):
+            _read(path, 512 * 1024 * 1024)
+    else:
+        assert _read(path, 512 * 1024 * 1024) == b"x" * size
+    assert reads == [size + 1]
+
+
+def test_parent_product_larger_than_declared_is_rejected_before_reading(
+    saved_parent: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from dmtools.terrain.adapters import parent as adapter
+
+    folder = tmp_path / "parent"
+    shutil.copytree(saved_parent, folder)
+    with (folder / "water.npz").open("ab") as stream:
+        stream.write(b"unexpected")
+    original = Path.open
+
+    def guarded(path: Path, *args: Any, **kwargs: Any) -> Any:
+        if path == folder / "water.npz":
+            pytest.fail("Declared-size mismatch must be rejected before reading the archive.")
+        return original(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "open", guarded)
+    with pytest.raises(ValueError, match="oversized"):
+        adapter.load_terrain_parent(folder, runtime_identity())

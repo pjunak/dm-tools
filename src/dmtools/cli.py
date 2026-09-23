@@ -76,6 +76,9 @@ def create_parser() -> argparse.ArgumentParser:
                             metavar=("X0", "Y0", "X1", "Y1"))
         parent.add_argument("--refine", type=int, required=True,
                             help="Power of two; experimental detail needs at least 8.")
+        parent.add_argument("--memory-mib", type=int, default=None,
+                            help="Regional admission budget in MiB (default 1024); estimated "
+                                 "allocations, not a process memory limit.")
         if experimental:
             parent.add_argument("--experimental", action="store_true", required=True,
                                 help="Acknowledge detail is experimental and hydrology unreviewed.")
@@ -121,14 +124,19 @@ def _run_terrain_region(arguments: argparse.Namespace) -> int:
 
 def _run_parent_region(arguments: argparse.Namespace) -> int:
     from dmtools.terrain.application.parent_region import sample_parent_region
+    from dmtools.terrain.application.region_memory import MIB, RegionalMemoryBudget
     from dmtools.terrain.domain.regional import RegionalDetailSettings
 
     try:
         x0, y0, x1, y1 = arguments.bounds_km
         detail = (RegionalDetailSettings(arguments.amplitude_m)
                   if arguments._experimental_detail else None)
-        manifest = sample_parent_region(arguments.parent, arguments.output, (x0, y0, x1, y1),
-                                        arguments.refine, detail_settings=detail)
+        budget = (RegionalMemoryBudget(arguments.memory_mib * MIB)
+                  if arguments.memory_mib is not None else None)
+        manifest = sample_parent_region(
+            arguments.parent, arguments.output, (x0, y0, x1, y1), arguments.refine,
+            detail_settings=detail, memory_budget=budget,
+        )
     except (OSError, ValueError, RuntimeError) as error:
         print(f"Parent regional generation failed: {error}", file=sys.stderr)
         return 1

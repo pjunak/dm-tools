@@ -389,10 +389,19 @@ editing a finished DEM; see [ADR-0048](docs/adr/0048-keep-zoom-driven-detail-gen
   numeric work cannot become a cached result or a completed artifact. Valid
   completed results can be retried to a new destination, with fresh source/runtime
   checks. See [ADR-0064](docs/adr/0064-cancel-generation-at-safe-checkpoints.md).
-- [ ] **P1 — Bound total local-generation job memory.** Result arrays and scalar
-  cell support are bounded; parent/context count is explicit. Establish admission
-  budgets for complete-source geometry, loaded/prepared parent buffers, active
-  sampling/rendering scratch and concurrent jobs before adding a scheduler.
+- [x] **P1 — Admit saved-parent jobs against shared memory estimates.** Default
+  sessions share 1024 MiB of estimated capacity, charging staged parent decoding,
+  loaded/prepared arrays, complete-source geometry allowances, cache capacity and
+  active sampling/rendering. Reject before expensive work, release on all exits,
+  and preserve valid reusable work. Bounded file reads avoid allocating the product
+  safety ceiling; detail protection queries batch all intersections without
+  dropping features. See [ADR-0065](docs/adr/0065-admit-regional-memory-estimates.md).
+- [ ] **P1 — Finish total local-generation memory calibration and ownership.**
+  Shared admission is implemented for saved-parent application jobs, not an OS
+  memory cap. Extend the [fresh-process evidence](docs/research/2026-09-23-regional-memory-admission.md)
+  to maximal parents, dense/overlapping geometry, near-limit and skinny regions,
+  simultaneous jobs, decoder expansion and long sessions. Include editor images,
+  whole-map jobs and unrelated retained work before adding a viewport scheduler.
   Recursive enrichment is not implemented.
 - [ ] **P1 — Preserve hydrological context during local enrichment.** Keep
   authored constraints and inherited upstream flow; a local rectangle or halo
@@ -402,8 +411,9 @@ editing a finished DEM; see [ADR-0048](docs/adr/0048-keep-zoom-driven-detail-gen
   responsive and distinguish image magnification, denser field sampling and
   newly generated detail. Define automatic thresholds or an explicit generate
   action, result freshness and total memory budgets before wiring jobs.
-  Cooperative cancellation and verified serial sessions now supply lifecycle
-  foundations; no viewport scheduler or recursive enrichment is implemented.
+  Cooperative cancellation, verified serial sessions and saved-parent admission
+  estimates now supply foundations; application-wide memory calibration remains.
+  No viewport scheduler or recursive enrichment is implemented.
 
 - [x] **P1 — Make sampled lake visibility follow display scale.** Classify
   each connected wet pool independently; hide pools at or below 9 output pixels

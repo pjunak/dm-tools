@@ -92,3 +92,4 @@ supersedes their legacy compatibility commitments during early development.
 - [ADR-0062: Reuse bounded detail-cell support](0062-reuse-bounded-detail-cell-support.md)
 - [ADR-0063: Reuse verified parent-region sessions](0063-reuse-verified-parent-region-sessions.md)
 - [ADR-0064: Cancel generation at safe checkpoints](0064-cancel-generation-at-safe-checkpoints.md)
+- [ADR-0065: Admit regional memory estimates](0065-admit-regional-memory-estimates.md)

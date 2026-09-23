@@ -34,6 +34,8 @@ from dmtools.terrain.pipeline.generate import ProgressCallback
 from dmtools.terrain.pipeline.parent import VerifiedTerrainParent
 from dmtools.terrain.pipeline.regional import RegionalTerrainSamples
 
+DETAIL_CELL_BATCH = 64
+
 LOCAL_DETAIL_ALGORITHM_ID = "protected-cell-residual-experiment@1"
 
 
@@ -164,10 +166,18 @@ class PreparedRegionalDetail:
                 NDArray[np.bool_], np.asarray(cast(Any, shapely.covers(field.polygon, cells)))
             )
             inland &= np.asarray(cast(Any, shapely.distance(cells, field.boundary))) > guard
-            intersections = self.protections.query(cells, predicate="intersects")
             protected[pending] = ~inland
-            if intersections.size:
-                protected[pending[np.unique(intersections[0])]] = True
+            # STRtree returns every matching pair. Bound the cell dimension so
+            # overlapping protections cannot create a whole-window cross product.
+            for start in range(0, pending.size, DETAIL_CELL_BATCH):
+                intersections = self.protections.query(
+                    cells[start : start + DETAIL_CELL_BATCH], predicate="intersects"
+                )
+                if intersections.size:
+                    protected[pending[start + np.unique(intersections[0])]] = True
+                del intersections  # Release each pair array before allocating the next.
+                if progress is not None:
+                    progress(0.05, "Checking bounded detail-protection batches")
             for index in pending[protected[pending]]:
                 self._cache.put(
                     int(columns[index]), int(rows[index]),
@@ -185,8 +195,8 @@ class PreparedRegionalDetail:
         weights[:, [0, -1]] *= 0.5
         weights = weights.ravel() / (n * n)
         active = np.flatnonzero(~protected)
-        for start in range(0, pending.size, 64):
-            ids = pending[start : start + 64]
+        for start in range(0, pending.size, DETAIL_CELL_BATCH):
+            ids = pending[start : start + DETAIL_CELL_BATCH]
             px = x[columns[ids], None] + (x[columns[ids] + 1] - x[columns[ids]])[:, None] * u
             py = y[rows[ids], None] + (y[rows[ids] + 1] - y[rows[ids]])[:, None] * v
             reference = field.sample_ground(px, py).astype(np.float64)
@@ -211,7 +221,7 @@ class PreparedRegionalDetail:
                 )
             if progress is not None:
                 progress(
-                    0.1 + 0.4 * min(start + 64, pending.size) / pending.size,
+                    0.1 + 0.4 * min(start + DETAIL_CELL_BATCH, pending.size) / pending.size,
                     "Preparing fixed parent-cell detail support",
                 )
         if progress is not None:

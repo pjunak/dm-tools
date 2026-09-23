@@ -33,6 +33,8 @@ mask, coordinates, both PNG styles, inspectable drainage and a completion manife
 Use `dmtools terrain water-budget PROJECT` to inspect shoreline and potential
 internal-network demand before a build; see the
 [forecast guide](../../../docs/terrain-water-budget.md).
+Saved-parent regional commands and sessions now support explicit
+[memory admission budgets](../../../docs/terrain-regional-memory.md).
 See the [numeric build guide](../../../docs/terrain-builds.md). The coordinate
 model remains the local SVG plane. Builds now include a
 [local-metric GeoTIFF](../../../docs/terrain-geotiff.md); world placement is still planned.

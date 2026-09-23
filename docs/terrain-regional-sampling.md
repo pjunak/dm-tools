@@ -103,7 +103,7 @@ residuals independently of output sampling density in the separate
 unchanged-field API; visual/spectral acceptance and finer hydrology remain open.
 Small cartographic rivers require that finer terrain/hydrology evidence.
 [Cooperative cancellation](terrain-generation-control.md) is implemented for this
-API. Workbench zoom scheduling and total job-memory admission remain open; separate
-[parent sessions](terrain-parent-regions.md) already provide freshness-checked,
-bounded numeric caching. See [TODO](../TODO.md), [ADR-0058](adr/0058-sample-bounded-regional-windows.md)
+API. Workbench zoom scheduling and memory admission for this input-defined API
+remain open. Separate [parent sessions](terrain-parent-regions.md) provide
+freshness-checked numeric caching and [shared admission estimates](terrain-regional-memory.md). See [TODO](../TODO.md), [ADR-0058](adr/0058-sample-bounded-regional-windows.md)
 and the [measurements](research/2026-09-22-regional-field-sampling.md).

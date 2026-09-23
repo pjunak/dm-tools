@@ -291,11 +291,12 @@ record the remaining visible cell pattern and conservative exclusions.
   under overlap, density and cache pressure. [Verified sessions](../terrain-parent-regions.md#write-several-artifacts-in-one-verified-session)
   now reuse one parent and byte-bounded results with automatic freshness checks;
   [ADR-0063](../adr/0063-reuse-verified-parent-region-sessions.md) defines ownership
-  and release. Bound total parent/geometry/active-job memory next, then add
-  workbench requests. Cooperative request cancellation is implemented; total
-  memory admission still precedes scheduling. Do not repeat full replay for every pointer
-  move or silently turn a successful experimental result
-  into accepted cartographic detail.
+  and release. [Shared admission estimates](../terrain-regional-memory.md) now
+  charge saved-parent loading, retained context and active sampling/rendering;
+  cooperative cancellation is also implemented. Calibrate native/geometry costs
+  and account for the rest of the application before workbench scheduling. Do not
+  repeat full replay for every pointer move or silently turn a successful
+  experimental result into accepted cartographic detail.
 - Extend the existing [regional prototype C](../research/2026-09-04-terrain-prototype-contracts.md)
   with these acceptance gates. No automatic zoom job or recursive child-parent
   enrichment is currently implemented.

@@ -64,6 +64,7 @@ are never reused. Parent/runtime checks still apply to every retry.
 An interrupted export can leave partial files, but no completed manifest. The
 last cancellation check is before manifest publication; once publication begins,
 that completed operation wins a later stop request. Completed parents and earlier
-artifacts are immutable. This contract is separate from future memory admission,
-zoom scheduling and finer hydrology. See
+artifacts are immutable. Saved-parent jobs release their temporary
+[memory reservations](terrain-regional-memory.md) on cancellation while keeping
+valid retained work charged. Zoom scheduling and finer hydrology remain separate. See
 [ADR-0064](adr/0064-cancel-generation-at-safe-checkpoints.md).

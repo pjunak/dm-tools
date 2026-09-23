@@ -84,7 +84,10 @@ serial sessions retaining one parent/detail context and byte-bounded numeric
 results. Files and runtime are checked on every write, including cached requests;
 changed provenance closes the session. Cache arrays stay private, while `close`
 releases all session references. [ADR-0063](../adr/0063-reuse-verified-parent-region-sessions.md)
-defines this lifecycle and the remaining total-memory/job limits.
+defines this lifecycle. `application/region_memory.py` adds shared admission
+reservations for staged loading, retained context and active generation/export;
+see [ADR-0065](../adr/0065-admit-regional-memory-estimates.md). Estimates are
+separate from exact cache bytes and do not impose an OS process-memory ceiling.
 
 The next durable-build work adds world georeferencing,
 derived GIS products, explicit hard/soft/inequality projection after optional
@@ -141,7 +144,8 @@ layer or path boundaries.
 - River/catchment vector products and external hydrology validation
   (numeric routing, footprint collection and basin review archives are implemented)
 - Visual/spectral acceptance of experimental regional detail, inherited finer
-  hydrology, zoom scheduling and total job-memory admission
+  hydrology, zoom scheduling and broader native/application-memory calibration
+  (saved-parent admission estimates are implemented)
 - Global climate-field and ecological-classification contracts
 - Web framework, queue, storage, and frontend
 - Public project license

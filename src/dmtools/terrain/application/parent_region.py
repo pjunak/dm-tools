@@ -2,10 +2,11 @@
 
 from dataclasses import replace
 from pathlib import Path
+from threading import Lock
 from typing import Self
 
 from dmtools.terrain.adapters.build import runtime_identity
-from dmtools.terrain.adapters.parent import LoadedTerrainParent, load_terrain_parent
+from dmtools.terrain.adapters.parent import LoadedTerrainParent, ParentLoadPlan, load_terrain_parent
 from dmtools.terrain.adapters.parent_region import (
     publish_parent_region_manifest,
     write_parent_region_products,
@@ -15,6 +16,16 @@ from dmtools.terrain.application.region_cache import (
     ParentRegionResult,
     RegionResultCache,
     RegionResultCacheInfo,
+)
+from dmtools.terrain.application.region_memory import (
+    DEFAULT_REGIONAL_MEMORY_BUDGET,
+    MIB,
+    MemoryReservation,
+    ParentSessionMemoryInfo,
+    RegionalJobEstimate,
+    RegionalMemoryBudget,
+    estimate_parent_memory,
+    estimate_regional_job,
 )
 from dmtools.terrain.domain.coordinates import Bounds
 from dmtools.terrain.domain.regional import (
@@ -50,13 +61,30 @@ class ParentRegionSession:
 
     def __init__(
         self, source: Path, *, result_cache_bytes: int = DEFAULT_RESULT_CACHE_BYTES,
+        memory_budget: RegionalMemoryBudget | None = None,
     ) -> None:
         self._results = RegionResultCache(result_cache_bytes)
-        self._runtime = runtime_identity()
-        self._loaded: LoadedTerrainParent | None = load_terrain_parent(source, self._runtime)
+        self._budget = (memory_budget if memory_budget is not None
+                        else DEFAULT_REGIONAL_MEMORY_BUDGET)
+        self._memory = self._budget.reserve(8 * MIB + result_cache_bytes, "parent session")
+        self._loaded: LoadedTerrainParent | None = None
         self._parent: VerifiedTerrainParent | None = None
         self._detail: PreparedRegionalDetail | None = None
         self._writing = False
+        self._operation = Lock()
+        self._active_bytes = 0
+
+        def admit(plan: ParentLoadPlan) -> None:
+            self._memory.resize(plan.estimated_peak_bytes + result_cache_bytes)
+
+        try:
+            self._runtime = runtime_identity()
+            self._loaded = load_terrain_parent(source, self._runtime, admit=admit)
+            self._estimate = estimate_parent_memory(self._loaded, result_cache_bytes)
+            self._memory.resize(self._estimate.total_bytes)
+        except BaseException:
+            self._release()
+            raise
 
     def _require_open(self) -> LoadedTerrainParent:
         if self._loaded is None:
@@ -79,24 +107,53 @@ class ParentRegionSession:
         """Inspect retained numeric bytes and entries; excludes parent/geometry and scratch."""
         return self._results.info()
 
+    def memory_info(self) -> ParentSessionMemoryInfo:
+        """Reserved estimates, separately from exact cached-array bytes and process RSS."""
+        return ParentSessionMemoryInfo(
+            self._estimate if self._loaded is not None else None,
+            self._active_bytes, self._budget.info(),
+        )
+
+    def estimate_write(
+        self, bounds_km: Bounds, refinement: int, *,
+        detail_settings: RegionalDetailSettings | None = None,
+    ) -> RegionalJobEstimate:
+        """Estimate active work without preparing terrain, mutating caches or creating files."""
+        loaded = self._require_open()
+        request = RegionalSamplingRequest.for_bounds(
+            loaded.data.build_id, loaded.data.grid, bounds_km, refinement
+        )
+        return estimate_regional_job(
+            request, self._estimate, detail=detail_settings is not None,
+            needs_preparation=self._parent is None,
+        )
+
     def clear_cache(self) -> None:
         """Discard results and cell support while retaining the verified parent."""
-        if self._writing:
+        if not self._operation.acquire(blocking=False):
             raise RuntimeError("Cannot clear a parent regional session during generation.")
-        self._results.clear()
-        if self._detail is not None:
-            self._detail.clear_cache()
+        try:
+            self._results.clear()
+            if self._detail is not None:
+                self._detail.clear_cache()
+        finally:
+            self._operation.release()
 
     def _release(self) -> None:
         self._results.clear()
         self._detail = None
         self._parent = None
         self._loaded = None
+        if not self._writing:
+            self._memory.close()
 
     def close(self) -> None:
-        if self._writing:
+        if not self._operation.acquire(blocking=False):
             raise RuntimeError("Cannot close a parent regional session during generation.")
-        self._release()
+        try:
+            self._release()
+        finally:
+            self._operation.release()
 
     def __enter__(self) -> Self:
         self._require_open()
@@ -112,19 +169,23 @@ class ParentRegionSession:
         cancellation: CancellationToken | None = None,
     ) -> Path:
         """Publish a new artifact, reusing exact requests only after freshness checks."""
-        if self._writing:
+        if not self._operation.acquire(blocking=False):
             raise RuntimeError("Parent regional session is already generating; use it serially.")
-        check_cancelled(cancellation)
-        progress = cancellable_progress(progress, cancellation)
-        loaded = self._require_open()
-        target = _destination(loaded.directory, destination)
-        request = RegionalSamplingRequest.for_bounds(
-            loaded.data.build_id, loaded.data.grid, bounds_km, refinement
-        )
-        if detail_settings is not None:
-            detail_cell_window(request)
+        reservation: MemoryReservation | None = None
         self._writing = True
         try:
+            check_cancelled(cancellation)
+            progress = cancellable_progress(progress, cancellation)
+            loaded = self._require_open()
+            target = _destination(loaded.directory, destination)
+            request = RegionalSamplingRequest.for_bounds(
+                loaded.data.build_id, loaded.data.grid, bounds_km, refinement
+            )
+            if detail_settings is not None:
+                detail_cell_window(request)
+            estimate = self.estimate_write(bounds_km, refinement, detail_settings=detail_settings)
+            reservation = self._budget.reserve(estimate.total_bytes, "regional generation/export")
+            self._active_bytes = estimate.total_bytes
             self._verify_current()
             check_cancelled(cancellation)
             if self._parent is None:
@@ -167,7 +228,13 @@ class ParentRegionSession:
                 detail=result.detail,
             )
         finally:
+            if reservation is not None:
+                reservation.close()
+            self._active_bytes = 0
             self._writing = False
+            if self._loaded is None:
+                self._memory.close()
+            self._operation.release()
 
 
 def sample_parent_region(
@@ -179,10 +246,11 @@ def sample_parent_region(
     detail_settings: RegionalDetailSettings | None = None,
     progress: ProgressCallback | None = None,
     cancellation: CancellationToken | None = None,
+    memory_budget: RegionalMemoryBudget | None = None,
 ) -> Path:
     check_cancelled(cancellation)
     target = _destination(source, destination)
-    with ParentRegionSession(source, result_cache_bytes=0) as session:
+    with ParentRegionSession(source, result_cache_bytes=0, memory_budget=memory_budget) as session:
         return session.write(
             target, bounds_km, refinement, detail_settings=detail_settings, progress=progress,
             cancellation=cancellation,

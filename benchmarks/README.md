@@ -431,3 +431,20 @@ zero on close. These are serial same-process observations, not fresh-process
 startup comparisons or process-memory measurements. The new JSON and sibling
 products directory must be outside every parent build. See the
 [report](../docs/research/2026-09-23-parent-region-sessions.md).
+
+### Regional admission and process memory
+
+```powershell
+.\.venv\Scripts\python.exe -m benchmarks.regional_memory --parent artifacts/local-detail-measurements/example-42/parent --refine 8 128 --mode reference detail --output artifacts/regional-memory.json
+```
+
+Use freshly built current-runtime parents from the public builder above. Each
+parent/mode/refinement/repetition gets a fresh worker, which performs cold and
+cached exports and verifies identical products/manifests. Parent building is
+outside the worker. Reports distinguish baseline/process-lifetime native resident
+peaks, exact unique parent numeric storage, cache bytes and policy reservations;
+all reservations must release on close. `--repeats` defaults to 1. Run without
+concurrent tests or other benchmarks. The new report/products paths must remain
+outside each parent. This measures finite workloads, not a hard OS memory limit
+or a guarantee for arbitrary native geometry. See the
+[report](../docs/research/2026-09-23-regional-memory-admission.md).

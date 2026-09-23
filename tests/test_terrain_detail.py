@@ -10,7 +10,7 @@ import numpy as np
 import pytest
 import shapely
 from numpy.typing import NDArray
-from shapely.geometry import LineString
+from shapely.geometry import LineString, box
 from shapely.strtree import STRtree
 
 from benchmarks.terrain import fixture
@@ -410,3 +410,38 @@ def test_failed_probe_batch_can_be_retried_without_stale_support(
     assert_identical_detail(
         sample(cached, origin, 8), sample(replace(original, cache_cells=0), origin, 8)
     )
+
+
+def test_protection_batches_preserve_all_intersections_and_numeric_results(
+    detail_field: tuple[PreparedRegionalDetail, tuple[int, int]], monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from dmtools.terrain.pipeline import detail as detail_module
+
+    field, origin = detail_field
+    left, top = origin
+    x, y = field.parent.data.x_km, field.parent.data.y_km
+    # Many overlapping features exercise the pair-product query. Protect one half
+    # so equivalence checks include both suppressed and active detail cells.
+    geometry = box(x[left], y[top], x[left + 4], y[top + 8])
+    tree = STRtree([geometry] * 100)
+    context = replace(field, protections=tree, cache_cells=0)
+    monkeypatch.setattr(detail_module, "DETAIL_CELL_BATCH", 4096)
+    control = sample(context, origin, 8, 1)
+    monkeypatch.setattr(detail_module, "DETAIL_CELL_BATCH", 7)
+    original = STRtree.query
+    sizes: list[int] = []
+
+    def query(self: STRtree, geometries: Any, *args: Any, **kwargs: Any) -> Any:
+        if self is tree:
+            sizes.append(len(geometries))
+            assert len(geometries) <= 7
+        return original(self, geometries, *args, **kwargs)
+
+    monkeypatch.setattr(STRtree, "query", query)
+    batched = sample(context, origin, 8, 1)
+    assert len(sizes) > 1
+    assert batched.evidence == control.evidence
+    for name in ("reference_elevation_m", "added_detail_m", "cell_amplitude_m",
+                 "reference_cell_mean_m", "detailed_cell_mean_m"):
+        np.testing.assert_array_equal(getattr(batched, name), getattr(control, name))
+    np.testing.assert_array_equal(batched.samples.elevation_m, control.samples.elevation_m)

@@ -12,6 +12,10 @@ in the current status or a new dated report.
 
 ## Implemented and measured work
 
+- [Regional memory admission - 2026-09-23](2026-09-23-regional-memory-admission.md)
+  reserves estimated parent/job memory, removes oversized file-read allocations
+  and bounds detail intersection batches; compares fresh-process resident peaks.
+
 - [Verified parent-region sessions - 2026-09-23](2026-09-23-parent-region-sessions.md)
   retains verified parent work and byte-bounded numeric results with automatic
   freshness checks; compares complete artifact writes and explicit release.
