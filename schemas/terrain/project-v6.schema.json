@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:dmtools:schema:terrain-project:5",
-  "title": "DM Tools terrain project version 5",
-  "description": "Current authored inputs; named stage seeds are mandatory. Earlier project versions are unsupported.",
+  "$id": "urn:dmtools:schema:terrain-project:6",
+  "title": "DM Tools terrain project version 6",
+  "description": "Current authored inputs including automatic drainage density. Earlier project versions are unsupported.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -18,7 +18,7 @@
       "const": "dmtools.terrain-project"
     },
     "schema_version": {
-      "const": 5
+      "const": 6
     },
     "coastline": {
       "type": "object",
@@ -112,7 +112,8 @@
         "detail_levels",
         "roughness",
         "coastal_rise_km",
-        "variability"
+        "variability",
+        "drainage_density"
       ],
       "properties": {
         "seed": {
@@ -155,6 +156,12 @@
           "type": "number",
           "minimum": 0,
           "maximum": 1
+        },
+        "drainage_density": {
+          "type": "number",
+          "minimum": 0.25,
+          "maximum": 2.0,
+          "description": "Automatic channel initiation multiplier: lower values form fewer channels; does not specify runoff or river width."
         }
       }
     },

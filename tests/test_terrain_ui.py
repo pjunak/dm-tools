@@ -7,7 +7,7 @@ from collections.abc import Iterator
 from dataclasses import replace
 from pathlib import Path
 from threading import Event
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import pytest
@@ -913,3 +913,67 @@ def test_failed_png_export_closes_export_image_and_keeps_readonly_reference(
     _assert_closed(*owned)
     assert app._image is ground and ground.tobytes() == before
     assert app._reference_is_current()
+
+
+def test_density_is_an_input_and_channel_navigation_keeps_ground_immutable(
+    app: ui.TerrainApp,
+) -> None:
+    _show_canvas(app)
+    terrain = app._terrain
+    assert terrain is not None
+    ground = terrain.elevation_m.copy()
+    assert "drainage_density" in app._variables
+    app._show_drainage.set(True)
+    app._draw_preview()
+    display = app._channel_display
+    assert display is not None
+    fit = app._map_rect()
+    assert fit is not None
+    count = display.visible_reach_count(fit)
+    app._zoom_view(4)
+    zoom = app._map_rect()
+    assert zoom is not None
+    assert app._channel_display is display
+    assert display.visible_reach_count(zoom) >= count
+    app._all_channels.set(True)
+    app._draw_preview()
+    assert app._channel_display is display
+    texts = " ".join(cast(str, app.preview.itemcget(item, "text"))
+                     for item in app.preview.find_all() if str(app.preview.type(item)) == "text")
+    assert "All channels" in texts and "all uphill edges red" in texts
+    app._variables["drainage_density"].set(.5)
+    assert app._read_settings().drainage_density == .5
+    assert not app._reference_is_current()
+    np.testing.assert_array_equal(terrain.elevation_m, ground)
+    app._show_drainage.set(False)
+    app._draw_preview()
+    assert app._channel_display is None
+
+
+def test_depressions_can_be_inspected_separately_from_channels(
+    app: ui.TerrainApp, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _show_canvas(app)
+    calls: list[str] = []
+    render = ui.render_basin_overlay
+    def record(*args: Any, **kwargs: Any) -> Image.Image:
+        calls.append("basins")
+        return render(*args, **kwargs)
+    monkeypatch.setattr(ui, "render_basin_overlay", record)
+    app._show_drainage.set(True)
+    app._draw_preview()
+    assert app._channel_display is not None
+    assert calls == []
+    app._show_depressions.set(True)
+    app._draw_preview()
+    assert calls == ["basins"]
+    app._show_drainage.set(False)
+    app._draw_preview()
+    assert app._channel_display is None
+    assert app._review_image is not None
+    texts = " ".join(cast(str, app.preview.itemcget(item, "text"))
+                     for item in app.preview.find_all() if str(app.preview.type(item)) == "text")
+    assert "Purple: depressions" in texts and "reaches" not in texts
+    app._show_depressions.set(False)
+    app._draw_preview()
+    assert app._review_image is None

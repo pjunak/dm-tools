@@ -277,6 +277,7 @@ class TerrainSettings:
     roughness: float = 0.55
     coastal_rise_km: float = 180.0
     variability: float = 0.75
+    drainage_density: float = 1.0
 
     def __post_init__(self) -> None:
         validate_master_seed(self.seed)
@@ -294,3 +295,5 @@ class TerrainSettings:
             raise ValueError("Coastal rise distance must be finite and positive.")
         if not 0 <= self.variability <= 1:
             raise ValueError("Variability must be between 0 and 1.")
+        if not 0.25 <= self.drainage_density <= 2.0:
+            raise ValueError("Drainage density must be between 0.25 and 2.")

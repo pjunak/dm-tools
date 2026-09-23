@@ -479,3 +479,16 @@ revision only after verifying every source and output pixel hash matches. Run
 without concurrent tests or benchmarks. This isolates display allocations and
 does not measure total Tk/worker/geometry memory. See the
 [measured comparison](../docs/research/2026-09-23-preview-image-ownership.md).
+
+## Connected drainage and viewport rendering
+
+```powershell
+.\.venv\Scripts\python.exe -m benchmarks.channel_network --case example regional square --seed 42 7 --density .5 1 2 --output artifacts/channel-network-review
+```
+
+This creates a new directory with overview/zoom comparisons and a completion-last
+JSON report. It checks complete edge coverage, reach connections, downstream area
+hierarchy and immutable ground. Counts separate generated density from display
+selection, and every sampled uphill edge remains in the review. It measures
+preparation and viewport wall time without promising physical river geometry or
+finer hydrology. See the [measurements](../docs/research/2026-09-24-connected-drainage-review.md).

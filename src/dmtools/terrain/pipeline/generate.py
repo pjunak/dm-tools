@@ -66,8 +66,8 @@ from dmtools.terrain.pipeline.water import (
 from dmtools.terrain.pipeline.water_budget import WaterSamplingBudget, plan_water_sampling_budget
 from dmtools.terrain.pipeline.water_sampling import SamplingDensity, SamplingFeature, SamplingGuide
 
-GENERATOR_ALGORITHM_ID = "coastline-constraint-terrain@17"
-AUTOMATIC_VALLEY_ALGORITHM_ID = "regional-budget-mfd-d8-valleys@13"
+GENERATOR_ALGORITHM_ID = "coastline-constraint-terrain@18"
+AUTOMATIC_VALLEY_ALGORITHM_ID = "regional-budget-mfd-d8-valleys@14"
 NOISE_ALGORITHM_ID = "coordinate-value-noise-fixed-budget@2"
 
 
@@ -941,6 +941,7 @@ def _prepare_automatic_valley_field(
         y_spacing_km=grid.y_spacing_km,
         maximum_elevation_m=settings.maximum_elevation_m,
         variability=settings.variability,
+        drainage_density=settings.drainage_density,
         residual_detail_m=(full_elevation - macro_elevation) * (1.0 - constraint_influence),
         incision_budget_m=budget,
         retention_terminal_mask=retention_terminals,

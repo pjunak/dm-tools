@@ -32,12 +32,12 @@ from dmtools.terrain.adapters import (
     save_height_map,
     save_terrain_project,
 )
+from dmtools.terrain.adapters.channel_display import ChannelDisplay, prepare_channel_display
 from dmtools.terrain.adapters.render import (
     compose_height_map,
     render_basin_catchment_overlay,
     render_basin_outflow_overlay,
     render_basin_overlay,
-    render_drainage_overlay,
     render_height_map_layers,
 )
 from dmtools.terrain.adapters.viewport import render_viewport
@@ -164,6 +164,7 @@ _CONTROLS = (
     _ControlSpec("roughness", "Fine-detail strength", 0.25, 0.85, 0.55, 0.01),
     _ControlSpec("coastal_rise_km", "Coastal rise distance", 5, 1_000, 180, 5, "km"),
     _ControlSpec("variability", "Elevation variability", 0, 1, 0.75, 0.01),
+    _ControlSpec("drainage_density", "Drainage density", 0.25, 2, 1.0, 0.05),
 )
 
 
@@ -184,6 +185,7 @@ class TerrainApp:
         self._image: Image.Image | None = None
         self._water_display: WaterDisplay | None = None
         self._preview_photo: ImageTk.PhotoImage | None = None
+        self._channel_display: ChannelDisplay | None = None
         self._coast_polygon: Polygon | MultiPolygon | None = None
         self._history = InstructionHistory()
         self._selected_instruction: int | None = None
@@ -246,10 +248,12 @@ class TerrainApp:
         self._render_style_label = tk.StringVar(value="Cartographic relief")
         self._show_instructions = tk.BooleanVar(value=True)
         self._show_drainage = tk.BooleanVar(value=False)
+        self._show_depressions = tk.BooleanVar(value=False)
+        self._all_channels = tk.BooleanVar(value=False)
         self._show_catchments = tk.BooleanVar(value=False)
         self._review_photo: ImageTk.PhotoImage | None = None
         self._review_image: Image.Image | None = None
-        self._review_key: tuple[int, bool, bool] | None = None
+        self._review_key: tuple[int, bool, bool, bool] | None = None
         self._legend_swatches: list[tk.Frame] = []
         self._brush_cursor: tuple[float, float] | None = None
         self._active_brush_values: tuple[float, float, float, ElevationMode] | None = None
@@ -497,6 +501,16 @@ class TerrainApp:
             command=self._draw_preview, background=_PREVIEW, foreground="#dce8e3",
             selectcolor=_PREVIEW, activebackground=_PREVIEW, activeforeground="white",
         ).pack(side="left", padx=10)
+        tk.Checkbutton(
+            review_toolbar, text="All channels", variable=self._all_channels,
+            command=self._draw_preview, background=_PREVIEW, foreground="#dce8e3",
+            selectcolor=_PREVIEW, activebackground=_PREVIEW, activeforeground="white",
+        ).pack(side="left", padx=(0, 10))
+        tk.Checkbutton(
+            review_toolbar, text="Depressions", variable=self._show_depressions,
+            command=self._draw_preview, background=_PREVIEW, foreground="#dce8e3",
+            selectcolor=_PREVIEW, activebackground=_PREVIEW, activeforeground="white",
+        ).pack(side="left", padx=(0, 10))
         tk.Checkbutton(
             review_toolbar, text="Basin catchments", variable=self._show_catchments,
             command=self._draw_preview, background=_PREVIEW, foreground="#dce8e3",
@@ -1175,6 +1189,7 @@ class TerrainApp:
             previous_water.close()
 
     def _clear_review(self) -> None:
+        self._channel_display = None
         if self._review_image is not None:
             self._review_image.close()
         self._review_image = None
@@ -2229,6 +2244,7 @@ class TerrainApp:
             roughness=values["roughness"],
             coastal_rise_km=values["coastal_rise_km"],
             variability=values["variability"],
+            drainage_density=values["drainage_density"],
         )
 
     def _apply_settings(self, settings: TerrainSettings) -> None:
@@ -2707,36 +2723,38 @@ class TerrainApp:
         terrain = self._terrain
         if terrain is None:
             raise ValueError("Generate terrain before showing reviews.")
-        key = (id(terrain), self._show_drainage.get(), self._show_catchments.get())
+        key = (id(terrain), self._show_drainage.get(), self._show_catchments.get(),
+               self._show_depressions.get())
         if self._review_image is not None and key == self._review_key:
             return self._review_image
-        # Build diagnostics once per result/toggle, never per wheel or pan event.
+        # Cache basin rasters and the channel graph; channel strokes are viewport-native.
         ratio = min(1., 1536 / max(terrain.width, terrain.height))
         size = (max(1, round(terrain.width * ratio)), max(1, round(terrain.height * ratio)))
         review = Image.new("RGBA", size)
         try:
-            if self._show_drainage.get():
+            if self._show_depressions.get():
                 with closing(render_basin_overlay(terrain, size)) as basins:
                     review.alpha_composite(basins)
             if self._show_catchments.get():
                 with closing(render_basin_catchment_overlay(terrain, size)) as catchments:
                     review.alpha_composite(catchments)
-            renderer = (render_drainage_overlay if self._show_drainage.get()
-                        else render_basin_outflow_overlay)
-            with closing(renderer(terrain, size)) as paths:
+            with closing(render_basin_outflow_overlay(terrain, size)) as paths:
                 review.alpha_composite(paths)
+            channels = prepare_channel_display(terrain) if self._show_drainage.get() else None
         except BaseException:
             review.close()
             raise
         self._clear_review()
         self._review_image, self._review_key = review, key
+        self._channel_display = channels
         return review
 
     def _draw_preview(self) -> None:
         self.preview.delete("all")
         self._preview_photo = None
         self._review_photo = None
-        if not (self._show_drainage.get() or self._show_catchments.get()):
+        if not (self._show_drainage.get() or self._show_catchments.get()
+                or self._show_depressions.get()):
             self._clear_review()
         if self._coastline is None:
             self.preview.create_text(
@@ -2777,13 +2795,30 @@ class TerrainApp:
         for exterior, holes in self._coastline_canvas_coordinates():
             for coordinates in (exterior, *holes):
                 self.preview.create_line(coordinates, fill="#b9cbc6", width=1.5, joinstyle="round")
-        if self._terrain is not None and (self._show_drainage.get() or self._show_catchments.get()):
+        if self._terrain is not None and (self._show_drainage.get() or self._show_catchments.get()
+                                          or self._show_depressions.get()):
             with closing(render_viewport(self._review_layer(), rect, size)) as review:
+                if self._channel_display is not None:
+                    with closing(self._channel_display.render(
+                        rect, size, all_channels=self._all_channels.get(),
+                    )) as channels:
+                        review.alpha_composite(channels)
                 self._review_photo = ImageTk.PhotoImage(review)
             self.preview.create_image(0, 0, image=self._review_photo, anchor="nw")
             legends: list[str] = []
             if self._show_drainage.get():
-                legends.append("Blue: planned / red: uphill. Purple: depressions. Yellow: spills.")
+                display = self._channel_display
+                assert display is not None
+                visible = display.visible_reach_count(rect, all_channels=self._all_channels.get())
+                total = len(display.network.reaches)
+                mode = "All channels" if self._all_channels.get() else "Scale-aware channels"
+                spacing = max(self._terrain.routing_grid.x_spacing_km,
+                              self._terrain.routing_grid.y_spacing_km)
+                legends.append(f"{mode}: {visible}/{total} reaches. "
+                               "Blue: planned; all uphill edges red.")
+                legends.append(f"Routing {spacing:,.2f} km/sample (fixed).")
+            if self._show_depressions.get():
+                legends.append("Purple: depressions. Yellow: spills.")
             if self._show_catchments.get():
                 legends.append("Cyan water / green land feed the outlet; amber stays retained.")
             legends.append("Teal: lake outlets. Orange: low boundary. Red diamonds: barriers. "

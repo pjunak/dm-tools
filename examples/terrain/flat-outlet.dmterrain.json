@@ -198,7 +198,7 @@
     }
   ],
   "schema": "dmtools.terrain-project",
-  "schema_version": 5,
+  "schema_version": 6,
   "settings": {
     "coastal_rise_km": 20.0,
     "detail_levels": 5,
@@ -208,6 +208,7 @@
     "resolution_px": 768,
     "roughness": 0.55,
     "seed": 42,
-    "variability": 0.75
+    "variability": 0.75,
+    "drainage_density": 1.0
   }
 }

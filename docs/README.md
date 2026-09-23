@@ -57,6 +57,9 @@ For regional terrain authoring and its first four recipes, read the
 For authored lake levels, dry-basin retention and their review, read the
 [water guide](terrain-water.md).
 
+For drainage-density inputs and connected scale-aware inspection, read the
+[drainage guide](terrain-drainage.md).
+
 For basin extents, spill candidates and water-boundary limits, read the
 [basin review contract](terrain-basins.md).
 

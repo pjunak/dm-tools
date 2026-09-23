@@ -259,7 +259,7 @@ def steepest_flow_accumulation(
         edge_barriers_m=edge_barriers_m,
     )
 
-    accumulation = _accumulate_steepest_receivers(
+    accumulation = receiver_contributing_area(
         routing_elevation_m,
         land_mask,
         receivers,
@@ -268,7 +268,7 @@ def steepest_flow_accumulation(
     return accumulation, receiver_slope
 
 
-def _accumulate_steepest_receivers(
+def receiver_contributing_area(
     routing_elevation_m: NDArray[np.float64],
     land_mask: NDArray[np.bool_],
     receivers: NDArray[np.int64],
@@ -767,6 +767,7 @@ def drainage_incision(
     y_spacing_km: float,
     maximum_elevation_m: float,
     variability: float,
+    drainage_density: float = 1.0,
     residual_detail_m: NDArray[np.float64] | None = None,
     incision_budget_m: NDArray[np.float64] | None = None,
     retention_terminal_mask: NDArray[np.bool_] | None = None,
@@ -774,6 +775,8 @@ def drainage_incision(
 ) -> DrainageIncision:
     """Derive broad valley incision and contributing area from a terrain surface."""
 
+    if not 0.25 <= drainage_density <= 2.0:
+        raise ValueError("Drainage density must be between 0.25 and 2.")
     global_budget_m = automatic_incision_budget(maximum_elevation_m, variability)
     if incision_budget_m is None:
         budget_m = np.full_like(elevation_m, global_budget_m)
@@ -810,7 +813,7 @@ def drainage_incision(
         edge_barriers_m=edge_barriers_m,
     )
     cell_area_km2 = x_spacing_km * y_spacing_km
-    tree_accumulation_km2 = _accumulate_steepest_receivers(
+    tree_accumulation_km2 = receiver_contributing_area(
         routing_surface,
         land_mask,
         receivers,
@@ -839,7 +842,14 @@ def drainage_incision(
         4.0,
     )
     initiation_index = tree_accumulation_km2 / local_threshold_km2
-    initiation_mask = initiation_sample & (initiation_index >= 1.0)
+    # Keep the slope reference independent of density: raising density must only
+    # add candidates, never remove an existing downstream path. The multiplier
+    # controls initiation, not terrain heights, flow receivers or incision caps.
+    initiation_mask = (
+        land_mask & ~terminals & (initiation_slope > 0.0)
+        & (tree_accumulation_km2 >= minimum_source_area_km2 / drainage_density)
+        & (initiation_index * drainage_density >= 1.0)
+    )
     channel, channel_heads = _connected_channel_network(
         initiation_mask,
         receivers,

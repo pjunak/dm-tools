@@ -40,7 +40,8 @@ def _source_in(tmp_path: Path) -> CoastlineSource:
 def _project_for(source: CoastlineSource) -> TerrainProject:
     return TerrainProject(
         coastline=source.coastline,
-        settings=TerrainSettings(seed=42, object_scale_km=3_850.0, resolution_px=512),
+        settings=TerrainSettings(seed=42, object_scale_km=3_850.0, resolution_px=512,
+                                 drainage_density=1.4),
         constraints=(
             TerrainBrushStroke(
                 points=((0.25, 0.4), (0.5, 0.45)),
@@ -84,8 +85,8 @@ def test_project_round_trip_preserves_authored_state_and_relative_svg_path(
     authoring = cast("dict[str, object]", serialized["authoring"])
     tools = cast("dict[str, dict[str, object]]", authoring["tools"])
     assert serialized["schema"] == "dmtools.terrain-project"
-    assert serialized["schema_version"] == 5
-    schema_path = EXAMPLES.parents[1] / "schemas" / "terrain" / "project-v5.schema.json"
+    assert serialized["schema_version"] == 6
+    schema_path = EXAMPLES.parents[1] / "schemas" / "terrain" / "project-v6.schema.json"
     schema: dict[str, Any] = json.loads(schema_path.read_text(encoding="utf-8"))
     Draft202012Validator.check_schema(schema)
     validate(serialized, schema, cls=Draft202012Validator)

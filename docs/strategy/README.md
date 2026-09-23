@@ -113,6 +113,11 @@ bounds on unseen terrain heights.
    nodal/interior conditioning. Compare whole-route alternatives for infeasible
    sources/crests and address turn smoothing, while extending coverage to unresolved
    sub-probe extrema, other recipes, authored features and blended maxima.
+   The [connected review and density controls](../terrain-drainage.md) now remove
+   magnified channel pixels and overview clutter while retaining every sampled
+   uphill conflict. The next geometric gain must change actual paths shared by
+   routing and incision: measure direction bias, exact junctions and full profiles;
+   compare convergent flat routing before adding decorative curve smoothing.
    Define explicit source-scale/process-grid limits. Preserve divides,
    authored constraints and cut-budget policy. Inspect regenerated 1025 px results with
    pan/zoom and ground readout; keep authored controls authoritative.
@@ -150,7 +155,7 @@ bounds on unseen terrain heights.
    cut depth/length and preserved anchors, then expose reviewable river networks.
 4. Extend point-anchored ridge/valley profiles with direct per-vertex controls,
    explicit passes and asymmetric sides.
-5. Add regional drainage-density/runoff controls as authored generation inputs
+5. Extend the implemented global density control with regional density/runoff inputs
    and implement bounded local detail generation after its parent, boundary and
    hydrology consistency gates are defined. Couple small-river appearance to
    adequately resolved local terrain and hydrology, retaining parent trunks,
@@ -266,7 +271,7 @@ preparation, and publishes bounded numeric samples with provenance. Exact
 65/129/257/overlap/revisit evidence and measured costs are recorded in the
 [implementation report](../research/2026-09-22-regional-field-sampling.md).
 
-The [verified-parent workflow](../terrain-parent-regions.md) now adds build v17
+The [verified-parent workflow](../terrain-parent-regions.md) now adds build v18
 portable snapshots, exact runtime/file verification, full numeric replay and an
 explicit experimental additive residual. It retains the prepared field instead
 of replacing it with sparse bilinear terrain. Fixed cell probes/modes preserve

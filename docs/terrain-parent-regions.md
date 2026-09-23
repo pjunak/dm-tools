@@ -38,14 +38,14 @@ spectral or hydrological acceptance.
 
 ## Verified parent contract
 
-Only [current build v17](../schemas/terrain/build-v17.schema.json) from the exact
+Only [current build v18](../schemas/terrain/build-v18.schema.json) from the exact
 current source/runtime is accepted. Rebuild after changing installed source or
 dependencies. Old builds have no compatibility loader.
 
 The loader checks completion, manifest identity, all required product names,
 sizes and hashes, runtime, algorithms, settings and coordinates. Numeric headers,
 dtypes and shapes are checked before allocation; object arrays are forbidden.
-The [typed input snapshot](../schemas/terrain/input-snapshot-v1.schema.json)
+The [typed input snapshot](../schemas/terrain/input-snapshot-v2.schema.json)
 contains full coastline geometry, explicitly typed constraints, settings and
 saved authoring controls. Original project/SVG files need not remain available.
 Their hashes remain provenance; the snapshot does not pretend to recreate their

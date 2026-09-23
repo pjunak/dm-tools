@@ -39,13 +39,17 @@ coarse leakage. Cardinal direction and broad protected gaps remain visible;
 cartographic acceptance, parent-view transitions and finer hydrology stay open.
 The external-engine inventory below retains the 2026-09-13 audit date.
 
+Connected scale-aware channel review and global authored drainage density were
+implemented on 2026-09-24. See the [measurements](2026-09-24-connected-drainage-review.md);
+D8 geometry, runoff, physical river widths and finer local hydrology remain open.
+
 ## Implemented baseline
 
 | Area | Implemented behavior | Remaining boundary |
 |---|---|---|
 | Input editor | Retained reference with freshness, geographic pan/zoom, property/geometry edits, undo/redo, guarded Save/Save As, resolution presets, ground inspection and cooperative Cancel/Esc with elapsed stage progress ([ADR-0064](../adr/0064-cancel-generation-at-safe-checkpoints.md)) | Automatic draft preview, comparison views, vertex insertion/removal, climate-region inputs; individual native steps have no stop-latency bound |
 | Local numeric builds | Saved-project CLI, Float32 NPY/GeoTIFF, review NPZ, previews, diagnostics and completion hashes | World placement, vector products, external desktop GIS acceptance |
-| Scale-aware water display | Cached sampled-pool screen areas, fading small lakes, fixed-size viewport rendering, native PNG policy and actual ground-spacing readout ([ADR-0057](../adr/0057-display-water-at-the-appropriate-scale.md)) | River size/width model, connected network selection and resolution-gated visibility; diagnostic channels remain complete |
+| Scale-aware water display | Cached sampled-pool screen areas, fading small lakes, fixed-size viewport rendering, native PNG policy and actual ground-spacing readout ([ADR-0057](../adr/0057-display-water-at-the-appropriate-scale.md)) | Physical river size/width model and resolution-gated local hydrology; connected scale selection and complete diagnostic review are implemented ([ADR-0069](../adr/0069-connect-and-scale-drainage-review.md)) |
 | Zoom-driven local detail | Unchanged-field sampling, verified saved-parent replay and explicit experimental residual CLI/API; exact shared samples, terrain-weighted shared edges, protected authored/water/channel context, bounded cell support and serial parent/result sessions with freshness checks and shared admission estimates ([ADR-0061](../adr/0061-verify-parents-and-isolate-local-detail.md), [ADR-0062](../adr/0062-reuse-bounded-detail-cell-support.md), [ADR-0063](../adr/0063-reuse-verified-parent-region-sessions.md)) | Remaining grid direction, visual/coarse-power acceptance, parent-view transitions, broader slope/bound checks, finer inherited hydrology, small-river readiness, zoom jobs and broader native/application-memory calibration |
 | Detail-band amplitudes (R34) | Fixed geometric coefficients, explicit finer-band tails and fixed regional shape carriers; base macro fields agree exactly across 2/6/12 bands ([ADR-0059](../adr/0059-preserve-noise-band-amplitudes.md)) | Coarse-cell averages and authored drainage still change; finished-parent restriction, coarse spectral power and route inheritance remain open |
 | Coordinates/seeds (R01-R03) | Source/local round trips, endpoint grids, actual spacing metadata and portable named seeds | Planetary CRS, configurable process spacing, cell-average/resampling policy |
@@ -169,7 +173,7 @@ measured benefit and packaging/workflow evidence; it is not the next prerequisit
 ## Evidence and next experiments
 
 - [Verified-parent detail](2026-09-23-verified-parent-detail.md) implements portable
-  build v17 snapshots, complete parent replay and separate sampling/enrichment
+  build v18 snapshots, complete parent replay and separate sampling/enrichment
   commands. Fixed support avoids output-density drift; original reference
   structure, parent nodes, water and authored/channel cores are retained.
   [Shared-edge support](2026-09-23-shared-edge-detail.md) now carries additions

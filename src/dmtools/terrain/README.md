@@ -300,9 +300,28 @@ are not embedded. Saves use a temporary file followed by atomic replacement so
 an interrupted write does not leave a partially written project. The current format is
 strict: unknown fields or unsupported versions are rejected rather than
 guessed. The public contract is
-[`schemas/terrain/project-v5.schema.json`](../../../schemas/terrain/project-v5.schema.json)
+[`schemas/terrain/project-v6.schema.json`](../../../schemas/terrain/project-v6.schema.json)
 and its rationale is recorded in
 [ADR-0006](../../../docs/adr/0006-versioned-terrain-project.md).
+
+## Drainage inspection and density
+
+Enable **Drainage review** to see connected planned channels. At overview scale,
+smaller tributaries fade out; zoom reveals the existing network. Lines are drawn
+at screen resolution so their thickness does not grow with magnification.
+**All channels** shows the entire planned network. Every sampled uphill edge
+remains red in either view. Enable **Depressions** separately for basin/spill
+polygons; it starts off to keep channel inspection clear.
+
+For fewer generated channels, set **Drainage density** to 0.5 and generate again.
+The default 1.0 retains the established terrain behavior. This is an input change,
+so the previous result stays visible as a stale, read-only reference until generation.
+Density controls channel initiation, not rainfall, physical river width or an
+exact percentage of channels. See the [drainage guide](../../../docs/terrain-drainage.md).
+
+Zooming the review does not generate finer hydrology. Canonical routes still use
+an eight-direction grid; straight runs and angular turns remain a generation
+limitation. The workbench shows its fixed routing spacing alongside the review.
 
 ## Generator settings
 
@@ -317,6 +336,7 @@ and its rationale is recorded in
 | Fine-detail strength | Ratio of each band amplitude to the preceding band | 0.55 |
 | Coastal rise distance | Distance over which relief rises from sea level | 180 km |
 | Elevation variability | Mix between an even interior and generated relief | 0.75 |
+| Drainage density | Automatic channel initiation multiplier; 0.25–2, lower forms fewer channels | 1.0 |
 
 Each noise band has a fixed share of the amplitude budget: band `k` has weight
 `(1-r) * r^k`, where `r` is Fine-detail strength and `k` starts at zero. Selecting

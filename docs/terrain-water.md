@@ -51,7 +51,7 @@ are planned in [ADR-0057](adr/0057-display-water-at-the-appropriate-scale.md).
 
 ## Authored and derived data
 
-Current project v5 adds `lake` and `dry_basin` records to `constraints`. Both store
+Current project v6 supports `lake` and `dry_basin` records to `constraints`. Both store
 closed normalized `points`, `water_level_m` and `outlet`. A lake requires a finite
 non-negative level no higher than the generation ceiling; its outlet is a
 normalized boundary point or null. A dry basin requires null for both fields.

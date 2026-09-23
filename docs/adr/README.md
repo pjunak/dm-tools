@@ -96,3 +96,4 @@ supersedes their legacy compatibility commitments during early development.
 - [ADR-0066: Bound terrain rendering scratch](0066-bound-terrain-rendering-scratch.md)
 - [ADR-0067: Own preview images and tile water](0067-own-preview-images-and-tile-water.md)
 - [ADR-0068: Share terrain detail across parent-cell edges](0068-share-terrain-detail-across-edges.md)
+- [ADR-0069: Connect and scale drainage review](0069-connect-and-scale-drainage-review.md)

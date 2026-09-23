@@ -36,7 +36,7 @@ from dmtools.terrain.domain import (
 )
 
 PROJECT_SCHEMA = "dmtools.terrain-project"
-PROJECT_SCHEMA_VERSION = 5
+PROJECT_SCHEMA_VERSION = 6
 PROJECT_EXTENSION = ".dmterrain.json"
 _MAX_PROJECT_BYTES = 16 * 1024 * 1024
 
@@ -130,6 +130,7 @@ def _settings_from_json(value: object) -> TerrainSettings:
         "roughness",
         "coastal_rise_km",
         "variability",
+        "drainage_density",
     }
     _require_keys(data, expected, "settings")
     try:
@@ -147,6 +148,7 @@ def _settings_from_json(value: object) -> TerrainSettings:
             roughness=_number(data["roughness"], "settings.roughness"),
             coastal_rise_km=_number(data["coastal_rise_km"], "settings.coastal_rise_km"),
             variability=_number(data["variability"], "settings.variability"),
+            drainage_density=_number(data["drainage_density"], "settings.drainage_density"),
         )
     except ValueError as error:
         raise TerrainProjectInputError(f"Invalid generator settings: {error}") from error
@@ -290,6 +292,7 @@ def settings_to_json(settings: TerrainSettings) -> dict[str, int | float]:
         "roughness": settings.roughness,
         "coastal_rise_km": settings.coastal_rise_km,
         "variability": settings.variability,
+        "drainage_density": settings.drainage_density,
     }
 
 
@@ -462,7 +465,7 @@ def load_terrain_project(source: Path) -> LoadedTerrainProject:
 
 
 INPUT_SNAPSHOT_SCHEMA = "dmtools.terrain-input-snapshot"
-INPUT_SNAPSHOT_VERSION = 1
+INPUT_SNAPSHOT_VERSION = 2
 
 
 def project_snapshot_to_json(project: TerrainProject) -> dict[str, object]:

@@ -30,6 +30,31 @@ The [research status](docs/research/status.md) separates completed slices from
 partially addressed research goals; unchecked broad items may contain completed
 substeps.
 
+## Drainage improvement checkpoint — 2026-09-24
+
+- [x] Add an authored automatic drainage-density multiplier with deterministic,
+  downstream-connected channel initiation and current-format persistence.
+- [x] Derive connected reaches and unique D8 contributing areas for network
+  inspection; keep MFD capture and physical incision budgets separate.
+- [x] Draw drainage at viewport resolution, reveal tributaries by scale, and
+  retain an all-channel review plus every sampled uphill conflict. A separate
+  Depressions toggle keeps coarse basin polygons out of the default channel view.
+- [x] Record public-fixture density, connectivity, unchanged-default-reference,
+  zoom-rendering and performance evidence before accepting the changes.
+- [ ] **P0 — Reduce D8 direction bias in actual terrain generation.** Compare
+  terrain-guided subgrid paths shared by routing, floor fitting and rendering;
+  preserve junctions, authored divides, incision limits and lake terminals.
+  Display-only smoothing cannot satisfy this requirement.
+  [Current guide](docs/terrain-drainage.md) and
+  [public measurements](docs/research/2026-09-24-connected-drainage-review.md)
+  record the completed inspection/density work and its limits.
+- [ ] **Research — Compare convergent flat routing for global filled depressions.**
+  Reuse the existing basin integer-gradient primitive only after validating
+  global topological order, barrier reachability, retention and MFD capture.
+- [ ] **Research — Compare D-infinity and scale-specific sinuosity metrics.**
+  Measure direction bias and network shape at matching physical scales; a new
+  accumulation scheme alone does not supply realistic continuous river paths.
+
 ## Features
 
 ### Durable data and output products
@@ -119,7 +144,7 @@ substeps.
   [ADR-0036](docs/adr/0036-connect-lake-outflow-with-area-transfer.md).
 - [x] **P1 — Show collected and retained basin nodes.** The workbench and
   finished-ground review now map collected water, collected dry ground and
-  retained nodes. Build v17 exports the classification and retained contribution
+  retained nodes. Build v18 exports the classification and retained contribution
   at each footprint node; sample counts and area accounting remain distinct.
   Exact outlet ground minus water level is reported, including submerged outlets,
   without treating a clear sampled route as proof of a stable lake level. See
@@ -127,7 +152,7 @@ substeps.
 - [x] **P1 — Route internal flats with known exits.** Integer ranks now route
   exact flats without editing the DEM. Every link is vector-contained, real
   downhill alternatives take precedence, and paths to closed pits stay retained.
-  Build v17 exports internal receivers and ranks; details separate resolved flat
+  Build v18 exports internal receivers and ranks; details separate resolved flat
   donors from those reaching lake water. The public flat-outlet fixture covers
   both outcomes. See [ADR-0038](docs/adr/0038-route-basin-flats-with-integer-gradients.md)
   and the [measured rundown](docs/research/2026-09-11-basin-flat-routing.md).
@@ -162,7 +187,7 @@ substeps.
 - [x] **P1 — Check dry collection links between canonical nodes.** Batched
   profiles now reject dry-to-dry, dry-to-water and exact-flat climbs before
   routing; clear alternatives and lower closed pits remain eligible. Complete
-  chosen paths also check cumulative rises before collecting area. Build v17
+  chosen paths also check cumulative rises before collecting area. Build v18
   exports per-link evidence and path excursions. A public narrow point catches
   a 131.44 m climb and reroutes without changing ground. See
   [ADR-0043](docs/adr/0043-review-dry-collection-paths.md) and the
@@ -293,9 +318,10 @@ substeps.
   anchor preservation and downstream closure; never silently expand budgets.
 - [ ] **P1 — Extend regional process controls.** Add drainage density,
   runoff and erosion resistance with measurable effects and authored authority.
-- [x] **P1 — Render drainage review at display size.** Thin canonical D8
-  segments replace enlarged cell blocks. Routing accuracy is unchanged;
-  gridded/coast-parallel paths still need hydrology and river-geometry work.
+- [x] **P1 — Render drainage review at viewport size.** Connected reaches are
+  redrawn with bounded antialiasing at each view scale, with monotone catchment
+  selection and All channels review. Every red conflict remains visible.
+  Routing accuracy is unchanged; grid-aligned paths still need geometry work.
 - [x] **P1 — Support adjacent mainland sections and disconnected islands.** SVG
   land objects are dissolved into one polygonal mask, sub-sampling border
   slivers are repaired, and all components share one metric field and seed.
@@ -347,7 +373,7 @@ editing a finished DEM; see [ADR-0048](docs/adr/0048-keep-zoom-driven-detail-gen
   authored heights move by up to 29.161 m, shared coordinates drift across
   densities and eight sampled channel edges worsen. See the
   [experiment](docs/research/2026-09-23-parent-cell-preservation.md).
-- [x] **P0 — Bind regional requests to a verified immutable parent.** Build v17
+- [x] **P0 — Bind regional requests to a verified immutable parent.** Build v18
   contains typed portable inputs; `sample-parent` verifies completion, hashes,
   frame, runtime and all delivered ground/water values plus reused routing.
   Original source files are no longer needed. Requests and separate output
@@ -699,7 +725,9 @@ execution order.
   Authored lake/dry intent absorbs area and eligible outlets transfer it.
 - [ ] **P1 — Complete physical drainage policy and river products.** Define
   nested depressions, controlling sills, ocean semantics and constrained repair;
-  add river/catchment vectors and user-facing drainage-density/runoff controls.
+  add exportable river/catchment vectors and regional density/runoff controls.
+  Global authored density and in-memory connected reaches are implemented;
+  scale-aware diagnostic display does not establish real river water or widths.
   Canonical topology and sampled outlet clearance do not certify every river
   or every point of the delivered surface.
 - [ ] **P1 — Reconcile authored rivers with generated drainage.** Rivers should

@@ -29,7 +29,7 @@
       "$ref": "#/$defs/hash"
     },
     "runtime": {
-      "$ref": "urn:dmtools:schema:terrain-build:17#/properties/runtime"
+      "$ref": "urn:dmtools:schema:terrain-build:18#/properties/runtime"
     },
     "request": {
       "type": "object",
@@ -155,25 +155,25 @@
       ],
       "properties": {
         "build_id": {
-          "$ref": "urn:dmtools:schema:terrain-build:17#/$defs/hash"
+          "$ref": "urn:dmtools:schema:terrain-build:18#/$defs/hash"
         },
         "manifest_sha256": {
-          "$ref": "urn:dmtools:schema:terrain-build:17#/$defs/hash"
+          "$ref": "urn:dmtools:schema:terrain-build:18#/$defs/hash"
         },
         "elevation_sha256": {
-          "$ref": "urn:dmtools:schema:terrain-build:17#/$defs/hash"
+          "$ref": "urn:dmtools:schema:terrain-build:18#/$defs/hash"
         },
         "routing_sha256": {
-          "$ref": "urn:dmtools:schema:terrain-build:17#/$defs/hash"
+          "$ref": "urn:dmtools:schema:terrain-build:18#/$defs/hash"
         },
         "input_snapshot_sha256": {
-          "$ref": "urn:dmtools:schema:terrain-build:17#/$defs/hash"
+          "$ref": "urn:dmtools:schema:terrain-build:18#/$defs/hash"
         },
         "project_sha256": {
-          "$ref": "urn:dmtools:schema:terrain-build:17#/$defs/hash"
+          "$ref": "urn:dmtools:schema:terrain-build:18#/$defs/hash"
         },
         "svg_sha256": {
-          "$ref": "urn:dmtools:schema:terrain-build:17#/$defs/hash"
+          "$ref": "urn:dmtools:schema:terrain-build:18#/$defs/hash"
         },
         "replay_algorithm": {
           "const": "verified-parent-field-replay@1"
@@ -394,16 +394,16 @@
       ],
       "properties": {
         "samples.npz": {
-          "$ref": "urn:dmtools:schema:terrain-build:17#/$defs/product"
+          "$ref": "urn:dmtools:schema:terrain-build:18#/$defs/product"
         },
         "inputs.json": {
-          "$ref": "urn:dmtools:schema:terrain-build:17#/$defs/product"
+          "$ref": "urn:dmtools:schema:terrain-build:18#/$defs/product"
         },
         "scientific.png": {
-          "$ref": "urn:dmtools:schema:terrain-build:17#/$defs/product"
+          "$ref": "urn:dmtools:schema:terrain-build:18#/$defs/product"
         },
         "comparison.png": {
-          "$ref": "urn:dmtools:schema:terrain-build:17#/$defs/product"
+          "$ref": "urn:dmtools:schema:terrain-build:18#/$defs/product"
         }
       }
     }

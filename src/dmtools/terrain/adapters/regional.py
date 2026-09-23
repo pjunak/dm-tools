@@ -28,7 +28,7 @@ from dmtools.terrain.pipeline.generate import (
 from dmtools.terrain.pipeline.landforms import LANDFORM_ALGORITHM_ID
 from dmtools.terrain.pipeline.regional import REGIONAL_SAMPLING_ALGORITHM_ID, RegionalTerrainSamples
 
-REGIONAL_SCHEMA_VERSION = 1
+REGIONAL_SCHEMA_VERSION = 2
 
 
 def _write_json(path: Path, value: object) -> None:

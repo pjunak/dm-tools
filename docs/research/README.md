@@ -12,6 +12,10 @@ in the current status or a new dated report.
 
 ## Implemented and measured work
 
+- [Connected drainage review and authored density - 2026-09-24](2026-09-24-connected-drainage-review.md)
+  measures connected scale selection, viewport redraws and explicit density
+  controls; records the remaining D8 geometry and finer-hydrology limitations.
+
 - [Shared-edge terrain detail - 2026-09-23](2026-09-23-shared-edge-detail.md)
   connects experimental detail using terrain-slope weights, preserves parent nodes
   and moments, and measures quantized slopes, coarse leakage and remaining grid direction.
