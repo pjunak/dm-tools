@@ -396,11 +396,20 @@ editing a finished DEM; see [ADR-0048](docs/adr/0048-keep-zoom-driven-detail-gen
   and preserve valid reusable work. Bounded file reads avoid allocating the product
   safety ceiling; detail protection queries batch all intersections without
   dropping features. See [ADR-0065](docs/adr/0065-admit-regional-memory-estimates.md).
+- [x] **P1 — Bound ground-rendering scratch and regional comparison canvases.**
+  Tile both ground styles with exact gradient halos; keep native scientific and
+  numeric outputs. Cap review-only comparison panels at 1024 per side, retaining
+  native difference extrema and explicit preview metadata. Close owned pixel
+  buffers and check saved-parent cancellation between tiles. Thin-region detail
+  peaks fell from 1078 to 157 MiB in the public stress case; see
+  [ADR-0066](docs/adr/0066-bound-terrain-rendering-scratch.md) and the
+  [measurements](docs/research/2026-09-23-bounded-terrain-rendering.md).
 - [ ] **P1 — Finish total local-generation memory calibration and ownership.**
   Shared admission is implemented for saved-parent application jobs, not an OS
-  memory cap. Extend the [fresh-process evidence](docs/research/2026-09-23-regional-memory-admission.md)
-  to maximal parents, dense/overlapping geometry, near-limit and skinny regions,
-  simultaneous jobs, decoder expansion and long sessions. Include editor images,
+  memory cap. The [rendering follow-up](docs/research/2026-09-23-bounded-terrain-rendering.md)
+  adds near-limit square/thin requests and a 4096-longest-side public parent.
+  Extend to maximum node counts, dense/overlapping geometry, simultaneous jobs,
+  decoder expansion and long sessions. Include editor images,
   whole-map jobs and unrelated retained work before adding a viewport scheduler.
   Recursive enrichment is not implemented.
 - [ ] **P1 — Preserve hydrological context during local enrichment.** Keep
@@ -751,17 +760,21 @@ execution order.
   end-to-end cost estimates.
   The [guide-bounds comparison](docs/research/2026-09-13-water-guide-bounds.md)
   adds larger lake/constraint scenes and separates forecast planning from
-  generation and evidence serialization. Export timing, 4096-output
-  cases, larger constraint mixes and agreed latency/memory budgets remain.
+  generation and evidence serialization. The
+  [rendering follow-up](docs/research/2026-09-23-bounded-terrain-rendering.md)
+  adds a 4096-longest-side public build and larger saved-parent exports.
+  Broader end-to-end export timings, maximum-resolution terrain/constraint mixes
+  and agreed latency/memory budgets remain.
 - [ ] **P1 — Optimize measured boundary-distance cost.** Prototype indexed
   coast-segment distance queries on complex coasts before a native rewrite;
   the prior simple-coast STRtree probe was slower. Preserve exact masks,
   shared samples, numeric hashes and routing products. Compare simple coasts,
   islands, holes and many authored regions; retain peak memory evidence.
-- [ ] **P1 — Reduce preview peak memory.** Profile full-raster RGB and
-  hillshade temporaries, then compare tiled rendering with gradient halos and
-  identical pixels/alpha/metadata. Measure 4096 separately before assuming
-  full-resolution previews fit the intended desktop memory budget.
+- [ ] **P1 — Finish preview memory ownership and calibration.** Ground RGB and
+  hillshade scratch is now tiled with exact pixels/alpha/metadata, and regional
+  comparison panels are bounded; see the completed rendering item above.
+  Measure remaining full-raster water/composition/diagnostic images and concurrent
+  editor ownership before claiming the whole desktop preview fits its budget.
 - [ ] **P1 — Split growing modules along the next feature boundaries.** Extract
   structure-profile preparation from generation and workbench controls/drawing
   as those features change. Basin/conflict diagnostics are now extracted;

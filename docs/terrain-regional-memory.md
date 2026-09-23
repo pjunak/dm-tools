@@ -88,12 +88,23 @@ allowance, and the largest of these serial stage allowances:
   release their pair array before the next batch.
 - Cold preparation/replay: 4096 bytes per node of a 257 by 257 canonical grid,
   plus the geometry allowance. This reservation disappears for prepared sessions.
-- Rendering: 256 bytes per buffered sample, plus the three-panel comparison
-  canvas in detail mode, including its minimum width and caption height.
+- Rendering: 8 bytes per buffered sample in reference mode or 32 in detail mode
+  for native images/crops/resampling, plus 256 bytes per sample of one tile
+  (at most 258 by 258 including the gradient halo). Detail also charges four
+  bytes per pixel of its bounded three-panel comparison canvas, at most
+  3072 by 1080. These are allocation allowances, not decoded image file sizes.
 
 Cached writes retain an active export reservation. They use the same conservative
 new-result allowance as uncached writes. These operational estimates and counters
 never enter the terrain seed, schema or artifact identity.
+
+Ground shading now processes 256 by 256 cores with one-node gradient halos.
+It retains the original grid spacing and full native scientific output; there
+is no resolution reduction of numeric terrain. Only `comparison.png` fits each
+panel within 1024 by 1024, without upscaling. Difference colours and labels use
+the native maximum absolute height change. Owned render buffers explicitly close
+on success and cancellation; in-memory Pillow context exit alone does not free
+them. See [ADR-0066](adr/0066-bound-terrain-rendering-scratch.md).
 
 ## Ownership and remaining limits
 
@@ -110,5 +121,6 @@ its pool. Native geometry complexity, decoder/Python expansion and concurrent
 application activity still require broader calibration. It neither discovers
 available RAM nor enforces an OS limit. A scheduler, hard process isolation,
 recursive enrichment and finer hydrology are not implemented. See the
-[measurements](research/2026-09-23-regional-memory-admission.md),
+[initial measurements](research/2026-09-23-regional-memory-admission.md),
+[near-limit/thin-region rendering measurements](research/2026-09-23-bounded-terrain-rendering.md),
 [ADR-0065](adr/0065-admit-regional-memory-estimates.md) and [TODO](../TODO.md).

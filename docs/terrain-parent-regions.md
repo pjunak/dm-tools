@@ -23,8 +23,11 @@ Open `artifacts/detail-window/comparison.png`: left is the verified reference,
 middle is experimental ground, and right is the actual added height in metres
 (blue lowers, red raises). The reference and detailed panels use the same height
 scale; the difference panel uses the largest absolute change in this result.
-`scientific.png` contains only the detailed ground. Nothing is loaded into the
-workbench automatically.
+Each comparison panel fits within 1024 by 1024 pixels without upscaling; a
+footer and PNG metadata identify reduced previews and their native dimensions.
+The maximum added height comes from the native samples before resizing.
+`scientific.png` retains the full requested core size and contains only the
+detailed ground. Nothing is loaded into the workbench automatically.
 
 Use `--amplitude-m` in (0, 100]; the default is 12 m. This is an upper residual
 budget, not a calibrated geological parameter. Parent settings and their noise
@@ -80,7 +83,7 @@ claim a hard total-memory/time bound for arbitrary input geometry.
 | `samples.npz` | Buffered ground/mask, axes, sampled water and basin IDs; detail mode also includes reference ground, actual added heights, addressed cell budgets and fixed reference/detailed moments |
 | `inputs.json` | Portable typed parent inputs, unchanged |
 | `scientific.png` | Ground shaded with the halo, then cropped to the requested core |
-| `comparison.png` | Reference/detail/added-height comparison, experimental mode only |
+| `comparison.png` | Reference/detail/added-height review; each panel at most 1024 by 1024, experimental mode only |
 | `manifest.json` | Parent identities and replay counts, request/grids, runtime, stage seed, detail evidence, capability limits, file hashes and completion identity |
 
 Load NPZ with `allow_pickle=False`. `core_slice.rows` and `.columns` contain

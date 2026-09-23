@@ -9,6 +9,8 @@ from weakref import finalize
 import numpy as np
 
 from dmtools.terrain.adapters.parent import LoadedTerrainParent, ParentLoadPlan
+from dmtools.terrain.adapters.regional_review import comparison_layout
+from dmtools.terrain.adapters.render import GROUND_RENDER_TILE_EDGE
 from dmtools.terrain.domain.models import ElevationPoint
 from dmtools.terrain.domain.regional import (
     DETAIL_CELL_LIMIT,
@@ -203,8 +205,12 @@ def estimate_regional_job(
         sampling += 2048 * cells
     # Canonical preparation and parent replay have larger simultaneous fields.
     preparation = 4096 * 257**2 + parent.geometry_allowance_bytes if needs_preparation else 0
-    rendering = 256 * count
+    tile_samples = (min(height, GROUND_RENDER_TILE_EDGE + 2)
+                    * min(width, GROUND_RENDER_TILE_EDGE + 2))
+    rendering = (32 if detail else 8) * count + 256 * tile_samples
     if detail:
         rows, columns = request.core_slices
-        rendering += 12 * max(300, columns.stop - columns.start) * (rows.stop - rows.start + 56)
+        layout = comparison_layout(columns.stop - columns.start, rows.stop - rows.start)
+        canvas_width, canvas_height = layout.canvas_size
+        rendering += 4 * canvas_width * canvas_height
     return RegionalJobEstimate(arrays, sampling, preparation, rendering, 16 * MIB)

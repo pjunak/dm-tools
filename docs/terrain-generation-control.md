@@ -15,7 +15,9 @@ still reports its error. Start a new generation normally after either outcome.
 
 Stops are checked before generation, around progress callbacks, between field,
 replay and local-detail batches, while sampling channel/water profiles, and before
-artifact publication. A request arriving during a NumPy, Shapely, rendering,
+artifact publication. Saved-parent exports also check between ground/difference
+render tiles and comparison panels, releasing derived pixel buffers on exit.
+A request arriving during an individual NumPy, Shapely, rendering,
 hashing or file-writing operation waits for the next checkpoint. There is no
 promised maximum stop latency, forced thread termination or rollback of file I/O.
 Import/open/save operations do not yet have a Cancel control.

@@ -93,3 +93,4 @@ supersedes their legacy compatibility commitments during early development.
 - [ADR-0063: Reuse verified parent-region sessions](0063-reuse-verified-parent-region-sessions.md)
 - [ADR-0064: Cancel generation at safe checkpoints](0064-cancel-generation-at-safe-checkpoints.md)
 - [ADR-0065: Admit regional memory estimates](0065-admit-regional-memory-estimates.md)
+- [ADR-0066: Bound terrain rendering scratch](0066-bound-terrain-rendering-scratch.md)

@@ -1,6 +1,7 @@
 """Render and export colour-graded terrain previews."""
 
 import json
+from contextlib import closing
 from dataclasses import asdict
 from pathlib import Path
 from typing import Literal
@@ -31,6 +32,7 @@ from dmtools.terrain.domain import (
 )
 from dmtools.terrain.pipeline import GeneratedTerrain
 from dmtools.terrain.pipeline.basin_flow import BasinCatchmentClass
+from dmtools.terrain.pipeline.control import CancellationToken, check_cancelled
 from dmtools.terrain.pipeline.diagnostics import (
     CUT_LIMIT,
     DEPRESSION,
@@ -39,6 +41,8 @@ from dmtools.terrain.pipeline.diagnostics import (
 )
 
 type RenderStyle = Literal["cartographic", "scientific"]
+
+GROUND_RENDER_TILE_EDGE = 256
 
 _SCIENTIFIC_COLOUR_STOPS = np.linspace(0.0, 1.0, len(OLERON_LAND_RGB))
 
@@ -124,34 +128,59 @@ def _hillshade(
     return np.clip(0.72 + 0.38 * illumination, 0.55, 1.08)
 
 
-def render_ground_map(
+def _ground_rgba(
     elevation_m: NDArray[np.float32], land_mask: NDArray[np.bool_], grid: EndpointGrid,
-    maximum_elevation_m: float, *, style: RenderStyle = "scientific",
-) -> Image.Image:
-    """Render a sampled ground grid; callers crop their halo after shading."""
-
-    colour_scale_maximum_m = (
-        CARTOGRAPHIC_RELIEF_MAX_ELEVATION_M
-        if style == "cartographic"
-        else maximum_elevation_m
-    )
+    colour_scale_maximum_m: float, style: RenderStyle,
+) -> NDArray[np.uint8]:
     normalized = np.clip(
-        np.nan_to_num(elevation_m, nan=0.0) / colour_scale_maximum_m,
-        0.0,
-        1.0,
+        np.nan_to_num(elevation_m, nan=0.0) / colour_scale_maximum_m, 0.0, 1.0,
     )
     rgb = elevation_palette_rgb(normalized, style=style) * 255.0
+    # Use the original grid's spacing. Reconstructing a tile extent would introduce
+    # rounding differences into the slopes. The caller supplies stencil halos.
     rgb *= _hillshade(elevation_m, grid, style)[..., np.newaxis]
     rgb_uint8 = np.clip(rgb, 0, 255).astype(np.uint8)
     alpha = np.where(land_mask, 255, 0).astype(np.uint8)
-    rgba = np.dstack((rgb_uint8, alpha))
-    image = Image.fromarray(rgba, mode="RGBA")
-    _stops, _colours, palette_id = _palette(style)
-    image.info["dmtools.render_style"] = style
-    image.info["dmtools.colour_palette"] = palette_id
-    image.info["dmtools.colour_scale_maximum_m"] = f"{colour_scale_maximum_m:g}"
-    image.info["dmtools.water_visibility"] = "none"
-    return image
+    return np.dstack((rgb_uint8, alpha))
+
+
+def render_ground_map(
+    elevation_m: NDArray[np.float32], land_mask: NDArray[np.bool_], grid: EndpointGrid,
+    maximum_elevation_m: float, *, style: RenderStyle = "scientific",
+    cancellation: CancellationToken | None = None,
+) -> Image.Image:
+    """Shade full-resolution pixels with bounded scratch and one-node tile halos."""
+    if elevation_m.shape != grid.shape or land_mask.shape != grid.shape:
+        raise ValueError("Ground rendering requires arrays matching the supplied grid.")
+    check_cancelled(cancellation)
+    colour_scale_maximum_m = (
+        CARTOGRAPHIC_RELIEF_MAX_ELEVATION_M if style == "cartographic" else maximum_elevation_m
+    )
+    image = Image.new("RGBA", (grid.width, grid.height))
+    try:
+        for top in range(0, grid.height, GROUND_RENDER_TILE_EDGE):
+            bottom = min(top + GROUND_RENDER_TILE_EDGE, grid.height)
+            sy, ey = max(0, top - 1), min(grid.height, bottom + 1)
+            for left in range(0, grid.width, GROUND_RENDER_TILE_EDGE):
+                check_cancelled(cancellation)
+                right = min(left + GROUND_RENDER_TILE_EDGE, grid.width)
+                sx, ex = max(0, left - 1), min(grid.width, right + 1)
+                rgba = _ground_rgba(elevation_m[sy:ey, sx:ex], land_mask[sy:ey, sx:ex],
+                                    grid, colour_scale_maximum_m, style)
+                with (closing(Image.fromarray(rgba)) as tile,
+                      closing(tile.crop((left - sx, top - sy, right - sx, bottom - sy))) as core):
+                    image.paste(core, (left, top))
+                del rgba
+        check_cancelled(cancellation)
+        _stops, _colours, palette_id = _palette(style)
+        image.info["dmtools.render_style"] = style
+        image.info["dmtools.colour_palette"] = palette_id
+        image.info["dmtools.colour_scale_maximum_m"] = f"{colour_scale_maximum_m:g}"
+        image.info["dmtools.water_visibility"] = "none"
+        return image
+    except BaseException:
+        image.close()
+        raise
 
 
 def render_height_map_layers(

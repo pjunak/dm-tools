@@ -24,6 +24,10 @@ results while checking freshness on every write; see the
 Saved-parent jobs now use shared memory admission estimates, with bounded reads
 and protection-query batches; [measurements](2026-09-23-regional-memory-admission.md)
 keep actual process peaks separate from estimates and remaining calibration.
+The [rendering follow-up](2026-09-23-bounded-terrain-rendering.md) adds bounded
+scratch, review-only panel limits and explicit pixel-buffer release, with
+near-limit square/thin workloads and a 4096-longest-side parent. Native scientific
+pixels and terrain numbers remain unchanged; total application memory remains open.
 The external-engine inventory below retains the 2026-09-13 audit date.
 
 ## Implemented baseline

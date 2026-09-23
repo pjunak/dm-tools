@@ -88,6 +88,12 @@ defines this lifecycle. `application/region_memory.py` adds shared admission
 reservations for staged loading, retained context and active generation/export;
 see [ADR-0065](../adr/0065-admit-regional-memory-estimates.md). Estimates are
 separate from exact cache bytes and do not impose an OS process-memory ceiling.
+`adapters/render.py` shades full native ground in tiles with one-node halos;
+`adapters/regional_review.py` owns bounded comparison layouts and tiled difference
+colouring. The admission estimator uses the same tile/layout limits. Explicit
+image ownership releases scratch on completion and cancellation. This changes
+neither numerical stages nor native scientific resolution; see
+[ADR-0066](../adr/0066-bound-terrain-rendering-scratch.md).
 
 The next durable-build work adds world georeferencing,
 derived GIS products, explicit hard/soft/inequality projection after optional

@@ -14,8 +14,10 @@ from typing import Any
 import numpy as np
 import pytest
 from jsonschema import Draft202012Validator, ValidationError, validate
+from PIL import Image
 from referencing import Registry, Resource
 
+from benchmarks.regional_memory import sample_bounds
 from benchmarks.terrain import fixture
 from dmtools.cli import main
 from dmtools.terrain.adapters.build import canonical_json, file_sha256, runtime_identity
@@ -859,3 +861,34 @@ def test_parent_product_larger_than_declared_is_rejected_before_reading(
     monkeypatch.setattr(Path, "open", guarded)
     with pytest.raises(ValueError, match="oversized"):
         adapter.load_terrain_parent(folder, runtime_identity())
+
+
+def test_detail_export_bounds_only_review_panels_and_keeps_native_samples(
+    saved_parent: Path, tmp_path: Path,
+) -> None:
+    loaded = load_terrain_parent(saved_parent, runtime_identity())
+    bounds = sample_bounds(loaded.data.grid, 1024, (3, 2049))
+    destination = tmp_path / "thin-detail"
+    manifest = application.sample_parent_region(
+        saved_parent, destination, bounds, 1024, detail_settings=RegionalDetailSettings(),
+    )
+    document = json.loads(manifest.read_bytes())
+    with Image.open(destination / "scientific.png") as scientific:
+        assert scientific.size == (3, 2049)
+        assert "dmtools.preview_reduced" not in scientific.info
+    with Image.open(destination / "comparison.png") as comparison:
+        assert comparison.size == (900, 1080)
+        assert comparison.info["dmtools.native_size"] == "3x2049"
+        assert comparison.info["dmtools.panel_size"] == "1x1024"
+        assert comparison.info["dmtools.preview_reduced"] == "true"
+        assert comparison.info["dmtools.numeric_source_sha256"] == file_sha256(
+            destination / "samples.npz",
+        )
+    with np.load(destination / "samples.npz", allow_pickle=False) as arrays:
+        rows = slice(*document["core_slice"]["rows"])
+        columns = slice(*document["core_slice"]["columns"])
+        assert arrays["elevation_m"][rows, columns].shape == (2049, 3)
+    assert document["core_grid"]["width"] == 3
+    assert document["core_grid"]["height"] == 2049
+    for name, product in document["outputs"].items():
+        assert file_sha256(destination / name) == product["sha256"]

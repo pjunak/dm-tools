@@ -1,17 +1,18 @@
 """Publish independent parent-region artifacts and review images, never modify a parent."""
 
 import os
+from contextlib import closing
 from dataclasses import asdict
 from hashlib import sha256
 from pathlib import Path
 
 import numpy as np
-from PIL import Image, ImageDraw
 from PIL.PngImagePlugin import PngInfo
 
 from dmtools.terrain.adapters.build import canonical_json, file_sha256
 from dmtools.terrain.adapters.parent import LoadedTerrainParent
 from dmtools.terrain.adapters.project import project_snapshot_to_json
+from dmtools.terrain.adapters.regional_review import render_parent_comparison
 from dmtools.terrain.adapters.render import render_ground_map
 from dmtools.terrain.domain.coordinates import Bounds, EndpointGrid, LocalMetricFrame
 from dmtools.terrain.domain.regional import (
@@ -87,13 +88,13 @@ def write_parent_region_products(
     metadata.add_text("dmtools.note", note)
     paths = [("samples.npz", "authoritative"), ("inputs.json", "input-snapshot")]
     with (
-        render_ground_map(
+        closing(render_ground_map(
             samples.elevation_m,
             samples.land_mask,
             samples.request.grid(include_halo=True),
-            samples.maximum_elevation_m,
-        ) as buffered,
-        buffered.crop(crop) as image,
+            samples.maximum_elevation_m, cancellation=cancellation,
+        )) as buffered,
+        closing(buffered.crop(crop)) as image,
     ):
         with (destination / "scientific.png").open("xb") as stream:
             image.save(stream, format="PNG", pnginfo=metadata)
@@ -101,46 +102,22 @@ def write_parent_region_products(
         check_cancelled(cancellation)
         if detail is not None:
             with (
-                render_ground_map(
+                closing(render_ground_map(
                     detail.reference_elevation_m,
                     samples.land_mask,
                     samples.request.grid(include_halo=True),
-                    samples.maximum_elevation_m,
-                ) as reference_buffered,
-                reference_buffered.crop(crop) as reference,
+                    samples.maximum_elevation_m, cancellation=cancellation,
+                )) as reference_buffered,
+                closing(reference_buffered.crop(crop)) as reference,
+                closing(render_parent_comparison(
+                    reference, image, detail.added_detail_m[rows, columns],
+                    cancellation=cancellation,
+                )) as review,
             ):
-                delta = detail.added_detail_m[rows, columns].astype(np.float64)
-                peak = max(float(np.abs(delta).max()), 1e-9)
-                amount = np.abs(delta) / peak
-                rgb = np.full((*delta.shape, 3), 230.0, dtype=np.float64)
-                rgb[..., 0] -= 190 * np.maximum(-delta / peak, 0)
-                rgb[..., 2] -= 190 * np.maximum(delta / peak, 0)
-                rgb[..., 1] -= 170 * amount
-                with Image.fromarray(rgb.astype(np.uint8)) as difference:
-                    panel_width = max(300, image.width)
-                    with Image.new(
-                        "RGB", (3 * panel_width, image.height + 56), "#121c20"
-                    ) as review:
-                        draw = ImageDraw.Draw(review)
-                        for i, (panel, label) in enumerate(
-                            (
-                                (reference, "Verified reference"),
-                                (image, "Experimental detail"),
-                                (
-                                    difference,
-                                    f"Added metres: blue -{peak:.3f}, red +{peak:.3f}",
-                                ),
-                            )
-                        ):
-                            review.paste(panel, (i * panel_width, 30))
-                            draw.text((i * panel_width + 6, 8), label, fill="white")
-                        draw.text(
-                            (6, image.height + 36),
-                            "Ground only. Local hydrology unreviewed.",
-                            fill="white",
-                        )
-                        with (destination / "comparison.png").open("xb") as stream:
-                            review.save(stream, format="PNG", pnginfo=metadata)
+                for key, value in review.info.items():
+                    metadata.add_text(str(key), str(value))
+                with (destination / "comparison.png").open("xb") as stream:
+                    review.save(stream, format="PNG", pnginfo=metadata)
             paths.append(("comparison.png", "derived"))
     return {
         name: {

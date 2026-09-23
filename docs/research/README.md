@@ -12,6 +12,10 @@ in the current status or a new dated report.
 
 ## Implemented and measured work
 
+- [Bounded terrain rendering - 2026-09-23](2026-09-23-bounded-terrain-rendering.md)
+  tiles native ground shading, bounds regional comparison panels and releases
+  owned images on cancellation; measures near-limit and extreme-aspect regions.
+
 - [Regional memory admission - 2026-09-23](2026-09-23-regional-memory-admission.md)
   reserves estimated parent/job memory, removes oversized file-read allocations
   and bounds detail intersection batches; compares fresh-process resident peaks.

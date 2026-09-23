@@ -17,9 +17,9 @@ from benchmarks.parent_session import artifact_identity, workload
 from benchmarks.terrain import peak_resident_bytes
 from dmtools.terrain.adapters.build import canonical_json, file_sha256, runtime_identity
 from dmtools.terrain.application.parent_region import ParentRegionSession
-from dmtools.terrain.application.region_memory import RegionalMemoryBudget
+from dmtools.terrain.application.region_memory import MIB, RegionalMemoryBudget
 from dmtools.terrain.domain import EndpointGrid
-from dmtools.terrain.domain.regional import RegionalDetailSettings
+from dmtools.terrain.domain.regional import RegionalDetailSettings, RegionalSamplingRequest
 
 
 def numeric_storage(*roots: object) -> int:
@@ -50,14 +50,34 @@ def numeric_storage(*roots: object) -> int:
     return sum(buffers.values())
 
 
-def measure(source: Path, destination: Path, factor: int, mode: str) -> dict[str, object]:
+def sample_bounds(
+    grid: EndpointGrid, factor: int, size: tuple[int, int] | None,
+) -> tuple[float, float, float, float]:
+    """Choose an exactly addressed core, including deliberately thin stress windows."""
+    if size is None:
+        return workload(grid)[0][1]
+    width, height = size
+    if type(width) is not int or type(height) is not int or min(width, height) < 2:
+        raise ValueError("Window samples must be two integer dimensions of at least two.")
+    left = int(.35 * (grid.width - 1)) * factor
+    top = int(.35 * (grid.height - 1)) * factor
+    request = RegionalSamplingRequest(
+        "0" * 64, grid, factor, (left, top, left + width - 1, top + height - 1),
+    )
+    return request.grid().extent_km
+
+
+def measure(
+    source: Path, destination: Path, factor: int, mode: str, *,
+    window_samples: tuple[int, int] | None = None, memory_mib: int = 1024,
+) -> dict[str, object]:
     runtime = runtime_identity()
     document: dict[str, Any] = json.loads((source / "manifest.json").read_bytes())
     frame = document["coordinates"]
     grid = EndpointGrid(tuple(frame["extent_km"]), frame["width"], frame["height"])
-    bounds = workload(grid)[0][1]
+    bounds = sample_bounds(grid, factor, window_samples)
     baseline = peak_resident_bytes()
-    budget = RegionalMemoryBudget()
+    budget = RegionalMemoryBudget(memory_mib * MIB)
     settings = RegionalDetailSettings(40.) if mode == "detail" else None
     steps: list[dict[str, object]] = []
     identity = None
@@ -92,7 +112,8 @@ def measure(source: Path, destination: Path, factor: int, mode: str) -> dict[str
         raise RuntimeError("Runtime changed during the benchmark.")
     return {
         "parent_build_id": document["build_id"], "runtime": runtime, "mode": mode,
-        "refinement": factor, "baseline_process_peak_bytes": baseline,
+        "refinement": factor, "window_samples": window_samples, "bounds_km": bounds,
+        "baseline_process_peak_bytes": baseline,
         "retained_estimate": asdict(retained), "retained_estimated_bytes": retained.total_bytes,
         "admission": asdict(budget.info()), "steps": steps,
     }
@@ -104,11 +125,16 @@ def main() -> int:
     parser.add_argument("--refine", nargs="+", type=int, default=[8, 128])
     parser.add_argument("--mode", nargs="+", choices=["reference", "detail"], default=["detail"])
     parser.add_argument("--repeats", type=int, default=1)
+    parser.add_argument("--window-samples", type=int, nargs=2, metavar=("WIDTH", "HEIGHT"),
+                        help="Explicit core shape; default is eight parent cells per axis.")
+    parser.add_argument("--memory-mib", type=int, default=1024)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--worker", action="store_true", help=argparse.SUPPRESS)
     args = parser.parse_args()
+    size = None if args.window_samples is None else tuple(args.window_samples)
     if args.worker:
-        print(json.dumps(measure(args.parent[0], args.output, args.refine[0], args.mode[0])))
+        print(json.dumps(measure(args.parent[0], args.output, args.refine[0], args.mode[0],
+                                 window_samples=size, memory_mib=args.memory_mib)))
         return 0
     output: Path = args.output
     products = output.with_suffix("")
@@ -131,7 +157,8 @@ def main() -> int:
                     completed = subprocess.run(
                         [sys.executable, "-m", "benchmarks.regional_memory", "--worker",
                          "--parent", str(parent), "--refine", str(factor), "--mode", mode,
-                         "--output", str(products / label)],
+                         "--output", str(products / label), "--memory-mib", str(args.memory_mib),
+                         *([] if size is None else ["--window-samples", *map(str, size)])],
                         check=True, capture_output=True, text=True,
                     )
                     row: dict[str, object] = json.loads(completed.stdout)

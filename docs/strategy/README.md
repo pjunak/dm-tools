@@ -293,8 +293,12 @@ record the remaining visible cell pattern and conservative exclusions.
   [ADR-0063](../adr/0063-reuse-verified-parent-region-sessions.md) defines ownership
   and release. [Shared admission estimates](../terrain-regional-memory.md) now
   charge saved-parent loading, retained context and active sampling/rendering;
-  cooperative cancellation is also implemented. Calibrate native/geometry costs
-  and account for the rest of the application before workbench scheduling. Do not
+  cooperative cancellation is also implemented. Ground rendering now uses bounded
+  tile scratch with exact native pixels; regional comparison panels are capped.
+  The [stress measurements](../research/2026-09-23-bounded-terrain-rendering.md)
+  cover near-limit square/thin requests and a 4096-longest-side parent. Next
+  calibrate complex geometry, concurrent/long sessions and the rest of the
+  application before workbench scheduling. Do not
   repeat full replay for every pointer move or silently turn a successful
   experimental result into accepted cartographic detail.
 - Extend the existing [regional prototype C](../research/2026-09-04-terrain-prototype-contracts.md)

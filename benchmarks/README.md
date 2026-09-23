@@ -448,3 +448,15 @@ concurrent tests or other benchmarks. The new report/products paths must remain
 outside each parent. This measures finite workloads, not a hard OS memory limit
 or a guarantee for arbitrary native geometry. See the
 [report](../docs/research/2026-09-23-regional-memory-admission.md).
+
+
+Use `--window-samples WIDTH HEIGHT` for an exactly addressed core instead of
+an eight-parent-cell window. The normal regional node/halo limits still apply.
+For a 65-node public parent, `--refine 128 --window-samples 1409 1409` exercises
+nearly two million buffered samples; `--refine 65536 --window-samples 3 262145`
+and its transposed shape exercise long thin requests. Keep the complete window
+inside the parent. `--memory-mib` chooses the worker's admission budget and
+otherwise defaults to 1024; a larger explicit baseline budget can measure a
+request that an earlier estimator rejected. The report records the requested
+shape, resolved bounds and actual reservation capacity. See the
+[rendering comparison](../docs/research/2026-09-23-bounded-terrain-rendering.md).
