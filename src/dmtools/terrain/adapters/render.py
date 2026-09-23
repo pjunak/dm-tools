@@ -185,36 +185,60 @@ def render_ground_map(
 
 def render_height_map_layers(
     terrain: GeneratedTerrain, *, style: RenderStyle = "cartographic",
+    cancellation: CancellationToken | None = None,
 ) -> tuple[Image.Image, WaterDisplay | None]:
-    """Prepare relief and scale-aware water separately for navigation."""
+    """Transfer owned relief/area images to the caller only after both succeed."""
     image = render_ground_map(terrain.elevation_m, terrain.land_mask, terrain.grid,
-                              terrain.settings.maximum_elevation_m, style=style)
-    image.info["dmtools.water_visibility"] = WATER_DISPLAY_ID if style == "cartographic" else "none"
-    water = (prepare_water_display(terrain.water.surface_m, terrain.land_mask)
-             if style == "cartographic" else None)
-    return image, water
+                              terrain.settings.maximum_elevation_m, style=style,
+                              cancellation=cancellation)
+    water: WaterDisplay | None = None
+    try:
+        image.info["dmtools.water_visibility"] = (
+            WATER_DISPLAY_ID if style == "cartographic" else "none")
+        check_cancelled(cancellation)
+        water = (prepare_water_display(terrain.water.surface_m, terrain.land_mask)
+                 if style == "cartographic" else None)
+        check_cancelled(cancellation)
+        return image, water
+    except BaseException:
+        image.close()
+        if water is not None:
+            water.close()
+        raise
 
 
-def compose_height_map(image: Image.Image, water: WaterDisplay | None) -> Image.Image:
-    """Compose a full-size export; current viewport magnification has no effect."""
+def compose_height_map(
+    image: Image.Image, water: WaterDisplay | None, *,
+    cancellation: CancellationToken | None = None,
+) -> Image.Image:
+    """Copy borrowed ground for native export; viewport magnification has no effect."""
+    check_cancelled(cancellation)
     result = image.copy()
-    if water is not None:
-        with water.render((0., 0., float(image.width), float(image.height)), image.size) as overlay:
-            result.alpha_composite(overlay)
-    return result
+    try:
+        if water is not None:
+            water.composite_native(result, cancellation=cancellation)
+        return result
+    except BaseException:
+        result.close()
+        raise
 
 
 def render_height_map(
     terrain: GeneratedTerrain, *, style: RenderStyle = "cartographic",
+    cancellation: CancellationToken | None = None,
 ) -> Image.Image:
-    """Render derived relief with lake visibility at this output's pixel scale."""
-    image, water = render_height_map_layers(terrain, style=style)
+    """Return owned native relief, composing water without duplicating the ground."""
+    image, water = render_height_map_layers(terrain, style=style, cancellation=cancellation)
     try:
-        return compose_height_map(image, water)
-    finally:
-        image.close()
         if water is not None:
-            water.pool_area.close()
+            water.composite_native(image, cancellation=cancellation)
+        return image
+    except BaseException:
+        image.close()
+        raise
+    finally:
+        if water is not None:
+            water.close()
 
 
 def _constraint_payload(constraint: TerrainConstraint) -> dict[str, object]:
@@ -288,7 +312,7 @@ def render_basin_overlay(
         edge |= labels != padded[1 + dr:1 + dr + grid.height,
                                  1 + dc:1 + dc + grid.width]
     rgba[edge & (labels > 0)] = (200, 148, 255, 170)
-    with Image.fromarray(rgba) as source:
+    with closing(Image.fromarray(rgba)) as source:
         image = source.resize((width, height), Image.Resampling.NEAREST)
     draw = ImageDraw.Draw(image)
     x_scale = (width - 1) / max(1, grid.width - 1)
@@ -358,12 +382,14 @@ def render_drainage_review(terrain: GeneratedTerrain) -> Image.Image:
                                 (FINAL_ADJUSTMENT, (255, 150, 65)),
                                 (REGION_TRANSITION, (255, 215, 80))):
                 rgb[(context.flags & bit) != 0] = colour
-        with Image.fromarray(rgb) as panel:
+        with closing(Image.fromarray(rgb)) as panel:
             resized = panel.resize((map_width, map_height), Image.Resampling.NEAREST)
             image.paste(resized, (left, top + 28))
             resized.close()
         if index == 1:
-            with render_basin_catchment_overlay(terrain, (map_width, map_height)) as overlay:
+            with closing(render_basin_catchment_overlay(
+                terrain, (map_width, map_height),
+            )) as overlay:
                 image.paste(overlay, (left, top + 28), overlay)
         if index < 3:
             for basin in terrain.water.review.basins:
@@ -373,10 +399,10 @@ def render_drainage_review(terrain: GeneratedTerrain) -> Image.Image:
                 draw.line(points, fill=colour, width=1)
                 draw.text(points[0], f"A{basin.intent_id}", fill=colour)
         if index in (1, 2):
-            with render_basin_outflow_overlay(terrain, (map_width, map_height)) as overlay:
+            with closing(render_basin_outflow_overlay(terrain, (map_width, map_height))) as overlay:
                 image.paste(overlay, (left, top + 28), overlay)
         if index == 3:
-            with render_basin_overlay(terrain, (map_width, map_height)) as overlay:
+            with closing(render_basin_overlay(terrain, (map_width, map_height))) as overlay:
                 image.paste(overlay, (left, top + 28), overlay)
     lines = (
         "Blue: planned. Red: uphill. Context priority: yellow transition > orange final "
@@ -501,6 +527,6 @@ def render_drainage_overlay(
                        target_column * x_scale, target_row * y_scale),
                       width=1,
                       fill=(255, 95, 65, 255) if uphill else (45, 185, 255, 230))
-    with render_basin_outflow_overlay(terrain, (width, height)) as outflow:
+    with closing(render_basin_outflow_overlay(terrain, (width, height))) as outflow:
         image.alpha_composite(outflow)
     return image

@@ -37,6 +37,12 @@ Cartographic relief displays sampled lake pools in blue according to their
 screen area: hidden at or below 9 output pixels squared, fading to full opacity
 at 36. Small pools appear as the view moves closer; native-size exports use their
 own pixel scale. This only filters presentation; numeric water stays complete.
+Water colour calculations now use bounded tiles. Native export composes these
+directly onto ground, retaining the same pixels without a full-size water overlay.
+Viewport rendering keeps the original whole-viewport nearest-neighbour transform
+for categorical areas; panning cannot change a pool's visibility. Component-area
+preparation still processes the complete water raster. See
+[ADR-0067](adr/0067-own-preview-images-and-tile-water.md).
 Scientific elevation continues to show ground height, including the lake bed.
 The generated Float32 DEM and GeoTIFF remain ground elevations; a water surface never replaces an exact height
 anchor or bathymetry sample. The separate drainage/outlet review remains visible

@@ -4,6 +4,7 @@ import json
 import os
 import platform
 import sys
+from contextlib import closing
 from dataclasses import asdict
 from hashlib import file_digest, sha256
 from importlib.metadata import version
@@ -172,7 +173,7 @@ def write_build_products(
         stream.flush()
         os.fsync(stream.fileno())
     paths.append(("basin-flow.npz", "derived"))
-    with render_drainage_review(terrain) as review:
+    with closing(render_drainage_review(terrain)) as review:
         review.save(destination / "drainage.png")
     paths.append(("drainage.png", "derived"))
     _write_json(destination / "inputs.json", project_snapshot_to_json(project))
@@ -195,7 +196,7 @@ def write_build_products(
     paths.append(("diagnostics.json", "derived"))
     for style in ("cartographic", "scientific"):
         name = f"{style}.png"
-        with render_height_map(terrain, style=style) as image:
+        with closing(render_height_map(terrain, style=style)) as image:
             save_height_map(image, terrain, destination / name)
         paths.append((name, "derived"))
     return {

@@ -28,6 +28,10 @@ The [rendering follow-up](2026-09-23-bounded-terrain-rendering.md) adds bounded
 scratch, review-only panel limits and explicit pixel-buffer release, with
 near-limit square/thin workloads and a 4096-longest-side parent. Native scientific
 pixels and terrain numbers remain unchanged; total application memory remains open.
+The [preview ownership follow-up](2026-09-23-preview-image-ownership.md) tiles water
+colour/composition work and explicitly releases editor/export buffers. Synthetic
+1024/4096 display measurements and real-Tk failure/lifecycle tests cover these
+changes; complete water classification and aggregate worker/editor peaks remain open.
 The external-engine inventory below retains the 2026-09-13 audit date.
 
 ## Implemented baseline

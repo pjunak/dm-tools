@@ -135,7 +135,10 @@ local to this coastline, not latitude/longitude.
 
 Pan/zoom renders only the visible window instead of allocating an enlarged
 whole-map image. Drainage/catchment layers are cached per result and toggle
-combination. Zoom can expose coarse review samples; it does not improve their
+combination and released when both review toggles are off. Replacing a result,
+changing render style, opening another project and closing the workbench release
+obsolete image buffers. If a style render fails, the previous view and legend
+remain active. Zoom can expose coarse review samples; it does not improve their
 accuracy. Inspect **Drainage review** and **Basin details** when evaluating a run.
 
 In cartographic relief, small lake pools fade out in distant views and become

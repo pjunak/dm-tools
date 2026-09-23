@@ -404,6 +404,15 @@ editing a finished DEM; see [ADR-0048](docs/adr/0048-keep-zoom-driven-detail-gen
   peaks fell from 1078 to 157 MiB in the public stress case; see
   [ADR-0066](docs/adr/0066-bound-terrain-rendering-scratch.md) and the
   [measurements](docs/research/2026-09-23-bounded-terrain-rendering.md).
+- [x] **P1 — Bound water-colouring scratch and release editor image owners.**
+  Native water composition now uses 256-square tiles without a full water overlay;
+  one-shot rendering reuses its owned ground image. Preserve exact display pixels
+  and current visibility thresholds. Close old ground, water and diagnostic caches
+  on replacement/reset/shutdown; release viewport images after Tk transfer and
+  keep the old view/legend on failed style changes. Synthetic 4096 composition
+  peaks fell from 639 to 257 MiB. See
+  [ADR-0067](docs/adr/0067-own-preview-images-and-tile-water.md) and the
+  [measurements](docs/research/2026-09-23-preview-image-ownership.md).
 - [ ] **P1 — Finish total local-generation memory calibration and ownership.**
   Shared admission is implemented for saved-parent application jobs, not an OS
   memory cap. The [rendering follow-up](docs/research/2026-09-23-bounded-terrain-rendering.md)
@@ -770,11 +779,13 @@ execution order.
   the prior simple-coast STRtree probe was slower. Preserve exact masks,
   shared samples, numeric hashes and routing products. Compare simple coasts,
   islands, holes and many authored regions; retain peak memory evidence.
-- [ ] **P1 — Finish preview memory ownership and calibration.** Ground RGB and
-  hillshade scratch is now tiled with exact pixels/alpha/metadata, and regional
-  comparison panels are bounded; see the completed rendering item above.
-  Measure remaining full-raster water/composition/diagnostic images and concurrent
-  editor ownership before claiming the whole desktop preview fits its budget.
+- [ ] **P1 — Calibrate aggregate preview and preparation memory.** Ground and
+  water-colouring scratch are tiled; native water composition avoids full overlays;
+  editor/headless image lifetimes now have explicit cleanup. Complete-source wet
+  component polygonization/rasterization, retained native/viewport images, complex
+  diagnostic construction and old-reference/new-worker coexistence still need
+  representative whole-application measurements and admission policy. The isolated
+  display benchmark does not establish a total desktop budget.
 - [ ] **P1 — Split growing modules along the next feature boundaries.** Extract
   structure-profile preparation from generation and workbench controls/drawing
   as those features change. Basin/conflict diagnostics are now extracted;

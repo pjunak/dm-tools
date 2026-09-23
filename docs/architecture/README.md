@@ -191,6 +191,14 @@ worker and input history do not yet implement viewport-driven regional jobs.
 of the generated raster. All placement/hit testing uses its map transform. The
 image adapter renders only a canvas-sized raster; review overlays are cached by
 result and toggles. Navigation does not invalidate inputs or request new terrain.
+The UI explicitly owns ground and cached pool-area images until a successful
+replacement, project reset or shutdown. Review caches close on replacement or
+when both review toggles are off; temporary viewport images close after Tk copies
+them. Old Tk photo references and the owned poll callback are released as well.
+A failed style render preserves the previous image, water and legend. Water
+colour scratch is tiled, and native composition avoids a full overlay. One-shot
+rendering returns its owned ground; export of a retained reference makes one
+copy. See [ADR-0067](../adr/0067-own-preview-images-and-tile-water.md).
 
 A separate saved `GenerationInputs` snapshot owns dirty-state comparison. Drafts
 and pending property/geometry edits also count as unsaved work. Open/import/close

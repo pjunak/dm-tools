@@ -460,3 +460,22 @@ otherwise defaults to 1024; a larger explicit baseline budget can measure a
 request that an earlier estimator rejected. The report records the requested
 shape, resolved bounds and actual reservation capacity. See the
 [rendering comparison](../docs/research/2026-09-23-bounded-terrain-rendering.md).
+
+
+### Cached-water display and native composition
+
+```powershell
+python -m benchmarks.preview_memory --resolution 1024 4096 --mode compose water viewport --output artifacts/preview-memory.json
+```
+
+Each size/mode gets a fresh worker with three serial renders. Synthetic cached
+pool-area categories exercise hidden/fading/opaque water without running terrain
+or water polygonization. `compose` exports borrowed native ground, `water` renders
+a native-size overlay, and `viewport` uses a fixed 1296 by 768 frame with fractional
+pan/scale. Reports retain source/output pixel hashes, baseline/setup/process peaks
+and per-render time; row-band hashing stays outside timing. The report path must
+be new, and source/runtime drift prevents publication. Compare reports from each
+revision only after verifying every source and output pixel hash matches. Run
+without concurrent tests or benchmarks. This isolates display allocations and
+does not measure total Tk/worker/geometry memory. See the
+[measured comparison](../docs/research/2026-09-23-preview-image-ownership.md).

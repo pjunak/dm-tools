@@ -17,6 +17,10 @@ Stops are checked before generation, around progress callbacks, between field,
 replay and local-detail batches, while sampling channel/water profiles, and before
 artifact publication. Saved-parent exports also check between ground/difference
 render tiles and comparison panels, releasing derived pixel buffers on exit.
+Workbench generation also passes its token through ground-rendering tiles and
+checks around whole-pool water-area preparation. The image adapter's explicit
+water-render/composition API checks between colour tiles. Native component
+classification itself remains one cooperative operation.
 A request arriving during an individual NumPy, Shapely, rendering,
 hashing or file-writing operation waits for the next checkpoint. There is no
 promised maximum stop latency, forced thread termination or rollback of file I/O.

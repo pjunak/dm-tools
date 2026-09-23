@@ -7,6 +7,7 @@ from collections.abc import Iterator
 from dataclasses import replace
 from pathlib import Path
 from threading import Event
+from typing import Any
 
 import numpy as np
 import pytest
@@ -50,9 +51,10 @@ def app(generated: tuple[GenerationInputs, GeneratedTerrain]) -> Iterator[ui.Ter
     workbench._events.put(ui._ResultEvent(inputs, terrain, Image.new("RGBA", (65, 65)), None))
     workbench._poll_events()
     yield workbench
-    for callback in root.tk.splitlist(root.tk.call("after", "info")):
-        root.after_cancel(str(callback))
-    root.destroy()
+    if not workbench._closed:
+        for callback in root.tk.splitlist(root.tk.call("after", "info")):
+            root.after_cancel(str(callback))
+        workbench._close()
 
 
 def test_edit_keeps_readonly_reference_and_undo_restores_freshness(app: ui.TerrainApp) -> None:
@@ -726,3 +728,188 @@ def test_old_generation_events_cannot_finish_or_replace_a_new_request(app: ui.Te
     app._events.put(ui._CancelledEvent(current))
     app._poll_events()
     assert not app._busy
+
+
+
+def _assert_closed(*images: Image.Image | None) -> None:
+    for image in images:
+        assert image is not None
+        with pytest.raises(ValueError, match="closed"):
+            image.getpixel((0, 0))
+
+
+def test_replacement_and_project_reset_release_previous_preview_owners(app: ui.TerrainApp) -> None:
+    old_ground = app._image
+    old_pool = Image.new("F", (65, 65), 16.)
+    app._water_display = ui.WaterDisplay(old_pool)
+    app._show_drainage.set(True)
+    app._draw_preview()
+    old_review = app._review_image
+    terrain = app._terrain
+    assert terrain is not None
+    ground, pool = Image.new("RGBA", (65, 65)), Image.new("F", (65, 65), 16.)
+    app._events.put(ui._ResultEvent(
+        app._generation_inputs(), terrain, ground, ui.WaterDisplay(pool)))
+    app._poll_events()
+    _assert_closed(old_ground, old_pool, old_review)
+    assert app._image is ground and pool.getpixel((0, 0)) == 16.
+    current_review = app._review_image
+    coast = app._coastline
+    assert coast is not None
+    app._accept_coastline(coast)
+    _assert_closed(ground, pool, current_review)
+    assert app._image is app._water_display is app._review_image is None
+    assert app._preview_photo is app._review_photo is None
+
+
+def test_successful_style_switch_releases_previous_ground_and_water(app: ui.TerrainApp) -> None:
+    ground, pool = app._image, Image.new("F", (65, 65), 16.)
+    app._water_display = ui.WaterDisplay(pool)
+    app._render_style_label.set("Scientific elevation")
+    app._on_render_style_changed()
+    _assert_closed(ground, pool)
+    assert app._image is not None and app._image.getpixel((0, 0)) is not None
+    assert app._water_display is None
+    assert app._image.info["dmtools.render_style"] == "scientific"
+
+
+def test_failed_style_switch_keeps_pixels_water_and_legend(
+    app: ui.TerrainApp, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    image, water = app._image, app._water_display
+    legend = str(app._legend_high_label["text"])
+    errors: list[object] = []
+    def fail(*_args: object, **_kwargs: object) -> tuple[Image.Image, ui.WaterDisplay | None]:
+        raise MemoryError("replacement failed")
+    def error(*args: object, **_kwargs: object) -> None:
+        errors.extend(args)
+    monkeypatch.setattr(ui, "render_height_map_layers", fail)
+    monkeypatch.setattr(ui.messagebox, "showerror", error)
+    app._render_style_label.set("Scientific elevation")
+    app._on_render_style_changed()
+    assert errors and app._image is image and app._water_display is water
+    assert image is not None and image.getpixel((0, 0)) is not None
+    assert app._render_style_label.get() == "Cartographic relief"
+    assert str(app._legend_high_label["text"]) == legend
+
+
+def test_overlay_toggle_releases_hidden_pixels_and_navigation_releases_tk_photos(
+    app: ui.TerrainApp,
+) -> None:
+    _show_canvas(app)
+    app._show_drainage.set(True)
+    app._draw_preview()
+    previous_review = app._review_image
+    assert previous_review is not None
+    for _ in range(4):
+        old_names = str(app._preview_photo), str(app._review_photo)
+        app._draw_preview()
+        names = app.root.tk.splitlist(app.root.tk.call("image", "names"))
+        assert not set(old_names).intersection(names)
+        assert app._review_image is previous_review
+    app._show_catchments.set(True)
+    app._draw_preview()
+    _assert_closed(previous_review)
+    previous_review = app._review_image
+    app._show_drainage.set(False)
+    app._show_catchments.set(False)
+    app._draw_preview()
+    _assert_closed(previous_review)
+    assert app._review_image is app._review_photo is None
+
+
+@pytest.mark.parametrize("failed_transfer", [False, True])
+def test_viewport_images_close_after_tk_transfer_or_failure(
+    app: ui.TerrainApp, monkeypatch: pytest.MonkeyPatch, failed_transfer: bool,
+) -> None:
+    _show_canvas(app)
+    owned: list[Image.Image] = []
+    render = ui.render_viewport
+    def recorded(*args: Any, **kwargs: Any) -> Image.Image:
+        image = render(*args, **kwargs)
+        owned.append(image)
+        return image
+    def fail(*_args: object, **_kwargs: object) -> None:
+        raise RuntimeError("Tk transfer failed")
+    monkeypatch.setattr(ui, "render_viewport", recorded)
+    if failed_transfer:
+        monkeypatch.setattr(ui.ImageTk, "PhotoImage", fail)
+        with pytest.raises(RuntimeError, match="Tk transfer"):
+            app._draw_preview()
+    else:
+        app._draw_preview()
+    assert owned
+    _assert_closed(*owned)
+    assert app._image is not None and app._image.getpixel((0, 0)) is not None
+
+
+def test_close_releases_ground_water_reviews_and_poll_callback(app: ui.TerrainApp) -> None:
+    _show_canvas(app)
+    ground, pool = app._image, Image.new("F", (65, 65), 16.)
+    app._water_display = ui.WaterDisplay(pool)
+    app._show_drainage.set(True)
+    app._draw_preview()
+    review = app._review_image
+    callback = app._poll_after_id
+    assert callback is not None
+    app._close()
+    _assert_closed(ground, pool, review)
+    assert app._image is app._water_display is app._review_image is app._terrain is None
+    assert app._preview_photo is app._review_photo is app._poll_after_id is None
+    assert callback not in app.root.tk.splitlist(app.root.tk.call("after", "info"))
+    app._close()  # Repeated disposal is harmless.
+
+
+
+def test_failed_review_replacement_releases_new_canvas_and_keeps_previous_cache(
+    app: ui.TerrainApp, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    app._show_drainage.set(True)
+    previous = app._review_layer()
+    app._show_catchments.set(True)
+    owned: list[Image.Image] = []
+    new = Image.new
+    def record(*args: Any, **kwargs: Any) -> Image.Image:
+        image = new(*args, **kwargs)
+        if image.mode == "RGBA" and image.size == previous.size:
+            owned.append(image)
+        return image
+    def fail(*_args: object, **_kwargs: object) -> Image.Image:
+        raise RuntimeError("review failed")
+    monkeypatch.setattr(Image, "new", record)
+    monkeypatch.setattr(ui, "render_basin_catchment_overlay", fail)
+    with pytest.raises(RuntimeError, match="review failed"):
+        app._review_layer()
+    assert owned and app._review_image is previous
+    _assert_closed(*owned)
+    assert previous.getpixel((0, 0)) is not None
+
+
+def test_failed_png_export_closes_export_image_and_keeps_readonly_reference(
+    app: ui.TerrainApp, monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+) -> None:
+    ground = app._image
+    assert ground is not None
+    before = ground.tobytes()
+    owned: list[Image.Image] = []
+    errors: list[object] = []
+    compose = ui.compose_height_map
+    def record(*args: Any, **kwargs: Any) -> Image.Image:
+        image = compose(*args, **kwargs)
+        owned.append(image)
+        return image
+    def fail(*_args: object, **_kwargs: object) -> None:
+        raise OSError("PNG write failed")
+    def error(*args: object, **_kwargs: object) -> None:
+        errors.extend(args)
+    def destination(**_kwargs: object) -> str:
+        return str(tmp_path / "unwritten.png")
+    monkeypatch.setattr(ui.filedialog, "asksaveasfilename", destination)
+    monkeypatch.setattr(ui, "compose_height_map", record)
+    monkeypatch.setattr(ui, "save_height_map", fail)
+    monkeypatch.setattr(ui.messagebox, "showerror", error)
+    app._export()
+    assert errors and owned
+    _assert_closed(*owned)
+    assert app._image is ground and ground.tobytes() == before
+    assert app._reference_is_current()

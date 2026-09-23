@@ -7,6 +7,7 @@ import queue
 import threading
 import tkinter as tk
 from collections.abc import Callable
+from contextlib import closing
 from dataclasses import dataclass, replace
 from functools import partial
 from math import hypot
@@ -195,6 +196,7 @@ class TerrainApp:
         self._generation_message = ""
         self._generation_fraction = 0.0
         self._closed = False
+        self._poll_after_id: str | None = None
         self._viewport = MapViewport()
         self._syncing_selection = False
         self._selection_mode = False
@@ -267,7 +269,7 @@ class TerrainApp:
         self._bind_shortcuts()
         self.root.protocol("WM_DELETE_WINDOW", self._request_close)
         self._set_busy(False)
-        self.root.after(80, self._poll_events)
+        self._poll_after_id = self.root.after(80, self._poll_events)
         if project is not None:
             self.root.after_idle(partial(self._load_project, project))
 
@@ -1162,24 +1164,48 @@ class TerrainApp:
     def _selected_render_style(self) -> RenderStyle:
         return _RENDER_STYLE_LABELS.get(self._render_style_label.get(), "cartographic")
 
+    def _replace_preview_layers(
+        self, image: Image.Image | None, water: WaterDisplay | None,
+    ) -> None:
+        previous_image, previous_water = self._image, self._water_display
+        self._image, self._water_display = image, water
+        if previous_image is not None and previous_image is not image:
+            previous_image.close()
+        if previous_water is not None and previous_water is not water:
+            previous_water.close()
+
+    def _clear_review(self) -> None:
+        if self._review_image is not None:
+            self._review_image.close()
+        self._review_image = None
+        self._review_key = None
+        self._review_photo = None
+
     def _on_render_style_changed(self, _event: tk.Event[tk.Misc] | None = None) -> None:
         style = self._selected_render_style()
+        if self._terrain is not None:
+            try:
+                image, water = render_height_map_layers(self._terrain, style=style)
+            except Exception as error:
+                # A failed replacement keeps both the previous pixels and their legend.
+                previous = (self._image.info.get("dmtools.render_style", "cartographic")
+                            if self._image is not None else "cartographic")
+                label = next(key for key, value in _RENDER_STYLE_LABELS.items()
+                             if value == previous)
+                self._render_style_label.set(label)
+                messagebox.showerror("Rendering failed", str(error), parent=self.root)
+                return
+            self._replace_preview_layers(image, water)
         self._legend_high_label.configure(text="10 km" if style == "cartographic" else "MAX")
         for swatch, colour in zip(
-            self._legend_swatches,
-            elevation_legend_colours(style=style),
-            strict=True,
+            self._legend_swatches, elevation_legend_colours(style=style), strict=True,
         ):
             swatch.configure(background=colour)
         if self._terrain is None:
             return
-        self._image, self._water_display = render_height_map_layers(self._terrain, style=style)
         self.status_label.configure(
-            text=(
-                "Cartographic relief ready."
-                if style == "cartographic"
-                else "Scientific elevation view ready."
-            )
+            text=("Cartographic relief ready." if style == "cartographic"
+                  else "Scientific elevation view ready.")
         )
         self._draw_preview()
 
@@ -1883,7 +1909,18 @@ class TerrainApp:
         self._guard_unsaved(self._close)
 
     def _close(self) -> None:
+        if self._closed:
+            return
         self._closed = True
+        if self._poll_after_id is not None:
+            self.root.after_cancel(self._poll_after_id)
+            self._poll_after_id = None
+        self.preview.delete("all")
+        self._preview_photo = None
+        self._clear_review()
+        self._replace_preview_layers(None, None)
+        self._terrain = None
+        self._generated_inputs = None
         self.root.destroy()
 
     def _shortcut(self, command: Callable[[], None], *, editing: bool = False) -> str | None:
@@ -2144,8 +2181,7 @@ class TerrainApp:
         self._drag_candidate = None
         self._pan_start = None
         self._selection_mode = False
-        self._review_image = None
-        self._review_key = None
+        self._clear_review()
         land_geometry = unary_union(
             [
                 Polygon(component.exterior, holes=component.holes)
@@ -2162,8 +2198,7 @@ class TerrainApp:
         self._active_brush_values = None
         self._brush_cursor = None
         self._terrain = None
-        self._image = None
-        self._water_display = None
+        self._replace_preview_layers(None, None)
         self.progress.stop()
         self.progress.configure(mode="determinate", value=0)
         self._set_busy(False)
@@ -2315,7 +2350,7 @@ class TerrainApp:
     def _discard_result(event: _ResultEvent) -> None:
         event.image.close()
         if event.water_display is not None:
-            event.water_display.pool_area.close()
+            event.water_display.close()
 
     def _generate(self) -> None:
         if self._busy:
@@ -2364,7 +2399,8 @@ class TerrainApp:
                 )
                 cancellation.checkpoint()
                 self._events.put(_ProgressEvent(0.97, "Rendering colour relief", cancellation))
-                image, water = render_height_map_layers(terrain, style=render_style)
+                image, water = render_height_map_layers(
+                    terrain, style=render_style, cancellation=cancellation)
                 cancellation.checkpoint()
                 completed_event = _ResultEvent(inputs, terrain, image, water, cancellation)
                 image, water = None, None  # Ownership transfers to the UI event.
@@ -2381,7 +2417,7 @@ class TerrainApp:
                 if image is not None:
                     image.close()
                 if water is not None:
-                    water.pool_area.close()
+                    water.close()
             # A terminal event releases the UI's job slot, so send it after cleanup.
             self._events.put(completed_event)
 
@@ -2390,6 +2426,9 @@ class TerrainApp:
     def _poll_events(self) -> None:
         if self._closed:
             return
+        if self._poll_after_id is not None:
+            self.root.after_cancel(self._poll_after_id)
+            self._poll_after_id = None
         try:
             while True:
                 event = self._events.get_nowait()
@@ -2432,10 +2471,8 @@ class TerrainApp:
                     elapsed = self._end_generation()
                     self._generated_inputs = event.inputs
                     self._terrain = event.terrain
-                    self._image = event.image
-                    self._water_display = event.water_display
-                    self._review_image = None
-                    self._review_key = None
+                    self._replace_preview_layers(event.image, event.water_display)
+                    self._clear_review()
                     self.progress.stop()
                     self.progress.configure(mode="determinate")
                     self.progress.configure(value=100)
@@ -2501,7 +2538,7 @@ class TerrainApp:
         except queue.Empty:
             pass
         self._update_generation_status()
-        self.root.after(80, self._poll_events)
+        self._poll_after_id = self.root.after(80, self._poll_events)
 
     def _show_basin_details(self) -> None:
         if self._terrain is None:
@@ -2677,21 +2714,30 @@ class TerrainApp:
         ratio = min(1., 1536 / max(terrain.width, terrain.height))
         size = (max(1, round(terrain.width * ratio)), max(1, round(terrain.height * ratio)))
         review = Image.new("RGBA", size)
-        if self._show_drainage.get():
-            with render_basin_overlay(terrain, size) as basins:
-                review.alpha_composite(basins)
-        if self._show_catchments.get():
-            with render_basin_catchment_overlay(terrain, size) as catchments:
-                review.alpha_composite(catchments)
-        renderer = (render_drainage_overlay if self._show_drainage.get()
-                    else render_basin_outflow_overlay)
-        with renderer(terrain, size) as paths:
-            review.alpha_composite(paths)
+        try:
+            if self._show_drainage.get():
+                with closing(render_basin_overlay(terrain, size)) as basins:
+                    review.alpha_composite(basins)
+            if self._show_catchments.get():
+                with closing(render_basin_catchment_overlay(terrain, size)) as catchments:
+                    review.alpha_composite(catchments)
+            renderer = (render_drainage_overlay if self._show_drainage.get()
+                        else render_basin_outflow_overlay)
+            with closing(renderer(terrain, size)) as paths:
+                review.alpha_composite(paths)
+        except BaseException:
+            review.close()
+            raise
+        self._clear_review()
         self._review_image, self._review_key = review, key
         return review
 
     def _draw_preview(self) -> None:
         self.preview.delete("all")
+        self._preview_photo = None
+        self._review_photo = None
+        if not (self._show_drainage.get() or self._show_catchments.get()):
+            self._clear_review()
         if self._coastline is None:
             self.preview.create_text(
                 20, 20, text="Open a terrain project or import SVG land shapes.\n"
@@ -2717,9 +2763,9 @@ class TerrainApp:
             pass
         self.zoom_label.configure(text=f"{self._viewport.zoom:.1f}x fit{scale_label}")
         if self._image is not None:
-            with render_viewport(self._image, rect, size) as display:
+            with closing(render_viewport(self._image, rect, size)) as display:
                 if self._water_display is not None:
-                    with self._water_display.render(rect, size) as water:
+                    with closing(self._water_display.render(rect, size)) as water:
                         display.alpha_composite(water)
                 self._preview_photo = ImageTk.PhotoImage(display)
             self.preview.create_image(0, 0, image=self._preview_photo, anchor="nw")
@@ -2732,7 +2778,7 @@ class TerrainApp:
             for coordinates in (exterior, *holes):
                 self.preview.create_line(coordinates, fill="#b9cbc6", width=1.5, joinstyle="round")
         if self._terrain is not None and (self._show_drainage.get() or self._show_catchments.get()):
-            with render_viewport(self._review_layer(), rect, size) as review:
+            with closing(render_viewport(self._review_layer(), rect, size)) as review:
                 self._review_photo = ImageTk.PhotoImage(review)
             self.preview.create_image(0, 0, image=self._review_photo, anchor="nw")
             legends: list[str] = []
@@ -3138,7 +3184,7 @@ class TerrainApp:
         if not selected:
             return
         try:
-            with compose_height_map(self._image, self._water_display) as image:
+            with closing(compose_height_map(self._image, self._water_display)) as image:
                 save_height_map(image, self._terrain, Path(selected))
         except OSError as error:
             messagebox.showerror("Export failed", str(error), parent=self.root)

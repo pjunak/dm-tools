@@ -298,7 +298,10 @@ record the remaining visible cell pattern and conservative exclusions.
   The [stress measurements](../research/2026-09-23-bounded-terrain-rendering.md)
   cover near-limit square/thin requests and a 4096-longest-side parent. Next
   calibrate complex geometry, concurrent/long sessions and the rest of the
-  application before workbench scheduling. Do not
+  application before workbench scheduling. Water-colouring scratch and native
+  composition are now tiled, with explicit editor image ownership; the
+  [display measurements](../research/2026-09-23-preview-image-ownership.md)
+  isolate those gains without claiming a total desktop memory bound. Do not
   repeat full replay for every pointer move or silently turn a successful
   experimental result into accepted cartographic detail.
 - Extend the existing [regional prototype C](../research/2026-09-04-terrain-prototype-contracts.md)
