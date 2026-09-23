@@ -75,6 +75,10 @@ complete numeric replay in `pipeline/parent.py`, and an opt-in protected residua
 in `pipeline/detail.py`. Detail only changes a new regional result. File formats
 and publication stay outside those numerical stages; experimental acceptance
 and hydrology capability flags stay explicit in the artifact contract.
+Each prepared detail context owns bounded scalar cell support with explicit
+eviction and clearing; no output arrays are cached. Context replacement resets
+that cache. See [ADR-0062](../adr/0062-reuse-bounded-detail-cell-support.md) for
+identity ownership, serial use and the remaining total-memory/job limits.
 
 The next durable-build work adds world georeferencing,
 derived GIS products, explicit hard/soft/inequality projection after optional

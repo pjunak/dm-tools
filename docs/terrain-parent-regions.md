@@ -70,8 +70,8 @@ halo. Experimental detail requires refinement at least 8 and at most 4,096
 parent cells intersecting the buffered window. Original parent nodes are exact.
 
 Each eligible cell uses a fixed 17 by 17 probe lattice, independently of output
-resolution. Thus preparation adds at most 1,183,744 probes. The pointwise output
-uses batches of at most 65,536. Full-parent replay and complete-source geometry,
+resolution. Thus an uncached request adds at most 1,183,744 probes. The pointwise
+output uses batches of at most 65,536. Full-parent replay and complete-source geometry,
 constraints and routing still cost work outside the window; these limits do not
 claim a hard total-memory/time bound for arbitrary input geometry.
 
@@ -124,7 +124,8 @@ not assumed to meet an unenriched parent there.
 The regular cell support is visible in difference images. Terrain-aware support,
 coarse spectral-power acceptance, derivative checks on the final quantized field,
 partial coastal/basin detail, inherited outlet paths and upstream flow, finer
-routing, cache budgets, cancellation and workbench requests remain open. Read
+routing, whole-parent/result cache budgets, cancellation and workbench requests
+remain open. Read
 [ADR-0061](adr/0061-verify-parents-and-isolate-local-detail.md), the
 [measurements](research/2026-09-23-verified-parent-detail.md) and [TODO](../TODO.md).
 
@@ -133,3 +134,27 @@ then `prepare_regional_detail(...)` across windows. File loading belongs to
 `load_terrain_parent(...)`; `sample_parent_region(...)` owns completion checks
 and publication. A cached caller must retain and verify the corresponding parent
 and runtime identities before publishing any result.
+
+## Reuse fixed cell preparation
+
+`prepare_regional_detail(parent, settings, cache_cells=4096)` owns a private
+least-recently-used cache. Each entry stores only the protection flag, amplitude
+and reference/detailed means for one globally addressed parent cell. Subsequent
+windows reuse those values across overlaps and refinement levels. Probe arrays
+and delivered terrain arrays are not retained. Ground delivery and its height
+checks still run for every request.
+
+Choose an integer capacity from 0 through 4,096; zero disables reuse. The bound
+applies to scalar entries per context, not total application memory. Eviction
+only causes recomputation. `context.clear_cache()` frees the entries and resets
+counts; `context.cache_info()` reports capacity, retained cells, hits, misses
+and evictions. Use a context serially. Creating or replacing a context starts a
+fresh cache, so changed parents/settings cannot inherit another context's values.
+
+Artifact evidence stays independent of cache history: `probe_samples` is the
+fixed support count for all eligible cells in that result, including cached
+support. Cache counters are operational and are never serialized in the result.
+The CLI creates one context per invocation; reuse currently benefits Python
+callers that retain it across requests. Parent/runtime checks before publication
+remain required. See [ADR-0062](adr/0062-reuse-bounded-detail-cell-support.md) and
+the [measurements](research/2026-09-23-detail-cell-reuse.md).

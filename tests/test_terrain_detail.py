@@ -28,7 +28,7 @@ from dmtools.terrain.pipeline.detail import (
     prepare_regional_detail,
     residual_basis,
 )
-from dmtools.terrain.pipeline.generate import generate_terrain
+from dmtools.terrain.pipeline.generate import PreparedTerrainField, generate_terrain
 from dmtools.terrain.pipeline.parent import (
     ParentRouting,
     ParentTerrainData,
@@ -303,3 +303,110 @@ def test_recorded_moments_match_the_actual_fixed_probe_grid(
         assert np.sum(actual * weights) == pytest.approx(
             detail.detailed_cell_mean_m[index], abs=1e-10, rel=0
         )
+
+
+def test_repeated_detail_window_reuses_fixed_ground_probes(
+    detail_field: tuple[PreparedRegionalDetail, tuple[int, int]],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    field, origin = detail_field
+    first = sample(field, origin, 8)
+    assert first.evidence.probe_samples > 0
+
+    def forbidden(*_args: object, **_kwargs: object) -> None:
+        pytest.fail("A cached cell must not repeat its fixed ground probes.")
+
+    monkeypatch.setattr(PreparedTerrainField, "sample_ground", forbidden)
+    repeated = sample(field, origin, 16)
+    np.testing.assert_array_equal(first.cell_amplitude_m, repeated.cell_amplitude_m)
+    np.testing.assert_array_equal(first.reference_cell_mean_m, repeated.reference_cell_mean_m)
+    np.testing.assert_array_equal(first.detailed_cell_mean_m, repeated.detailed_cell_mean_m)
+    np.testing.assert_array_equal(first.samples.elevation_m, repeated.samples.elevation_m[::2, ::2])
+
+
+def assert_identical_detail(actual: DetailedRegion, expected: DetailedRegion) -> None:
+    assert actual.evidence == expected.evidence
+    assert actual.samples.request == expected.samples.request
+    for left, right, names in (
+        (actual, expected, (
+            "reference_elevation_m", "added_detail_m", "cell_columns", "cell_rows",
+            "cell_amplitude_m", "reference_cell_mean_m", "detailed_cell_mean_m",
+        )),
+        (actual.samples, expected.samples, (
+            "x_km", "y_km", "elevation_m", "land_mask", "water_surface_m", "basin_intent_ids",
+        )),
+    ):
+        for name in names:
+            a, b = getattr(left, name), getattr(right, name)
+            assert a.dtype == b.dtype and a.shape == b.shape
+            assert a.tobytes() == b.tobytes(), name
+
+
+def test_cache_reuses_overlap_without_changing_results_or_evidence(
+    detail_field: tuple[PreparedRegionalDetail, tuple[int, int]],
+) -> None:
+    original, origin = detail_field
+    cached = replace(original, cache_cells=128)
+    uncached = replace(original, cache_cells=0)
+    for position, factor in ((origin, 8), ((origin[0] + 1, origin[1] + 1), 8), (origin, 16)):
+        assert_identical_detail(
+            sample(cached, position, factor), sample(uncached, position, factor)
+        )
+    info = cached.cache_info()
+    assert (info.cells, info.hits, info.misses, info.evictions) == (79, 49 + 64, 79, 0)
+    assert uncached.cache_info().cells == uncached.cache_info().hits == 0
+
+
+def test_eviction_and_clear_recompute_exactly(
+    detail_field: tuple[PreparedRegionalDetail, tuple[int, int]],
+) -> None:
+    original, origin = detail_field
+    cached = replace(original, cache_cells=8)
+    expected = sample(replace(original, cache_cells=0), origin, 8, halo=1)
+    for _ in range(2):
+        assert_identical_detail(sample(cached, origin, 8, halo=1), expected)
+        assert cached.cache_info().cells == 8
+        assert cached.cache_info().evictions > 0
+    cached.clear_cache()
+    assert cached.cache_info().cells == cached.cache_info().hits == 0
+    assert cached.cache_info().misses == cached.cache_info().evictions == 0
+    assert_identical_detail(sample(cached, origin, 8, halo=1), expected)
+
+
+def test_replacing_detail_context_does_not_inherit_cached_support(
+    detail_field: tuple[PreparedRegionalDetail, tuple[int, int]],
+) -> None:
+    original, origin = detail_field
+    sample(original, origin, 8)
+    changed = replace(original, settings=RegionalDetailSettings(1.0))
+    assert changed.cache_info().cells == 0
+    expected = sample(replace(changed, cache_cells=0), origin, 8)
+    assert_identical_detail(sample(changed, origin, 8), expected)
+    assert np.max(expected.cell_amplitude_m) <= 1.0
+    for fresh in (
+        replace(original, parent=original.parent),
+        prepare_regional_detail(original.parent, original.settings),
+    ):
+        assert fresh.cache_info().cells == 0
+
+
+def test_failed_probe_batch_can_be_retried_without_stale_support(
+    detail_field: tuple[PreparedRegionalDetail, tuple[int, int]],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    original, origin = detail_field
+    cached = replace(original)
+    method = PreparedTerrainField.sample_ground
+
+    def invalid(
+        self: PreparedTerrainField, x: NDArray[np.float64], y: NDArray[np.float64],
+    ) -> NDArray[np.float32]:
+        return np.full(x.shape, np.nan, dtype=np.float32)
+
+    monkeypatch.setattr(PreparedTerrainField, "sample_ground", invalid)
+    with pytest.raises(RuntimeError, match="invalid interior ground"):
+        sample(cached, origin, 8)
+    monkeypatch.setattr(PreparedTerrainField, "sample_ground", method)
+    assert_identical_detail(
+        sample(cached, origin, 8), sample(replace(original, cache_cells=0), origin, 8)
+    )

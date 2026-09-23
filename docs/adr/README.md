@@ -89,3 +89,4 @@ supersedes their legacy compatibility commitments during early development.
 - [ADR-0060: Interpolate overlapping absolute height points](0060-interpolate-overlapping-height-points.md)
 
 - [ADR-0061: Verify saved parents and isolate experimental local detail](0061-verify-parents-and-isolate-local-detail.md)
+- [ADR-0062: Reuse bounded detail-cell support](0062-reuse-bounded-detail-cell-support.md)

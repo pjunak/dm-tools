@@ -283,9 +283,12 @@ record the remaining visible cell pattern and conservative exclusions.
 - Introduce inherited inflow/outlet context and finer routing, including reviewed
   basin outflow paths outside protected footprints, before enabling small rivers.
   Keeping planned channel corridors unchanged alone does not validate new runoff.
-- Reuse prepared parents/detail context under explicit cache budgets and eviction;
-  then add cancellation, freshness and workbench requests. Do not repeat full
-  replay for every pointer move or silently turn a successful experimental result
+- Fixed detail-cell support now has bounded per-context reuse and eviction;
+  [ADR-0062](../adr/0062-reuse-bounded-detail-cell-support.md) and the
+  [measurements](../research/2026-09-23-detail-cell-reuse.md) preserve exact output
+  under overlap, density and cache pressure. Bound total prepared-parent/result
+  memory next, then add cancellation, freshness and workbench requests. Do not
+  repeat full replay for every pointer move or silently turn a successful experimental result
   into accepted cartographic detail.
 - Extend the existing [regional prototype C](../research/2026-09-04-terrain-prototype-contracts.md)
   with these acceptance gates. No automatic zoom job or recursive child-parent

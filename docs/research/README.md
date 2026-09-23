@@ -12,6 +12,10 @@ in the current status or a new dated report.
 
 ## Implemented and measured work
 
+- [Bounded detail-cell reuse - 2026-09-23](2026-09-23-detail-cell-reuse.md)
+  reuses scalar cell support across regional requests with explicit limits and
+  eviction; measures exact cached/uncached results and local sampling cost.
+
 - [Verified parent and experimental local detail - 2026-09-23](2026-09-23-verified-parent-detail.md)
   adds portable completed-parent replay, separate regional artifacts and bounded
   residual generation; measures consistency/cost while retaining explicit visual

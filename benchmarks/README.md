@@ -391,3 +391,21 @@ They separate parent build, file loading, complete replay, protection preparatio
 regional generation and publication. See the
 [measured report](../docs/research/2026-09-23-verified-parent-detail.md) and
 [usage contract](../docs/terrain-parent-regions.md).
+
+### Fixed-cell preparation reuse
+
+Build the public parents above, then compare repeated requests with caching
+disabled, a 128-cell eviction budget and the default 4,096-cell budget:
+
+```powershell
+.\.venv\Scripts\python.exe -m benchmarks.detail_reuse --parent artifacts/local-detail-measurements/example-42/parent artifacts/local-detail-measurements/regional-42/parent artifacts/local-detail-measurements/water-42/parent --repeats 3 --output artifacts/detail-reuse.json
+```
+
+Parents must match current source/runtime and have at least 33 nodes on each
+axis. Each sequence samples a cold window, zoom, overlap, repeat, distant window
+and revisit. Variant order alternates between repetitions; every numeric array,
+request record and evidence field must match, including after eviction. Cache
+counts show retained cells, reuse and recomputation. Timings cover sampling only:
+loading/replay, hashing and exports are excluded. No result arrays are cached.
+Run serially without concurrent tests; the JSON output must be a new file outside
+all parent builds. See the [report](../docs/research/2026-09-23-detail-cell-reuse.md).

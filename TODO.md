@@ -370,11 +370,19 @@ editing a finished DEM; see [ADR-0048](docs/adr/0048-keep-zoom-driven-detail-gen
   cell edges currently have zero residual. Cover seeds, oblique boundaries and
   extreme detail scales. Fixed probe bounds do not certify unseen extrema;
   observed violations reject a request. R34 remains open.
+- [x] **P1 — Reuse fixed detail-cell preparation under a bounded budget.** Each
+  prepared detail context now retains at most 4,096 scalar protection/amplitude/
+  moment records with least-recently-used eviction, explicit clearing and an
+  uncached control. Overlap, refinement, eviction and retry preserve numeric
+  results, evidence and artifacts exactly. See
+  [ADR-0062](docs/adr/0062-reuse-bounded-detail-cell-support.md) and the
+  [measurements](docs/research/2026-09-23-detail-cell-reuse.md).
 - [ ] **P1 — Add bounded prepared-context and result caching.** Finer arrays,
   evaluation batches and experimental cell work are bounded. Python callers can
-  reuse verified parents and protected detail context across requests. Add cache
-  budgets/eviction, cell preparation reuse and result freshness. Identify entries
-  by inputs, parent/runtime, extent, spacing and detail algorithm/settings;
+  reuse verified parents and protected detail context across requests. Add total
+  parent/result cache budgets, eviction and result freshness. Cell preparation
+  reuse is implemented separately above. Identify entries by inputs, parent/runtime,
+  extent, spacing and detail algorithm/settings;
   changed identities invalidate children. Recursive enrichment is not implemented.
 - [ ] **P1 — Preserve hydrological context during local enrichment.** Keep
   authored constraints and inherited upstream flow; a local rectangle or halo

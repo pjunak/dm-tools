@@ -7,6 +7,7 @@ not accepted local hydrology or a certified bound on unseen terrain extrema.
 """
 
 from dataclasses import dataclass, replace
+from dataclasses import field as dataclass_field
 from hashlib import sha256
 from typing import Any, cast
 
@@ -17,12 +18,18 @@ from shapely.geometry import LineString, Point, box
 from shapely.strtree import STRtree
 
 from dmtools.terrain.domain.regional import (
+    DETAIL_CELL_LIMIT,
     DETAIL_PROBE_INTERVALS,
     RegionalDetailSettings,
     RegionalSamplingRequest,
     detail_cell_window,
 )
 from dmtools.terrain.domain.seeds import LOCAL_DETAIL_STAGE_ID, stage_seed
+from dmtools.terrain.pipeline.detail_cache import (
+    CellDetailSupport,
+    DetailCacheInfo,
+    DetailSupportCache,
+)
 from dmtools.terrain.pipeline.generate import ProgressCallback
 from dmtools.terrain.pipeline.parent import VerifiedTerrainParent
 from dmtools.terrain.pipeline.regional import RegionalTerrainSamples
@@ -92,9 +99,25 @@ class DetailedRegion:
 
 @dataclass(frozen=True, slots=True)
 class PreparedRegionalDetail:
+    """One immutable parent/settings context with a private, serial-use support cache."""
+
     parent: VerifiedTerrainParent
     settings: RegionalDetailSettings
     protections: STRtree
+    cache_cells: int = DETAIL_CELL_LIMIT
+    _cache: DetailSupportCache = dataclass_field(init=False, repr=False, compare=False)
+
+    def __post_init__(self) -> None:
+        # init=False also gives dataclasses.replace a fresh cache when any context changes.
+        object.__setattr__(self, "_cache", DetailSupportCache(self.cache_cells))
+
+    def cache_info(self) -> DetailCacheInfo:
+        """Operational counts only; never include request history in artifact identity."""
+        return self._cache.info()
+
+    def clear_cache(self) -> None:
+        """Release retained support and reset operational counts, preserving the parent."""
+        self._cache.clear()
 
     def sample(
         self, request: RegionalSamplingRequest, progress: ProgressCallback | None = None
@@ -111,24 +134,44 @@ class PreparedRegionalDetail:
         )
         columns, rows = cc.ravel(), rr.ravel()
         x, y = self.parent.data.x_km, self.parent.data.y_km
-        cells = cast(Any, shapely.box(x[columns], y[rows], x[columns + 1], y[rows + 1]))
         field = sampler.prepared_field
         # The authoritative parent already stores its ceiling rounded to Float32.
         ceiling_m = float(np.float32(field.settings.maximum_elevation_m))
         if not np.isfinite(ceiling_m):
             raise ValueError("Local detail requires a finite Float32 terrain ceiling.")
-        guard = min(sampler.reference_grid.x_spacing_km, sampler.reference_grid.y_spacing_km)
-        inland = cast(
-            NDArray[np.bool_], np.asarray(cast(Any, shapely.covers(field.polygon, cells)))
-        )
-        inland &= np.asarray(cast(Any, shapely.distance(cells, field.boundary))) > guard
-        intersections = self.protections.query(cells, predicate="intersects")
-        protected = ~inland
-        if intersections.size:
-            protected[np.unique(intersections[0])] = True
+        protected = np.zeros(columns.size, dtype=np.bool_)
         amplitude = np.zeros(columns.size, dtype=np.float64)
         reference_means = np.full(columns.size, np.nan, dtype=np.float64)
         detailed_means = reference_means.copy()
+        missing: list[int] = []
+        for index, (column, row) in enumerate(zip(columns, rows, strict=True)):
+            support = self._cache.get(int(column), int(row))
+            if support is None:
+                missing.append(index)
+            else:
+                protected[index] = support.protected
+                amplitude[index] = support.amplitude_m
+                reference_means[index] = support.reference_mean_m
+                detailed_means[index] = support.detailed_mean_m
+        pending = np.asarray(missing, dtype=np.int64)
+        if pending.size:
+            pc, pr = columns[pending], rows[pending]
+            cells = cast(Any, shapely.box(x[pc], y[pr], x[pc + 1], y[pr + 1]))
+            guard = min(sampler.reference_grid.x_spacing_km, sampler.reference_grid.y_spacing_km)
+            inland = cast(
+                NDArray[np.bool_], np.asarray(cast(Any, shapely.covers(field.polygon, cells)))
+            )
+            inland &= np.asarray(cast(Any, shapely.distance(cells, field.boundary))) > guard
+            intersections = self.protections.query(cells, predicate="intersects")
+            protected[pending] = ~inland
+            if intersections.size:
+                protected[pending[np.unique(intersections[0])]] = True
+            for index in pending[protected[pending]]:
+                self._cache.put(
+                    int(columns[index]), int(rows[index]),
+                    CellDetailSupport(True, 0.0, float("nan"), float("nan")),
+                )
+            pending = pending[~protected[pending]]
         seed = stage_seed(field.settings.seed, LOCAL_DETAIL_STAGE_ID)
         coefficients = cell_coefficients(columns, rows, seed)
         n = DETAIL_PROBE_INTERVALS
@@ -140,8 +183,8 @@ class PreparedRegionalDetail:
         weights[:, [0, -1]] *= 0.5
         weights = weights.ravel() / (n * n)
         active = np.flatnonzero(~protected)
-        for start in range(0, active.size, 64):
-            ids = active[start : start + 64]
+        for start in range(0, pending.size, 64):
+            ids = pending[start : start + 64]
             px = x[columns[ids], None] + (x[columns[ids] + 1] - x[columns[ids]])[:, None] * u
             py = y[rows[ids], None] + (y[rows[ids] + 1] - y[rows[ids]])[:, None] * v
             reference = field.sample_ground(px, py).astype(np.float64)
@@ -156,9 +199,17 @@ class PreparedRegionalDetail:
             detailed = (reference + residual).astype(np.float32).astype(np.float64)
             reference_means[ids] = np.sum(reference * weights, axis=1)
             detailed_means[ids] = np.sum(detailed * weights, axis=1)
+            for index in ids:
+                self._cache.put(
+                    int(columns[index]), int(rows[index]),
+                    CellDetailSupport(
+                        False, float(amplitude[index]), float(reference_means[index]),
+                        float(detailed_means[index]),
+                    ),
+                )
             if progress is not None:
                 progress(
-                    0.1 + 0.4 * min(start + 64, active.size) / max(1, active.size),
+                    0.1 + 0.4 * min(start + 64, pending.size) / pending.size,
                     "Preparing fixed parent-cell detail support",
                 )
         samples = sampler.sample(request, progress)
@@ -213,7 +264,8 @@ class PreparedRegionalDetail:
 
 
 def prepare_regional_detail(
-    parent: VerifiedTerrainParent, settings: RegionalDetailSettings
+    parent: VerifiedTerrainParent, settings: RegionalDetailSettings, *,
+    cache_cells: int = DETAIL_CELL_LIMIT,
 ) -> PreparedRegionalDetail:
     """Protect complete cells intersecting authored cores, basins and planned channel corridors."""
     field = parent.sampler.prepared_field
@@ -239,4 +291,4 @@ def prepare_regional_detail(
     # An empty tree is supported, but keep a harmless outside-frame box explicit.
     if not geometries:
         geometries.append(box(-2 * guard, -2 * guard, -guard, -guard))
-    return PreparedRegionalDetail(parent, settings, STRtree(geometries))
+    return PreparedRegionalDetail(parent, settings, STRtree(geometries), cache_cells)

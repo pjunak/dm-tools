@@ -16,6 +16,8 @@ was subsequently fixed in the global pointwise field. Verified saved-parent
 replay and a bounded opt-in residual experiment were then implemented; its
 visual/spectral acceptance and finer hydrology remain open. See the
 [2026-09-23 measurements](2026-09-23-verified-parent-detail.md).
+Bounded per-context cell support reuse now avoids repeated fixed probes with
+exact cache/eviction controls; see the [follow-up](2026-09-23-detail-cell-reuse.md).
 The external-engine inventory below retains the 2026-09-13 audit date.
 
 ## Implemented baseline
@@ -25,7 +27,7 @@ The external-engine inventory below retains the 2026-09-13 audit date.
 | Input editor | Retained reference with freshness, geographic pan/zoom, property/geometry edits, undo/redo, guarded Save/Save As, resolution presets and ground inspection | Cancellation, automatic draft preview, comparison views, vertex insertion/removal, climate-region inputs |
 | Local numeric builds | Saved-project CLI, Float32 NPY/GeoTIFF, review NPZ, previews, diagnostics and completion hashes | World placement, vector products, external desktop GIS acceptance |
 | Scale-aware water display | Cached sampled-pool screen areas, fading small lakes, fixed-size viewport rendering, native PNG policy and actual ground-spacing readout ([ADR-0057](../adr/0057-display-water-at-the-appropriate-scale.md)) | River size/width model, connected network selection and resolution-gated visibility; diagnostic channels remain complete |
-| Zoom-driven local detail | Unchanged-field sampling, verified saved-parent replay and explicit experimental residual CLI/API; fixed reference moments, exact parent nodes/edges/nested samples and protected authored/water/channel context ([ADR-0061](../adr/0061-verify-parents-and-isolate-local-detail.md)) | Cell-pattern removal, visual/coarse-power acceptance, final-field slopes/bounds, finer inherited hydrology, small-river readiness, zoom jobs and bounded caching |
+| Zoom-driven local detail | Unchanged-field sampling, verified saved-parent replay and explicit experimental residual CLI/API; fixed reference moments, exact parent nodes/edges/nested samples, protected authored/water/channel context and bounded cell support reuse ([ADR-0061](../adr/0061-verify-parents-and-isolate-local-detail.md), [ADR-0062](../adr/0062-reuse-bounded-detail-cell-support.md)) | Cell-pattern removal, visual/coarse-power acceptance, final-field slopes/bounds, finer inherited hydrology, small-river readiness, zoom jobs and total parent/result cache budgets |
 | Detail-band amplitudes (R34) | Fixed geometric coefficients, explicit finer-band tails and fixed regional shape carriers; base macro fields agree exactly across 2/6/12 bands ([ADR-0059](../adr/0059-preserve-noise-band-amplitudes.md)) | Coarse-cell averages and authored drainage still change; finished-parent restriction, coarse spectral power and route inheritance remain open |
 | Coordinates/seeds (R01-R03) | Source/local round trips, endpoint grids, actual spacing metadata and portable named seeds | Planetary CRS, configurable process spacing, cell-average/resampling policy |
 | Authored macro routing (R04-R05) | Authored macro, regular crest probes and bounded carrier-root/tangent searches shape a shared Priority-Flood/D8/MFD graph; topology and finished-field conflicts are exported | Other hidden extrema, filled barriers and unresolved final-ground climbs remain; routes are not validated rivers |

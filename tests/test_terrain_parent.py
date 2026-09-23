@@ -18,6 +18,10 @@ from benchmarks.terrain import fixture
 from dmtools.cli import main
 from dmtools.terrain.adapters.build import canonical_json, file_sha256, runtime_identity
 from dmtools.terrain.adapters.parent import load_terrain_parent
+from dmtools.terrain.adapters.parent_region import (
+    publish_parent_region_manifest,
+    write_parent_region_products,
+)
 from dmtools.terrain.adapters.project import (
     load_terrain_project,
     project_snapshot_from_json,
@@ -28,6 +32,7 @@ from dmtools.terrain.application import parent_region as application
 from dmtools.terrain.application.build import build_terrain_project
 from dmtools.terrain.domain import TerrainProject
 from dmtools.terrain.domain.regional import RegionalDetailSettings, RegionalSamplingRequest
+from dmtools.terrain.pipeline.detail import prepare_regional_detail
 from dmtools.terrain.pipeline.parent import prepare_verified_parent
 
 ROOT = Path(__file__).parents[1]
@@ -237,6 +242,27 @@ def test_parent_cli_artifacts_are_repeatable_and_schema_bound(
     identity = document.pop("artifact_id")
     assert identity == sha256(canonical_json(document)).hexdigest()
     assert before == {p.name: file_sha256(p) for p in saved_parent.iterdir()}
+    if detail:
+        runtime = runtime_identity()
+        loaded = load_terrain_parent(saved_parent, runtime)
+        parent = prepare_verified_parent(loaded.data)
+        settings = RegionalDetailSettings()
+        context = prepare_regional_detail(parent, settings)
+        request = RegionalSamplingRequest.for_bounds(
+            parent.data.build_id, parent.data.grid, bounds, 8
+        )
+        context.sample(request)
+        warmed = context.sample(request)
+        assert context.cache_info().hits == warmed.evidence.parent_cells
+        destination = tmp_path / "warm"
+        destination.mkdir()
+        outputs = write_parent_region_products(warmed.samples, parent, destination, warmed)
+        publish_parent_region_manifest(
+            warmed.samples, loaded, parent, destination, bounds_km=bounds, runtime=runtime,
+            outputs=outputs, detail_settings=settings, detail=warmed,
+        )
+        for artifact in first.iterdir():
+            assert artifact.read_bytes() == (destination / artifact.name).read_bytes()
 
 
 def test_parent_changes_during_export_prevent_completion(
