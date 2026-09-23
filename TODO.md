@@ -38,7 +38,7 @@ substeps.
   hashes, generator and schema versions, master and stage seeds, effective
   parameters, working extent and units, runtime/dependency versions, warnings,
   and authoritative output hashes.
-  Current version-16 builds record named stage seeds, numeric product hashes,
+  Completed builds record named stage seeds, numeric product hashes,
   and explicit local-only NPY/GeoTIFF coordinates. World placement remains open.
 - [x] **P0 — Export the authoritative Float32 DEM as local-metric GeoTIFF.**
   Implemented point registration, metre units, NaN nodata, embedded masks,
@@ -384,6 +384,11 @@ editing a finished DEM; see [ADR-0048](docs/adr/0048-keep-zoom-driven-detail-gen
   aligned requests and detail settings; artifact bounds remain caller-specific.
   Clearing and close release retained work. See
   [ADR-0063](docs/adr/0063-reuse-verified-parent-region-sessions.md).
+- [x] **P1 — Cancel regional requests without losing reusable parent work.**
+  One-way tokens stop at preparation/sampling/export checkpoints; cancelled
+  numeric work cannot become a cached result or a completed artifact. Valid
+  completed results can be retried to a new destination, with fresh source/runtime
+  checks. See [ADR-0064](docs/adr/0064-cancel-generation-at-safe-checkpoints.md).
 - [ ] **P1 — Bound total local-generation job memory.** Result arrays and scalar
   cell support are bounded; parent/context count is explicit. Establish admission
   budgets for complete-source geometry, loaded/prepared parent buffers, active
@@ -396,7 +401,9 @@ editing a finished DEM; see [ADR-0048](docs/adr/0048-keep-zoom-driven-detail-gen
 - [ ] **P1 — Connect zoom to regional generation requests.** Keep navigation
   responsive and distinguish image magnification, denser field sampling and
   newly generated detail. Define automatic thresholds or an explicit generate
-  action, cancellation, result freshness and cache budgets before wiring jobs.
+  action, result freshness and total memory budgets before wiring jobs.
+  Cooperative cancellation and verified serial sessions now supply lifecycle
+  foundations; no viewport scheduler or recursive enrichment is implemented.
 
 - [x] **P1 — Make sampled lake visibility follow display scale.** Classify
   each connected wet pool independently; hide pools at or below 9 output pixels
@@ -1112,10 +1119,12 @@ geometry movement and project-saving behavior.
   resolution preview in the background while retaining an explicit full-quality
   Generate action. Explicit Quick test (257 px) and Detail (1025 px) resolution
   presets are implemented; these change the saved setting, not a hidden preview.
-- [ ] **P0 — Add stage-aware progress and cancellation.** Show the current
-  pipeline stage, elapsed work and cancellation status. Background generation
-  already reports progress labels; cancellation and elapsed work remain open.
-  Headless builds already publish completion last.
+- [x] **P0 — Add stage-aware progress and cancellation.** The workbench shows
+  elapsed time, stage and Cancel/Esc status. It retains the previous map, waits
+  for worker acknowledgement and rejects cancelled/old queued results. Headless
+  application operations check tokens before completion publication. Stops are
+  cooperative; individual native operations and file writes have no latency bound.
+  See [the guide](docs/terrain-generation-control.md).
 - [ ] **P1 — Add switchable inspection overlays.** Include contours, hillshade,
   slope, curvature, influence extents, hard-constraint residuals, drainage,
   catchments and clipped-elevation warnings. Drainage and basin catchment

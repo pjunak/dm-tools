@@ -22,6 +22,11 @@ from dmtools.terrain.domain.regional import (
     RegionalSamplingRequest,
     detail_cell_window,
 )
+from dmtools.terrain.pipeline.control import (
+    CancellationToken,
+    cancellable_progress,
+    check_cancelled,
+)
 from dmtools.terrain.pipeline.detail import PreparedRegionalDetail, prepare_regional_detail
 from dmtools.terrain.pipeline.generate import ProgressCallback
 from dmtools.terrain.pipeline.parent import VerifiedTerrainParent, prepare_verified_parent
@@ -104,10 +109,13 @@ class ParentRegionSession:
         self, destination: Path, bounds_km: Bounds, refinement: int, *,
         detail_settings: RegionalDetailSettings | None = None,
         progress: ProgressCallback | None = None,
+        cancellation: CancellationToken | None = None,
     ) -> Path:
         """Publish a new artifact, reusing exact requests only after freshness checks."""
         if self._writing:
             raise RuntimeError("Parent regional session is already generating; use it serially.")
+        check_cancelled(cancellation)
+        progress = cancellable_progress(progress, cancellation)
         loaded = self._require_open()
         target = _destination(loaded.directory, destination)
         request = RegionalSamplingRequest.for_bounds(
@@ -118,8 +126,10 @@ class ParentRegionSession:
         self._writing = True
         try:
             self._verify_current()
+            check_cancelled(cancellation)
             if self._parent is None:
                 self._parent = prepare_verified_parent(loaded.data, progress)
+            check_cancelled(cancellation)
             parent = self._parent
             key = request, detail_settings
             result = self._results.get(key)
@@ -128,22 +138,29 @@ class ParentRegionSession:
                     result = ParentRegionResult(parent.sampler.sample(request, progress))
                 else:
                     if self._detail is None:
-                        self._detail = prepare_regional_detail(parent, detail_settings)
+                        self._detail = prepare_regional_detail(
+                            parent, detail_settings, progress=progress
+                        )
                     elif self._detail.settings != detail_settings:
                         self._detail = replace(self._detail, settings=detail_settings)
                     detail = self._detail.sample(request, progress)
                     result = ParentRegionResult(detail.samples, detail)
                 self._verify_current()
+                check_cancelled(cancellation)
                 self._results.put(key, result)
             else:
                 if progress is not None:
                     progress(1.0, "Reusing verified regional samples")
                 # A callback can change files even on a cache hit.
                 self._verify_current()
+            check_cancelled(cancellation)
             target.parent.mkdir(parents=True, exist_ok=True)
             target.mkdir()
-            outputs = write_parent_region_products(result.samples, parent, target, result.detail)
+            outputs = write_parent_region_products(
+                result.samples, parent, target, result.detail, cancellation=cancellation
+            )
             self._verify_current()
+            check_cancelled(cancellation)
             return publish_parent_region_manifest(
                 result.samples, loaded, parent, target, bounds_km=bounds_km,
                 runtime=self._runtime, outputs=outputs, detail_settings=detail_settings,
@@ -161,9 +178,12 @@ def sample_parent_region(
     *,
     detail_settings: RegionalDetailSettings | None = None,
     progress: ProgressCallback | None = None,
+    cancellation: CancellationToken | None = None,
 ) -> Path:
+    check_cancelled(cancellation)
     target = _destination(source, destination)
     with ParentRegionSession(source, result_cache_bytes=0) as session:
         return session.write(
-            target, bounds_km, refinement, detail_settings=detail_settings, progress=progress
+            target, bounds_km, refinement, detail_settings=detail_settings, progress=progress,
+            cancellation=cancellation,
         )

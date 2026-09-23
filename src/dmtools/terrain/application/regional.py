@@ -8,6 +8,11 @@ from dmtools.terrain.adapters.regional import publish_regional_manifest, write_r
 from dmtools.terrain.domain import EndpointGrid, LocalMetricFrame
 from dmtools.terrain.domain.coordinates import Bounds
 from dmtools.terrain.domain.regional import RegionalSamplingRequest
+from dmtools.terrain.pipeline.control import (
+    CancellationToken,
+    cancellable_progress,
+    check_cancelled,
+)
 from dmtools.terrain.pipeline.generate import ProgressCallback
 from dmtools.terrain.pipeline.regional import prepare_regional_sampler, sampling_source_id
 
@@ -15,8 +20,11 @@ from dmtools.terrain.pipeline.regional import prepare_regional_sampler, sampling
 def sample_terrain_region(
     source: Path, destination: Path, bounds_km: Bounds, refinement: int, *,
     progress: ProgressCallback | None = None,
+    cancellation: CancellationToken | None = None,
 ) -> Path:
     """Reserve a fresh result directory after validating the halo-inclusive request budget."""
+    check_cancelled(cancellation)
+    progress = cancellable_progress(progress, cancellation)
     target = destination.absolute()
     if target.exists() or target.is_symlink():
         raise FileExistsError(f"Regional destination already exists: {target}")
@@ -37,15 +45,18 @@ def sample_terrain_region(
             raise ValueError("Project or coastline changed during regional sampling; retry.")
 
     verify_inputs()
+    check_cancelled(cancellation)
     target.parent.mkdir(parents=True, exist_ok=True)
     target.mkdir()
     sampler = prepare_regional_sampler(project.coastline, project.settings,
                                        constraints=project.constraints, progress=progress)
     samples = sampler.sample(request, progress)
+    check_cancelled(cancellation)
     outputs = write_regional_products(samples, project, target)
     verify_inputs()
     if runtime_identity() != runtime:
         raise ValueError("Generator source or runtime changed during regional sampling; retry.")
+    check_cancelled(cancellation)
     return publish_regional_manifest(
         samples, project, target, requested_bounds_km=bounds_km, project_sha256=project_hash,
         svg_sha256=loaded.coastline_source.sha256, runtime=runtime, outputs=outputs,

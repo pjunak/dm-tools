@@ -4,6 +4,7 @@
 
 1. To use the application, read the
    [terrain tool guide](../src/dmtools/terrain/README.md).
+   For stopping work safely, read [generation cancellation](terrain-generation-control.md).
 2. To contribute or choose the next implementation, read the
    [current development strategy](strategy/README.md).
 3. To understand the present dependency direction and data flow, read the

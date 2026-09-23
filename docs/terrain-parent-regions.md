@@ -124,8 +124,8 @@ not assumed to meet an unenriched parent there.
 The regular cell support is visible in difference images. Terrain-aware support,
 coarse spectral-power acceptance, derivative checks on the final quantized field,
 partial coastal/basin detail, inherited outlet paths and upstream flow, finer
-routing, total job-memory budgets, cancellation and workbench requests
-remain open. Read
+routing, total job-memory budgets and workbench requests remain open.
+[Cooperative cancellation](terrain-generation-control.md) is now implemented. Read
 [ADR-0061](adr/0061-verify-parents-and-isolate-local-detail.md), the
 [measurements](research/2026-09-23-verified-parent-detail.md) and [TODO](../TODO.md).
 
@@ -195,6 +195,12 @@ budget, retained bytes, entry count, hits, misses, evictions and bypasses.
 
 `clear_cache()` releases results and scalar cell support while keeping the prepared
 parent. `close()` and context-manager exit release all session references.
+Pass `cancellation=CancellationToken()` to an individual write to allow a
+controlling thread to request a stop. Cancelled numeric work is never cached;
+valid completed results can survive an export-time cancellation for a retry to
+a new destination. Use a fresh token for that retry. See the
+[cancellation lifecycle](terrain-generation-control.md).
+
 Retain and use each session serially. Its public API returns artifact paths, keeping
 cache arrays private. Equal aligned requests can share numeric data even when their
 original bounds differ; each manifest retains the bounds supplied for that write.

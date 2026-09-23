@@ -158,6 +158,13 @@ instruction, and undo/redo restores input tuples. Geometry dragging previews an
 immutable candidate, validates placement/topology on release and commits once.
 `move_instruction` keeps closed rings and lake outlet edge positions consistent.
 Opening a project resets history.
+A per-job cancellation token identifies worker events and guards UI acceptance.
+Cancelled/old results release their images and cannot replace the reference; the
+worker retains its slot until it acknowledges the stop. Progress shows elapsed
+time and the current stage. Application operations check cancellation before
+manifest publication, and reusable sessions retain only valid completed numeric
+work. See [ADR-0064](../adr/0064-cancel-generation-at-safe-checkpoints.md).
+
 A `GenerationInputs` snapshot accompanies each worker result. The UI compares it
 with current coastline, settings and constraints before treating the result as
 current or enabling PNG export. Retained images and review products belong to the

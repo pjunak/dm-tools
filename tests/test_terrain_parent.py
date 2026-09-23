@@ -34,6 +34,7 @@ from dmtools.terrain.application import parent_region as application
 from dmtools.terrain.application.build import build_terrain_project
 from dmtools.terrain.domain import TerrainProject
 from dmtools.terrain.domain.regional import RegionalDetailSettings, RegionalSamplingRequest
+from dmtools.terrain.pipeline.control import CancellationToken, GenerationCancelled
 from dmtools.terrain.pipeline.detail import prepare_regional_detail
 from dmtools.terrain.pipeline.parent import prepare_verified_parent
 from dmtools.terrain.pipeline.regional import TerrainRegionSampler
@@ -569,3 +570,112 @@ def test_session_close_releases_parent_and_prepared_arrays(
         assert len(references) == 2 and all(ref() is not None for ref in references)
     gc.collect()
     assert all(ref() is None for ref in references)
+
+
+@pytest.mark.parametrize("stage", [
+    "Verifying all saved parent samples",
+    "Sampling the regional terrain field",
+    "Applying experimental local detail",
+])
+def test_cancelled_session_request_publishes_nothing_and_can_retry(
+    saved_parent: Path, tmp_path: Path, stage: str,
+) -> None:
+    token = CancellationToken()
+    bounds = (1100., 1100., 1700., 1700.)
+    settings = RegionalDetailSettings()
+
+    def stop(_fraction: float, label: str) -> None:
+        if label == stage:
+            token.cancel()
+
+    application.sample_parent_region(saved_parent, tmp_path / "control", bounds, 8,
+                                     detail_settings=settings)
+    with application.ParentRegionSession(saved_parent) as session:
+        with pytest.raises(GenerationCancelled):
+            session.write(tmp_path / "cancelled", bounds, 8, detail_settings=settings,
+                          cancellation=token, progress=stop)
+        assert not (tmp_path / "cancelled").exists()
+        assert session.cache_info().entries == 0
+        session.write(tmp_path / "retry", bounds, 8, detail_settings=settings,
+                      cancellation=CancellationToken())
+        for artifact in (tmp_path / "control").iterdir():
+            assert artifact.read_bytes() == (tmp_path / "retry" / artifact.name).read_bytes()
+    load_terrain_parent(saved_parent, runtime_identity()).verify_unchanged()
+
+
+def test_cancelled_cache_hit_keeps_valid_result_without_publishing(
+    saved_parent: Path, tmp_path: Path,
+) -> None:
+    token = CancellationToken()
+    bounds = (1100., 1100., 1700., 1700.)
+    with application.ParentRegionSession(saved_parent) as session:
+        session.write(tmp_path / "control", bounds, 8)
+        token.cancel()
+        before = session.cache_info()
+        with pytest.raises(GenerationCancelled):
+            session.write(tmp_path / "precancelled", bounds, 8, cancellation=token)
+        assert session.cache_info() == before
+        token = CancellationToken()
+
+        def stop(_fraction: float, label: str) -> None:
+            assert label == "Reusing verified regional samples"
+            token.cancel()
+
+        with pytest.raises(GenerationCancelled):
+            session.write(tmp_path / "cancelled-hit", bounds, 8,
+                          cancellation=token, progress=stop)
+        assert session.cache_info().entries == 1
+        assert not (tmp_path / "precancelled").exists()
+        assert not (tmp_path / "cancelled-hit").exists()
+        session.write(tmp_path / "retry", bounds, 8)
+        assert session.cache_info().hits == 2
+        for artifact in (tmp_path / "control").iterdir():
+            assert artifact.read_bytes() == (tmp_path / "retry" / artifact.name).read_bytes()
+
+
+def test_cancel_during_export_retains_only_partial_products_and_can_retry(
+    saved_parent: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    writer = application.write_parent_region_products
+    token = CancellationToken()
+    bounds = (1100., 1100., 1700., 1700.)
+
+    def stop_after_export(*args: Any, **kwargs: Any) -> dict[str, object]:
+        products = writer(*args, **kwargs)
+        token.cancel()
+        return products
+
+    with application.ParentRegionSession(saved_parent) as session:
+        monkeypatch.setattr(application, "write_parent_region_products", stop_after_export)
+        with pytest.raises(GenerationCancelled):
+            session.write(tmp_path / "partial", bounds, 8, cancellation=token)
+        assert (tmp_path / "partial/samples.npz").is_file()
+        assert not (tmp_path / "partial/manifest.json").exists()
+        assert session.cache_info().entries == 1
+        monkeypatch.setattr(application, "write_parent_region_products", writer)
+        session.write(tmp_path / "retry", bounds, 8, cancellation=CancellationToken())
+        assert session.cache_info().hits == 1
+        assert (tmp_path / "retry/manifest.json").is_file()
+        assert ((tmp_path / "retry/samples.npz").read_bytes()
+                == (tmp_path / "partial/samples.npz").read_bytes())
+
+
+
+def test_cancellation_after_publication_does_not_undo_a_completed_artifact(
+    saved_parent: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    publish = application.publish_parent_region_manifest
+    token = CancellationToken()
+
+    def complete(*args: Any, **kwargs: Any) -> Path:
+        manifest = publish(*args, **kwargs)
+        token.cancel()
+        return manifest
+
+    monkeypatch.setattr(application, "publish_parent_region_manifest", complete)
+    with application.ParentRegionSession(saved_parent) as session:
+        manifest = session.write(tmp_path / "completed", (1100., 1100., 1700., 1700.), 8,
+                                 cancellation=token)
+        assert token.is_cancelled
+        assert manifest.is_file()
+        assert json.loads(manifest.read_bytes())["status"] == "complete"

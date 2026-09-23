@@ -6,6 +6,7 @@ import tkinter as tk
 from collections.abc import Iterator
 from dataclasses import replace
 from pathlib import Path
+from threading import Event
 
 import numpy as np
 import pytest
@@ -23,6 +24,7 @@ from dmtools.terrain.domain import (
     landform_preset,
 )
 from dmtools.terrain.pipeline import GeneratedTerrain, generate_terrain
+from dmtools.terrain.pipeline.control import CancellationToken
 from dmtools.terrain.workbench import GenerationInputs
 
 
@@ -561,3 +563,166 @@ def test_resolution_readout_keeps_navigation_available_in_small_window(app: ui.T
     for widget in app.zoom_label.master.winfo_children():
         assert widget.winfo_ismapped()
         assert widget.winfo_width() >= widget.winfo_reqwidth()
+
+
+@pytest.mark.parametrize("escape", [False, True])
+def test_cancel_waits_for_worker_and_preserves_reference_and_inputs(
+    app: ui.TerrainApp, monkeypatch: pytest.MonkeyPatch, escape: bool,
+) -> None:
+    entered, release = Event(), Event()
+    terrain, image, inputs = app._terrain, app._image, app._generation_inputs()
+    assert terrain is not None
+    original = terrain.elevation_m.copy()
+    errors: list[object] = []
+    def show_error(*args: object, **_kwargs: object) -> None:
+        errors.extend(args)
+
+    monkeypatch.setattr(ui.messagebox, "showerror", show_error)
+
+    def generate(*_args: object, **_kwargs: object) -> GeneratedTerrain:
+        entered.set()
+        assert release.wait(5), "Worker was not released"
+        return terrain
+
+    monkeypatch.setattr(ui, "generate_terrain", generate)
+    app._generate()
+    token = app._generation_cancel
+    assert token is not None
+    try:
+        assert entered.wait(5)
+        assert str(app.generate_button["text"]) == "Cancel generation"
+        assert str(app.generate_button["state"]) == "normal"
+        app._generation_started = time.monotonic() - 12
+        app._poll_events()
+        assert " s" in str(app.status_label["text"])
+        if escape:
+            assert app._escape() == "break"
+        else:
+            app.generate_button.invoke()
+        assert token.is_cancelled and app._busy
+        assert str(app.generate_button["state"]) == "disabled"
+        app._events.put(ui._ProgressEvent(0.9, "Late progress", token))
+        app._poll_events()
+        assert "Cancelling" in str(app.status_label["text"])
+        assert app._terrain is terrain and app._image is image
+        assert not app._authoring_enabled
+    finally:
+        release.set()
+    _wait_for_operation(app)
+    assert not errors
+    assert app._generation_cancel is None
+    assert app._terrain is terrain and app._image is image
+    assert app._generation_inputs() == inputs
+    np.testing.assert_array_equal(terrain.elevation_m, original)
+    assert app._reference_is_current()
+    assert app._authoring_enabled
+    assert str(app.generate_button["text"]) == "Generate terrain"
+    assert str(app.generate_button["state"]) == "normal"
+    assert "Generation cancelled" in str(app.status_label["text"])
+
+
+def test_cancel_discards_a_result_already_waiting_in_the_ui_queue(
+    app: ui.TerrainApp, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    terrain, image = app._terrain, app._image
+    assert terrain is not None
+    candidate = Image.new("RGBA", (65, 65))
+    def completed(*_args: object, **_kwargs: object) -> GeneratedTerrain:
+        return terrain
+
+    monkeypatch.setattr(ui, "generate_terrain", completed)
+    def rendered(*_args: object, **_kwargs: object) -> tuple[Image.Image, None]:
+        return candidate, None
+
+    monkeypatch.setattr(ui, "render_height_map_layers", rendered)
+    app._generate()
+    # Do not pump Tk until the worker has enqueued its completed result.
+    while True:
+        event = app._events.get(timeout=5)
+        if isinstance(event, ui._ResultEvent):
+            break
+    app._events.put(event)
+    app._cancel_generation()
+    app._poll_events()
+    assert not app._busy
+    assert app._terrain is terrain and app._image is image
+    with pytest.raises(ValueError, match="closed"):
+        candidate.getpixel((0, 0))
+    assert "cancelled" in str(app.status_label["text"])
+
+
+def test_cancel_during_render_releases_new_images_and_does_not_show_an_error(
+    app: ui.TerrainApp, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    entered, release = Event(), Event()
+    closing, release_cleanup = Event(), Event()
+    terrain, image = app._terrain, app._image
+    assert terrain is not None
+    candidate, pool = Image.new("RGBA", (65, 65)), Image.new("F", (65, 65))
+    close = candidate.close
+
+    def finish_image() -> None:
+        closing.set()
+        assert release_cleanup.wait(5)
+        close()
+
+    monkeypatch.setattr(candidate, "close", finish_image)
+    errors: list[object] = []
+    def show_error(*args: object, **_kwargs: object) -> None:
+        errors.extend(args)
+
+    monkeypatch.setattr(ui.messagebox, "showerror", show_error)
+    def completed(*_args: object, **_kwargs: object) -> GeneratedTerrain:
+        return terrain
+
+    monkeypatch.setattr(ui, "generate_terrain", completed)
+
+    def render(*_args: object, **_kwargs: object) -> tuple[Image.Image, ui.WaterDisplay]:
+        entered.set()
+        assert release.wait(5)
+        return candidate, ui.WaterDisplay(pool)
+
+    monkeypatch.setattr(ui, "render_height_map_layers", render)
+    app._generate()
+    try:
+        assert entered.wait(5)
+        app._cancel_generation()
+    finally:
+        release.set()
+    try:
+        assert closing.wait(5)
+        app._poll_events()
+        assert app._busy, "Cancellation acknowledgement must follow resource cleanup"
+    finally:
+        release_cleanup.set()
+    _wait_for_operation(app)
+    assert not errors
+    assert app._terrain is terrain and app._image is image
+    for discarded in (candidate, pool):
+        with pytest.raises(ValueError, match="closed"):
+            discarded.getpixel((0, 0))
+
+
+def test_old_generation_events_cannot_finish_or_replace_a_new_request(app: ui.TerrainApp) -> None:
+    terrain, image = app._terrain, app._image
+    assert terrain is not None
+    old, current = CancellationToken(), CancellationToken()
+    app._generation_cancel = current
+    app._generation_started = time.monotonic()
+    app._generation_message = "New request"
+    app._set_busy(True)
+    candidate = Image.new("RGBA", (65, 65))
+    app._events.put(ui._CancelledEvent(old))
+    app._events.put(ui._ErrorEvent("Old error", "Old failure", RuntimeError("old"), old))
+    app._events.put(ui._ProgressEvent(1.0, "Old progress", old))
+    app._events.put(ui._ResultEvent(app._generation_inputs(), terrain, candidate, None, old))
+    app._poll_events()
+    assert app._busy and app._generation_cancel is current
+    assert app._terrain is terrain and app._image is image
+    assert "New request" in str(app.status_label["text"])
+    with pytest.raises(ValueError, match="closed"):
+        candidate.getpixel((0, 0))
+    current.cancel()
+    app._events.put(ui._CancelledEvent(current))
+    app._poll_events()
+    assert not app._busy

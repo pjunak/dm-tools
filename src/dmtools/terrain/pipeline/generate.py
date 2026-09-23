@@ -1,7 +1,7 @@
 # pyright: reportUnknownMemberType=false
 """First deterministic coastline-conditioned terrain pipeline."""
 
-from collections.abc import Callable, Sequence
+from collections.abc import Sequence
 from dataclasses import dataclass, field, replace
 from itertools import pairwise
 from typing import Any, cast
@@ -28,6 +28,12 @@ from dmtools.terrain.domain.seeds import RELIEF_STAGE_ID, stage_seed
 from dmtools.terrain.pipeline.basin_flow import BasinOutflow, resolve_basin_outflow
 from dmtools.terrain.pipeline.channel_floor import ChannelFloorReconstruction
 from dmtools.terrain.pipeline.channel_reconstruction import ChannelReconstruction
+from dmtools.terrain.pipeline.control import (
+    CancellationToken,
+    cancellable_progress,
+    check_cancelled,
+)
+from dmtools.terrain.pipeline.control import ProgressCallback as ProgressCallback
 from dmtools.terrain.pipeline.diagnostics import (
     ChannelConflicts,
     DrainageAnalysis,
@@ -59,8 +65,6 @@ from dmtools.terrain.pipeline.water import (
 )
 from dmtools.terrain.pipeline.water_budget import WaterSamplingBudget, plan_water_sampling_budget
 from dmtools.terrain.pipeline.water_sampling import SamplingDensity, SamplingFeature, SamplingGuide
-
-type ProgressCallback = Callable[[float, str], None]
 
 GENERATOR_ALGORITHM_ID = "coastline-constraint-terrain@17"
 AUTOMATIC_VALLEY_ALGORITHM_ID = "regional-budget-mfd-d8-valleys@13"
@@ -873,6 +877,7 @@ def _prepare_automatic_valley_field(
     constraints: tuple[_MetricConstraint, ...],
     regions: tuple[MetricRegion, ...] = (),
     basins: tuple[MetricBasin, ...] = (),
+    progress: ProgressCallback | None = None,
 ) -> _AutomaticValleyField:
     """Route broad drainage once on a canonical, output-resolution-free grid."""
 
@@ -910,6 +915,7 @@ def _prepare_automatic_valley_field(
     retention_terminals = basin_intent_ids(x_grid, y_grid, basins) > 0
     budget[retention_terminals] = 0
     def sample_routing_macro(x: NDArray[np.float64], y: NDArray[np.float64]) -> NDArray[np.float64]:
+        _report(progress, 0.062, "Reviewing mountain passes")
         points = shapely.points(x, y)
         coast_distance = np.asarray(shapely.distance(points, boundary), dtype=np.float64)
         _full, macro, driver = _base_elevation_fields(x, y, coast_distance, settings, regions)
@@ -922,9 +928,11 @@ def _prepare_automatic_valley_field(
         return np.where(shapely.intersects_xy(polygon, x, y),
                         np.clip(conditioned, 0., settings.maximum_elevation_m), 0.)
 
+    _report(progress, 0.062, "Reviewing mountain passes")
     edge_barriers = sample_mountain_barriers(
         x_km, y_km, routing_elevation, land_mask, regions, settings.seed, sample_routing_macro,
     )
+    _report(progress, 0.068, "Routing canonical drainage")
     drainage = drainage_incision(
         routing_elevation,
         land_mask,
@@ -938,6 +946,7 @@ def _prepare_automatic_valley_field(
         retention_terminal_mask=retention_terminals,
         edge_barriers_m=edge_barriers,
     )
+    _report(progress, 0.072, "Preparing connected valley shapes")
     reconstruction = ChannelReconstruction.prepare(x_km, y_km, drainage)
     nodal_floor = np.maximum(
         np.maximum(macro_elevation - drainage.incision_m, 0.)
@@ -946,6 +955,7 @@ def _prepare_automatic_valley_field(
     def sample_channel_source(
         x: NDArray[np.float64], y: NDArray[np.float64],
     ) -> tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.bool_]]:
+        _report(progress, 0.076, "Preparing channel floor profiles")
         points = shapely.points(x, y)
         coast_distance = np.asarray(shapely.distance(points, boundary), dtype=np.float64)
         full, macro, _driver = _base_elevation_fields(x, y, coast_distance, settings, regions)
@@ -955,6 +965,7 @@ def _prepare_automatic_valley_field(
             available &= basin_intent_ids(x, y, basins) == 0
         return macro, (full-macro)*(1-suppression), available
 
+    _report(progress, 0.076, "Preparing channel floor profiles")
     floor = ChannelFloorReconstruction.prepare(
         reconstruction.incision, nodal_floor, drainage.receivers, drainage.channel_mask, land_mask,
         sample_source=sample_channel_source,
@@ -1034,6 +1045,7 @@ def _prepare_downstream_valley_profiles(
     boundary: Any,
     settings: TerrainSettings,
     regions: tuple[MetricRegion, ...] = (),
+    progress: ProgressCallback | None = None,
 ) -> tuple[_MetricConstraint, ...]:
     """Prepare resolution-independent non-rising floors for authored valleys."""
 
@@ -1046,6 +1058,7 @@ def _prepare_downstream_valley_profiles(
     )
     prepared: list[_MetricConstraint] = []
     for constraint in constraints:
+        _report(progress, 0.04, "Preparing authored valley profiles")
         if constraint.kind != "valley":
             prepared.append(constraint)
             continue
@@ -1310,13 +1323,14 @@ def prepare_terrain_field(
     _report(progress, 0.04, "Preparing authored valley profiles")
     metric_constraints = _prepare_downstream_valley_profiles(
         metric_constraints, boundary, settings,
-        regions=regions,
+        regions=regions, progress=progress,
     )
     _report(progress, 0.06, "Routing drainage over authored terrain")
     automatic_valleys = _prepare_automatic_valley_field(
         polygon, boundary, width_km, height_km, settings, metric_constraints,
-        regions=regions, basins=basins,
+        regions=regions, basins=basins, progress=progress,
     )
+    _report(progress, 0.08, "Terrain field prepared")
 
     return PreparedTerrainField(polygon, boundary, width_km, height_km, settings,
                                  metric_constraints, regions, basins, automatic_valleys)
@@ -1344,9 +1358,12 @@ def generate_terrain(
     progress: ProgressCallback | None = None,
     *,
     constraints: Sequence[TerrainConstraint] = (),
+    cancellation: CancellationToken | None = None,
 ) -> GeneratedTerrain:
     """Generate a deterministic Float32 elevation grid inside a coastline."""
 
+    check_cancelled(cancellation)
+    progress = cancellable_progress(progress, cancellation)
     authored_constraints = tuple(constraints)
     field = prepare_terrain_field(coastline, settings, authored_constraints, progress)
     polygon, width_km, height_km = field.polygon, field.width_km, field.height_km
@@ -1386,6 +1403,7 @@ def generate_terrain(
     routing_basin_ids = basin_intent_ids(routing_x, routing_y, basins)
     outlet_heights: list[float | None] = []
     for basin in basins:
+        check_cancelled(cancellation)
         if basin.outlet_km is None:
             outlet_heights.append(None)
         else:
@@ -1393,11 +1411,19 @@ def generate_terrain(
             values = field.sample_ground(np.asarray([outlet_x]), np.asarray([outlet_y]))
             outlet_heights.append(float(values[0]))
     water_features = _water_sampling_guides(metric_constraints, regions, settings)
+    _report(progress, 0.93, "Reviewing basin water and outlets")
+
+    def sample_water_ground(x: NDArray[np.float64], y: NDArray[np.float64]) -> NDArray[np.float32]:
+        check_cancelled(cancellation)
+        values = field.sample_ground(x, y)
+        check_cancelled(cancellation)
+        return values
+
     water_review, basin_outflow = resolve_basin_outflow(
         basins, routing_basin_ids, routing_final, automatic_valleys.drainage,
         automatic_valleys.land_mask, review.drainage.receivers, review.drainage.boundary_flags,
         automatic_valleys.x_km, automatic_valleys.y_km, polygon, authored_constraints,
-        tuple(outlet_heights), field.sample_ground, water_features,
+        tuple(outlet_heights), sample_water_ground, water_features,
     )
     water = water_products(elevation, x_km, y_km, basins, routing_basin_ids, water_review)
 

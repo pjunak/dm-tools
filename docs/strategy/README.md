@@ -117,8 +117,10 @@ bounds on unseen terrain heights.
    authored constraints and cut-budget policy. Inspect regenerated 1025 px results with
    pan/zoom and ground readout; keep authored controls authoritative.
    [ADR-0049](../adr/0049-navigate-and-save-authored-inputs.md) owns the current
-   input-editor contract. Cancellation, comparison views and vertex insertion
-   remain separate editor work. [ADR-0048](../adr/0048-keep-zoom-driven-detail-generation.md)
+   input-editor contract. Cooperative cancellation and elapsed stage reporting
+   now retain the prior reference and reject cancelled/old worker results; see
+   [ADR-0064](../adr/0064-cancel-generation-at-safe-checkpoints.md). Comparison
+   views and vertex insertion remain separate editor work. [ADR-0048](../adr/0048-keep-zoom-driven-detail-generation.md)
    defines the distinct parent-conditioned enrichment scope. Scale-aware lake
    visibility now separates whole-pool importance from viewport cropping, with
    explicit display/ground spacing in the workbench; see
@@ -290,7 +292,8 @@ record the remaining visible cell pattern and conservative exclusions.
   now reuse one parent and byte-bounded results with automatic freshness checks;
   [ADR-0063](../adr/0063-reuse-verified-parent-region-sessions.md) defines ownership
   and release. Bound total parent/geometry/active-job memory next, then add
-  cancellation and workbench requests. Do not repeat full replay for every pointer
+  workbench requests. Cooperative request cancellation is implemented; total
+  memory admission still precedes scheduling. Do not repeat full replay for every pointer
   move or silently turn a successful experimental result
   into accepted cartographic detail.
 - Extend the existing [regional prototype C](../research/2026-09-04-terrain-prototype-contracts.md)

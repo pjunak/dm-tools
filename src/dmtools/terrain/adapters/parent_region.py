@@ -21,6 +21,7 @@ from dmtools.terrain.domain.regional import (
     RegionalDetailSettings,
 )
 from dmtools.terrain.domain.seeds import LOCAL_DETAIL_STAGE_ID, SEED_POLICY_ID, stage_seed
+from dmtools.terrain.pipeline.control import CancellationToken, check_cancelled
 from dmtools.terrain.pipeline.detail import LOCAL_DETAIL_ALGORITHM_ID, DetailedRegion
 from dmtools.terrain.pipeline.parent import PARENT_REPLAY_ALGORITHM_ID, VerifiedTerrainParent
 from dmtools.terrain.pipeline.regional import REGIONAL_SAMPLING_ALGORITHM_ID, RegionalTerrainSamples
@@ -38,7 +39,9 @@ def write_parent_region_products(
     parent: VerifiedTerrainParent,
     destination: Path,
     detail: DetailedRegion | None,
+    *, cancellation: CancellationToken | None = None,
 ) -> dict[str, object]:
+    check_cancelled(cancellation)
     arrays = {
         name: getattr(samples, name)
         for name in (
@@ -69,6 +72,7 @@ def write_parent_region_products(
         np.savez_compressed(stream, **arrays)
         stream.flush()
         os.fsync(stream.fileno())
+    check_cancelled(cancellation)
     _json(destination / "inputs.json", project_snapshot_to_json(parent.data.project))
     rows, columns = samples.request.core_slices
     crop = (columns.start, rows.start, columns.stop, rows.stop)
@@ -94,6 +98,7 @@ def write_parent_region_products(
         with (destination / "scientific.png").open("xb") as stream:
             image.save(stream, format="PNG", pnginfo=metadata)
         paths.append(("scientific.png", "derived"))
+        check_cancelled(cancellation)
         if detail is not None:
             with (
                 render_ground_map(

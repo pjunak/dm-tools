@@ -20,6 +20,7 @@ from dmtools.terrain.adapters.project import load_terrain_project, save_terrain_
 from dmtools.terrain.adapters.render import render_ground_map
 from dmtools.terrain.application import regional as application
 from dmtools.terrain.domain.regional import RegionalSamplingRequest
+from dmtools.terrain.pipeline.control import CancellationToken, GenerationCancelled
 from dmtools.terrain.pipeline.regional import prepare_regional_sampler
 
 ROOT = Path(__file__).parents[1]
@@ -186,3 +187,22 @@ def test_regional_help_and_error_output(tmp_path: Path, capsys: pytest.CaptureFi
                  "--refine", "2"]) == 1
     output = capsys.readouterr()
     assert "Regional sampling failed" in output.err and not output.out
+
+
+def test_cancel_after_export_does_not_publish_completion(
+    saved_project: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    token = CancellationToken()
+    writer = application.write_regional_products
+
+    def stop(*args: Any, **kwargs: Any) -> dict[str, object]:
+        outputs = writer(*args, **kwargs)
+        token.cancel()
+        return outputs
+
+    monkeypatch.setattr(application, "write_regional_products", stop)
+    destination = tmp_path / "cancelled-export"
+    with pytest.raises(GenerationCancelled):
+        application.sample_terrain_region(saved_project, destination, BOUNDS, 2, cancellation=token)
+    assert destination.is_dir()
+    assert not (destination / "manifest.json").exists()

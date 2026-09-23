@@ -19,6 +19,7 @@ from dmtools.terrain.adapters.build import canonical_json, file_sha256
 from dmtools.terrain.adapters.project import load_terrain_project, save_terrain_project
 from dmtools.terrain.application import build as build_module
 from dmtools.terrain.domain.seeds import RELIEF_STAGE_ID, SEED_POLICY_ID, stage_seed
+from dmtools.terrain.pipeline.control import CancellationToken, GenerationCancelled
 from dmtools.terrain.pipeline.generate import generate_terrain
 
 EXAMPLES = Path(__file__).parents[1] / "examples" / "terrain"
@@ -468,3 +469,22 @@ def test_connected_outlet_build_exports_conserved_source_and_terminal_area(
             a, b = link["source_flat_index"], link["target_flat_index"]
             if link["blocked"]:
                 assert selected[a] != b and selected[b] != a
+
+
+def test_cancel_after_export_does_not_publish_completion(
+    project_path: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    token = CancellationToken()
+    writer = build_module.write_build_products
+
+    def stop(*args: Any, **kwargs: Any) -> dict[str, object]:
+        outputs = writer(*args, **kwargs)
+        token.cancel()
+        return outputs
+
+    monkeypatch.setattr(build_module, "write_build_products", stop)
+    destination = tmp_path / "cancelled-export"
+    with pytest.raises(GenerationCancelled):
+        build_module.build_terrain_project(project_path, destination, cancellation=token)
+    assert destination.is_dir()
+    assert not (destination / "manifest.json").exists()

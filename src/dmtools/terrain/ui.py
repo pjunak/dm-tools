@@ -11,6 +11,7 @@ from dataclasses import dataclass, replace
 from functools import partial
 from math import hypot
 from pathlib import Path
+from time import monotonic
 from tkinter import filedialog, messagebox, ttk
 
 from PIL import Image, ImageTk
@@ -59,6 +60,7 @@ from dmtools.terrain.domain import (
     landform_preset,
 )
 from dmtools.terrain.pipeline import GeneratedTerrain, generate_terrain
+from dmtools.terrain.pipeline.control import CancellationToken, GenerationCancelled
 from dmtools.terrain.viewport import MapViewport
 from dmtools.terrain.workbench import GenerationInputs, InstructionHistory, move_instruction
 
@@ -99,6 +101,7 @@ class _ControlSpec:
 class _ProgressEvent:
     fraction: float
     message: str
+    generation: CancellationToken | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -107,6 +110,7 @@ class _ResultEvent:
     terrain: GeneratedTerrain
     image: Image.Image
     water_display: WaterDisplay | None
+    generation: CancellationToken | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -130,6 +134,12 @@ class _ErrorEvent:
     title: str
     status: str
     error: Exception
+    generation: CancellationToken | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class _CancelledEvent:
+    generation: CancellationToken
 
 
 type _UiEvent = (
@@ -139,6 +149,7 @@ type _UiEvent = (
     | _ProjectEvent
     | _ProjectSavedEvent
     | _ErrorEvent
+    | _CancelledEvent
 )
 
 
@@ -179,6 +190,10 @@ class TerrainApp:
         self._saved_inputs: GenerationInputs | None = None
         self._after_save: Callable[[], None] | None = None
         self._busy = False
+        self._generation_cancel: CancellationToken | None = None
+        self._generation_started: float | None = None
+        self._generation_message = ""
+        self._generation_fraction = 0.0
         self._closed = False
         self._viewport = MapViewport()
         self._syncing_selection = False
@@ -438,7 +453,8 @@ class TerrainApp:
         buttons.grid(row=row + 1, column=0, sticky="ew")
         buttons.columnconfigure(0, weight=1)
         self.generate_button = ttk.Button(
-            buttons, text="Generate terrain", style="Accent.TButton", command=self._generate
+            buttons, text="Generate terrain", style="Accent.TButton",
+            command=self._generate_or_cancel
         )
         self.generate_button.grid(row=0, column=0, sticky="ew")
         self.export_button = ttk.Button(
@@ -1827,8 +1843,17 @@ class TerrainApp:
         can_save = not busy and self._coastline_source is not None
         self.save_project_button.configure(state="normal" if can_save else "disabled")
         self.save_as_button.configure(state="normal" if can_save else "disabled")
-        self.generate_button.configure(
-            state="normal" if not busy and self._coastline is not None else "disabled")
+        token = self._generation_cancel
+        if token is not None:
+            self.generate_button.configure(
+                text="Cancelling…" if token.is_cancelled else "Cancel generation",
+                state="disabled" if token.is_cancelled else "normal",
+            )
+        else:
+            self.generate_button.configure(
+                text="Generate terrain",
+                state="normal" if not busy and self._coastline is not None else "disabled",
+            )
         for widget in self._settings_widgets:
             widget["state"] = state
         self.render_style_input.configure(state="disabled" if busy else "readonly")
@@ -1837,7 +1862,9 @@ class TerrainApp:
 
     def _guard_unsaved(self, action: Callable[[], None]) -> None:
         if self._busy:
-            self.status_label.configure(text="Wait for the current operation to finish.")
+            self.status_label.configure(text=(
+                "Cancel generation or wait for it to finish." if self._generation_cancel else
+                "Wait for the current operation to finish."))
             return
         if not self._document_is_dirty():
             action()
@@ -1873,7 +1900,7 @@ class TerrainApp:
         for sequence, command in (
             ("<Control-o>", self._choose_project), ("<Control-s>", self._save_project),
             ("<Control-Shift-S>", partial(self._save_project, save_as=True)),
-            ("<Control-Return>", self._generate), ("<Escape>", self._cancel_edit),
+            ("<Control-Return>", self._generate),
         ):
             self.root.bind(sequence, lambda _event, action=command: self._shortcut(action))
         for sequence, command in (
@@ -1884,6 +1911,7 @@ class TerrainApp:
         ):
             self.root.bind(sequence, lambda _event, action=command: self._shortcut(
                 action, editing=True))
+        self.root.bind("<Escape>", lambda _event: self._escape())
         self.root.bind("<KeyPress-space>", lambda _event: self._space_key(True))
         self.root.bind("<KeyRelease-space>", lambda _event: self._space_key(False))
         self.root.bind("<FocusOut>", lambda _event: self._space_key(False))
@@ -2239,6 +2267,56 @@ class TerrainApp:
         self._refresh_reference_state()
         self._draw_preview()
 
+    def _generate_or_cancel(self) -> None:
+        if self._generation_cancel is not None:
+            self._cancel_generation()
+        else:
+            self._generate()
+
+    def _escape(self) -> str:
+        if self._generation_cancel is not None:
+            self._cancel_generation()
+        elif not self._busy:
+            self._cancel_edit()
+        return "break"
+
+    def _cancel_generation(self) -> None:
+        if self._generation_cancel is not None:
+            self._generation_cancel.cancel()
+            # Keep the worker's slot until it acknowledges the stop.
+            self._set_busy(True)
+            self._update_generation_status()
+
+    def _update_generation_status(self) -> None:
+        if self._generation_started is None or self._generation_cancel is None:
+            return
+        message = ("Cancelling — waiting for the current step to stop"
+                   if self._generation_cancel.is_cancelled else self._generation_message)
+        elapsed = monotonic() - self._generation_started
+        self.status_label.configure(text=f"{message} · {elapsed:.1f} s")
+
+    def _end_generation(self) -> float | None:
+        elapsed = (None if self._generation_started is None else
+                   monotonic() - self._generation_started)
+        self._generation_started = None
+        self._generation_cancel = None
+        return elapsed
+
+    def _finish_cancelled_generation(self) -> None:
+        elapsed = self._end_generation()
+        self.progress.stop()
+        self.progress.configure(mode="determinate", value=0)
+        self._set_busy(False)
+        timing = f" after {elapsed:.1f} s" if elapsed is not None else ""
+        reference = " Previous map kept as reference." if self._terrain is not None else ""
+        self.status_label.configure(text=f"Generation cancelled{timing}.{reference}")
+
+    @staticmethod
+    def _discard_result(event: _ResultEvent) -> None:
+        event.image.close()
+        if event.water_display is not None:
+            event.water_display.pool_area.close()
+
     def _generate(self) -> None:
         if self._busy:
             return
@@ -2260,41 +2338,80 @@ class TerrainApp:
             messagebox.showerror("Invalid settings", str(error), parent=self.root)
             return
 
+        cancellation = CancellationToken()
+        self._generation_cancel = cancellation
+        self._generation_started = monotonic()
+        self._generation_message = "Starting deterministic generation"
+        self._generation_fraction = 0.0
         self._set_busy(True)
         self.progress.stop()
         self.progress.configure(mode="determinate", value=0)
-        self.status_label.configure(text="Starting deterministic generation…")
+        self._update_generation_status()
         render_style = self._selected_render_style()
 
         def worker() -> None:
+            image: Image.Image | None = None
+            water: WaterDisplay | None = None
+            completed_event: _ResultEvent | _CancelledEvent | _ErrorEvent
             try:
                 terrain = generate_terrain(
                     inputs.coastline,
                     inputs.settings,
-                    lambda fraction, message: self._events.put(_ProgressEvent(fraction, message)),
+                    lambda fraction, message: self._events.put(
+                        _ProgressEvent(0.94 * fraction, message, cancellation)),
                     constraints=inputs.constraints,
+                    cancellation=cancellation,
                 )
-                self._events.put(_ProgressEvent(0.97, "Rendering colour relief"))
+                cancellation.checkpoint()
+                self._events.put(_ProgressEvent(0.97, "Rendering colour relief", cancellation))
                 image, water = render_height_map_layers(terrain, style=render_style)
-                self._events.put(_ResultEvent(inputs, terrain, image, water))
+                cancellation.checkpoint()
+                completed_event = _ResultEvent(inputs, terrain, image, water, cancellation)
+                image, water = None, None  # Ownership transfers to the UI event.
+            except GenerationCancelled:
+                completed_event = _CancelledEvent(cancellation)
             except Exception as error:
-                self._events.put(
-                    _ErrorEvent(
-                        title="Terrain generation failed",
-                        status="Generation failed.",
-                        error=error,
-                    )
+                completed_event = _ErrorEvent(
+                    title="Terrain generation failed",
+                    status="Generation failed.",
+                    error=error,
+                    generation=cancellation,
                 )
+            finally:
+                if image is not None:
+                    image.close()
+                if water is not None:
+                    water.pool_area.close()
+            # A terminal event releases the UI's job slot, so send it after cleanup.
+            self._events.put(completed_event)
 
         threading.Thread(target=worker, name="terrain-generator", daemon=True).start()
 
     def _poll_events(self) -> None:
+        if self._closed:
+            return
         try:
             while True:
                 event = self._events.get_nowait()
+                if isinstance(event, (_ProgressEvent, _ResultEvent, _ErrorEvent, _CancelledEvent)):
+                    if event.generation is not self._generation_cancel:
+                        if isinstance(event, _ResultEvent):
+                            self._discard_result(event)
+                        continue
+                    if event.generation is not None and event.generation.is_cancelled:
+                        if isinstance(event, _ProgressEvent):
+                            continue
+                        if isinstance(event, _ResultEvent):
+                            self._discard_result(event)
+                        self._finish_cancelled_generation()
+                        continue
                 if isinstance(event, _ProgressEvent):
-                    self.progress.configure(value=event.fraction * 100.0)
+                    self._generation_fraction = max(self._generation_fraction, event.fraction)
+                    self.progress.configure(value=self._generation_fraction * 100.0)
+                    self._generation_message = event.message
                     self.status_label.configure(text=event.message)
+                elif isinstance(event, _CancelledEvent):
+                    self._finish_cancelled_generation()
                 elif isinstance(event, _CoastlineEvent):
                     self._accept_coastline(event.source.coastline, event.source)
                 elif isinstance(event, _ProjectEvent):
@@ -2312,6 +2429,7 @@ class TerrainApp:
                         if self._closed:
                             return
                 elif isinstance(event, _ResultEvent):
+                    elapsed = self._end_generation()
                     self._generated_inputs = event.inputs
                     self._terrain = event.terrain
                     self._image = event.image
@@ -2342,7 +2460,8 @@ class TerrainApp:
                     water_status = (f" Basin review: {basin_issues} areas need attention."
                                     if event.terrain.water.review.basins else "")
                     self.status_label.configure(text=(
-                        f"Terrain ready. {drainage_status} "
+                        (f"Terrain ready in {elapsed:.1f} s. " if elapsed is not None
+                         else "Terrain ready. ") + f"{drainage_status} "
                         f"Planned channels: {agreement.uphill_channel_edge_count:,} uphill edges; "
                         f"{conflicts.insufficient_cut_edge_count:,} exceed cut allowance, "
                         f"{conflicts.depression_edge_count:,} touch depressions (may overlap)."
@@ -2365,6 +2484,7 @@ class TerrainApp:
                     self._set_busy(False)
                     self._draw_preview()
                 else:
+                    self._end_generation()
                     self.progress.stop()
                     self.progress.configure(mode="determinate", value=0)
                     self._after_save = None
@@ -2380,6 +2500,7 @@ class TerrainApp:
                     messagebox.showerror(event.title, str(event.error), parent=self.root)
         except queue.Empty:
             pass
+        self._update_generation_status()
         self.root.after(80, self._poll_events)
 
     def _show_basin_details(self) -> None:

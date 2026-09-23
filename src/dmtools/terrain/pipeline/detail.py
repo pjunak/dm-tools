@@ -122,6 +122,8 @@ class PreparedRegionalDetail:
     def sample(
         self, request: RegionalSamplingRequest, progress: ProgressCallback | None = None
     ) -> DetailedRegion:
+        if progress is not None:
+            progress(0.0, "Preparing regional detail cells")
         sampler = self.parent.sampler
         if (
             request.source_id != sampler.source_id
@@ -212,6 +214,8 @@ class PreparedRegionalDetail:
                     0.1 + 0.4 * min(start + 64, pending.size) / pending.size,
                     "Preparing fixed parent-cell detail support",
                 )
+        if progress is not None:
+            progress(0.5, "Sampling the reference for local detail")
         samples = sampler.sample(request, progress)
         elevation = samples.elevation_m.copy()
         _height, width = elevation.shape
@@ -237,6 +241,8 @@ class PreparedRegionalDetail:
                     "reduce its amplitude or choose another region."
                 )
             elevation.ravel()[start:stop] = ground.astype(np.float32)
+            if progress is not None:
+                progress(stop / elevation.size, "Applying experimental local detail")
         added = np.where(samples.land_mask, elevation - samples.elevation_m, 0.0).astype(np.float32)
         errors = np.abs(detailed_means[active] - reference_means[active])
         evidence = DetailEvidence(
@@ -266,8 +272,11 @@ class PreparedRegionalDetail:
 def prepare_regional_detail(
     parent: VerifiedTerrainParent, settings: RegionalDetailSettings, *,
     cache_cells: int = DETAIL_CELL_LIMIT,
+    progress: ProgressCallback | None = None,
 ) -> PreparedRegionalDetail:
     """Protect complete cells intersecting authored cores, basins and planned channel corridors."""
+    if progress is not None:
+        progress(0.0, "Preparing local-detail protections")
     field = parent.sampler.prepared_field
     grid = parent.sampler.reference_grid
     guard = min(grid.x_spacing_km, grid.y_spacing_km)
@@ -278,7 +287,9 @@ def prepare_regional_detail(
     width = routing.x_km.size
     sources = np.flatnonzero(routing.channel_mask & routing.land_mask)
     radius = max(guard, np.diff(routing.x_km).max(), np.diff(routing.y_km).max())
-    for source in sources:
+    for index, source in enumerate(sources):
+        if progress is not None and index % 64 == 0:
+            progress(0.05 * index / sources.size, "Protecting inherited channel corridors")
         row, column = divmod(int(source), width)
         start = (routing.x_km[column], routing.y_km[row])
         target = int(routing.receivers.flat[source])
@@ -291,4 +302,6 @@ def prepare_regional_detail(
     # An empty tree is supported, but keep a harmless outside-frame box explicit.
     if not geometries:
         geometries.append(box(-2 * guard, -2 * guard, -guard, -guard))
+    if progress is not None:
+        progress(0.05, "Local-detail protections prepared")
     return PreparedRegionalDetail(parent, settings, STRtree(geometries), cache_cells)

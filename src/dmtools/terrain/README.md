@@ -17,6 +17,10 @@ the user draw absolute/relative height points, ridges and valleys, landform
 regions, lakes and dry basins. A terrain brush
 paints broad soft elevation guidance directly over the continent. Import
 validation and generation run on background workers with progress reporting.
+Generation also shows elapsed time: click **Cancel generation** or press **Esc**
+to stop at the next checkpoint. The previous map and authored inputs are retained;
+controls unlock when the worker acknowledges the stop. Read the
+[cancellation guide](../../../docs/terrain-generation-control.md) for limits.
 The result is previewed and can be exported as a transparent colour-relief PNG.
 The same window can save and open authored `.dmterrain.json` projects.
 Every build uses named stage seeds derived from the numeric master Seed.
@@ -115,7 +119,7 @@ adds hidden detail bands or implements a regional generation job.
 | Inspect location and ground | Move the pointer: local x/y km from the map's top-left and the nearest reference DEM sample |
 | Adjust brush width / strength | **Shift+wheel** / **Ctrl+Shift+wheel** |
 | Apply properties / finish a draft | **Enter** with the map focused |
-| Cancel unapplied properties, draft or drag | **Esc** |
+| Cancel generation while running; otherwise cancel unapplied properties, draft or drag | **Esc** |
 | Delete / undo / redo an instruction | **Delete** / **Ctrl+Z** / **Ctrl+Y** or **Ctrl+Shift+Z**, outside text fields |
 | Open / Save / Save As | **Ctrl+O** / **Ctrl+S** / **Ctrl+Shift+S** |
 | Generate | **Ctrl+Enter** |

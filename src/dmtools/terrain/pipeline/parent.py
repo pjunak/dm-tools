@@ -107,6 +107,8 @@ def prepare_verified_parent(
             _equal(actual, saved.ravel()[start:stop], label)
         if progress is not None:
             progress(0.1 + 0.8 * stop / count, "Verifying all saved parent samples")
+    if progress is not None:
+        progress(0.92, "Verifying inherited canonical routing")
     automatic, routing = field.automatic_valleys, data.routing
     for name in ("x_km", "y_km", "land_mask"):
         _equal(getattr(automatic, name), getattr(routing, name), f"canonical {name}")
@@ -128,5 +130,7 @@ def prepare_verified_parent(
     )
     _freeze(data)
     _freeze(field)
+    if progress is not None:
+        progress(1.0, "Parent replay verified")
     sampler = TerrainRegionSampler(data.build_id, grid, field)
     return VerifiedTerrainParent(data, sampler, count, rx.size)

@@ -16,7 +16,9 @@ plateau and mountain regions; and saves those inputs as `.dmterrain.json`.
 The editor keeps the last result as a placement reference, supports instruction
 selection, property/geometry edits and undo/redo, and marks changed inputs for
 regeneration. Pan/zoom, ground inspection, resolution presets and guarded Save /
-Save As support testing without editing a completed DEM.
+Save As support testing without editing a completed DEM. Generation now shows
+elapsed stage progress and supports Cancel/Esc while retaining the previous map;
+see [cancellation](docs/terrain-generation-control.md).
 Authored lakes and dry basins retain ground and captured contributing area.
 Reviewed lake outlets transfer eligible area downstream, with visible shoreline,
 wet-link and dry-path evidence. Water levels are imposed previews, not simulated
