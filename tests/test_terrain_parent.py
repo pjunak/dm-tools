@@ -259,7 +259,7 @@ def test_parent_cli_artifacts_are_repeatable_and_schema_bound(
         )
         context.sample(request)
         warmed = context.sample(request)
-        assert context.cache_info().hits == warmed.evidence.parent_cells
+        assert context.cache_info().hits == warmed.evidence.support_cells
         destination = tmp_path / "warm"
         destination.mkdir()
         outputs = write_parent_region_products(warmed.samples, parent, destination, warmed)

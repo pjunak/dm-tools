@@ -354,26 +354,38 @@ editing a finished DEM; see [ADR-0048](docs/adr/0048-keep-zoom-driven-detail-gen
   artifacts bind the parent ID and preserve its frame. See
   [ADR-0061](docs/adr/0061-verify-parents-and-isolate-local-detail.md).
 - [x] **P0 — Add a bounded experimental residual on the retained reference.**
-  `enrich-region --experimental` conditions only an added smooth cell residual,
-  with globally addressed coefficients, fixed 17-by-17 preparation probes,
-  parent-node/edge equality and measured zero-added-mean moments. Authored cores,
+  `enrich-region --experimental` conditions only an added smooth residual,
+  with globally addressed edge coefficients, fixed 17-by-17 preparation probes,
+  parent-node equality and measured zero-added-mean moments. Authored cores,
   basin footprints, coastal margins and planned channel corridors are protected.
   65/129/257, overlap/revisit, water and bounds checks pass on public fixtures.
   [The measurements](docs/research/2026-09-23-verified-parent-detail.md) also expose
   regular cell support and windows completely excluded by protection. This is
   an executable experiment, not accepted cartographic terrain or finer hydrology.
-- [ ] **P0 — Complete parent/child and neighboring-window acceptance.** Replace
-  regular cell-stamped appearance with terrain-aware residual support; measure
-  coarse spectral power and final Float32 height/slope tolerances. Preserve the
-  original prepared reference and density-independent moments/protections.
-  Define arbitrary partial-cell transitions to the unchanged parent; only parent
-  cell edges currently have zero residual. Cover seeds, oblique boundaries and
-  extreme detail scales. Fixed probe bounds do not certify unseen extrema;
-  observed violations reject a request. R34 remains open.
+- [x] **P1 — Connect experimental detail across parent-cell edges.**
+  Shared deterministic edge modes replace isolated cell-interior stamps. Fixed
+  terrain slopes weight horizontal/vertical contributions; adjacent cell budgets
+  and protections agree. A one-cell support halo counts against the unchanged
+  4096-cell limit, and the temporary probe bank is included in admission.
+  [Paired measurements](docs/research/2026-09-23-shared-edge-detail.md) cover three
+  public projects, three seeds and 65/129/257 outputs: exact nodes/overlaps,
+  cell means, final Float32 edge secants and coarse spectral power. Shared edges
+  carry detail; there is no old-formula compatibility path. See
+  [ADR-0068](docs/adr/0068-share-terrain-detail-across-edges.md).
+- [ ] **P0 — Complete parent/child and neighboring-window acceptance.**
+  Remove remaining grid direction with oblique, terrain-character-aware support;
+  set acceptance tolerances for coarse spectral leakage and final Float32 slopes
+  across more physical scales and seeds, including a scale-dependent amplitude/
+  slope budget for small parent cells. Preserve the prepared reference and
+  density-independent moments/protections. Define transitions to the unchanged
+  parent for both whole-cell and partial-cell views: shared-edge detail no longer
+  returns to zero at every parent-cell boundary. Cover oblique boundaries and
+  extreme detail scales. Fixed probes do not certify unseen extrema; observed
+  violations reject a request. R34 remains open.
 - [x] **P1 — Reuse fixed detail-cell preparation under a bounded budget.** Each
   prepared detail context now retains at most 4,096 scalar protection/amplitude/
-  moment records with least-recently-used eviction, explicit clearing and an
-  uncached control. Overlap, refinement, eviction and retry preserve numeric
+  terrain-direction/moment records with least-recently-used eviction, explicit
+  clearing and an uncached control. Overlap, refinement, eviction and retry preserve numeric
   results, evidence and artifacts exactly. See
   [ADR-0062](docs/adr/0062-reuse-bounded-detail-cell-support.md) and the
   [measurements](docs/research/2026-09-23-detail-cell-reuse.md).
@@ -550,8 +562,9 @@ execution order.
 - [ ] **P1 — Add terrain-character-aware residual detail.** Control spectral
   slope, anisotropy, roughness, and amplitude by region so plains, plateaus,
   rolling hills and mountain belts do not share one texture. The first four
-  regional recipes already vary detail and mountain orientation; exposed spectral
-  targets, terrain-adaptive orientation and suitability controls remain open.
+  regional recipes already vary detail and mountain orientation. Experimental
+  local detail now weights horizontal/vertical modes using fixed terrain slopes;
+  oblique orientation, exposed spectral targets and suitability controls remain open.
 - [ ] **P1 — Preserve authored constraints after every optional process stage.**
   Reproject or solve back to hard constraints after erosion/diffusion and report
   the remaining residual for soft constraints.
@@ -1010,11 +1023,13 @@ Priorities remain conditional on the current strategy's prerequisites.
   now rejects a bilinear/trapezoidal candidate despite precise node/mean results:
   it loses parent structure and authored heights, depends on output density and
   worsens inherited channels. The verified-parent residual experiment now binds
-  the prepared reference and fixed moments; visual/coarse-power and finer-flow
-  acceptance remain open. Continue with terrain-aware support: constrain only
-  added residuals independently of display sampling, protect
-  authored/water/channel constraints, and measure coarse spectral power after
-  conditioning. Stable weights or preserved cell means alone do not close R34.
+  the prepared reference and fixed moments. Shared-edge terrain weighting now
+  reduces quantized edge slope errors while measuring some increased coarse
+  leakage; [the paired evidence](docs/research/2026-09-23-shared-edge-detail.md)
+  leaves visual/coarse-power and finer-flow acceptance open. Continue with
+  oblique support and physical-scale tolerances; constrain only added residuals
+  independently of display sampling and protect authored/water/channel constraints.
+  Stable weights or preserved cell means alone do not close R34.
 - [ ] **Research — R35: Constrain regional transition gradients.** Match
   province reference levels and budget the extra slope from blending surfaces
   at different heights. Measure slope/curvature across flat, plateau and

@@ -95,3 +95,4 @@ supersedes their legacy compatibility commitments during early development.
 - [ADR-0065: Admit regional memory estimates](0065-admit-regional-memory-estimates.md)
 - [ADR-0066: Bound terrain rendering scratch](0066-bound-terrain-rendering-scratch.md)
 - [ADR-0067: Own preview images and tile water](0067-own-preview-images-and-tile-water.md)
+- [ADR-0068: Share terrain detail across parent-cell edges](0068-share-terrain-detail-across-edges.md)

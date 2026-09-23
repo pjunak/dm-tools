@@ -14,6 +14,7 @@ from typing import Any
 
 import numpy as np
 
+from benchmarks import detail_metrics
 from dmtools.terrain.adapters.build import file_sha256, runtime_identity
 from dmtools.terrain.adapters.parent import load_terrain_parent
 from dmtools.terrain.adapters.parent_region import (
@@ -128,6 +129,7 @@ def _measure(
                 "generation_seconds": generation_seconds,
                 "publication_seconds": publication_seconds,
                 "evidence": asdict(detail.evidence),
+                "spatial_metrics": detail_metrics.measure_detail(detail),
                 "common_samples_exact": common_equal,
                 "parent_nodes_exact": nodes_equal,
                 "water_samples_exact": water_equal,
@@ -190,6 +192,7 @@ def main() -> int:
         parser.error("Result file and corresponding products directory must both be new.")
     runtime = runtime_identity()
     runner_hash = file_sha256(Path(__file__))
+    metrics_hash = file_sha256(Path(detail_metrics.__file__))
     products.mkdir(parents=True)
     cases: list[dict[str, object]] = []
     for case in args.case:
@@ -197,12 +200,14 @@ def main() -> int:
             result = _measure(case, seed, products / f"{case}-{seed}", runtime)
             cases.append(result)
             print(f"{case}, seed {seed}: verified parent and three detail densities", flush=True)
-    if runtime_identity() != runtime or file_sha256(Path(__file__)) != runner_hash:
+    if (runtime_identity() != runtime or file_sha256(Path(__file__)) != runner_hash
+            or file_sha256(Path(detail_metrics.__file__)) != metrics_hash):
         raise RuntimeError("Runtime or benchmark source changed; no result published.")
     document = {
         "algorithm": LOCAL_DETAIL_ALGORITHM_ID,
         "runtime": runtime,
         "benchmark_sha256": runner_hash,
+        "metrics_sha256": metrics_hash,
         "cases": cases,
         "limits": [
             "Serial stage observations, not fresh-process speedup evidence.",

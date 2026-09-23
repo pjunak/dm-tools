@@ -204,7 +204,7 @@
         "local_detail": {
           "enum": [
             null,
-            "protected-cell-residual-experiment@1"
+            "terrain-weighted-edge-residual-experiment@2"
           ]
         },
         "seed_policy": {
@@ -296,6 +296,7 @@
               "additionalProperties": false,
               "required": [
                 "parent_cells",
+                "support_cells",
                 "protected_cells",
                 "active_cells",
                 "probe_samples",
@@ -307,6 +308,11 @@
                 "parent_cells": {
                   "type": "integer",
                   "minimum": 0
+                },
+                "support_cells": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 4096
                 },
                 "protected_cells": {
                   "type": "integer",
@@ -490,7 +496,7 @@
           "algorithms": {
             "properties": {
               "local_detail": {
-                "const": "protected-cell-residual-experiment@1"
+                "const": "terrain-weighted-edge-residual-experiment@2"
               },
               "detail_stage_seed": {
                 "type": "integer"

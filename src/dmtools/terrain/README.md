@@ -354,10 +354,12 @@ exact shared values.
 The [verified-parent workflow](../../../docs/terrain-parent-regions.md) now loads
 current completed builds, replays every delivered sample and reused routing
 field, and provides a separate experimental residual with fixed cell moments.
-Nested coordinates and parent nodes/edges remain exact; authored cores, basins
-and planned channel corridors are protected. The formula still has visible cell
-support and lacks cartographic acceptance. Terrain-aware detail, coarse spectral
-power, finer inherited hydrology and GUI request scheduling remain open. See
+Nested coordinates and parent nodes remain exact; authored cores, basins and
+planned channel corridors are protected. [Shared-edge detail](../../../docs/research/2026-09-23-shared-edge-detail.md)
+connects additions using fixed terrain-slope weights and reduces boundary slope
+errors. Cell edges may now differ from the unchanged parent. Directional pattern,
+coarse spectral acceptance, transitions to the unenriched parent, finer inherited
+hydrology and GUI request scheduling remain open. See
 [ADR-0048](../../../docs/adr/0048-keep-zoom-driven-detail-generation.md),
 [ADR-0058](../../../docs/adr/0058-sample-bounded-regional-windows.md) and the
 [regional prototype](../../../docs/research/2026-09-04-terrain-prototype-contracts.md).

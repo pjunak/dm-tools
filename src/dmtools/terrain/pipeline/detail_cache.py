@@ -15,7 +15,8 @@ class CellDetailSupport:
     protected: bool
     amplitude_m: float
     reference_mean_m: float
-    detailed_mean_m: float
+    detailed_mean_m: float  # NaN until a halo-only cell is requested for delivery.
+    x_weight: float
 
 
 @dataclass(frozen=True, slots=True)

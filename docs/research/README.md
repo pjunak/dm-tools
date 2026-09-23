@@ -12,6 +12,10 @@ in the current status or a new dated report.
 
 ## Implemented and measured work
 
+- [Shared-edge terrain detail - 2026-09-23](2026-09-23-shared-edge-detail.md)
+  connects experimental detail using terrain-slope weights, preserves parent nodes
+  and moments, and measures quantized slopes, coarse leakage and remaining grid direction.
+
 - [Preview image ownership - 2026-09-23](2026-09-23-preview-image-ownership.md)
   tiles water composition, removes duplicate one-shot ground images and closes
   editor/export buffers; records isolated native/viewport peaks and Tk lifecycle checks.

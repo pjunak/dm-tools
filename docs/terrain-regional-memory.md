@@ -83,8 +83,10 @@ reference/delta arrays and cell records where applicable), 16 MiB of I/O
 allowance, and the largest of these serial stage allowances:
 
 - Sampling: 2048 bytes per active sample, bounded by the 65,536-sample chunk or
-  the 64-cell fixed-probe batch. Detail also charges cell metadata and possible
-  STRtree intersection pairs. Protection queries now use at most 64 cells and
+  the 64-cell fixed-probe batch. Detail counts its one-parent-cell support halo
+  against the 4096-cell limit and charges the temporary Float32 probe bank
+  (289 values per cell), cell metadata and possible STRtree intersection pairs.
+  Protection queries use at most 64 cells and
   release their pair array before the next batch.
 - Cold preparation/replay: 4096 bytes per node of a 257 by 257 canonical grid,
   plus the geometry allowance. This reservation disappears for prepared sessions.

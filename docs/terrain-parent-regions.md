@@ -70,7 +70,10 @@ projection is introduced. Requests round outward to globally anchored fine-grid
 nodes and include one halo cell. The existing [regional request rules](terrain-regional-sampling.md)
 apply: power-of-two refinement and at most 2,000,000 delivered nodes including
 halo. Experimental detail requires refinement at least 8 and at most 4,096
-parent cells intersecting the buffered window. Original parent nodes are exact.
+parent cells including a one-parent-cell support halo around the buffered window,
+clipped to the parent frame. This support halo is separate from the fine-node
+output halo. A formerly fitting request can now exceed the preparation limit;
+choose smaller bounds. Original parent nodes are exact.
 
 Each eligible cell uses a fixed 17 by 17 probe lattice, independently of output
 resolution. Thus an uncached request adds at most 1,183,744 probes. The pointwise
@@ -91,7 +94,9 @@ exclusive-stop Python slices. Ground is Float32 metres and NaN off land. Added
 heights are zero off land. `cell_columns`/`cell_rows` address the original parent
 cells; protected cells have zero amplitude and NaN moments because no probes
 were needed. Some otherwise eligible cells can also have zero amplitude when
-the observed terrain reaches its height bounds.
+the observed terrain reaches its height bounds. `active_cells` counts nonzero
+local budgets; a cell surrounded by protected neighbors can still receive no
+addition. `changed_samples` reports actual delivered changes.
 
 The [parent-region v1 schema](../schemas/terrain/parent-region-v1.schema.json)
 explicitly distinguishes `reference-samples` from `experimental-detail`.
@@ -104,10 +109,16 @@ always false. The parent's existing diagnostic routing is not upgraded to rivers
 The existing prepared field is retained everywhere; there is no bilinear
 replacement of its interior structure. Only a new additive residual is generated.
 Coefficients depend on the named `terrain.local-detail` seed and global parent
-cell addresses. Smooth cell basis functions have zero analytic added mean and
-zero value/first derivative at cell edges. The fixed trapezoidal reference moments
-are computed from the prepared field, not inferred from four sparse corner heights.
-Float32 storage introduces small measured moment errors.
+edge addresses. Both cells use the same shape and budget at a shared edge.
+Fixed-probe terrain slopes weight the horizontal and vertical contributions;
+this is a limited directional preference, not arbitrary ridge orientation.
+The added field has zero analytic mean in every parent cell and retains exact
+parent nodes. Its values and first/second derivatives agree across shared edges
+in real arithmetic. Cell-edge values may now differ from the unchanged parent.
+The fixed trapezoidal reference moments come from the prepared field, not four
+sparse corner heights. Float32 storage introduces small measured moment errors.
+[ADR-0068](adr/0068-share-terrain-detail-across-edges.md) supersedes the old
+cell-interior formula; there is no compatibility mode.
 
 Whole cells touching authored point/line cores, basin footprints or buffered
 planned channel edges are protected. Cells near the coastline are also excluded.
@@ -117,17 +128,21 @@ protections are fixed against the full source, not recomputed from a cropped
 catchment.
 
 Amplitude uses half the smallest observed distance from zero/the elevation
-representable Float32 ceiling on the fixed probes, capped by the requested budget. Those probes do
-not certify unseen extrema: if a delivered point exceeds a bound, the request
-fails instead of clipping and changing its moments. Parent-cell edges retain
-the reference value at every density; boundaries of arbitrary partial-cell
-windows must be blended/displayed with another result of the same detail field,
-not assumed to meet an unenriched parent there.
+representable Float32 ceiling on the fixed probes, capped by the requested budget.
+An edge uses the smaller adjacent budget, so an excluded cell also suppresses
+its shared edges. Those probes do not certify unseen extrema: if a delivered
+point exceeds a bound, the request fails instead of clipping and changing its
+moments. Whole and partial-cell window boundaries must be displayed with another
+result of the same detail field; even a parent-cell edge need not meet an
+unenriched parent. A display transition has not yet been implemented.
 
-The regular cell support is visible in difference images. Terrain-aware support,
-coarse spectral-power acceptance, derivative checks on the final quantized field,
-partial coastal/basin detail, inherited outlet paths and upstream flow, finer
-routing, broader memory calibration and workbench requests remain open.
+[Paired measurements](research/2026-09-23-shared-edge-detail.md) show connected
+additions and smaller quantized boundary slope errors, with some increased
+coarse-scale spectral leakage. Grid direction and protected gaps remain visible.
+Oblique terrain support, cartographic/spectral acceptance, transitions to the
+unenriched parent, partial coastal/basin detail, inherited outlet paths and
+upstream flow, finer routing, broader memory calibration and workbench requests
+remain open.
 [Cooperative cancellation](terrain-generation-control.md) is now implemented. Read
 [ADR-0061](adr/0061-verify-parents-and-isolate-local-detail.md), the
 [measurements](research/2026-09-23-verified-parent-detail.md) and [TODO](../TODO.md).
@@ -141,11 +156,15 @@ and runtime identities before publishing any result.
 ## Reuse fixed cell preparation
 
 `prepare_regional_detail(parent, settings, cache_cells=4096)` owns a private
-least-recently-used cache. Each entry stores only the protection flag, amplitude
-and reference/detailed means for one globally addressed parent cell. Subsequent
-windows reuse those values across overlaps and refinement levels. Probe arrays
-and delivered terrain arrays are not retained. Ground delivery and its height
-checks still run for every request.
+least-recently-used cache. Each entry stores only the protection flag, amplitude,
+terrain-direction weight and reference/detailed means for one globally addressed
+parent cell, including support-halo cells. A halo-only cell has no detailed mean
+until first delivered; that first delivery samples its reference probes again.
+Subsequent windows reuse complete records across overlaps and refinement levels.
+During preparation, a temporary Float32 probe bank holds at most 4.52 MiB while
+adjacent budgets become available; it is released before delivery and included
+in memory admission. Neither probes nor delivered terrain arrays enter this
+scalar cache. Ground delivery and its height checks run for every request.
 
 Choose an integer capacity from 0 through 4,096; zero disables reuse. The bound
 applies to scalar entries per context, not total application memory. Eviction
@@ -154,9 +173,11 @@ counts; `context.cache_info()` reports capacity, retained cells, hits, misses
 and evictions. Use a context serially. Creating or replacing a context starts a
 fresh cache, so changed parents/settings cannot inherit another context's values.
 
-Artifact evidence stays independent of cache history: `probe_samples` is the
-fixed support count for all eligible cells in that result, including cached
-support. Cache counters are operational and are never serialized in the result.
+Artifact evidence stays independent of cache history: `parent_cells` counts
+cells touched by the output, `support_cells` includes the preparation halo, and
+`probe_samples` counts fixed probes for all eligible support cells, including
+cached support. It is not the number of evaluations performed on this visit.
+Cache counters are operational and are never serialized in the result.
 The CLI creates one context per invocation; reuse currently benefits Python
 callers that retain it across requests. Parent/runtime checks before publication
 remain required. See [ADR-0062](adr/0062-reuse-bounded-detail-cell-support.md) and

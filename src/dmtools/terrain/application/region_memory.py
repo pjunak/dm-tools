@@ -16,7 +16,7 @@ from dmtools.terrain.domain.regional import (
     DETAIL_CELL_LIMIT,
     DETAIL_PROBE_INTERVALS,
     RegionalSamplingRequest,
-    detail_cell_window,
+    detail_support_window,
 )
 from dmtools.terrain.pipeline.detail import DETAIL_CELL_BATCH
 from dmtools.terrain.pipeline.regional import REGIONAL_CHUNK_SAMPLES
@@ -193,7 +193,7 @@ def estimate_regional_job(
     count = height * width
     cells = 0
     if detail:
-        left, top, right, bottom = detail_cell_window(request)
+        left, top, right, bottom = detail_support_window(request)
         cells = (right - left + 1) * (bottom - top + 1)
     arrays = (21 if detail else 13) * count + 8 * (height + width) + 40 * cells
     probes = DETAIL_CELL_BATCH * (DETAIL_PROBE_INTERVALS + 1) ** 2 if detail else 0
@@ -202,7 +202,7 @@ def estimate_regional_job(
     sampling = 2048 * max(min(count, REGIONAL_CHUNK_SAMPLES), probes)
     if detail:
         sampling += 16 * min(cells, DETAIL_CELL_BATCH) * max(1, parent.protection_count)
-        sampling += 2048 * cells
+        sampling += (2048 + 4 * (DETAIL_PROBE_INTERVALS + 1) ** 2) * cells
     # Canonical preparation and parent replay have larger simultaneous fields.
     preparation = 4096 * 257**2 + parent.geometry_allowance_bytes if needs_preparation else 0
     tile_samples = (min(height, GROUND_RENDER_TILE_EDGE + 2)

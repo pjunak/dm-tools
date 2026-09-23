@@ -19,14 +19,18 @@ from dmtools.terrain.domain.regional import (
     RegionalDetailSettings,
     RegionalSamplingRequest,
     detail_cell_window,
+    detail_support_window,
 )
 from dmtools.terrain.pipeline import regional
 from dmtools.terrain.pipeline.detail import (
     DetailedRegion,
     PreparedRegionalDetail,
-    cell_coefficients,
     prepare_regional_detail,
+)
+from dmtools.terrain.pipeline.detail_basis import (
+    edge_coefficients,
     residual_basis,
+    terrain_x_weight,
 )
 from dmtools.terrain.pipeline.generate import PreparedTerrainField, generate_terrain
 from dmtools.terrain.pipeline.parent import (
@@ -130,13 +134,9 @@ def test_65_129_257_windows_preserve_common_samples_and_parent_nodes(
         assert np.max(np.abs(result.added_detail_m)) <= field.settings.amplitude_m + 0.001
         assert result.evidence.maximum_cell_mean_error_m < 0.00025
         assert result.evidence.parent_cells == 64
+        assert result.evidence.support_cells == 100
         assert not result.samples.elevation_m.flags.writeable
-        np.testing.assert_array_equal(
-            result.samples.elevation_m[::factor, :], result.reference_elevation_m[::factor, :]
-        )
-        np.testing.assert_array_equal(
-            result.samples.elevation_m[:, ::factor], result.reference_elevation_m[:, ::factor]
-        )
+
 
 
 def test_overlap_repeat_visit_halo_and_batch_size_do_not_change_ground(
@@ -198,29 +198,65 @@ def test_water_authored_cores_and_channel_corridors_keep_reference_ground(
     np.testing.assert_array_equal(samples.basin_intent_ids, reference.basin_intent_ids)
 
 
-def test_cell_basis_has_zero_moment_and_vanishing_boundary_slopes() -> None:
-    coefficients = cell_coefficients(
+def test_edge_basis_has_zero_moment_exact_nodes_and_bounded_amplitude() -> None:
+    coefficients = edge_coefficients(
         np.array([9, 10], dtype=np.int64), np.array([7, 8], dtype=np.int64), 2026
     )
+    amplitudes = np.full((2, 4), 0.75, dtype=np.float64)
     for n in (16, 32, 64):
         axis = np.linspace(0.0, 1.0, n + 1)
         u, v = np.meshgrid(axis, axis)
-        values = residual_basis(u[..., None], v[..., None], coefficients)
+        values = residual_basis(u[..., None], v[..., None], coefficients, amplitudes)
         means = np.trapezoid(np.trapezoid(values, axis, axis=0), axis, axis=0)
         assert np.max(np.abs(means)) < 1e-15
-        assert np.count_nonzero(values[[0, -1], :]) == 0
-        assert np.count_nonzero(values[:, [0, -1]]) == 0
-    v = np.linspace(0.0, 1.0, 51)[:, None]
-    for edge in (0.0, 1.0):
-        epsilon = 1e-6 if edge == 0 else -1e-6
-        difference = residual_basis(np.full_like(v, edge + epsilon), v, coefficients)
-        assert np.max(np.abs(difference / epsilon)) < 1e-5
+        assert np.max(np.abs(values)) <= 1
+        assert np.count_nonzero(values[np.ix_([0, -1], [0, -1])]) == 0
+        assert np.count_nonzero(values[0, :]) > n // 2
+        assert np.count_nonzero(values[:, 0]) > n // 2
     np.testing.assert_array_equal(
         coefficients,
-        cell_coefficients(
+        edge_coefficients(
             np.array([10, 9], dtype=np.int64), np.array([8, 7], dtype=np.int64), 2026
         )[::-1],
     )
+
+
+@pytest.mark.parametrize("axis", [0, 1])
+def test_shared_edge_values_and_first_derivatives_agree(axis: int) -> None:
+    columns = np.array([9, 10] if axis == 0 else [9, 9], dtype=np.int64)
+    rows = np.array([7, 7] if axis == 0 else [7, 8], dtype=np.int64)
+    coefficients = edge_coefficients(columns, rows, 2026)
+    amplitudes = np.array([[.3, .4, .5, .6], [.4, .5, .6, .7]])
+    if axis == 1:
+        amplitudes[1, 2] = amplitudes[0, 3]
+    t = np.linspace(0, 1, 101)
+
+    def value(cell: int, normal: float) -> NDArray[np.float64]:
+        coordinate = np.full_like(t, normal)
+        u, v = (coordinate, t) if axis == 0 else (t, coordinate)
+        return residual_basis(u, v, coefficients[cell], amplitudes[cell])
+
+    np.testing.assert_array_equal(value(0, 1), value(1, 0))
+    epsilon = 1e-6
+    left = (value(0, 1) - value(0, 1 - epsilon)) / epsilon
+    right = (value(1, epsilon) - value(1, 0)) / epsilon
+    assert np.max(np.abs(left - right)) < 0.00002
+    assert np.max(np.abs(left)) < 0.00001
+    epsilon = 1e-4
+    left_second = (value(0, 1) - 2 * value(0, 1 - epsilon)
+                   + value(0, 1 - 2 * epsilon)) / epsilon**2
+    right_second = (value(1, 0) - 2 * value(1, epsilon)
+                    + value(1, 2 * epsilon)) / epsilon**2
+    assert np.max(np.abs(left_second - right_second)) < 0.01
+
+
+def test_terrain_direction_uses_physical_slopes_and_flat_is_isotropic() -> None:
+    axis = np.linspace(0, 1, 17, dtype=np.float32)
+    xx, yy = np.meshgrid(axis, axis)
+    reference = np.stack((xx, yy, xx + yy, xx * 0))
+    np.testing.assert_allclose(terrain_x_weight(reference, 1, 1), [.75, .25, .5, .5])
+    # Twice the x spacing means half the x gradient and one quarter its energy.
+    assert terrain_x_weight(reference[2:3], 2, 1)[0] == pytest.approx(.35)
 
 
 @pytest.mark.parametrize("value", [0.0, -1.0, float("nan"), float("inf"), 101.0, True])
@@ -353,7 +389,7 @@ def test_cache_reuses_overlap_without_changing_results_or_evidence(
             sample(cached, position, factor), sample(uncached, position, factor)
         )
     info = cached.cache_info()
-    assert (info.cells, info.hits, info.misses, info.evictions) == (79, 49 + 64, 79, 0)
+    assert (info.cells, info.hits, info.misses, info.evictions) == (119, 81 + 100, 119, 0)
     assert uncached.cache_info().cells == uncached.cache_info().hits == 0
 
 
@@ -445,3 +481,52 @@ def test_protection_batches_preserve_all_intersections_and_numeric_results(
                  "reference_cell_mean_m", "detailed_cell_mean_m"):
         np.testing.assert_array_equal(getattr(batched, name), getattr(control, name))
     np.testing.assert_array_equal(batched.samples.elevation_m, control.samples.elevation_m)
+
+
+def test_support_halo_is_admitted_before_any_preparation() -> None:
+    grid = EndpointGrid((0., 0., 1000., 1000.), 129, 129)
+    # The 64 by 64 delivered cells fit, but their 66 by 66 support does not.
+    request = RegionalSamplingRequest("a" * 64, grid, 8, (8, 8, 65 * 8, 65 * 8), 0)
+    with pytest.raises(ValueError, match="including support halo"):
+        detail_cell_window(request)
+    small = replace(request, window=(8, 8, 9 * 8, 9 * 8))
+    assert detail_cell_window(small) == (1, 1, 8, 8)
+    assert detail_support_window(small) == (0, 0, 9, 9)
+
+
+def test_partial_cell_request_matches_the_same_global_detail_field(
+    detail_field: tuple[PreparedRegionalDetail, tuple[int, int]],
+) -> None:
+    field, origin = detail_field
+    whole = sample(field, origin, 16)
+    x0, y0, x1, y1 = whole.samples.request.window
+    request = replace(whole.samples.request, window=(x0 + 3, y0 + 5, x1 - 7, y1 - 9))
+    partial = replace(field, cache_cells=0).sample(request)
+    np.testing.assert_array_equal(
+        partial.samples.elevation_m, whole.samples.elevation_m[5:-9, 3:-7])
+    np.testing.assert_array_equal(
+        partial.reference_elevation_m, whole.reference_elevation_m[5:-9, 3:-7])
+
+
+def test_crossing_edges_change_but_protected_interfaces_do_not(
+    detail_field: tuple[PreparedRegionalDetail, tuple[int, int]],
+) -> None:
+    field, origin = detail_field
+    result = sample(field, origin, 16)
+    amplitudes = result.cell_amplitude_m.reshape(8, 8)
+    changed_edge = False
+    for row in range(8):
+        for column in range(7):
+            values = result.added_detail_m[row * 16:(row + 1) * 16 + 1, (column + 1) * 16]
+            if min(amplitudes[row, column:column + 2]) == 0:
+                assert np.count_nonzero(values) == 0
+            else:
+                changed_edge |= bool(np.any(values))
+    for row in range(7):
+        for column in range(8):
+            values = result.added_detail_m[(row + 1) * 16, column * 16:(column + 1) * 16 + 1]
+            if min(amplitudes[row:row + 2, column]) == 0:
+                assert np.count_nonzero(values) == 0
+            else:
+                changed_edge |= bool(np.any(values))
+    assert changed_edge

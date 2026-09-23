@@ -270,18 +270,21 @@ The [verified-parent workflow](../terrain-parent-regions.md) now adds build v17
 portable snapshots, exact runtime/file verification, full numeric replay and an
 explicit experimental additive residual. It retains the prepared field instead
 of replacing it with sparse bilinear terrain. Fixed cell probes/modes preserve
-shared values across 65/129/257 outputs, original nodes/edges and protected
-water/authored/channel ground. The [measurements](../research/2026-09-23-verified-parent-detail.md)
-record the remaining visible cell pattern and conservative exclusions.
+shared values across 65/129/257 outputs, original nodes and protected
+water/authored/channel ground. [Shared-edge detail](../research/2026-09-23-shared-edge-detail.md)
+now connects additions across cells with fixed terrain-direction weights and
+smoother edge transitions; original parent-cell edges are no longer pinned.
 
-- Replace regular cell-stamped appearance with terrain-aware support before
-  cartographic adoption. Preserve exact overlap/order, authored heights, water
-  and inherited channels while measuring coarse spectral power and final-field
-  boundary slopes. Fixed quadrature is a measured moment rule, not a certified
-  bound on all unseen blended-field extrema. R34 remains open.
-- Define how arbitrary partial-cell view boundaries transition to the unchanged
-  parent. The residual meets the parent at parent-cell edges; an arbitrary crop
-  boundary is not automatically a zero-residual seam.
+- Advance the limited horizontal/vertical weighting to oblique terrain support
+  before cartographic adoption. The public comparisons reduce edge slope errors
+  but expose remaining directional pattern and somewhat greater coarse spectral
+  leakage. Preserve exact overlap/order, authored heights, water and inherited
+  channels; establish scale-specific visual/spectral/slope acceptance. Fixed
+  quadrature is a measured moment rule, not a certified bound on unseen extrema.
+  R34 remains open.
+- Define how whole and partial-cell view boundaries transition to the unchanged
+  parent. Both now can carry nonzero detail at the crop edge; same-field neighbors
+  meet exactly, but switching directly to the unenriched parent is not valid.
 - Introduce inherited inflow/outlet context and finer routing, including reviewed
   basin outflow paths outside protected footprints, before enabling small rivers.
   Keeping planned channel corridors unchanged alone does not validate new runoff.

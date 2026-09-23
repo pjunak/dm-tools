@@ -8,8 +8,8 @@ from dmtools.terrain.pipeline.detail_cache import CellDetailSupport, DetailSuppo
 
 def test_recently_used_cell_survives_eviction_and_replacement() -> None:
     cache = DetailSupportCache(2)
-    first = CellDetailSupport(False, 12.0, 400.0, 400.0)
-    second = CellDetailSupport(True, 0.0, float("nan"), float("nan"))
+    first = CellDetailSupport(False, 12.0, 400.0, 400.0, 0.5)
+    second = CellDetailSupport(True, 0.0, float("nan"), float("nan"), 0.5)
     cache.put(1, 2, first)
     cache.put(2, 1, second)
     assert cache.get(1, 2) is first  # Touch the older entry before inserting another.
@@ -30,7 +30,7 @@ def test_recently_used_cell_survives_eviction_and_replacement() -> None:
 @pytest.mark.parametrize("capacity", [0, 1, 31, DETAIL_CELL_LIMIT])
 def test_cache_never_retains_more_than_its_cell_budget(capacity: int) -> None:
     cache = DetailSupportCache(capacity)
-    support = CellDetailSupport(False, 1.0, 2.0, 2.0)
+    support = CellDetailSupport(False, 1.0, 2.0, 2.0, 0.5)
     for column in range(DETAIL_CELL_LIMIT + 10):
         cache.put(column, 0, support)
         assert cache.info().cells <= capacity

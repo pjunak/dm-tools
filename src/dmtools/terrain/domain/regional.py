@@ -153,17 +153,30 @@ class RegionalDetailSettings:
             raise ValueError("Experimental detail amplitude must be finite and in (0, 100] metres.")
 
 
-def detail_cell_window(request: RegionalSamplingRequest) -> tuple[int, int, int, int]:
-    """Bound preparation to cells with an interval inside the buffered window."""
+def _detail_windows(request: RegionalSamplingRequest) -> tuple[
+    tuple[int, int, int, int], tuple[int, int, int, int],
+]:
     if request.refinement < 8:
         raise ValueError("Experimental detail requires refinement of at least 8.")
     x0, y0, x1, y1 = request.sample_window
     factor = request.refinement
     left, top = x0 // factor, y0 // factor
-    right = (x1 - 1) // factor
-    bottom = (y1 - 1) // factor
-    count = (right - left + 1) * (bottom - top + 1)
+    right, bottom = (x1 - 1) // factor, (y1 - 1) // factor
+    grid = request.reference_grid
+    support = (max(0, left - 1), max(0, top - 1),
+               min(grid.width - 2, right + 1), min(grid.height - 2, bottom + 1))
+    count = (support[2] - support[0] + 1) * (support[3] - support[1] + 1)
     if count > DETAIL_CELL_LIMIT:
-        raise ValueError(f"Detail preparation needs {count:,} parent cells; limit is "
-                         f"{DETAIL_CELL_LIMIT:,}. Use a smaller window.")
-    return left, top, right, bottom
+        raise ValueError(f"Detail preparation needs {count:,} parent cells including support halo; "
+                         f"limit is {DETAIL_CELL_LIMIT:,}. Use a smaller window.")
+    return (left, top, right, bottom), support
+
+
+def detail_cell_window(request: RegionalSamplingRequest) -> tuple[int, int, int, int]:
+    """Delivered cells, with the shared-edge support halo included in admission."""
+    return _detail_windows(request)[0]
+
+
+def detail_support_window(request: RegionalSamplingRequest) -> tuple[int, int, int, int]:
+    """One extra parent cell on each side, clipped to the reference frame."""
+    return _detail_windows(request)[1]

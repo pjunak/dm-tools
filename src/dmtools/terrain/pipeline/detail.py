@@ -8,7 +8,6 @@ not accepted local hydrology or a certified bound on unseen terrain extrema.
 
 from dataclasses import dataclass, replace
 from dataclasses import field as dataclass_field
-from hashlib import sha256
 from typing import Any, cast
 
 import numpy as np
@@ -23,8 +22,14 @@ from dmtools.terrain.domain.regional import (
     RegionalDetailSettings,
     RegionalSamplingRequest,
     detail_cell_window,
+    detail_support_window,
 )
 from dmtools.terrain.domain.seeds import LOCAL_DETAIL_STAGE_ID, stage_seed
+from dmtools.terrain.pipeline.detail_basis import (
+    edge_coefficients,
+    residual_basis,
+    terrain_x_weight,
+)
 from dmtools.terrain.pipeline.detail_cache import (
     CellDetailSupport,
     DetailCacheInfo,
@@ -36,48 +41,13 @@ from dmtools.terrain.pipeline.regional import RegionalTerrainSamples
 
 DETAIL_CELL_BATCH = 64
 
-LOCAL_DETAIL_ALGORITHM_ID = "protected-cell-residual-experiment@1"
-
-
-def cell_coefficients(
-    columns: NDArray[np.int64], rows: NDArray[np.int64], seed: int
-) -> NDArray[np.float64]:
-    coefficients = np.empty((columns.size, 3), dtype=np.float64)
-    for i, (column, row) in enumerate(zip(columns.flat, rows.flat, strict=True)):
-        payload = (
-            b"dmtools.local-detail-cell@1\0"
-            + seed.to_bytes(4, "big")
-            + int(column).to_bytes(8, "big")
-            + int(row).to_bytes(8, "big")
-        )
-        digest = sha256(payload).digest()
-        for mode in range(3):
-            unit = int.from_bytes(digest[mode * 4 : mode * 4 + 4], "big") / 0xFFFFFFFF
-            coefficients[i, mode] = (2 * unit - 1) / 3
-    return coefficients
-
-
-def residual_basis(
-    u: NDArray[np.float64], v: NDArray[np.float64], coefficients: NDArray[np.float64]
-) -> NDArray[np.float64]:
-    """Each odd factor integrates to zero; values and first derivatives vanish at edges."""
-    bu, bv = np.sin(np.pi * u) ** 2, np.sin(np.pi * v) ** 2
-    value = (
-        bu
-        * bv
-        * (
-            coefficients[..., 0] * np.sin(2 * np.pi * u)
-            + coefficients[..., 1] * np.sin(2 * np.pi * v)
-            + coefficients[..., 2] * np.sin(4 * np.pi * u) * np.sin(4 * np.pi * v)
-        )
-    )
-    # sin(pi) is not exactly zero in binary floating point.
-    return np.where((u == 0) | (u == 1) | (v == 0) | (v == 1), 0.0, value)
+LOCAL_DETAIL_ALGORITHM_ID = "terrain-weighted-edge-residual-experiment@2"
 
 
 @dataclass(frozen=True, slots=True)
 class DetailEvidence:
     parent_cells: int
+    support_cells: int
     protected_cells: int
     active_cells: int
     probe_samples: int
@@ -133,33 +103,39 @@ class PreparedRegionalDetail:
         ):
             raise ValueError("Detail request belongs to a different parent or grid.")
         left, top, right, bottom = detail_cell_window(request)
+        sl, st, sr, sb = detail_support_window(request)
         cc, rr = np.meshgrid(
-            np.arange(left, right + 1, dtype=np.int64), np.arange(top, bottom + 1, dtype=np.int64)
+            np.arange(sl, sr + 1, dtype=np.int64), np.arange(st, sb + 1, dtype=np.int64)
         )
-        columns, rows = cc.ravel(), rr.ravel()
+        sc, sy = cc.ravel(), rr.ravel()
+        core = np.flatnonzero((sc >= left) & (sc <= right) & (sy >= top) & (sy <= bottom))
+        columns, rows = sc[core], sy[core]
+        core_slot = np.full(sc.size, -1, dtype=np.int64)
+        core_slot[core] = np.arange(core.size)
         x, y = self.parent.data.x_km, self.parent.data.y_km
         field = sampler.prepared_field
-        # The authoritative parent already stores its ceiling rounded to Float32.
         ceiling_m = float(np.float32(field.settings.maximum_elevation_m))
         if not np.isfinite(ceiling_m):
             raise ValueError("Local detail requires a finite Float32 terrain ceiling.")
-        protected = np.zeros(columns.size, dtype=np.bool_)
-        amplitude = np.zeros(columns.size, dtype=np.float64)
-        reference_means = np.full(columns.size, np.nan, dtype=np.float64)
+        protected = np.zeros(sc.size, dtype=np.bool_)
+        amplitude = np.zeros(sc.size, dtype=np.float64)
+        x_weight = np.full(sc.size, 0.5, dtype=np.float64)
+        reference_means = np.full(sc.size, np.nan, dtype=np.float64)
         detailed_means = reference_means.copy()
         missing: list[int] = []
-        for index, (column, row) in enumerate(zip(columns, rows, strict=True)):
+        for index, (column, row) in enumerate(zip(sc, sy, strict=True)):
             support = self._cache.get(int(column), int(row))
             if support is None:
                 missing.append(index)
             else:
                 protected[index] = support.protected
                 amplitude[index] = support.amplitude_m
+                x_weight[index] = support.x_weight
                 reference_means[index] = support.reference_mean_m
                 detailed_means[index] = support.detailed_mean_m
         pending = np.asarray(missing, dtype=np.int64)
         if pending.size:
-            pc, pr = columns[pending], rows[pending]
+            pc, pr = sc[pending], sy[pending]
             cells = cast(Any, shapely.box(x[pc], y[pr], x[pc + 1], y[pr + 1]))
             guard = min(sampler.reference_grid.x_spacing_km, sampler.reference_grid.y_spacing_km)
             inland = cast(
@@ -167,25 +143,21 @@ class PreparedRegionalDetail:
             )
             inland &= np.asarray(cast(Any, shapely.distance(cells, field.boundary))) > guard
             protected[pending] = ~inland
-            # STRtree returns every matching pair. Bound the cell dimension so
-            # overlapping protections cannot create a whole-window cross product.
             for start in range(0, pending.size, DETAIL_CELL_BATCH):
                 intersections = self.protections.query(
-                    cells[start : start + DETAIL_CELL_BATCH], predicate="intersects"
+                    cells[start:start + DETAIL_CELL_BATCH], predicate="intersects"
                 )
                 if intersections.size:
                     protected[pending[start + np.unique(intersections[0])]] = True
-                del intersections  # Release each pair array before allocating the next.
+                del intersections
                 if progress is not None:
                     progress(0.05, "Checking bounded detail-protection batches")
             for index in pending[protected[pending]]:
-                self._cache.put(
-                    int(columns[index]), int(rows[index]),
-                    CellDetailSupport(True, 0.0, float("nan"), float("nan")),
-                )
-            pending = pending[~protected[pending]]
+                self._cache.put(int(sc[index]), int(sy[index]),
+                                CellDetailSupport(True, 0.0, float("nan"), float("nan"), 0.5))
+
         seed = stage_seed(field.settings.seed, LOCAL_DETAIL_STAGE_ID)
-        coefficients = cell_coefficients(columns, rows, seed)
+        coefficients = edge_coefficients(columns, rows, seed)
         n = DETAIL_PROBE_INTERVALS
         uv = np.linspace(0.0, 1.0, n + 1)
         u, v = np.meshgrid(uv, uv)
@@ -194,36 +166,80 @@ class PreparedRegionalDetail:
         weights[[0, -1], :] *= 0.5
         weights[:, [0, -1]] *= 0.5
         weights = weights.ravel() / (n * n)
-        active = np.flatnonzero(~protected)
+        # Keep probes only during this call, avoiding a second terrain evaluation
+        # after both adjacent cell budgets are known. The cache remains scalar.
+        need_moments = core[~protected[core] & np.isnan(detailed_means[core])]
+        probe_bank = np.empty((need_moments.size, (n + 1) ** 2), dtype=np.float32)
+        moment_slot = np.full(sc.size, -1, dtype=np.int64)
+        moment_slot[need_moments] = np.arange(need_moments.size)
+        pending = np.union1d(pending[~protected[pending]], need_moments)
+
+        def points(ids: NDArray[np.int64]) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
+            px = x[sc[ids], None] + (x[sc[ids] + 1] - x[sc[ids]])[:, None] * u
+            py = y[sy[ids], None] + (y[sy[ids] + 1] - y[sy[ids]])[:, None] * v
+            return px, py
+
+        def remember(index: int) -> None:
+            self._cache.put(int(sc[index]), int(sy[index]), CellDetailSupport(
+                bool(protected[index]), float(amplitude[index]), float(reference_means[index]),
+                float(detailed_means[index]), float(x_weight[index]),
+            ))
+
         for start in range(0, pending.size, DETAIL_CELL_BATCH):
-            ids = pending[start : start + DETAIL_CELL_BATCH]
-            px = x[columns[ids], None] + (x[columns[ids] + 1] - x[columns[ids]])[:, None] * u
-            py = y[rows[ids], None] + (y[rows[ids] + 1] - y[rows[ids]])[:, None] * v
-            reference = field.sample_ground(px, py).astype(np.float64)
+            ids = pending[start:start + DETAIL_CELL_BATCH]
+            px, py = points(ids)
+            reference = field.sample_ground(px, py)
             if not np.isfinite(reference).all():
                 raise RuntimeError("Detail preparation encountered invalid interior ground.")
-            margin = np.min(np.minimum(reference, ceiling_m - reference), axis=1)
+            z = reference.astype(np.float64)
+            margin = np.min(np.minimum(z, ceiling_m - z), axis=1)
             amplitude[ids] = np.minimum(self.settings.amplitude_m, np.maximum(margin, 0.0) * 0.5)
-            # Use the same coordinate-to-cell arithmetic as delivered samples.
-            pu = (px - x[columns[ids], None]) / (x[columns[ids] + 1] - x[columns[ids]])[:, None]
-            pv = (py - y[rows[ids], None]) / (y[rows[ids] + 1] - y[rows[ids]])[:, None]
-            residual = residual_basis(pu, pv, coefficients[ids, None, :]) * amplitude[ids, None]
-            detailed = (reference + residual).astype(np.float32).astype(np.float64)
-            reference_means[ids] = np.sum(reference * weights, axis=1)
-            detailed_means[ids] = np.sum(detailed * weights, axis=1)
+            x_weight[ids] = terrain_x_weight(
+                reference.reshape(-1, n + 1, n + 1),
+                sampler.reference_grid.x_spacing_km / n,
+                sampler.reference_grid.y_spacing_km / n,
+            )
+            reference_means[ids] = np.sum(z * weights, axis=1)
+            selected = moment_slot[ids] >= 0
+            probe_bank[moment_slot[ids[selected]]] = reference[selected]
             for index in ids:
-                self._cache.put(
-                    int(columns[index]), int(rows[index]),
-                    CellDetailSupport(
-                        False, float(amplitude[index]), float(reference_means[index]),
-                        float(detailed_means[index]),
-                    ),
-                )
+                remember(int(index))
             if progress is not None:
-                progress(
-                    0.1 + 0.4 * min(start + DETAIL_CELL_BATCH, pending.size) / pending.size,
-                    "Preparing fixed parent-cell detail support",
-                )
+                progress(0.1 + 0.25 * min(start + DETAIL_CELL_BATCH, pending.size) / pending.size,
+                         "Preparing fixed terrain-aware detail support")
+
+        # Share the smaller of the two adjacent budgets. An excluded neighbor
+        # suppresses this edge on both sides; crop boundaries never change it.
+        stride = sr - sl + 1
+        neighbors = core[:, None] + np.array([-1, 1, -stride, stride])
+        neighbors = np.clip(neighbors, 0, sc.size - 1)
+        valid = np.column_stack((columns > 0, columns < x.size - 2,
+                                 rows > 0, rows < y.size - 2))
+        orientation = (x_weight[core, None] + x_weight[neighbors]) * 0.5
+        orientation[:, :2] = 1 - orientation[:, :2]
+        edge_amplitudes = np.minimum(amplitude[core, None], amplitude[neighbors]) * orientation
+        edge_amplitudes[~valid] = 0.0
+        for start in range(0, need_moments.size, DETAIL_CELL_BATCH):
+            ids = need_moments[start:start + DETAIL_CELL_BATCH]
+            local = core_slot[ids]
+            px, py = points(ids)
+            pu = (px - x[sc[ids], None]) / (x[sc[ids] + 1] - x[sc[ids]])[:, None]
+            pv = (py - y[sy[ids], None]) / (y[sy[ids] + 1] - y[sy[ids]])[:, None]
+            residual = residual_basis(pu, pv, coefficients[local, None],
+                                      edge_amplitudes[local, None])
+            detailed = (probe_bank[moment_slot[ids]].astype(np.float64) + residual).astype(
+                np.float32
+            )
+            detailed_means[ids] = np.sum(detailed.astype(np.float64) * weights, axis=1)
+            for index in ids:
+                remember(int(index))
+            if progress is not None:
+                progress(0.4, "Measuring fixed detail moments")
+        del probe_bank
+        support_probe_samples = int(np.count_nonzero(~protected) * (n + 1) ** 2)
+        protected, amplitude = protected[core], amplitude[core]
+        reference_means, detailed_means = reference_means[core], detailed_means[core]
+        active = np.flatnonzero(~protected)
         if progress is not None:
             progress(0.5, "Sampling the reference for local detail")
         samples = sampler.sample(request, progress)
@@ -238,7 +254,7 @@ class PreparedRegionalDetail:
             local = (row - top) * (right - left + 1) + column - left
             u = (px - x[column]) / (x[column + 1] - x[column])
             v = (py - y[row]) / (y[row + 1] - y[row])
-            residual = residual_basis(u, v, coefficients[local]) * amplitude[local]
+            residual = residual_basis(u, v, coefficients[local], edge_amplitudes[local])
             ground = elevation.ravel()[start:stop].astype(np.float64) + residual
             mask = samples.land_mask.ravel()[start:stop]
             if (
@@ -257,9 +273,10 @@ class PreparedRegionalDetail:
         errors = np.abs(detailed_means[active] - reference_means[active])
         evidence = DetailEvidence(
             columns.size,
+            sc.size,
             int(protected.sum()),
             int(np.count_nonzero(amplitude)),
-            int(active.size * (n + 1) ** 2),
+            support_probe_samples,
             float(errors.max(initial=0)),
             float(np.abs(added).max(initial=0)),
             int(np.count_nonzero(added)),
