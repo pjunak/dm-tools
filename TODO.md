@@ -377,13 +377,18 @@ editing a finished DEM; see [ADR-0048](docs/adr/0048-keep-zoom-driven-detail-gen
   results, evidence and artifacts exactly. See
   [ADR-0062](docs/adr/0062-reuse-bounded-detail-cell-support.md) and the
   [measurements](docs/research/2026-09-23-detail-cell-reuse.md).
-- [ ] **P1 — Add bounded prepared-context and result caching.** Finer arrays,
-  evaluation batches and experimental cell work are bounded. Python callers can
-  reuse verified parents and protected detail context across requests. Add total
-  parent/result cache budgets, eviction and result freshness. Cell preparation
-  reuse is implemented separately above. Identify entries by inputs, parent/runtime,
-  extent, spacing and detail algorithm/settings;
-  changed identities invalidate children. Recursive enrichment is not implemented.
+- [x] **P1 — Reuse verified parents and bounded numeric results in sessions.**
+  A serial application session owns one loaded/prepared parent, one detail context
+  and at most 32 numeric results under an explicit byte budget. Every write checks
+  parent/runtime freshness; changed identities close the session. Cache keys bind
+  aligned requests and detail settings; artifact bounds remain caller-specific.
+  Clearing and close release retained work. See
+  [ADR-0063](docs/adr/0063-reuse-verified-parent-region-sessions.md).
+- [ ] **P1 — Bound total local-generation job memory.** Result arrays and scalar
+  cell support are bounded; parent/context count is explicit. Establish admission
+  budgets for complete-source geometry, loaded/prepared parent buffers, active
+  sampling/rendering scratch and concurrent jobs before adding a scheduler.
+  Recursive enrichment is not implemented.
 - [ ] **P1 — Preserve hydrological context during local enrichment.** Keep
   authored constraints and inherited upstream flow; a local rectangle or halo
   must not invent an independent catchment. Validate drainage after detail and

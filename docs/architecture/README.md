@@ -68,17 +68,23 @@ reference endpoint grid, nested fine window and halo before any expensive work.
 The pipeline evaluates only bounded regional arrays while retaining complete
 canonical context. Separate adapters publish numeric samples and a cropped
 scientific ground preview; no full-build reviews or finer hydrology are implied.
-Prepared samplers can be reused across requests, but GUI jobs and caches remain
-future work. The [parent-region operation](../terrain-parent-regions.md) adds
+Prepared samplers can be reused across requests; GUI jobs remain future work.
+The [parent-region operation](../terrain-parent-regions.md) adds
 portable snapshot decoding and file/runtime checks in adapters/application,
 complete numeric replay in `pipeline/parent.py`, and an opt-in protected residual
 in `pipeline/detail.py`. Detail only changes a new regional result. File formats
 and publication stay outside those numerical stages; experimental acceptance
 and hydrology capability flags stay explicit in the artifact contract.
 Each prepared detail context owns bounded scalar cell support with explicit
-eviction and clearing; no output arrays are cached. Context replacement resets
-that cache. See [ADR-0062](../adr/0062-reuse-bounded-detail-cell-support.md) for
-identity ownership, serial use and the remaining total-memory/job limits.
+eviction and clearing; this pipeline cache retains no output arrays. Context
+replacement resets that cache. See
+[ADR-0062](../adr/0062-reuse-bounded-detail-cell-support.md) for
+identity ownership and scalar limits. `application/parent_region.py` now owns
+serial sessions retaining one parent/detail context and byte-bounded numeric
+results. Files and runtime are checked on every write, including cached requests;
+changed provenance closes the session. Cache arrays stay private, while `close`
+releases all session references. [ADR-0063](../adr/0063-reuse-verified-parent-region-sessions.md)
+defines this lifecycle and the remaining total-memory/job limits.
 
 The next durable-build work adds world georeferencing,
 derived GIS products, explicit hard/soft/inequality projection after optional
@@ -135,7 +141,7 @@ layer or path boundaries.
 - River/catchment vector products and external hydrology validation
   (numeric routing, footprint collection and basin review archives are implemented)
 - Visual/spectral acceptance of experimental regional detail, inherited finer
-  hydrology, zoom scheduling and bounded caching
+  hydrology, zoom scheduling and total job-memory admission
 - Global climate-field and ecological-classification contracts
 - Web framework, queue, storage, and frontend
 - Public project license

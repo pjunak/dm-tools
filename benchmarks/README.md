@@ -409,3 +409,25 @@ counts show retained cells, reuse and recomputation. Timings cover sampling only
 loading/replay, hashing and exports are excluded. No result arrays are cached.
 Run serially without concurrent tests; the JSON output must be a new file outside
 all parent builds. See the [report](../docs/research/2026-09-23-detail-cell-reuse.md).
+
+### Verified session reuse
+
+```powershell
+.\.venv\Scripts\python.exe -m benchmarks.parent_session --parent artifacts/local-detail-measurements/example-42/parent artifacts/local-detail-measurements/regional-42/parent artifacts/local-detail-measurements/water-42/parent --repeats 3 --output artifacts/parent-session.json
+```
+
+Use current-runtime parents from the public builder above. This repeats cold,
+zoom, overlap, repeat, distant-window and revisit writes in three variants:
+independent application calls, a session retaining prepared work only, and a
+session also retaining numeric results. All use experimental detail at 40 m.
+Variant order alternates; every output hash and complete manifest must match
+its independent control. Each write uses a fresh output directory.
+
+Recorded time includes parent/session setup, freshness checks, numerical work,
+rendering, file writes, publication and session close. Independent verification
+of the benchmark outputs is outside the timed interval. Result-cache bytes and
+entry counts are recorded after every write, and retained bytes must return to
+zero on close. These are serial same-process observations, not fresh-process
+startup comparisons or process-memory measurements. The new JSON and sibling
+products directory must be outside every parent build. See the
+[report](../docs/research/2026-09-23-parent-region-sessions.md).

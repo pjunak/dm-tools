@@ -1,9 +1,11 @@
 # pyright: reportUnknownMemberType=false, reportUnknownVariableType=false, reportMissingTypeStubs=false
 """Portable parent replay, bounded decoding and atomic regional publication."""
 
+import gc
 import io
 import json
 import shutil
+import weakref
 from dataclasses import replace
 from hashlib import sha256
 from pathlib import Path
@@ -34,6 +36,7 @@ from dmtools.terrain.domain import TerrainProject
 from dmtools.terrain.domain.regional import RegionalDetailSettings, RegionalSamplingRequest
 from dmtools.terrain.pipeline.detail import prepare_regional_detail
 from dmtools.terrain.pipeline.parent import prepare_verified_parent
+from dmtools.terrain.pipeline.regional import TerrainRegionSampler
 
 ROOT = Path(__file__).parents[1]
 
@@ -330,3 +333,239 @@ def test_detail_cli_requires_explicit_experimental_flag() -> None:
                 "8",
             ]
         )
+
+
+@pytest.mark.parametrize("settings", [None, RegionalDetailSettings()])
+def test_session_replays_once_and_reuses_exact_artifacts(
+    saved_parent: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    settings: RegionalDetailSettings | None,
+) -> None:
+    bounds = (1100., 1100., 1700., 1700.)
+    application.sample_parent_region(
+        saved_parent, tmp_path / "control", bounds, 8, detail_settings=settings,
+    )
+    replay = application.prepare_verified_parent
+    calls = 0
+
+    def count(*args: Any, **kwargs: Any) -> Any:
+        nonlocal calls
+        calls += 1
+        return replay(*args, **kwargs)
+
+    monkeypatch.setattr(application, "prepare_verified_parent", count)
+    with application.ParentRegionSession(saved_parent) as session:
+        session.write(tmp_path / "first", bounds, 8, detail_settings=settings)
+
+        def forbidden(*_args: object, **_kwargs: object) -> None:
+            pytest.fail("Cached requests must reuse prepared parents and complete numeric results.")
+
+        monkeypatch.setattr(application, "prepare_verified_parent", forbidden)
+        monkeypatch.setattr(TerrainRegionSampler, "sample", forbidden)
+        session.write(tmp_path / "cached", bounds, 8, detail_settings=settings)
+        assert calls == 1
+        info = session.cache_info()
+        assert (info.entries, info.hits, info.misses) == (1, 1, 1)
+        assert 0 < info.retained_bytes <= info.budget_bytes
+        for artifact in (tmp_path / "control").iterdir():
+            for folder in ("first", "cached"):
+                assert artifact.read_bytes() == (tmp_path / folder / artifact.name).read_bytes()
+    assert session.cache_info().entries == session.cache_info().retained_bytes == 0
+    with pytest.raises(RuntimeError, match="closed"):
+        session.write(tmp_path / "closed", bounds, 8)
+    assert not (tmp_path / "closed").exists()
+
+
+def test_session_keys_include_mode_settings_and_density_but_preserve_requested_bounds(
+    saved_parent: Path, tmp_path: Path,
+) -> None:
+    bounds = (1100., 1100., 1700., 1700.)
+    with application.ParentRegionSession(saved_parent) as session:
+        for index, (factor, settings) in enumerate((
+            (8, None), (8, RegionalDetailSettings(12.)),
+            (8, RegionalDetailSettings(30.)), (16, None),
+        )):
+            session.write(tmp_path / str(index), bounds, factor, detail_settings=settings)
+            assert session.cache_info().hits == 0
+        assert session.cache_info().entries == 4
+        smaller = (1100.01, 1100.01, 1699.99, 1699.99)
+        session.write(tmp_path / "alias", smaller, 8)
+        assert session.cache_info().hits == 1
+        a = json.loads((tmp_path / "0/manifest.json").read_bytes())
+        b = json.loads((tmp_path / "alias/manifest.json").read_bytes())
+        assert a["request"]["window_inclusive"] == b["request"]["window_inclusive"]
+        assert b["request"]["requested_bounds_km"] == list(smaller)
+        assert a["artifact_id"] != b["artifact_id"]
+        assert (
+            (tmp_path / "0/samples.npz").read_bytes()
+            == (tmp_path / "alias/samples.npz").read_bytes()
+        )
+
+
+@pytest.mark.parametrize(
+    "fault", ["product", "manifest", "runtime", "runtime-unavailable", "hit-callback"]
+)
+def test_session_closes_and_discards_caches_on_parent_or_runtime_drift(
+    saved_parent: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, fault: str,
+) -> None:
+    folder = tmp_path / "parent"
+    shutil.copytree(saved_parent, folder)
+    bounds = (1100., 1100., 1700., 1700.)
+    with application.ParentRegionSession(folder) as session:
+        session.write(tmp_path / "first", bounds, 8)
+        assert session.cache_info().entries == 1
+
+        def change(_fraction: float, _label: str) -> None:
+            with (folder / "scientific.png").open("ab") as stream:
+                stream.write(b"changed")
+
+        if fault == "runtime":
+            monkeypatch.setattr(application, "runtime_identity", lambda: {"changed": True})
+        elif fault == "runtime-unavailable":
+            def unavailable() -> None:
+                raise RuntimeError("Runtime identity changed or became unavailable")
+
+            monkeypatch.setattr(application, "runtime_identity", unavailable)
+        elif fault == "product":
+            change(0., "")
+        elif fault == "manifest":
+            with (folder / "manifest.json").open("ab") as stream:
+                stream.write(b" ")
+        expected_error = RuntimeError if fault == "runtime-unavailable" else ValueError
+        with pytest.raises(expected_error, match="changed"):
+            session.write(
+                tmp_path / "stale", bounds, 8,
+                progress=change if fault == "hit-callback" else None,
+            )
+        assert not (tmp_path / "stale").exists()
+        assert session.cache_info().entries == session.cache_info().retained_bytes == 0
+        with pytest.raises(RuntimeError, match="closed"):
+            session.write(tmp_path / "retry", bounds, 8)
+
+
+@pytest.mark.parametrize("budget", [0, 1])
+def test_session_bypasses_small_budgets_and_reuses_parent_after_clear(
+    saved_parent: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, budget: int,
+) -> None:
+    bounds = (1100., 1100., 1700., 1700.)
+    with application.ParentRegionSession(saved_parent, result_cache_bytes=budget) as session:
+        session.write(tmp_path / "first", bounds, 8)
+        assert session.cache_info().entries == 0
+        assert session.cache_info().bypasses == 1
+        session.clear_cache()
+
+        def forbidden(*_args: object, **_kwargs: object) -> None:
+            pytest.fail("Clearing result/cell caches must retain the verified parent.")
+
+        monkeypatch.setattr(application, "prepare_verified_parent", forbidden)
+        session.write(tmp_path / "second", bounds, 8)
+        for artifact in (tmp_path / "first").iterdir():
+            assert artifact.read_bytes() == (tmp_path / "second" / artifact.name).read_bytes()
+
+
+def test_session_export_failure_can_retry_cached_result_to_a_new_destination(
+    saved_parent: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    bounds = (1100., 1100., 1700., 1700.)
+    writer = application.write_parent_region_products
+    with application.ParentRegionSession(saved_parent) as session:
+        def fail(*_args: object, **_kwargs: object) -> None:
+            raise OSError("export unavailable")
+
+        monkeypatch.setattr(application, "write_parent_region_products", fail)
+        with pytest.raises(OSError, match="export unavailable"):
+            session.write(tmp_path / "partial", bounds, 8)
+        assert (tmp_path / "partial").is_dir()
+        assert not (tmp_path / "partial/manifest.json").exists()
+        assert session.cache_info().entries == 1
+        monkeypatch.setattr(application, "write_parent_region_products", writer)
+        session.write(tmp_path / "retry", bounds, 8)
+        assert session.cache_info().hits == 1
+        assert (tmp_path / "retry/manifest.json").is_file()
+
+
+def test_session_rejects_reentrant_generation_and_lifecycle_changes(
+    saved_parent: Path, tmp_path: Path,
+) -> None:
+    bounds = (1100., 1100., 1700., 1700.)
+    with application.ParentRegionSession(saved_parent) as session:
+        session.write(tmp_path / "first", bounds, 8)
+
+        def reenter(_fraction: float, _label: str) -> None:
+            with pytest.raises(RuntimeError, match="serially"):
+                session.write(tmp_path / "nested", bounds, 8)
+            for action in (session.clear_cache, session.close):
+                with pytest.raises(RuntimeError, match="during generation"):
+                    action()
+
+        session.write(tmp_path / "cached", bounds, 8, progress=reenter)
+        assert not (tmp_path / "nested").exists()
+
+
+def test_session_eviction_recomputes_identical_products_within_byte_budget(
+    saved_parent: Path, tmp_path: Path,
+) -> None:
+    grid = load_terrain_parent(saved_parent, runtime_identity()).data.grid
+    dx, dy = grid.x_spacing_km, grid.y_spacing_km
+    first_bounds = (20 * dx, 10 * dy, 28 * dx, 18 * dy)
+    other_bounds = (21 * dx, 10 * dy, 29 * dx, 18 * dy)
+    with application.ParentRegionSession(saved_parent) as probe:
+        probe.write(tmp_path / "control", first_bounds, 8)
+        budget = probe.cache_info().retained_bytes
+    with application.ParentRegionSession(saved_parent, result_cache_bytes=budget) as session:
+        for index, bounds in enumerate((first_bounds, other_bounds, first_bounds)):
+            session.write(tmp_path / f"evict-{index}", bounds, 8)
+            info = session.cache_info()
+            assert info.entries == 1 and info.retained_bytes == budget
+        assert session.cache_info().evictions == 2
+        assert session.cache_info().misses == 3
+        for artifact in (tmp_path / "control").iterdir():
+            assert artifact.read_bytes() == (tmp_path / "evict-2" / artifact.name).read_bytes()
+
+
+def test_failed_sampling_is_not_cached_and_session_can_retry(
+    saved_parent: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    method = TerrainRegionSampler.sample
+    bounds = (1100., 1100., 1700., 1700.)
+    with application.ParentRegionSession(saved_parent) as session:
+        def fail(*_args: object, **_kwargs: object) -> None:
+            raise ValueError("sample unavailable")
+
+        monkeypatch.setattr(TerrainRegionSampler, "sample", fail)
+        with pytest.raises(ValueError, match="sample unavailable"):
+            session.write(tmp_path / "failed", bounds, 8)
+        assert session.cache_info().entries == 0
+        assert not (tmp_path / "failed").exists()
+        monkeypatch.setattr(TerrainRegionSampler, "sample", method)
+        session.write(tmp_path / "retried", bounds, 8)
+        assert session.cache_info().misses == 2
+        assert session.cache_info().entries == 1
+
+
+def test_session_close_releases_parent_and_prepared_arrays(
+    saved_parent: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    load = application.load_terrain_parent
+    prepare = application.prepare_verified_parent
+    references: list[weakref.ReferenceType[Any]] = []
+
+    def record_load(*args: Any, **kwargs: Any) -> Any:
+        parent = load(*args, **kwargs)
+        references.append(weakref.ref(parent.data.elevation_m))
+        return parent
+
+    def record_prepare(*args: Any, **kwargs: Any) -> Any:
+        parent = prepare(*args, **kwargs)
+        references.append(weakref.ref(parent.sampler.prepared_field.automatic_valleys.x_km))
+        return parent
+
+    monkeypatch.setattr(application, "load_terrain_parent", record_load)
+    monkeypatch.setattr(application, "prepare_verified_parent", record_prepare)
+    with application.ParentRegionSession(saved_parent) as session:
+        session.write(
+            tmp_path / "detail", (1100., 1100., 1700., 1700.), 8,
+            detail_settings=RegionalDetailSettings(),
+        )
+        assert len(references) == 2 and all(ref() is not None for ref in references)
+    gc.collect()
+    assert all(ref() is None for ref in references)

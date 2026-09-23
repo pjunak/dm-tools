@@ -12,6 +12,10 @@ in the current status or a new dated report.
 
 ## Implemented and measured work
 
+- [Verified parent-region sessions - 2026-09-23](2026-09-23-parent-region-sessions.md)
+  retains verified parent work and byte-bounded numeric results with automatic
+  freshness checks; compares complete artifact writes and explicit release.
+
 - [Bounded detail-cell reuse - 2026-09-23](2026-09-23-detail-cell-reuse.md)
   reuses scalar cell support across regional requests with explicit limits and
   eviction; measures exact cached/uncached results and local sampling cost.

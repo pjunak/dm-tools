@@ -124,7 +124,7 @@ not assumed to meet an unenriched parent there.
 The regular cell support is visible in difference images. Terrain-aware support,
 coarse spectral-power acceptance, derivative checks on the final quantized field,
 partial coastal/basin detail, inherited outlet paths and upstream flow, finer
-routing, whole-parent/result cache budgets, cancellation and workbench requests
+routing, total job-memory budgets, cancellation and workbench requests
 remain open. Read
 [ADR-0061](adr/0061-verify-parents-and-isolate-local-detail.md), the
 [measurements](research/2026-09-23-verified-parent-detail.md) and [TODO](../TODO.md).
@@ -158,3 +158,50 @@ The CLI creates one context per invocation; reuse currently benefits Python
 callers that retain it across requests. Parent/runtime checks before publication
 remain required. See [ADR-0062](adr/0062-reuse-bounded-detail-cell-support.md) and
 the [measurements](research/2026-09-23-detail-cell-reuse.md).
+
+## Write several artifacts in one verified session
+
+Use the application session to reuse parent replay, cell support and bounded
+numeric results while retaining automatic file/runtime checks:
+
+```python
+from pathlib import Path
+from dmtools.terrain.application.parent_region import ParentRegionSession
+from dmtools.terrain.domain.regional import RegionalDetailSettings
+
+with ParentRegionSession(Path("artifacts/detail-parent")) as session:
+    for name, refinement in (("near", 8), ("closer", 16), ("revisit", 8)):
+        manifest = session.write(
+            Path("artifacts") / name,
+            (1375.0, 800.0, 1875.0, 1300.0),
+            refinement,
+            detail_settings=RegionalDetailSettings(40.0),
+        )
+        print(manifest, session.cache_info())
+```
+
+Choose new output directories for every write. Omit `detail_settings` to sample
+the unchanged parent field. Experimental detail retains all acceptance limits
+above. The session validates files when opened and numerically replays the parent
+on its first valid request. Each subsequent write verifies file hashes and runtime
+again, including cache hits. Source/runtime changes close the session and discard
+retained data; open a new session only after restoring/rebuilding a valid parent.
+
+`result_cache_bytes` defaults to 64 MiB, accepts integers from zero through 256 MiB,
+and is paired with a fixed 32-entry limit. The cache charges complete backing
+numeric allocations, not merely a small view's apparent size. Oversized requests
+still generate normally but are not retained. `cache_info()` reports the byte
+budget, retained bytes, entry count, hits, misses, evictions and bypasses.
+
+`clear_cache()` releases results and scalar cell support while keeping the prepared
+parent. `close()` and context-manager exit release all session references.
+Retain and use each session serially. Its public API returns artifact paths, keeping
+cache arrays private. Equal aligned requests can share numeric data even when their
+original bounds differ; each manifest retains the bounds supplied for that write.
+
+One loaded/prepared parent and one detail context remain resident while open.
+The result byte limit excludes parent/geometry storage, scalar cell records,
+active generation/rendering scratch and Python metadata; it is not a process-wide
+memory limit. Separate CLI invocations use temporary sessions with result
+retention disabled. Read [ADR-0063](adr/0063-reuse-verified-parent-region-sessions.md)
+and the [measurements](research/2026-09-23-parent-region-sessions.md).

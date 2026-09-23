@@ -158,7 +158,7 @@ bounds on unseen terrain heights.
    provide display foundations. Bounded unchanged-field regional sampling now
    provides a CLI/API request foundation with shared context and provenance;
    verified-parent replay and an experimental protected residual now extend it.
-   Visual/coarse-power acceptance, inherited finer hydrology and bounded job/cache
+   Visual/coarse-power acceptance, inherited finer hydrology and bounded job
    scheduling remain the next local-generation gates.
 
 R04/R05 provide the first drainage correctness slice and review products;
@@ -286,9 +286,12 @@ record the remaining visible cell pattern and conservative exclusions.
 - Fixed detail-cell support now has bounded per-context reuse and eviction;
   [ADR-0062](../adr/0062-reuse-bounded-detail-cell-support.md) and the
   [measurements](../research/2026-09-23-detail-cell-reuse.md) preserve exact output
-  under overlap, density and cache pressure. Bound total prepared-parent/result
-  memory next, then add cancellation, freshness and workbench requests. Do not
-  repeat full replay for every pointer move or silently turn a successful experimental result
+  under overlap, density and cache pressure. [Verified sessions](../terrain-parent-regions.md#write-several-artifacts-in-one-verified-session)
+  now reuse one parent and byte-bounded results with automatic freshness checks;
+  [ADR-0063](../adr/0063-reuse-verified-parent-region-sessions.md) defines ownership
+  and release. Bound total parent/geometry/active-job memory next, then add
+  cancellation and workbench requests. Do not repeat full replay for every pointer
+  move or silently turn a successful experimental result
   into accepted cartographic detail.
 - Extend the existing [regional prototype C](../research/2026-09-04-terrain-prototype-contracts.md)
   with these acceptance gates. No automatic zoom job or recursive child-parent
