@@ -12,8 +12,11 @@ classifies the product as a usable research workbench with strong build
 foundations, before consistently convincing drainage/landforms. Eight current
 public cases still contain 32–132 m sampled internal rises on some planned
 channels whose endpoints descend. Default density/review changes did not replace
-D8 geometry. The next quality milestone is shared terrain/channel paths, with
-convergent-flat routing as an isolated early comparison.
+D8 geometry. Shared terrain/channel agreement remains the quality milestone.
+After minimal comparison/flat-routing evidence, the
+[landscape-evolution plan](../strategy/landscape-evolution.md) brings a bounded
+two-epoch uplift/incision/hillslope comparison forward before a large path-only
+implementation. This is researched and planned, not implemented or accepted.
 
 Verified-parent sampling, bounded sessions and shared-edge residual detail are
 implemented, but cartographic/coarse-scale acceptance, parent-view transitions
@@ -22,9 +25,11 @@ appear at zoom; real local river generation and automatic viewport jobs cannot
 be claimed from that display behavior.
 
 The fresh audit finds SciPy and Numba Python 3.14 Windows wheels, and a Landlab
-wheel whose dependency inventory includes GPL `py-richdem`. These candidates
-remain uninstalled. The report records versions, licenses, exact audit limits
-and renewed primary sources; the runtime dependency register is unchanged.
+wheel whose dependency inventory includes GPL `py-richdem`. A subsequent
+[wheel-only resolution](2026-09-24-landscape-evolution-models.md#windows-and-python-dependency-probe)
+succeeds with 45 distributions, including two prereleases. These candidates
+remain uninstalled; no evolution model has been executed or benchmarked. The
+runtime dependency register is unchanged.
 
 ## Implemented baseline
 
@@ -156,10 +161,17 @@ measured benefit and packaging/workflow evidence; it is not the next prerequisit
 
 ## Evidence and next experiments
 
-Current order is quality comparisons and convergent flats, then shared physical
-channel paths, then coherent landforms and accepted local enrichment. See
-[strategy batches A–F](../strategy/README.md#next-implementation-order). The entries
+Current order is minimal quality comparisons and convergent flats, LE1/LE2's
+history-model comparison, then selected shared terrain/channel integration,
+coherent landforms and accepted local enrichment. See
+[strategy batches A–F](../strategy/README.md#next-implementation-order) and the
+[detailed LE0–LE6 plan](../strategy/landscape-evolution.md). The entries
 below preserve evidence by topic, not a competing execution order.
+
+- [Landscape-evolution research](2026-09-24-landscape-evolution-models.md) compares
+  process models and tools for ordered geological epochs. LE0 research is complete;
+  LE1 reference execution and LE2 quality comparison have not started. Adoption,
+  constraint-aware reconstruction, material transport and local flow are gated.
 
 - [Progress reassessment](2026-09-24-progress-and-generation-strategy.md) records
   the fresh eight-case 65-station profile probe at `8430d01`. Endpoint descent

@@ -41,8 +41,8 @@ not a physical river-water validation or a private-map result.
 | Order | Outcome and existing backlog owners | Gate |
 |---|---|---|
 | **A — next** | Quality fixtures, paired maps/profiles, process-scale warnings; convergent-flat comparison (R02/R25/R27/R41/R43) | Fixed comparison set and a measured accept/reject result; no new benchmark framework |
-| **B — next major generation change** | Shared terrain-guided channel paths and whole-route feasibility (R48/R32) | Improved final-ground profiles and reduced grid bias with preserved anchors, cuts, junctions, terminals and coverage |
-| **C** | One coherent range/pass/tributary/lowland system (R08/R09/R14/R40/R44) | Better structural/visual results across fixed seeds and physical scales |
+| **B — next major generation decision** | LE1/LE2 geological-history comparison (R11/R14), then selected terrain/channel integration (R48/R32) | Early quality/cost decision before a large integration; accepted final surface preserves anchors, cuts, junctions, terminals and coverage |
+| **C** | Consolidate one coherent range/pass/tributary/lowland system from the selected comparison (R08/R09/R14/R40/R44) | Better structural/visual results across fixed seeds and physical scales |
 | **D** | Accepted parent-conditioned detail and inherited fine hydrology, then zoom jobs (R15/R34) | Overlap, coarse-scale, boundary/flow and visual acceptance before real small rivers |
 | **E** | Runoff, river size, lake hierarchy and sediment (R16/R18/R33) | Explicit flux, storage and material accounting |
 | **F** | Source-world placement, continuous climate and derived ecological layers (R01) | Geographic scale/context before climate claims |
@@ -52,6 +52,34 @@ acceptance criteria and stopping rules. P0 items below remain prerequisites in
 their own feature areas; they are not all immediate work. Preserve historical
 research and completed substeps. Full-field bound research remains separate
 from the current quality milestone; no stronger clearance claims are implied.
+
+### Geological-history checkpoint
+
+The [source/tool review](docs/research/2026-09-24-landscape-evolution-models.md)
+and [detailed LE0–LE6 plan](docs/strategy/landscape-evolution.md) specify this work.
+These checkpoints group existing R IDs; they are not a second backlog or an
+adopted simulation engine.
+
+- [x] **LE0 — Research models and existing implementations.** Compare stream power,
+  hillslope transport, SPACE, analytical erosion, depression routing and larger
+  frameworks. Record the successful 45-package Windows/Python wheel dry run,
+  GPL dependency, prereleases and the absence of any engine execution.
+- [ ] **LE1 — Validate an isolated reference** (R11/R14/R41). Pin a usable environment;
+  check units, boundaries, analytic controls and time/grid convergence.
+- [ ] **LE2 — Compare a two-epoch landscape** (R11/R14/R40/R43). Show controlled
+  range-to-lowland results with two rock resistances, held-out seeds, direction
+  tests and measured cost. Accept or reject before large production integration.
+- [ ] **LE3 — Preserve authored intent and shared terrain/channel geometry**
+  (R02/R32/R48). Separate initial, persistent and final constraints; validate
+  reconstruction, basin semantics, Float32 profiles and frozen-state sampling.
+- [ ] **LE4 — Compare conserved bedrock/mobile sediment** (R16/R18/R33). Account
+  for porosity, storage, deposition, fines, boundary exchange and corrections.
+- [ ] **LE5 — Expose accepted history as pre-generation inputs** (R11/R27/R32).
+  Update current schemas/provenance/replay and the editor together; no legacy
+  modes or output sculpting. Sediment controls depend on LE4 acceptance.
+- [ ] **LE6 — Condition local enrichment on evolved parents** (R15/R34).
+  Validate overlap/downsample and inherited flux before zoom jobs/small rivers;
+  final-state conditioning does not imply complete local historical replay.
 
 ### Drainage inspection checkpoint
 
@@ -955,8 +983,13 @@ Priorities remain conditional on the current strategy's prerequisites.
   authored sequence of uplift, incision, deposition and glacial episodes with
   one uniform erosion-age parameter. Record order, units and assumptions;
   label the history a design hypothesis rather than inferred canon.
-  Compare a simple analytical event sequence with LoopStructural as an optional
-  reference; distinguish reverse-time reconstruction from forward simulation.
+  Start with LE1/LE2's sequential uplift/incision/hillslope reference and two
+  resistance regions. Separate initial conditions, time-varying forcing,
+  persistent boundaries and final hard targets; do not silently pin present-day
+  heights throughout history. Record corrections and geological work separately.
+  Geological histories are pre-generation hypotheses, not output editing.
+  LoopStructural/inverse reconstruction remain later references, distinct from
+  the immediate forward-evolution experiment.
 - [ ] **Research — R12: Prototype contour-guided authoring.** Compare the 2026
   iso-contour approach for plateaus, basin margins and elevation bands. Reject
   crossing/contradictory contours and quantify DEM reconstruction, river-floor
@@ -975,8 +1008,11 @@ Priorities remain conditional on the current strategy's prerequisites.
   terrain-age control. Test uplift/base-level assumptions, convergence,
   authored anchors and runtime against the current incision baseline. Its 2D
   network/surface coupling still iterates; changing age can relocate valleys and
-  deposition is not covered generally. Start with one constrained fixture after
-  the shared-path contract, and check drainage after hard-constraint restoration.
+  deposition is not covered generally. LE1/LE2 now compare sequential epochs
+  before a large shared-path implementation; analytical erosion is a conditional
+  speed/maturity alternative. Test time-step accuracy and knickpoint diffusion,
+  not only solver stability. LE3 then enforces authored/shared-path semantics and
+  checks drainage after constraint-aware reconstruction.
 - [ ] **Research — R15: Evaluate multi-scale erosion amplification.** Compare
   the previously researched MIT reference with current residual detail on a
   generated local mountain/valley window. Preserve the fixed parent, inherited
@@ -990,6 +1026,9 @@ Priorities remain conditional on the current strategy's prerequisites.
   The audited large-scale SPACE component needs single-receiver routing;
   start with a D8 reference, explicit discharge units, porosity/control-volume
   accounting and explicit flooded-node behavior rather than passing MFD data.
+  LE4 adds closed/dry controls, boundary/fines flux and numerical-refinement
+  checks. Upstream prose/source discrepancies require pinned-code tests;
+  dependency resolution is not runtime or conservation validation.
 - [ ] **Research — R17: Evaluate 2026 stochastic geomorphological transport.**
   Compare resolved regional meanders/fans with a stream-power baseline.
   Distinguish MIT `geotransport` reference code from LGPL/CUDA `soillib`;
@@ -1205,8 +1244,12 @@ Priorities remain conditional on the current strategy's prerequisites.
   Use fixed physical station spacing, matched source-to-terminal routes and
   complete-network coverage when segmentation changes. Batch B's acceptance
   targets and fallback to network-led surface construction are in the strategy.
-  Process spacing remains independent of output pixels. Remove superseded runtime
-  paths after acceptance; preserve current inputs/contracts without legacy support.
+  Process spacing remains independent of output pixels. LE2 first tests whether
+  co-evolving terrain/drainage is a better basis; LE3 must meet the same final
+  surface/path contract. A failed evolution candidate returns to the bounded
+  terrain-guided prototype. Do not count changed automatic D8 edges as matched
+  route improvements. Remove superseded runtime paths after acceptance; preserve
+  current inputs/contracts without legacy support.
 
 ## UI / UX improvements
 
@@ -1320,6 +1363,11 @@ geometry movement and project-saving behavior.
   download UX only at the service boundary.
 
 ## Related decisions and research
+
+- [Landscape-evolution models and tools — 2026-09-24](docs/research/2026-09-24-landscape-evolution-models.md)
+  compares primary papers and existing engines; records a wheel-only dependency
+  probe. The [detailed implementation plan](docs/strategy/landscape-evolution.md)
+  owns LE0–LE6, equations, integration boundaries and acceptance/rejection gates.
 
 - [Progress and generation strategy reassessment — 2026-09-24](docs/research/2026-09-24-progress-and-generation-strategy.md)
   records the current eight-case profile baseline, research/tool refresh and

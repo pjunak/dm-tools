@@ -12,6 +12,12 @@ in the current status or a new dated report.
 
 ## Current reassessment
 
+- [Landscape-evolution models and tools — 2026-09-24](2026-09-24-landscape-evolution-models.md)
+  compares primary papers, mathematical assumptions and existing engines for
+  authored geological epochs; records a Windows wheel-only dependency probe.
+  The [detailed implementation plan](../strategy/landscape-evolution.md) specifies
+  the proposed comparison, integration and acceptance gates. No engine was run.
+
 - [Progress and generation strategy — 2026-09-24](2026-09-24-progress-and-generation-strategy.md)
   audits the working product, measures hidden channel-profile rises on eight
   current public cases, refreshes primary sources and platform/license evidence,
