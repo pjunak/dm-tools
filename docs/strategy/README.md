@@ -14,6 +14,13 @@ removes measured interpolation humps on descending paths while preserving their
 coverage; direction, authoring and grid-sensitivity gates remain open. No external
 engine has been adopted into the application.
 
+The subsequent [world-context research](../research/2026-09-24-world-context-enrichment.md)
+and [WC0-WC6 plan](world-context.md) advance retained world import and shared
+context from the former final climate phase. The next foundation is explicit
+world placement and continent identity. Physical path/landform acceptance remains
+a prerequisite for world-informed production terrain; ecological classifications
+remain downstream. This is a planning change, not an implemented world importer.
+
 This is the authoritative execution order. [TODO](../../TODO.md) remains the
 complete grouped backlog; P0 there can mean a prerequisite within a later
 feature, not a second concurrent critical path. The
@@ -50,7 +57,9 @@ Dated reports and accepted ADRs remain historical evidence.
 | Terrain-aligned drainage | Frozen-graph reconstruction measured; production not accepted | Shared physical paths, lower grid bias, hard constraints and resolution acceptance |
 | Coherent landform families | Partial recipes; two-epoch reference implemented and measured, quality gate open | Related range/pass/tributary/lowland structure that survives multiple seeds and scales |
 | Useful zoom enrichment | Experimental | Accepted regional shape, transition and inherited-flow behavior; then viewport scheduling |
-| Hydrological water and world ecology | Later dependent work | Runoff/storage/river-size evidence; world placement and climate for ecological layers |
+| World import and shared context | Planned; current SVG import dissolves identities and uses a local scale | WC0 retained world frame/continent ownership, then WC1 geography/ocean/province context |
+| World-informed rough terrain and history | Planned, dependent on physical terrain acceptance | WC2/WC3 coarse relief, seasonal runoff and bounded feedback; WC4 reviewed parent |
+| Hydrological water and ecology | Later dependent work | Flux/storage/river-size evidence and WC6 ecological layers; shared world context comes earlier |
 
 Do not turn this into one percentage or count passed tests as realism progress.
 
@@ -96,6 +105,33 @@ units/denominators and a reasoned accept/reject result for the flat experiment.
 Do not spend several batches perfecting the dashboard. A useful minimal report
 unblocks B; the analogue atlas can grow alongside later quality work.
 
+### W. Establish world inputs, then couple shared context to rough terrain
+
+The [world-context plan](world-context.md) is the detailed R49 feature contract.
+**Next foundation batch: WC0.** Preserve the source projection/frame, radius and
+continent/island identities before deriving the physical land union. Add explicit
+mapping and a source preview; do not interpret a larger local SVG as georeferenced.
+WC1 then derives ocean connectivity/exposure and inspectable province/history
+hypotheses. These bounded contracts can precede the remaining B/C quality work.
+They do not require an erosion engine, climate simulation or private-map import.
+
+After B/C and the relevant LE2/LE3 gates, WC2 supplies rough world relief and
+bathymetric context using a tested physical process/domain representation. WC3
+updates seasonal climate/runoff against that relief and runs bounded coarse
+history feedback. WC4 freezes a reviewed world parent before world-linked regional
+jobs. A/C comparison fixtures remain the quality controls for these stages.
+
+This splits the former F phase: geographic placement and shared forcing move
+earlier; ecological interpretation stays later. Product sequence is import →
+provisional context → rough terrain → climate/history feedback → selected world
+parent → detailed continents/regions. Build order is not seven parallel workstreams:
+start WC0/WC1, resolve B/C acceptance, then WC2-WC4 and D/WC5.
+
+**Exit:** preserved authored vectors and semantic membership, validated spherical
+coordinates/topology, explicit hypotheses and one bounded world candidate with
+reproducible climate/water budgets. See WC0-WC4 for the separate stage gates;
+coordinate success alone does not accept climate or terrain quality.
+
 ### B. Make a river path and its terrain agree
 
 R48's required outcome remains the largest immediate generation gain: terrain
@@ -121,7 +157,8 @@ This is a numerical control, not an accepted physical river model. Grid directio
 stay unchanged, slope creases remain and off-grid authored targets can be violated.
 Reconstruction volume changes are recorded separately from erosion.
 
-**Next bounded batch:** compare the physical valley/path prototype below against
+**Next bounded terrain-quality batch, after WC0/WC1 foundations:** compare the
+physical valley/path prototype below against
 that monotonic-profile control, and diagnose receiver/outlet sensitivity using
 the existing spacing/time states. Preserve the same coverage and native hard
 constraint controls. Fix the physical process policy before another expensive
@@ -218,13 +255,17 @@ freshness checks and reusable verified sessions. Small physical rivers appear
 only when local hydrology is adequately resolved and display scale supports them;
 large water survives distant views. Diagnostic tributary visibility already exists
 and must keep its different meaning. Recursive child-parent detail is a later gate.
+For world-linked regional aging, [WC5](world-context.md) and LE6 additionally
+require time-dependent parent boundary/forcing and refinement to the same world
+present. Current final-state residual detail does not satisfy historical replay;
+never apply the complete history again to an already aged parent.
 
 ### E. Add water quantity and richer landform processes
 
-R16/R18/R33 extend contributing area with an authored runoff field and later a
-climate adapter. Define discharge units and boundary flux before physical river
-widths, seasonal/dry channels, braided reaches or deltas. A simple authored runoff
-input does not require a complete climate simulation.
+R16/R18/R33 extend contributing area with explicit runoff and the shared WC3
+climate adapter when available. Define discharge units and boundary flux before
+physical river widths, seasonal/dry channels, braided reaches or deltas. A simple
+authored runoff input does not require a complete climate simulation.
 
 Complete controlling-sill/storage and nested lake/outlet semantics before lake
 chains. Use the [LE4 comparison](landscape-evolution.md#le4--bedrock-cover-and-deposition-comparison)
@@ -234,22 +275,21 @@ Selective geological recipes can follow: resistant caps/escarpments, glacial
 valleys, volcanic families, dunes and karst, with their own scales and assumptions.
 These remain choices from TODO, not a requirement to simulate every process.
 
-### F. Place the terrain in its world and derive climate/ecology
+### F. Derive ecological layers and evaluate richer world processes
 
-R01 becomes a prerequisite when world integration or climate work starts; it does
-not block local drainage comparisons. Preserve the declared source-world frame,
-planetary radius and coastline placement, choose working projections, and check
-distance distortion and round trips before world georeferenced exports. Local
-metric GeoTIFF already exists and does not establish planetary coordinates.
+World placement, ocean context and seasonal climate/runoff are now W/WC0-WC4
+prerequisites to world-informed terrain, not deferred until this phase. WC6 uses
+their accepted fields for climate/life-zone views, biome suitability and separate
+wetland/substrate layers. Retain uncertainty and classification-version metadata.
+A bog can occur on a tundra plain; a field is a human land-use decision.
 
-Prototype transparent continuous temperature/moisture fields with shared global
-context, seasonal assumptions, prevailing circulation, elevation and orographic
-rain shadow. Evaluate runoff/aridity and uncertainty before assigning named
-zones. Do not start independent continent climates without common boundary data.
-Keep biome/life zone, wetland, landform and cultural land use as overlapping layers:
-a bog can occur on a tundra plain; a field is a human land-use decision.
-The [world-systems research](../research/2026-09-04-technology-and-world-systems.md)
-remains a candidate inventory; verify component assumptions when implementing.
+Advanced ocean circulation, plate reconstructions and geological carbon/weathering
+cycles remain optional research. The [new world-context review](../research/2026-09-24-world-context-enrichment.md)
+compares established and newer tools, including ExoPlaSim and the 2026 Generic-PCM
+reduced ocean model. None is an application dependency or a required full-planet
+simulation. Select one external comparison only when it answers a measured gap.
+The [earlier world-systems inventory](../research/2026-09-04-technology-and-world-systems.md)
+remains historical background; current scope and execution order live here.
 
 ## How to keep development focused
 

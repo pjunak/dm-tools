@@ -67,6 +67,12 @@ validate distortion and round trips. It must also distinguish node sample
 extents from raster pixel outer corners. Existing projects must not silently
 acquire a different physical scale.
 
+This is now the next WC0 foundation in the [world-context plan](strategy/world-context.md),
+which also retains continent/island identities, longitude wrapping, polar policy
+and custom-planet CRS semantics. Its proposed cell-centred climate fields must
+remain distinct from current endpoint-node terrain rasters. No world metadata or
+geographic reprojection is supplied by the current formats described above.
+
 The [ADR](adr/0025-centralize-local-frames-and-endpoint-grids.md) records the
 implementation boundary and alternatives. See the [build guide](terrain-builds.md)
 for the current local numeric products and [TODO](../TODO.md) for remaining

@@ -43,6 +43,13 @@ now generates public comparison terrain through uplift and erosion epochs, with
 inspectable snapshots and numerical checks. It uses a separate scientific
 environment; history generation is not yet part of the desktop or saved-project CLI.
 
+The [planned world-context workflow](docs/strategy/world-context.md) will retain
+an imported world and its continent identities, generate provisional context and
+rough terrain, then refine selected regions with shared climate and geological
+history. World coordinates, climate and regional history replay are not implemented;
+this plan extends the local terrain and experimental evolution foundations.
+See the [research review](docs/research/2026-09-24-world-context-enrichment.md).
+
 ## Requirements
 
 - CPython 3.14
@@ -138,7 +145,8 @@ supported. Current correctness and useful improvements take priority.
 | `docs/research/` | Dated evidence and prototype recommendations |
 
 Start with [the current development strategy](docs/strategy/README.md), then see
-[the documentation index](docs/README.md),
+[the documentation reading guide](docs/README.md) and
+[complete file inventory](docs/FILE_INDEX.md),
 [the architecture overview](docs/architecture/README.md), and
 [the terrain tool guide](src/dmtools/terrain/README.md). The categorized
 implementation backlog is maintained in the [terrain tool roadmap](TODO.md).

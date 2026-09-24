@@ -6,6 +6,12 @@ adds a small, protected residual to that field. Each writes a separate result;
 neither changes the parent or any authored input. Workbench zoom jobs are still
 planned. Small rivers remain unavailable until finer hydrology is implemented.
 
+The [world-context plan](strategy/world-context.md) adds a future hierarchy of
+world → continent/region with shared climate, histories and one geological present.
+WC5/LE6 historical refinement requires time-dependent parent boundary/forcing;
+it must not age a completed parent again. Neither command below supplies that
+capability, world placement or a continent-history model.
+
 ## Quick public example
 
 The [local-detail project](../examples/terrain/local-detail.dmterrain.json) uses

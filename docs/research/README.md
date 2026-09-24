@@ -12,6 +12,13 @@ in the current status or a new dated report.
 
 ## Current reassessment
 
+- [World-context enrichment — 2026-09-24](2026-09-24-world-context-enrichment.md)
+  evaluates retained world import, geography/oceans, tectonic hypotheses, seasonal
+  climate and same-present regional aging; compares established tools and newer
+  2026 ocean work. The [WC0-WC6 plan](../strategy/world-context.md) moves minimum
+  world context forward while retaining terrain-quality gates. Source research
+  only: no new engine installed, numerical climate run or application feature.
+
 - [Landscape-evolution models and tools — 2026-09-24](2026-09-24-landscape-evolution-models.md)
   compares primary papers, mathematical assumptions and existing engines for
   authored geological epochs; records a Windows wheel-only dependency probe.

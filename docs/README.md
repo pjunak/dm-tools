@@ -24,6 +24,16 @@
 8. For portable named stage seeds, read the
    [seed contract](terrain-seeds.md).
 
+For the requested full-world workflow, start with the
+[WC0-WC6 implementation plan](strategy/world-context.md) and its
+[primary-source/tool review](research/2026-09-24-world-context-enrichment.md).
+World import and context are planned; the current tool still uses local geometry.
+
+The [complete documentation file inventory](FILE_INDEX.md) lists every tracked
+Markdown document and legal notice individually, with purpose and current versus
+historical role. It also lists the public machine-readable schemas and isolated
+reference dependency lock separately. This page remains the selective reading guide.
+
 ## Document roles and authority
 
 Implemented code, public schemas, tests, and accepted ADRs define current

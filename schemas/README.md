@@ -22,6 +22,11 @@ same samples in local metres with an upward y axis; neither has a world CRS.
 See the [build guide](../docs/terrain-builds.md) and
 [seed contract](../docs/terrain-seeds.md).
 
+The [world-context plan](../docs/strategy/world-context.md) specifies future
+retained world geometry, shared climate/history and regional boundary products.
+None has a public schema yet; these proposals are not fields supported by the
+formats above. Add contracts with implementation and validation, not placeholders.
+
 During early development, replace obsolete formats and update the current
 example, tests and documentation. Version identifiers record provenance and
 reject unsupported input; old saves, compatibility loaders and migration paths

@@ -40,18 +40,45 @@ not a physical river-water validation or a private-map result.
 
 | Order | Outcome and existing backlog owners | Gate |
 |---|---|---|
-| **A — next** | Quality fixtures, paired maps/profiles, process-scale warnings; convergent-flat comparison (R02/R25/R27/R41/R43) | Fixed comparison set and a measured accept/reject result; no new benchmark framework |
+| **A — quality controls** | Quality fixtures, paired maps/profiles, process-scale warnings; convergent-flat comparison (R02/R25/R27/R41/R43) | Fixed comparison set and a measured accept/reject result; no new benchmark framework |
+| **W — next foundation** | Retained world import/frame/continent identities (WC0), then ocean/geographic/province context (WC1; R01/R49) | Preserve authored vectors and global scale; context is provisional, not solved climate |
 | **B — next major generation decision** | Build on the measured frozen reconstruction: physical valley/path geometry and grid/capture sensitivity (R48/R32) | Profile gains do not close direction or authoring gates; preserve anchors, cuts, junctions, terminals and coverage before LE3 |
 | **C** | Consolidate one coherent range/pass/tributary/lowland system from the selected comparison (R08/R09/R14/R40/R44) | Better structural/visual results across fixed seeds and physical scales |
-| **D** | Accepted parent-conditioned detail and inherited fine hydrology, then zoom jobs (R15/R34) | Overlap, coarse-scale, boundary/flow and visual acceptance before real small rivers |
+| **W — after B/C acceptance** | Rough world, seasonal climate/runoff feedback and reviewed parent (WC2-WC4; R33/R49) | Physical terrain acceptance, bounded coupling, shared world time and budgets |
+| **D / WC5** | Accepted parent-conditioned detail, same-present historical refinement and inherited fine hydrology, then zoom jobs (R15/R34/R49) | Exact overlap, coarse-scale, time-dependent boundary/flow and visual acceptance before real small rivers |
 | **E** | Runoff, river size, lake hierarchy and sediment (R16/R18/R33) | Explicit flux, storage and material accounting |
-| **F** | Source-world placement, continuous climate and derived ecological layers (R01) | Geographic scale/context before climate claims |
+| **F / WC6** | Derived ecological layers and selected richer world-process comparisons | Accepted continuous climate/hydrology first; world placement is now W/WC0 |
 
 The [strategy](docs/strategy/README.md#next-implementation-order) owns detailed
 acceptance criteria and stopping rules. P0 items below remain prerequisites in
 their own feature areas; they are not all immediate work. Preserve historical
 research and completed substeps. Full-field bound research remains separate
 from the current quality milestone; no stronger clearance claims are implied.
+
+### World-context checkpoint
+
+The [new source/tool review](docs/research/2026-09-24-world-context-enrichment.md)
+and [WC0-WC6 plan](docs/strategy/world-context.md) refine the full-world workflow.
+This advances world placement and forcing from the former final climate phase;
+no world importer, climate engine or continent-history feature is implemented yet.
+
+- [x] **Research and plan:** compare geographic/tectonic/climate models and existing
+  tools; define fixed-coast import → provisional context → rough relief → bounded
+  climate/history feedback → reviewed parent → same-present regional refinement.
+- [ ] **WC0 — Retain the world source** (R01/R49): explicit projection/frame/radius,
+  continent/island ownership, selected SVG groups and import preview. Next batch.
+- [ ] **WC1 — Generate provisional context** (R07/R10/R11/R49): ocean topology and
+  exposure, bathymetric hypotheses, geological provinces and inspectable defaults.
+- [ ] **WC2 — Produce a rough physical world** (R02/R48/R49): process/domain scale,
+  related macro relief and ocean basins, after B/C and relevant LE acceptance.
+- [ ] **WC3 — Couple climate/runoff and coarse history** (R33/R49): seasonal budgets,
+  explicit epoch forcing, bounded feedback and visible nonconvergence.
+- [ ] **WC4 — Select a verified world parent** (R49/LE3/LE5): staged editor workflow,
+  continent defaults/province overrides, shared present and stale-child tracking.
+- [ ] **WC5 — Refine regional history to the same present** (R15/R34/LE6): sufficient
+  parent trajectory, inherited flux, exact overlaps and no double aging.
+- [ ] **WC6 — Derive ecology and compare richer processes:** classifications after
+  continuous fields; advanced oceans/GCMs/plate histories only for a specific gap.
 
 ### Geological-history checkpoint
 
@@ -103,9 +130,10 @@ records execution and its remaining gates; the simulation is still research-only
 - [ ] **LE5 — Expose accepted history as pre-generation inputs** (R11/R27/R32).
   Update current schemas/provenance/replay and the editor together; no legacy
   modes or output sculpting. Sediment controls depend on LE4 acceptance.
-- [ ] **LE6 — Condition local enrichment on evolved parents** (R15/R34).
-  Validate overlap/downsample and inherited flux before zoom jobs/small rivers;
-  final-state conditioning does not imply complete local historical replay.
+- [ ] **LE6 — Condition local enrichment and refine shared history** (R15/R34/R49).
+  Validate overlap/downsample and inherited flux before zoom jobs/small rivers.
+  WC5 additionally requires time-dependent parent context and replay to one present;
+  final-state conditioning alone does not satisfy regional historical refinement.
 
 ### Drainage inspection checkpoint
 
@@ -584,41 +612,48 @@ Direct sculpting or manual patching of completed maps could belong in a
 separate module or program. This is a possibility only, with no implementation
 plan or dependency on the active input editor.
 
-### World climate, ecology, and environmental zones (deferred)
+### World context, climate and environmental layers
 
-These are backlog entries only. Do not begin implementation until the durable
-terrain-output and world-coordinate contracts needed by the
-[current strategy](docs/strategy/README.md) are proven.
+[Strategy W and WC0-WC6](docs/strategy/world-context.md) now bring source-world
+contracts and provisional context forward. Coupled climate/runoff follows rough
+terrain acceptance; ecological interpretations remain downstream. R49 owns the
+workflow, with shared numeric responsibilities in R01/R02/R07/R10/R11/R15/R33/R34.
 
-- [ ] **P2 — Author climate-region guidance before generation.** Once climate
-  semantics exist, allow areas such as an intended desert to be drawn over the
-  previous map. Regenerate derived climate/biome outputs from these inputs; do
-  not expose a no-op desert tool before a backend consumes it.
-- [ ] **Research — Define the global climate input and output contract.** Inputs
-  should include the fixed world projection and latitude, ocean/land mask,
-  accepted DEM, orbital and rotational assumptions, circulation or prevailing
-  winds, and authored overrides. Outputs should be continuous monthly or
-  seasonal fields with units, provenance, diagnostics, and uncertainty.
-- [ ] **P2 — Prototype deterministic continuous climate fields.** Generate
-  temperature, seasonal range, precipitation, coastal moderation,
-  continentality, orographic precipitation and rain shadow, potential
-  evapotranspiration, aridity, and runoff before assigning named zones.
+- [ ] **P0 — Preserve full-world import and continent identities.** Retain selected
+  SVG groups, islands, holes and explicit frame/radius; derive a separate physical
+  land union. Do not equate continents with connected land, plates or watersheds.
+- [ ] **P1 — Generate inspectable ocean and geological context.** Record connected
+  water, gateways, upwind exposure, shelf/basin hypotheses and province histories.
+  Keep bathymetry separate from effective mixed-layer depth and ocean heat transport.
+- [ ] **P1 — Define shared climate and epoch forcing.** Inputs include orbital,
+  rotational and atmospheric assumptions, rough relief, ocean scenarios and
+  authored overrides. Outputs need seasonal units, validity, budgets, provenance
+  and uncertainty. Fixed modern geography is an explicit historical assumption.
+- [ ] **P1 — Prototype deterministic continuous climate fields.** Compare seasonal
+  temperature, precipitation, coastal moderation, continentality, rain shadows,
+  potential/actual evapotranspiration, aridity and runoff before named zones.
+  Re-evaluate them after rough mountains; cap feedback and report nonconvergence.
+- [ ] **P1 — Author climate-region guidance before generation.** Once consumed by
+  a backend, let the user specify intended aridity/desert areas over the previous
+  map, with conflicts and uncertainty visible. Do not expose a no-op paint tool.
+- [ ] **P0 — Preserve world-to-region consistency.** Share one parent revision,
+  global present, history and boundary forcing. Changes to macro relief or gateways
+  can invalidate distant climates. Local aging must not replay time twice.
 - [ ] **P2 — Add versioned climate-zone classification views.** Derive familiar
-  Köppen–Geiger-like and ecological Holdridge-like views from the continuous
-  fields; keep thresholds and classification-version metadata explicit.
+  Köppen–Geiger-like and ecological Holdridge-like views from continuous fields;
+  keep thresholds, limitations and classification-version metadata explicit.
 - [ ] **P2 — Generate biome suitability and display classes.** Use climate,
-  elevation, growing season, slope, aspect, terrain wetness, substrate, and
-  authored exceptions. Preserve fuzzy transitions or confidence instead of
-  pretending every boundary is exact.
-- [ ] **P2 — Generate separate, overlapping environmental layers.** Treat bogs
-  and other wetlands as hydrology/ecosystem results, plains as landforms,
-  tundra as a biome, and fields as cultural land use. Include additional
-  grassland, forest, desert, marsh, fen, floodplain, alpine, and coastal types
-  only within the layer whose semantics fit.
-- [ ] **P2 — Preserve global-to-continent consistency.** Climate
-  and ecology builds must share global boundary conditions while allowing
-  continent and local resolution, authored pre-generation guidance, rebuildable
-  exports, and source-build provenance.
+  elevation, growing season, slope, aspect, wetness, substrate and authored
+  exceptions, preserving fuzzy transitions or confidence.
+- [ ] **P2 — Generate separate overlapping environmental layers.** Bogs/wetlands
+  are hydrology/ecosystem results, plains are landforms, tundra is a biome and
+  fields are cultural land use. Forest, desert, marsh, fen, floodplain, alpine and
+  coastal types belong only in layers with the corresponding semantics.
+- [ ] **Research — Compare optional world engines when a specific gap warrants it.**
+  Climlab supplies energy controls; GPlates/GPlately need specified plate histories;
+  ExoPlaSim is an external full-climate comparator. Evaluate reduced ocean heat
+  transport, GEOCLIM7, Isca/ROCKE-3D, alternate spherical meshes or learned
+  surrogates only behind their own data, license, cost and validation gates.
 
 ## Algorithm and result improvements
 
@@ -1144,8 +1179,9 @@ Priorities remain conditional on the current strategy's prerequisites.
 - [ ] **Research — R33: Weight runoff before assigning river size.** Define an
   optional authored runoff field and future climate-derived discharge adapter.
   Keep contributing area distinct from water flux. Test wet/dry catchments of
-  equal size, seasonal assumptions and upstream boundary flux; full climate
-  generation remains deferred under the existing strategy.
+  equal size, seasonal assumptions and upstream boundary flux. WC3 now plans
+  shared seasonal climate/runoff before world-informed aging; an authored runoff
+  control remains useful without a climate engine. Raw rainfall is not runoff.
 
 #### Prototype findings and additional improvement candidates
 
@@ -1283,11 +1319,31 @@ Priorities remain conditional on the current strategy's prerequisites.
   route improvements. Remove superseded runtime paths after acceptance; preserve
   current inputs/contracts without legacy support.
 
+#### Shared world context — 2026-09-24
+
+- [ ] **P0 — R49: Generate continents from a retained, shared world context.**
+  Follow the [WC0-WC6 plan](docs/strategy/world-context.md) for full-world import,
+  provisional context, rough terrain, bounded climate/history feedback and an
+  immutable world parent. Preserve coastline vectors and semantic identities;
+  no independent continent rescaling or automatic plate assignment. Track
+  ocean topology/bathymetry and surface heat storage separately. Use continent
+  defaults with province overrides and one global present; keep crust age,
+  uplift chronology and simulated erosion duration distinct. Regional history
+  requires sufficient time-dependent parent boundary/flux, exact shared samples,
+  deterministic request order and explicit correction budgets. Add staged input
+  review and global invalidation where dependencies cannot yet be bounded.
+  Run public spherical/topology, continentality, rain-shadow, water/heat budget,
+  old-crust/young-belt and no-double-aging controls before production adoption.
+  Existing solutions and optional alternatives are recorded in the
+  [source review](docs/research/2026-09-24-world-context-enrichment.md); no new
+  runtime dependency or public schema is implied by this planned item.
+
 ## UI / UX improvements
 
-Current priority: paired generation comparisons, selected-channel profiles and
-process-resolution/conflict feedback to support batches A/B. The workbench is
-already usable; further polish should serve the current quality decision.
+Current priority: WC0's retained-source/mapping preview, then paired generation
+comparisons, selected-channel profiles and process-resolution/conflict feedback
+for A/B. The complete world wizard follows accepted WC2/WC3 products; do not
+expose controls whose backend is absent. Further polish should serve these gates.
 [ADR-0047](docs/adr/0047-edit-generation-inputs-only.md) defines input editing;
 [ADR-0048](docs/adr/0048-keep-zoom-driven-detail-generation.md) keeps local enrichment in scope.
 [ADR-0049](docs/adr/0049-navigate-and-save-authored-inputs.md) records navigation,
@@ -1396,6 +1452,10 @@ geometry movement and project-saving behavior.
 
 ## Related decisions and research
 
+- [World-context enrichment — 2026-09-24](docs/research/2026-09-24-world-context-enrichment.md)
+  reviews primary geographic, tectonic and climate models, existing tools and
+  deployment limits. The [WC0-WC6 plan](docs/strategy/world-context.md) advances
+  world inputs/context and specifies shared-time regional history refinement.
 - [Frozen terrain/channel reconstruction — 2026-09-24](docs/research/2026-09-24-frozen-channel-reconstruction.md)
   records complete-route profile gains, remaining nodal failures, authoring limits,
   explicit composition volume and base-environment cost on the frozen cohort.

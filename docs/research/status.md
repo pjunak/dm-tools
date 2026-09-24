@@ -35,6 +35,24 @@ including plot/test tools and current application dependencies. Landlab/SciPy
 now execute and are benchmarked; the application dependencies are unchanged.
 The dependency register distinguishes this reference from a shipped engine.
 
+## Planned world-context workflow
+
+The [new source review](2026-09-24-world-context-enrichment.md) compares existing
+geographic, tectonic and climate models, including the 2026 Generic-PCM reduced
+ocean work. The [WC0-WC6 plan](../strategy/world-context.md) now advances world
+import/placement and provisional context before world-informed terrain. Rough
+relief feeds seasonal climate/runoff, followed by bounded history feedback and
+a reviewed world parent. Ecological classifications remain downstream.
+
+This research/planning batch adds no runtime or schema and installs no engine.
+The current SVG importer dissolves semantic identities and the coordinate frame
+is local; WC0 retained world import is the next foundation batch. World climate,
+ocean basins, continent/province histories and same-present regional geological
+replay are not implemented. Existing local detail is not history replay. Source
+and license checks for Climlab/GPlates/ExoPlaSim are not local execution evidence.
+B/LE2's physical paths, authoring and resolution gates remain prerequisites to
+production WC2; the new world plan does not promote the current history candidate.
+
 ## Implemented experimental history model
 
 The [reference command](../../benchmarks/evolution/README.md) owns public metric
@@ -170,7 +188,8 @@ terrain composition and its water decisions remain open.
 Local RBF/screened-Poisson replacement, adopted history generation, bedrock/sediment
 transport, coupled ridge/drainage generation, specialized glacial/wind/volcanic
 families, Earth-analogue synthesis and learned proposals remain candidates.
-Global climate/ecology still needs its input, scale and validation contracts.
+World source/context and climate/runoff contracts are now specified as planned
+WC0-WC4 work; implementation and validation remain open. Ecology follows WC6.
 The input editor is followed by generation, including planned zoom-driven local
 enrichment. [ADR-0048](../adr/0048-keep-zoom-driven-detail-generation.md) corrects
 the earlier exclusion of regional generation; manual sculpting of completed
@@ -192,13 +211,14 @@ measured benefit and packaging/workflow evidence; it is not the next prerequisit
 
 ## Evidence and next experiments
 
-The first history comparison is implemented. Current order is the remaining
-quality/flat controls and continuous terrain/channel reconstruction on frozen
-current/evolved fixtures, resolution acceptance, then full authoring-safe
-integration, coherent landforms and accepted local enrichment. See
-[strategy batches A–F](../strategy/README.md#next-implementation-order) and the
-[detailed LE0–LE6 plan](../strategy/landscape-evolution.md). The entries
-below preserve evidence by topic, not a competing execution order.
+The first history comparison is implemented. Current order advances WC0/WC1
+world-source/context foundations, retains A's controls and B/C's physical-path,
+resolution and authoring acceptance, then couples WC2-WC4 rough-world climate/history
+before world-linked D/WC5 enrichment. Local comparisons do not need a whole-world
+climate engine. See [strategy A/W/B-F](../strategy/README.md#next-implementation-order),
+the [WC0-WC6 plan](../strategy/world-context.md) and
+[LE0-LE6 plan](../strategy/landscape-evolution.md). The entries below preserve
+evidence by topic, not a competing execution order.
 
 - [Landscape-evolution research](2026-09-24-landscape-evolution-models.md) compares
   process models and tools for ordered geological epochs. LE0 research is complete;

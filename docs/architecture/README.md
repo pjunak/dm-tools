@@ -95,11 +95,26 @@ image ownership releases scratch on completion and cancellation. This changes
 neither numerical stages nor native scientific resolution; see
 [ADR-0066](../adr/0066-bound-terrain-rendering-scratch.md).
 
-The next durable-build work adds world georeferencing,
-derived GIS products, explicit hard/soft/inequality projection after optional
-generation stages. Climate and ecological products
-are a later derived system that consumes accepted terrain and global world
-context rather than becoming an implicit terrain stage.
+The [planned world workflow](../strategy/world-context.md) changes future stage
+ownership: retained world source and explicit geography → provisional context →
+rough relief/bathymetry → bounded climate/runoff and history feedback → reviewed
+immutable world parent → regional refinement to the same present. Ecological
+classes are downstream views; climate forcing also informs terrain evolution.
+This is not implemented by the current local pipeline above.
+
+Adapters will retain selected source groups and identities before a derived land
+union. Domain values will own explicit planet/frame, province histories and units;
+application operations will own staged jobs, parent/dependency verification and
+publication. Numerical stages consume arrays and explicit boundary/forcing data,
+not UI state or implicit world globals. Exact public formats arrive with their
+implementations; current project/build schemas contain no world context.
+
+Continent identity is not a closed solver boundary. Shared climate, catchments and
+histories can cross it. Final-state detail and historical refinement have different
+capabilities: the latter needs time-dependent parent context and a common target
+present. Preserve immutable parents, overlap and hard constraints; keep correction
+budgets separate and reject unsupported capabilities. Derived GIS and explicit
+hard/soft/inequality projection remain planned contract work.
 
 Source-to-local conversion and uniform endpoint grids are dependency-light
 domain values shared by generation, routing, diagnostics, rendering and build
@@ -140,9 +155,10 @@ disconnected islands and retained enclosed water use the same metric extent and
 coordinate-addressed field. The pipeline therefore receives geometry, not SVG
 layer or path boundaries.
 
-## Deferred decisions
+## Planned contracts and remaining decisions
 
-- World-georeferenced build contracts and explicit source placement
+- Planned next: WC0 world-source contracts, retained identities and explicit
+  source placement; later WC2-WC5 coupled products and historical parent context
 - Direct per-vertex profiles, explicit passes and asymmetric structural sides
   (point-anchored longitudinal ridge/valley profiles are implemented)
 - Inter-lake transfer, constrained repair and nested depression policy
@@ -152,7 +168,8 @@ layer or path boundaries.
 - Visual/spectral acceptance of experimental regional detail, inherited finer
   hydrology, zoom scheduling and broader native/application-memory calibration
   (saved-parent admission estimates are implemented)
-- Global climate-field and ecological-classification contracts
+- WC3 shared seasonal climate/runoff contracts, followed by WC6 ecological
+  classification; neither is present in the current runtime
 - Web framework, queue, storage, and frontend
 - Public project license
 

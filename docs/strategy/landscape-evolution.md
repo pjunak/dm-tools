@@ -92,6 +92,25 @@ weather events, meanders, sediment grain classes or planetary climate. Keep thes
 as separate, evidence-driven extensions. Low runoff can be an authored historical
 forcing; a desert biome requires moisture/climate evidence, not erosion age alone.
 
+## World context and shared geological time
+
+The [WC0-WC6 world plan](world-context.md) adds an explicit parent for future
+continent histories: retained global geography, ocean/geological hypotheses,
+rough relief and seasonal climate/runoff. No world context exists in the current
+LE1/LE2 reference, whose metric fixtures and authored runoff remain valid controls.
+
+Continent settings are defaults, with spatial geological-province overrides.
+Continents need not equal plates or catchments. Separate crust age, uplift timing
+and erosion duration; all histories finish at one global present. Historical
+forcing must declare fixed modern geography, authored epochs or reconstructed
+inputs. Modern climate is not evidence of past climate.
+
+WC3 feedback must restart the same initial history or continue an explicitly
+identified checkpoint. It cannot age the previous final surface again. WC5/LE6
+will refine regional history to the same present, with parent boundary/forcing
+through time. These requirements extend existing evolution work, not create a
+second history engine. Shared climate/runoff moves earlier than ecological layers.
+
 ## Mathematical model and units
 
 ### First model: evolving elevation
@@ -245,13 +264,15 @@ must respect protected ground and channel corridors and be revalidated after
 composition. Evolution replaces the accepted automatic shaping stage; do not
 apply both the old automatic incision and the new incision unknowingly.
 
-Zoom enrichment follows later. Its first model should condition finer generation
-on the immutable **final** parent terrain, substrate/cover and boundary flow,
-with the existing overlap/downsample requirements. Independently evolving each
-viewport from ancient terrain would change shared catchments. Replaying local
-geological history would additionally require time-varying boundary levels,
-water and sediment fluxes; final parent discharge alone cannot supply that.
-Keep this distinction explicit rather than promising complete geological replay.
+Zoom enrichment follows later. Its first model conditions finer generation on
+the immutable **final** parent terrain, substrate/cover and boundary flow, with
+the existing overlap/downsample requirements. This is present-state detail.
+The world workflow also commits to a separately gated historical-refinement
+milestone in WC5/LE6: replay to the same global present using parent boundary
+levels and water/material fluxes through time. Final discharge alone is
+insufficient. Independent viewport histories would change shared catchments;
+use deterministic shared support and test restriction, flux and exact overlaps.
+Neither increasing zoom nor refining resolution advances the world's age.
 
 ## Work packages and decision gates
 
@@ -405,6 +426,11 @@ retain the explicitly export-only incision model and keep deposition experimenta
 ### LE5 — Application, persistence and pre-generation editor
 
 Depends on LE3 acceptance; LE4 is required only for sediment controls/products.
+World-linked history controls are delivered together with WC4's parent and
+shared-time contract; the core local-history integration does not depend on a
+complete world workflow. Continent defaults and province overrides bind to one
+context/history revision, with crust age separate from uplift timing and erosion
+duration.
 
 - Add current-format history settings, epoch ordering and validation; update
   schemas, examples, build identity and saved-parent replay together. Reject old
@@ -439,8 +465,17 @@ fine physical spacing before small rivers can be displayed as real hydrology.
 
 Connect accepted results to zoom scheduling only after numeric/visual acceptance.
 Large water remains visible remotely; small streams appear when both local process
-resolution and screen scale support them. Full historical replay, if later chosen,
-requires the additional boundary-time data described above and a separate gate.
+resolution and screen scale support them.
+
+**Required planned extension for world-linked aging (WC5):** retain sufficient
+parent trajectory/checkpoints, define temporal boundary interpolation and replay
+refined initial conditions through the selected epochs to the same present.
+Account for correction volume separately; test history truncation, water/material
+boundary flux, child restriction, exact overlaps and request-order independence.
+This is a separate acceptance gate from present-state detail, not an optional
+meaning of that command. A final DEM plus an age number cannot pass it. Keep the
+current exact parent/authoring contract; incompatibility requires an explicit
+contract decision rather than silently relaxing it.
 
 ## Integration map
 
@@ -516,11 +551,13 @@ Prose-only follow-ups need link/claim/diff checks; reuse unchanged runtime evide
   independent age query with a temporally continuous history.
 - R16/R18: lake storage, sediment sizes, lateral erosion, fans, meanders, braids
   and deltas; each needs appropriate scale and conservation evidence.
-- R15/R34: conditional finer detail versus actual local history replay.
+- R15/R34/R49: accepted present-state detail, then WC5/LE6 historical refinement
+  with boundary trajectories and one shared present.
 - R17/R31/R45–R47: stochastic transport, GPU/native kernels and eventual Rust;
   measured model/workload benefit must precede adoption.
-- R01/R33 and strategy F: world placement, climate/runoff feedback, aridity and
-  ecological layers; separate authored wetness from inferred planetary climate.
+- R01/R33/R49 and strategy W: early world placement and shared climate/runoff
+  feedback; distinguish authored wetness from inferred climate. Ecological layers
+  remain strategy F/WC6 work.
 
 The first LE1/LE2 history comparison and frozen reconstruction follow-up are
 delivered. Between-node humps are now isolated and removable on fixed descending
