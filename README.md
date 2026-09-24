@@ -38,6 +38,11 @@ native/application-memory calibration remain open. World placement and validated
 vectors also remain future work. See the
 [current research status](docs/research/status.md).
 
+An [experimental landscape-evolution command](benchmarks/evolution/README.md)
+now generates public comparison terrain through uplift and erosion epochs, with
+inspectable snapshots and numerical checks. It uses a separate scientific
+environment; history generation is not yet part of the desktop or saved-project CLI.
+
 ## Requirements
 
 - CPython 3.14

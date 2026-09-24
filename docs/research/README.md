@@ -25,6 +25,11 @@ in the current status or a new dated report.
 
 ## Implemented and measured work
 
+- [Landscape-evolution reference — 2026-09-24](2026-09-24-landscape-evolution-reference.md)
+  implements LE1 and the first LE2 comparison: ordered uplift/runoff/incision/
+  hillslope transport, numerical controls, pinned reference, figures and cost.
+  Chronology responds, but continuous profiles and grid acceptance remain open.
+
 - [Connected drainage review and authored density - 2026-09-24](2026-09-24-connected-drainage-review.md)
   measures connected scale selection, viewport redraws and explicit density
   controls; records the remaining D8 geometry and finer-hydrology limitations.

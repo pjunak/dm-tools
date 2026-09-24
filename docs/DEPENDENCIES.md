@@ -4,8 +4,8 @@ The terrain application uses the following runtime dependencies. The
 version range in `pyproject.toml` is authoritative; versions below are the
 minimum accepted versions when the dependency was adopted.
 
-This register lists adopted runtime packages and data, plus development-only
-validation tooling below. Evaluated
+This register lists adopted runtime packages and data, development-only
+validation tooling, and the explicitly isolated research environment below. Evaluated
 candidates remain in [dated research](research/README.md) and the
 [current strategy](strategy/README.md) until an implementation has an immediate
 need, supported-platform validation, and a completed license review.
@@ -66,3 +66,31 @@ permit redistribution with attribution/notice retention. GDAL uses an
 [MIT-style license](https://gdal.org/en/stable/license.html); PROJ has its own
 [MIT-style notice](https://proj.org/en/stable/about.html#license).
 When packaging native wheels, retain their bundled third-party notices too.
+
+
+## Isolated landscape-evolution reference
+
+The repository-only [evolution experiment](../benchmarks/evolution/README.md)
+now runs an isolated Landlab stack on Windows x86-64 / CPython 3.14.7. It is
+installed under ignored `artifacts/`, not in the application environment or
+`pyproject.toml`. The [wheel lock](../benchmarks/evolution/requirements-windows-py314.txt)
+pins all 53 distributions and SHA-256 hashes used by the experiment, including
+plotting and test tooling and existing application dependencies.
+
+| Reference package | Tested version | Immediate use | License / boundary |
+|---|---|---|---|
+| Landlab | 2.11.0 | D8/depression routing, implicit incision and conservative hillslope reference | MIT; not the license of the whole stack |
+| SciPy | 1.18.1 | Landlab numerical dependency | BSD-3-Clause; wheel includes additional native notices |
+| Matplotlib | 3.11.2 | Standalone scientific comparison figures | Matplotlib/PSF-style license; retain bundled notices if distributed |
+| py-richdem | 2.2.0rc3 | Landlab-declared dependency; selected model does not call it | GPL-3.0-only, prerelease; research environment only |
+| wrapt | 2.5.0rc1 | Resolved transitive dependency | BSD-2-Clause, prerelease |
+
+Versions/licenses were checked against the installed wheel metadata and license
+files. Primary package references: [Landlab](https://pypi.org/project/landlab/2.11.0/),
+[py-richdem](https://pypi.org/project/py-richdem/2.2.0rc3/),
+[SciPy license](https://github.com/scipy/scipy/blob/main/LICENSE.txt), and
+[Matplotlib license](https://matplotlib.org/stable/project/license.html).
+An isolated reference installation is not adoption or redistribution approval.
+LE3 must select the actual production implementation and review all shipped
+transitive/native notices before bundling. The project distribution-license
+question above remains open.

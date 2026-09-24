@@ -41,7 +41,7 @@ not a physical river-water validation or a private-map result.
 | Order | Outcome and existing backlog owners | Gate |
 |---|---|---|
 | **A — next** | Quality fixtures, paired maps/profiles, process-scale warnings; convergent-flat comparison (R02/R25/R27/R41/R43) | Fixed comparison set and a measured accept/reject result; no new benchmark framework |
-| **B — next major generation decision** | LE1/LE2 geological-history comparison (R11/R14), then selected terrain/channel integration (R48/R32) | Early quality/cost decision before a large integration; accepted final surface preserves anchors, cuts, junctions, terminals and coverage |
+| **B — next major generation decision** | Use the implemented LE1/LE2 reference to compare continuous terrain/channel reconstruction (R48/R32), then resolve grid sensitivity | Current D8/bilinear candidate is not accepted; preserve anchors, cuts, junctions, terminals and coverage before LE3 |
 | **C** | Consolidate one coherent range/pass/tributary/lowland system from the selected comparison (R08/R09/R14/R40/R44) | Better structural/visual results across fixed seeds and physical scales |
 | **D** | Accepted parent-conditioned detail and inherited fine hydrology, then zoom jobs (R15/R34) | Overlap, coarse-scale, boundary/flow and visual acceptance before real small rivers |
 | **E** | Runoff, river size, lake hierarchy and sediment (R16/R18/R33) | Explicit flux, storage and material accounting |
@@ -57,18 +57,34 @@ from the current quality milestone; no stronger clearance claims are implied.
 
 The [source/tool review](docs/research/2026-09-24-landscape-evolution-models.md)
 and [detailed LE0–LE6 plan](docs/strategy/landscape-evolution.md) specify this work.
-These checkpoints group existing R IDs; they are not a second backlog or an
-adopted simulation engine.
+These checkpoints group existing R IDs. The
+[first implementation report](docs/research/2026-09-24-landscape-evolution-reference.md)
+records execution and its remaining gates; the simulation is still research-only.
 
 - [x] **LE0 — Research models and existing implementations.** Compare stream power,
   hillslope transport, SPACE, analytical erosion, depression routing and larger
   frameworks. Record the successful 45-package Windows/Python wheel dry run,
-  GPL dependency, prereleases and the absence of any engine execution.
-- [ ] **LE1 — Validate an isolated reference** (R11/R14/R41). Pin a usable environment;
-  check units, boundaries, analytic controls and time/grid convergence.
-- [ ] **LE2 — Compare a two-epoch landscape** (R11/R14/R40/R43). Show controlled
-  range-to-lowland results with two rock resistances, held-out seeds, direction
-  tests and measured cost. Accept or reject before large production integration.
+  GPL dependency and prereleases. That initial report predates execution.
+- [x] **LE1 — Validate an isolated reference** (R11/R14/R41). A 53-wheel Windows
+  lock, typed inputs, bounded adaptive solver, physical ledgers and analytic
+  controls are implemented. Steady channels, knickpoint time/grid refinement,
+  dry/flooded cases, Float64 runoff and incomplete publication are tested.
+- [ ] **LE2 — Accept a two-epoch landscape** (R11/R14/R40/R43). The comparison
+  command, current/constant/reversed controls, three-seed cohort, process ablations,
+  resistance, rotation/extent/spacing checks and figures are implemented. The
+  D8/bilinear candidate fails the continuous-profile quality gate; keep chronology
+  as a useful candidate while resolving grid sensitivity and surface/path agreement.
+- [x] **LE2 evidence — Make experiments inspectable and reproducible.** New output
+  directories contain epoch images, numeric states, profiles, input/runtime hashes,
+  fresh-process timing/memory, conservation checks and explicit incomplete results.
+- [ ] **Next — Compare continuous terrain/channel reconstruction** (R48/R32).
+  Use frozen current and evolved fixtures, matched source/terminal coverage and
+  the existing hard-constraint controls. Then rerun temporal/spatial refinement;
+  do not promote a smoother drawing or unrelated automatic-edge count as success.
+- [ ] **LE2 follow-up — Complete structural acceptance** (R40/R41/R43). Add the
+  missing peak/pass and matched physical-route scorecard, resolve long D8 grooves
+  and quantify capture sensitivity. The finest-grid budget failure is a stopping
+  result, not permission to increase limits until it finishes.
 - [ ] **LE3 — Preserve authored intent and shared terrain/channel geometry**
   (R02/R32/R48). Separate initial, persistent and final constraints; validate
   reconstruction, basin semantics, Float32 profiles and frozen-state sampling.
@@ -802,8 +818,9 @@ execution order.
   hydrological conditioning and established GIS flow/depression tooling. Keep
   optional engines behind adapters and measure Python 3.14/platform support,
   determinism, license implications, and resolution sensitivity. The dated source
-  audit shortlisted Landlab for a Python experiment, but no local Landlab runtime
-  comparison has run. GRASS and Whitebox remain
+  audit shortlisted Landlab; the isolated evolution reference now runs its
+  D8/depression components and records a discharge-precision correction. Product
+  hydrology adoption and authored-basin comparisons remain open. GRASS and Whitebox remain
   external comparison tools with explicit license/version boundaries.
 
 ### Landscape processes and validation
@@ -814,7 +831,9 @@ execution order.
   resolution-dependent. Prefer stream-power incision plus explicit flow
   routing over a visual particle or droplet erosion filter. The first bounded
   area-and-slope incision proxy is implemented for automatic broad valleys;
-  time-stepped stream-power evolution and convergence testing remain research.
+  time-stepped stream power, hillslope flux and analytic convergence controls now
+  run in the isolated reference. Whole-landscape resolution sensitivity and
+  authoring-safe product integration remain open.
 - [ ] **Research — Prototype thermal erosion/talus relaxation.** Use it only
   where material and slope assumptions are explicit, and verify that it does
   not erase authored passes, ridges, or valley floors.
@@ -983,8 +1002,8 @@ Priorities remain conditional on the current strategy's prerequisites.
   authored sequence of uplift, incision, deposition and glacial episodes with
   one uniform erosion-age parameter. Record order, units and assumptions;
   label the history a design hypothesis rather than inferred canon.
-  Start with LE1/LE2's sequential uplift/incision/hillslope reference and two
-  resistance regions. Separate initial conditions, time-varying forcing,
+  LE1/LE2's sequential uplift/incision/hillslope reference and two resistance
+  regions now execute, with constant/reversed/ablated controls and a held-out seed. Separate initial conditions, time-varying forcing,
   persistent boundaries and final hard targets; do not silently pin present-day
   heights throughout history. Record corrections and geological work separately.
   Geological histories are pre-generation hypotheses, not output editing.
@@ -1008,8 +1027,8 @@ Priorities remain conditional on the current strategy's prerequisites.
   terrain-age control. Test uplift/base-level assumptions, convergence,
   authored anchors and runtime against the current incision baseline. Its 2D
   network/surface coupling still iterates; changing age can relocate valleys and
-  deposition is not covered generally. LE1/LE2 now compare sequential epochs
-  before a large shared-path implementation; analytical erosion is a conditional
+  deposition is not covered generally. The implemented LE1/LE2 reference measures
+  sequential epochs before product integration; analytical erosion is a conditional
   speed/maturity alternative. Test time-step accuracy and knickpoint diffusion,
   not only solver stability. LE3 then enforces authored/shared-path semantics and
   checks drainage after constraint-aware reconstruction.
@@ -1244,8 +1263,9 @@ Priorities remain conditional on the current strategy's prerequisites.
   Use fixed physical station spacing, matched source-to-terminal routes and
   complete-network coverage when segmentation changes. Batch B's acceptance
   targets and fallback to network-led surface construction are in the strategy.
-  Process spacing remains independent of output pixels. LE2 first tests whether
-  co-evolving terrain/drainage is a better basis; LE3 must meet the same final
+  Process spacing remains independent of output pixels. LE2's executable
+  co-evolution reference shows chronology response but still fails reconstructed
+  profiles; use its frozen states in the next bounded comparison. LE3 must meet the same final
   surface/path contract. A failed evolution candidate returns to the bounded
   terrain-guided prototype. Do not count changed automatic D8 edges as matched
   route improvements. Remove superseded runtime paths after acceptance; preserve
@@ -1364,6 +1384,9 @@ geometry movement and project-saving behavior.
 
 ## Related decisions and research
 
+- [Landscape-evolution reference implementation — 2026-09-24](docs/research/2026-09-24-landscape-evolution-reference.md)
+  records the executed first batch, isolated command, numerical controls,
+  public comparisons and failed product-quality gates.
 - [Landscape-evolution models and tools — 2026-09-24](docs/research/2026-09-24-landscape-evolution-models.md)
   compares primary papers and existing engines; records a wheel-only dependency
   probe. The [detailed implementation plan](docs/strategy/landscape-evolution.md)

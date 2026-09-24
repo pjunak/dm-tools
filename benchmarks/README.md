@@ -16,6 +16,13 @@ outputs/diagnostics and that generator source, dependencies and benchmark code
 have not changed during the run. Do not edit engine or benchmark Python files
 while measuring them, and avoid concurrent tests or other heavy workloads.
 
+## Landscape evolution
+
+The [isolated evolution reference](evolution/README.md) compares prescribed
+uplift/erosion histories against the current generator. It has its own pinned
+scientific environment and produces epoch figures, physical-scale measures and
+fresh-process cost evidence. It does not change normal terrain builds.
+
 ## Cases
 
 | Case | Purpose |

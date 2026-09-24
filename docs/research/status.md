@@ -16,7 +16,9 @@ D8 geometry. Shared terrain/channel agreement remains the quality milestone.
 After minimal comparison/flat-routing evidence, the
 [landscape-evolution plan](../strategy/landscape-evolution.md) brings a bounded
 two-epoch uplift/incision/hillslope comparison forward before a large path-only
-implementation. This is researched and planned, not implemented or accepted.
+implementation. The [first batch](2026-09-24-landscape-evolution-reference.md)
+now implements and measures that reference. Chronology is useful; D8/bilinear
+channel profiles and whole-landscape grid sensitivity prevent product acceptance.
 
 Verified-parent sampling, bounded sessions and shared-edge residual detail are
 implemented, but cartographic/coarse-scale acceptance, parent-view transitions
@@ -27,9 +29,28 @@ be claimed from that display behavior.
 The fresh audit finds SciPy and Numba Python 3.14 Windows wheels, and a Landlab
 wheel whose dependency inventory includes GPL `py-richdem`. A subsequent
 [wheel-only resolution](2026-09-24-landscape-evolution-models.md#windows-and-python-dependency-probe)
-succeeds with 45 distributions, including two prereleases. These candidates
-remain uninstalled; no evolution model has been executed or benchmarked. The
-runtime dependency register is unchanged.
+succeeds with 45 distributions, including two prereleases. The Landlab/SciPy
+stack was subsequently installed in an isolated 53-wheel reference environment,
+including plot/test tools and current application dependencies. Landlab/SciPy
+now execute and are benchmarked; the application dependencies are unchanged.
+The dependency register distinguishes this reference from a shipped engine.
+
+## Implemented experimental history model
+
+The [reference command](../../benchmarks/evolution/README.md) owns public metric
+fixtures, typed epochs/budgets, uplift/runoff/resistance fields, implicit incision,
+conservative hillslope flux, adaptive full/half-step comparison with rollback,
+Float32 rerouting, complete/incomplete publication, numeric/source hashes and
+HTML/PNG inspection. LE1 controls pass, including steady slope-area and moving
+knickpoints. The first LE2 matrix covers frozen seeds, chronology, ablations,
+orientation, extent and process spacing. These are executable experiments, not
+terrain-project settings or a default generation stage.
+
+Next: B/R48 continuous terrain/channel reconstruction and resolution acceptance
+using these frozen fixtures, then full LE3 authored-input integration if accepted.
+Peak/pass structure, real basins/coasts and matched physical-route acceptance
+remain open. Sediment, epoch editor controls and evolved local enrichment remain
+later dependent work. No post-generation modification is introduced.
 
 ## Implemented baseline
 
@@ -136,7 +157,7 @@ cell/strip/sample limits and publishes no accepted profile on exhaustion.
 This is a bounded stopping contract for the isolated noise field; the full
 terrain composition and its water decisions remain open.
 
-Local RBF/screened-Poisson replacement, time-stepped erosion, bedrock/sediment
+Local RBF/screened-Poisson replacement, adopted history generation, bedrock/sediment
 transport, coupled ridge/drainage generation, specialized glacial/wind/volcanic
 families, Earth-analogue synthesis and learned proposals remain candidates.
 Global climate/ecology still needs its input, scale and validation contracts.
@@ -145,14 +166,14 @@ enrichment. [ADR-0048](../adr/0048-keep-zoom-driven-detail-generation.md) correc
 the earlier exclusion of regional generation; manual sculpting of completed
 outputs remains out of scope. The complete alternatives and gates remain in TODO.
 
-SciPy, Landlab, Fastscapelib and Numba remain uninstalled as checked on
-2026-09-24. The [new source/platform audit](2026-09-24-progress-and-generation-strategy.md#current-tool-and-platform-check)
-updates selected paper, wheel and dependency findings, including Landlab's
-GPL dependency and Fastscapelib's missing compatible wheel. GRASS, Whitebox,
-SPACE, HighMap, GPU transport, geological engines and learned tools remain
-references/candidates, not successful project integrations. Older findings
-retain their original dates. No external engine was installed or executed in
-this reassessment.
+Landlab and SciPy are now installed and executed only in the separate reference
+environment. Fastscapelib and Numba remain uninstalled here. The
+[earlier source/platform audit](2026-09-24-progress-and-generation-strategy.md#current-tool-and-platform-check)
+retains its pre-installation evidence, including the GPL dependency and missing
+Fastscapelib wheel. GRASS, Whitebox, SPACE, HighMap, GPU transport, geological
+engines and learned tools remain candidates, not successful product integrations.
+The [reference report](2026-09-24-landscape-evolution-reference.md) owns subsequent
+execution evidence and the selected router/precision decisions.
 
 [The dependency register](../DEPENDENCIES.md) lists adopted packages. The local
 application remains Python with NumPy/Shapely numerical and geometric work and
@@ -161,17 +182,19 @@ measured benefit and packaging/workflow evidence; it is not the next prerequisit
 
 ## Evidence and next experiments
 
-Current order is minimal quality comparisons and convergent flats, LE1/LE2's
-history-model comparison, then selected shared terrain/channel integration,
-coherent landforms and accepted local enrichment. See
+The first history comparison is implemented. Current order is the remaining
+quality/flat controls and continuous terrain/channel reconstruction on frozen
+current/evolved fixtures, resolution acceptance, then full authoring-safe
+integration, coherent landforms and accepted local enrichment. See
 [strategy batches A–F](../strategy/README.md#next-implementation-order) and the
 [detailed LE0–LE6 plan](../strategy/landscape-evolution.md). The entries
 below preserve evidence by topic, not a competing execution order.
 
 - [Landscape-evolution research](2026-09-24-landscape-evolution-models.md) compares
   process models and tools for ordered geological epochs. LE0 research is complete;
-  LE1 reference execution and LE2 quality comparison have not started. Adoption,
-  constraint-aware reconstruction, material transport and local flow are gated.
+  LE1 reference execution and the first LE2 comparison are implemented in the
+  [subsequent batch](2026-09-24-landscape-evolution-reference.md). Product-quality
+  acceptance, authored reconstruction, material transport and local flow are gated.
 
 - [Progress reassessment](2026-09-24-progress-and-generation-strategy.md) records
   the fresh eight-case 65-station profile probe at `8430d01`. Endpoint descent

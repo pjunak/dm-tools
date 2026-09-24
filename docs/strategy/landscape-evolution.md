@@ -1,10 +1,35 @@
 # Landscape-evolution implementation plan
 
-Updated 2026-09-24. **Proposed, not implemented.**
+Updated 2026-09-24. **LE1 implemented; LE2 comparison executable and measured.
+Production-quality acceptance and application integration remain open.**
 The [primary-source review](../research/2026-09-24-landscape-evolution-models.md)
 records the scientific basis, tool comparison and dependency probe.
 The [main strategy](README.md) remains the authoritative project order; this
 plan specifies its bounded geological-history experiment and conditional rollout.
+
+## First implementation checkpoint
+
+The [reference implementation and results](../research/2026-09-24-landscape-evolution-reference.md)
+and [runnable guide](../../benchmarks/evolution/README.md) now provide typed epoch,
+process-grid and budget inputs; an isolated Landlab adapter; deterministic
+forcing fields; adaptive time stepping with rollback; water/material checks;
+Float32 measurements; fresh-process comparisons and a local visual report.
+
+LE1's zero/uplift/one-link/runoff/diffusion, steady slope-area and moving-knickpoint
+controls pass. LE2 now covers two epochs, matched constant forcing, reverse
+chronology, process ablations, resistance, seeds 42/7/20260902, orientation,
+extent and process-spacing probes. The held-out seed uses the frozen coefficients.
+This is an implemented research path, not a replacement for normal builds.
+
+**Decision:** retain the history model as a useful candidate, but do not promote
+this D8/bilinear surface into the application. Good node-level drainage does not
+prevent internal rises on reconstructed diagonal channels. Grid direction and
+whole-landscape resolution sensitivity also remain acceptance questions.
+Follow the report's measured limits rather than counting analytic tests as realism.
+The next bounded B/R48 experiment must compare actual continuous terrain/channel
+reconstruction on the frozen current and evolved fixtures, then repeat spatial
+and time refinement. Do that before a full LE3 integration, sediment, history UI
+or zoom scheduling. Keep one eventual production path.
 
 ## Outcome and decision
 
@@ -13,22 +38,22 @@ starting landscape through authored epochs. Rivers and terrain must respond to
 each other. Keep generation reproducible, preserve author intent, and make the
 result practical to inspect in the existing local workbench.
 
-**First choice to test:** Landlab as an isolated reference for prescribed uplift,
+**Reference now tested:** Landlab as an isolated reference for prescribed uplift,
 effective runoff, implicit stream-power incision and linear hillslope transport.
 Use two epochs and two rock-resistance regions. Compare against the current
 recipe/incision output before deciding whether to integrate an existing component
 or implement a narrow project kernel. Keep Python and existing application layers.
 
-**Sequence change:** finish a minimal batch-A comparison, then run LE1/LE2 before
-committing to a large R48 path-refinement implementation. R48 remains a required
-outcome: terrain, channel paths, probes and display must agree. LE3 determines
-whether an evolved surface can satisfy it. If LE2 fails, return to the bounded
-terrain-guided path prototype in batch B; do not pursue both as permanent backends.
-LE4/LE5 and the later features below depend on a measured acceptance decision.
+**Sequence:** the first paired history report and LE1/LE2 execution are in place.
+The bounded B/R48 reconstruction comparison is next: terrain, channel paths,
+probes and display must agree. Only an accepted continuous surface justifies
+full LE3 integration. Keep the current and evolved fixtures as controls, not as
+permanent competing product backends. LE4/LE5 depend on that acceptance.
 
-LE numbers identify work packages, not a competing execution order. The critical
-path is minimal A → LE1 → LE2 → LE3 → basic LE5 delivery, consolidating the
-range-to-lowland result in C. Strategy D then owns LE6 local enrichment; E owns
+LE numbers identify work packages, not a competing execution order. LE1 and the
+first paired evidence are complete. The remaining path is A's outstanding
+controls → LE2 quality plus B/R48 acceptance → LE3 → basic LE5 delivery,
+consolidating the range-to-lowland result in C. Strategy D then owns LE6 local enrichment; E owns
 LE4 sediment and the corresponding LE5 controls. An export-only erosion result
 can reach the workbench before sediment support. Change that order only with
 recorded evidence from the preceding comparison.
@@ -209,6 +234,9 @@ linked into strategy/TODO. No runtime adoption or quality improvement is claimed
 
 ### LE1 — Reference environment and controlled fixtures
 
+**Implemented.** The executable controls and locked environment are linked above.
+The following list records the scope they establish, not unfinished setup work.
+
 Depends on minimal strategy A evidence, not a completed UI comparison dashboard.
 
 1. Create a disposable Python 3.14 research environment outside application
@@ -218,7 +246,7 @@ Depends on minimal strategy A evidence, not a completed UI comparison dashboard.
    supported reference environment; keep the application Python version fixed.
 2. Add a narrow benchmark entry point beside the existing terrain benchmarks.
    Share fixture identity, seed, coordinates, runtime hashing and artifact
-   conventions. Its command/options do not exist until this package lands.
+   conventions. The command is `python -m benchmarks.evolution`; see its guide for options.
 3. Establish unit/boundary controls: zero forcing leaves a flat surface unchanged;
    uplift-only height equals integrated uplift away from fixed boundaries;
    a one-receiver incision problem matches its implicit update; conservative
@@ -237,7 +265,12 @@ integration but should not delay unrelated baseline-quality reporting.
 
 ### LE2 — Two-epoch mountain-to-lowland proof
 
-Depends on LE1. This is the next substantial generation experiment.
+**Comparison implemented; acceptance not passed.** See the measured first-batch
+report for completed cases, resource limits and remaining morphology/reconstruction
+gates. Preserve that cohort when testing improvements.
+
+Depends on LE1. The first experiment is executed; the requirements below
+continue to govern acceptance and follow-up comparisons.
 
 Use an 80 × 60 km public synthetic domain, a broad oblique uplift belt, a lowland
 outlet and two resistance regions. Initial exploratory epochs: 2 Myr of active
@@ -381,13 +414,13 @@ requires the additional boundary-time data described above and a separate gate.
 
 ## Integration map
 
-These are proposed responsibility boundaries, not new files already present.
-Avoid extracting a generic framework while implementing one experiment.
+The benchmark package and dependency-light domain inputs below now exist. Other
+boundaries are conditional integration work. Avoid a generic simulation framework.
 
 | Area | Planned responsibility |
 |---|---|
-| `benchmarks/` | First reference runner, scenario fixtures, convergence/ablation comparisons and paired reports; external engine imports stay here initially |
-| `domain/evolution.py` (proposed) | Typed epochs, units, boundary/material settings, validation and result identity; no Landlab or filesystem imports |
+| `benchmarks/evolution/` (implemented) | Reference adapter/runner, public scenarios, numerical controls, fresh-process comparisons and paired reports; optional engine imports stay here |
+| `domain/evolution.py` (implemented) | Typed epochs, physical grid, history and budgets with validation; no Landlab/filesystem dependency, no saved-project fields yet |
 | `pipeline/evolution.py` (proposed) | Accepted deterministic orchestration and model-state transitions; numeric primitives only where justified |
 | `pipeline/evolution_surface.py` (proposed if needed) | Frozen-state reconstruction and constraint/path composition, separated from time stepping |
 | `pipeline/generate.py` | Integrate at `prepare_terrain_field`; `PreparedTerrainField` keeps coordinate-query semantics and Float32 delivery |
@@ -426,8 +459,10 @@ terms behind a relative percentage of total mountain volume.
 
 Set an initial experimental ceiling of 60 seconds for a ~50,000-node basic run
 on the recorded local hardware, excluding separate final water review/export,
-and at most 4,096 accepted steps. This is a proposed stop/review budget, not a
-measured capability or final product promise. Calibrate before larger grids.
+and at most 4,096 accepted steps. This remains a stop/review budget, not a final
+product promise. The first
+measured ~50,000-node run completes inside it; the finest-grid probe and complete
+worker times are recorded separately in the report. Recheck after model changes.
 Report complete build time separately; a fast erosion kernel is insufficient if
 preparation, reconstruction or validation dominates. Add control-workspace,
 reference-engine and rollback arrays to admission estimates; do not assume the
@@ -439,10 +474,9 @@ within a measured memory budget; the inner solver must retain a defined reductio
 order if exact repeatability is promised. Cross-platform comparisons may use
 explicit tolerances rather than unsupported bitwise guarantees.
 
-For runtime implementation commits run the repository's pytest, Ruff and Pyright
-gates plus the relevant numerical/quality evidence. For this documentation-only
-planning change, check claims, links and the diff; it does not warrant rerunning
-unchanged runtime tests or claiming new terrain-quality validation.
+For implementation commits run the repository's pytest, Ruff and Pyright gates
+plus the isolated reference tests and relevant numerical/quality evidence.
+Prose-only follow-ups need link/claim/diff checks; reuse unchanged runtime evidence.
 
 ## Deferred questions with an owner
 
@@ -458,6 +492,7 @@ unchanged runtime tests or claiming new terrain-quality validation.
 - R01/R33 and strategy F: world placement, climate/runoff feedback, aridity and
   ecological layers; separate authored wetness from inferred planetary climate.
 
-The immediate deliverable is a visible, measured LE1/LE2 comparison. It should
-answer whether a small history model is worth integrating, with enough evidence
-to stop or change direction before a large rewrite.
+The first visible, measured LE1/LE2 comparison is delivered. The next decision
+is whether a constrained continuous terrain/channel surface can retain its
+useful process response without the measured grid/reconstruction failures.
+Production adoption stays gated; a large rewrite is not the next step.

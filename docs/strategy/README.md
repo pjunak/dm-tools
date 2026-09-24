@@ -7,8 +7,9 @@ structure are the next product milestone. See the
 for current measurements, alternatives and platform checks. The subsequent
 [landscape-evolution research](../research/2026-09-24-landscape-evolution-models.md)
 and [detailed implementation plan](landscape-evolution.md) promote a bounded
-uplift/erosion history comparison into the next generation decision; no engine
-has been adopted.
+uplift/erosion history comparison into the generation decision. The
+[first implementation](../research/2026-09-24-landscape-evolution-reference.md)
+now runs that comparison; no external engine has been adopted into the application.
 
 This is the authoritative execution order. [TODO](../../TODO.md) remains the
 complete grouped backlog; P0 there can mean a prerequisite within a later
@@ -42,9 +43,9 @@ Dated reports and accepted ADRs remain historical evidence.
 | Milestone | Position on 2026-09-24 | Next exit condition |
 |---|---|---|
 | Usable authoring and reproducible build | Implemented | Maintain it while changing generation |
-| Measured quality baseline | Partial: profiles/diagnostics exist; fresh eight-case probe completed | One comparable gallery and structural scorecard, including known failures |
+| Measured quality baseline | Partial: eight-case profile probe plus paired evolution/control gallery completed | One comparable gallery and structural scorecard, including known failures |
 | Terrain-aligned drainage | Not accepted | Shared physical paths, lower grid bias, feasible sampled profiles and explicit conflicts |
-| Coherent landform families | Partial recipes; geological-history model researched, untested | Related range/pass/tributary/lowland structure that survives multiple seeds and scales |
+| Coherent landform families | Partial recipes; two-epoch reference implemented and measured, quality gate open | Related range/pass/tributary/lowland structure that survives multiple seeds and scales |
 | Useful zoom enrichment | Experimental | Accepted regional shape, transition and inherited-flow behavior; then viewport scheduling |
 | Hydrological water and world ecology | Later dependent work | Runoff/storage/river-size evidence; world placement and climate for ecological layers |
 
@@ -100,15 +101,20 @@ context, but stop treating every raster edge as the final physical centreline.
 One prepared path representation must be shared by source sampling, bed profiles,
 actual valley shaping, diagnostics and rendering.
 
-**Next bounded comparison:** after minimal A evidence, run
-[LE1/LE2](landscape-evolution.md#work-packages-and-decision-gates): an isolated
-Landlab reference and a two-epoch uplift/incision/hillslope experiment. This brings
-R11/R14's process comparison forward from C before investing in a large path-only
-implementation. Recompute terrain and drainage together and compare against the
-current control. A promising result proceeds to LE3's constraint-aware surface
-and shared paths; a rejected result returns to the bounded subgrid-path prototype.
-Do not build two permanent production backends or wait for a complete R48
-implementation before testing the evolution hypothesis.
+**Implemented comparison:** [LE1/LE2](landscape-evolution.md#first-implementation-checkpoint)
+now have an isolated executable reference, analytic controls, paired history
+figures and measured public cohorts. Chronology and resistance influence terrain;
+conservation alone does not make its continuous river paths acceptable. The
+[first report](../research/2026-09-24-landscape-evolution-reference.md) rejects
+promotion of the current D8/bilinear reconstruction and records remaining grid
+sensitivity. Keep the useful history candidate, not its artifacts as defaults.
+
+**Next bounded batch:** implement the shared terrain/channel reconstruction
+comparison below on both frozen current-generator and evolved snapshots. Check
+matched profiles/coverage and direction, then repeat time and process-grid
+refinement before a full LE3 constraint integration. The history engine is already
+available; do not build another erosion framework or add sediment/UI/zoom work to
+avoid this gate. There will be one accepted production path.
 
 For the path prototype, compare the current D8 control against terrain-guided
 subgrid paths inside allowed corridors. Keep exact junctions and coastal/lake
@@ -258,13 +264,13 @@ remains a candidate inventory; verify component assumptions when implementing.
 Python remains the iteration language. NumPy, Shapely, Pillow, SVG parsing and
 Rasterio/affine are adopted; the [dependency register](../DEPENDENCIES.md) owns
 runtime versions/licenses. The [2026-09-24 platform audit](../research/2026-09-24-progress-and-generation-strategy.md#current-tool-and-platform-check)
-finds compatible Python 3.14 Windows wheels for SciPy and Numba, but neither is
-installed or validated here. The subsequent
-[wheel-only dependency probe](../research/2026-09-24-landscape-evolution-models.md#windows-and-python-dependency-probe)
-resolves 45 distributions for a Landlab reference, including GPL `py-richdem`
-and two prereleases. No engine was installed or executed. Fastscapelib lacks a
-matching wheel in its current release. C++/GPU reference tools are experiments,
-not mandatory runtime changes.
+found compatible Python 3.14 Windows wheels for SciPy and Numba. The subsequent
+[reference implementation](../research/2026-09-24-landscape-evolution-reference.md)
+installs and executes Landlab/SciPy in a separate research environment, with a
+53-wheel hash lock, explicit GPL `py-richdem` and two prereleases. The application
+dependency set is unchanged; Numba and Fastscapelib remain uninstalled here.
+Fastscapelib lacked a matching wheel in the recorded audit. C++/GPU reference
+tools are experiments, not mandatory runtime changes.
 
 R45–R47 govern future native work: identify a dominant kernel, compare complete
 workload benefit and Windows packaging, and explicitly choose a kernel bridge or

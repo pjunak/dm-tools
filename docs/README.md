@@ -65,10 +65,13 @@ For basin extents, spill candidates and water-boundary limits, read the
 
 For the current progress, quality gaps, refreshed research and delivery plan,
 read the [2026-09-24 reassessment](research/2026-09-24-progress-and-generation-strategy.md).
-For the proposed uplift/erosion history model, read the
+For the experimental uplift/erosion history model, read the
 [primary-source and tool comparison](research/2026-09-24-landscape-evolution-models.md)
-and [detailed implementation plan](strategy/landscape-evolution.md). Research and
-dependency resolution are complete; reference execution and adoption remain open.
+and [detailed implementation plan](strategy/landscape-evolution.md). The
+[first executable batch](research/2026-09-24-landscape-evolution-reference.md)
+includes numerical controls and measured comparisons; production acceptance
+remains open. The [reference guide](../benchmarks/evolution/README.md) owns setup
+and the testable comparison command.
 The [2026-09-13 audit](maintenance/2026-09-13-documentation-and-research-status.md)
 and [2026-09-10 checkpoint](maintenance/2026-09-10-sanity-and-performance.md)
 retain earlier documentation, structure and performance evidence.
