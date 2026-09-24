@@ -4,6 +4,11 @@ This package orchestrates terrain generation using typed inputs and effective
 configuration. Stochastic stages use named deterministic seeds; generation
 returns numeric elevation, retained routing products and diagnostics.
 
+The independent `world.py` source-inspection stage validates typed world ownership,
+periodic geometry and overlaps, then measures sampled land on the declared sphere.
+It generates no terrain or climate. File decoding, saving and source rendering
+remain in adapters. See the [world guide](../../../../docs/terrain-worlds.md).
+
 The implemented generator builds a coordinate-addressed relief field and a
 separate low-frequency macro surface. Regional recipes and authored constraints,
 including valley profiles prepared against a stable pre-incision reference,

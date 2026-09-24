@@ -1,7 +1,10 @@
 # World-context and staged terrain implementation plan
 
-Updated 2026-09-24. **Planned, not implemented.** The application still imports
-local SVG geometry and has no world-source, climate or continent-history format.
+Updated 2026-09-25. **WC0 implemented; WC1-WC6 planned.** The
+[World workspace](../terrain-worlds.md) imports retained SVG sources, validates
+explicit spherical placement and ownership, and saves portable world projects.
+Existing terrain generation is still local; no climate or continent-history
+format is implemented.
 The [research review](../research/2026-09-24-world-context-enrichment.md) records
 primary sources, existing solutions, licenses and the limits of the recommendation.
 The [main strategy](README.md) owns execution order; [TODO R49](../../TODO.md)
@@ -300,7 +303,7 @@ ship before preserving world coordinates.
 
 | Milestone | Bounded deliverable and dependencies | Exit evidence |
 |---|---|---|
-| WC0: retained world import | Explicit frame/planet source metadata, selected SVG groups, stable continents/islands, mapping preview; R01/R49 | Geometry/frame round trips, excluded furniture, deterministic identity, seam/pole and malformed-input controls |
+| WC0: retained world import — implemented | Explicit full-sphere frame/radius, retained SVG, stable continents/islands, mapping preview and portable saves; R01/R49 | Public touching-continent, owned-island, hole, offset-frame, seam/pole, malformed-input and UI/save controls; see implementation report |
 | WC1: provisional context | Geometry/topology descriptors, ocean/gateway hypotheses and province/default inputs; WC0, R07/R10/R11 | Preserved coastline, connected-water and fetch controls, visible unsupported straits, reproducible context preview |
 | WC2: rough physical world | Shared macro terrain/bathymetry and process-domain prototype, physical scale/support; WC1, B/C, R02/R48, LE2/LE3 acceptance for evolved output | Matched quality gallery, cross-label catchments, constraints, projections/flux and resolution gates |
 | WC3: climate/runoff feedback | Seasonal fields, moisture/storage budgets, declared epoch forcing and bounded coarse-history loop; WC2, R33 and selected LE engine | Energy/water closure, rain-shadow/continentality controls, convergence or explicit incomplete result, measured resources |
@@ -308,17 +311,27 @@ ship before preserving world coordinates.
 | WC5: regional historical refinement | Same-present child generation with time-dependent parent boundary/forcing, scale-aware water; WC4, LE6, R15/R34 | No double aging, exact overlaps/order independence, inherited flux, restriction/constraint and seam acceptance |
 | WC6: downstream ecology and stronger references | Climate/life-zone/ecosystem layers; optional advanced ocean, material transport or external GCM comparisons | Independent evidence for each chosen addition; none is a blanket dependency of WC0 |
 
-**Next concrete implementation batch: WC0.** Retain selected source IDs/groups
-before union, add explicit world/frame input types and validation, persist an
-identity-preserving source snapshot, and expose an import/mapping preview. Use
-public synthetic worlds, not private campaign copies. Demonstrate two touching
-named continents, owned islands, furniture and an antimeridian crossing. Existing
-local-only input must remain explicitly local; replace obsolete public contracts
-when needed, with no legacy-save loader. Do not generate a climate map while its
-world coordinates are still guessed.
+**WC0 checkpoint:** [ADR-0070](../adr/0070-retain-world-source-and-workspaces.md)
+and the [implementation report](../research/2026-09-25-world-source-workspace.md)
+record the shipped workspace and public controls. Original SVG remains
+authoritative; flattened inspection geometry and area have explicit tolerance.
+Full-sphere Plate Carrée is the supported input. Partial worlds, other projections,
+world-to-metric terrain extraction and context generation remain unimplemented.
 
-WC1 is the next world feature once that contract passes. B's shared path/ground
-and LE2 resolution/authoring work remain prerequisites to production-quality WC2.
+**Next concrete batch: WC1 geography and ocean topology.** Build a typed, bounded
+cell-centred spherical grid with exact cell areas and periodic longitude. Derive
+fractional land coverage and connected water without equating named continents
+with components. Retain explicit evidence for unresolved straits/islands and
+separate named seas from connected oceans. Add a preview with resolution/support
+and unsupported topology visible. Test polar/seam connectivity, tiny islands,
+narrow gateways and area convergence against the retained WC0 source. Then add
+directional fetch/interior distance before bathymetry and province hypotheses;
+keep context assumptions separate from the source file.
+
+WC0 follow-ups to consider alongside that work: cancel/checkpoint long imports,
+measure curved-source complexity, and decide whether partial mapping drafts need
+a distinct input document. These do not justify a no-op climate editor. B's shared
+path/ground and LE2 resolution/authoring work remain prerequisites to WC2.
 Coordinate the shared implementation in the main strategy; these milestones do
 not authorize seven concurrent subsystems or a new general simulation framework.
 The current usable local generator continues to supply the baseline comparison.

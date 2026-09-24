@@ -1,6 +1,10 @@
 # Schemas
 
-Only the current terrain formats are supported:
+Only the current formats are supported:
+
+- [World project v1](world/project-v1.schema.json): portable `.dmworld.json` source
+  snapshot, full-sphere frame/radius and explicit continent/island assignments.
+  This is a validated source, not a climate/terrain build or generated parent.
 
 - [Project v6](terrain/project-v6.schema.json): authored `.dmterrain.json` inputs.
 - [Build v18](terrain/build-v18.schema.json): numeric products, coordinates,
@@ -17,15 +21,16 @@ Register all current schemas locally by `$id` for validation. The build
 references project settings; regional samples reuse current project settings
 and the build's runtime, seed and file-identity definitions. None depends on
 obsolete formats.
-The numeric arrays use an endpoint-node SVG-local plane. GeoTIFF records the
+Terrain numeric arrays use an endpoint-node SVG-local plane. GeoTIFF records the
 same samples in local metres with an upward y axis; neither has a world CRS.
 See the [build guide](../docs/terrain-builds.md) and
 [seed contract](../docs/terrain-seeds.md).
 
-The [world-context plan](../docs/strategy/world-context.md) specifies future
-retained world geometry, shared climate/history and regional boundary products.
-None has a public schema yet; these proposals are not fields supported by the
-formats above. Add contracts with implementation and validation, not placeholders.
+The [world guide](../docs/terrain-worlds.md) describes the implemented source
+format and its independent geographic contract. The
+[world-context plan](../docs/strategy/world-context.md) specifies future shared
+climate/history and regional boundary products. Those generated products have no
+public schema yet; do not add placeholders to source or terrain formats.
 
 During early development, replace obsolete formats and update the current
 example, tests and documentation. Version identifiers record provenance and

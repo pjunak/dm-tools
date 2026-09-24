@@ -9,7 +9,7 @@ hosting is not a committed delivery step for the current local tool.
 ```text
 Tk UI / CLI
      |
-     +--> application build / water-budget / regional-sampling operations
+     +--> application world / build / water-budget / regional-sampling operations
      |           |
      +-----------+--> numeric generation pipeline --> domain values
                  |
@@ -95,19 +95,32 @@ image ownership releases scratch on completion and cancellation. This changes
 neither numerical stages nor native scientific resolution; see
 [ADR-0066](../adr/0066-bound-terrain-rendering-scratch.md).
 
-The [planned world workflow](../strategy/world-context.md) changes future stage
+The [World workspace](../terrain-worlds.md) now adds a separate implemented source
+path: retained SVG → explicit full-sphere frame and semantic assignments → topology
+and area validation → portable world source. `domain/world.py` owns immutable
+inputs and sphere conversions; `pipeline/world.py` owns typed inspection;
+`adapters/world_svg.py`, `world_project.py` and `world_render.py` own concrete
+formats/previews. `application/world.py` verifies the snapshot and coordinates
+open/save. `world_ui.py` supplies background jobs, mapping and document guards.
+The CLI exposes `terrain gui --world` and `world inspect`. No new runtime
+dependency or numerical terrain stage is introduced. See
+[ADR-0070](../adr/0070-retain-world-source-and-workspaces.md).
+
+The remaining [world workflow](../strategy/world-context.md) changes future stage
 ownership: retained world source and explicit geography → provisional context →
 rough relief/bathymetry → bounded climate/runoff and history feedback → reviewed
 immutable world parent → regional refinement to the same present. Ecological
 classes are downstream views; climate forcing also informs terrain evolution.
 This is not implemented by the current local pipeline above.
 
-Adapters will retain selected source groups and identities before a derived land
-union. Domain values will own explicit planet/frame, province histories and units;
+Adapters now retain world source groups/IDs before derived wrapped land views;
+source ownership is separate from physical connectivity. Domain values own the
+explicit source frame/radius. Future values add province histories and units;
 application operations will own staged jobs, parent/dependency verification and
 publication. Numerical stages consume arrays and explicit boundary/forcing data,
 not UI state or implicit world globals. Exact public formats arrive with their
-implementations; current project/build schemas contain no world context.
+implementations; current terrain project/build schemas contain no world context.
+The independent world-source schema contains geography and assignments only.
 
 Continent identity is not a closed solver boundary. Shared climate, catchments and
 histories can cross it. Final-state detail and historical refinement have different
@@ -157,8 +170,9 @@ layer or path boundaries.
 
 ## Planned contracts and remaining decisions
 
-- Planned next: WC0 world-source contracts, retained identities and explicit
-  source placement; later WC2-WC5 coupled products and historical parent context
+- WC1 spherical coverage, connected-water/gateway and exposure context on the
+  implemented WC0 world source; later WC2-WC5 coupled products and historical
+  parent context
 - Direct per-vertex profiles, explicit passes and asymmetric structural sides
   (point-anchored longitudinal ridge/valley profiles are implemented)
 - Inter-lake transfer, constrained repair and nested depression policy

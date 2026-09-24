@@ -1,30 +1,30 @@
 # Complete documentation file inventory
 
-Updated 2026-09-24. Scope: every version-controlled Markdown document in DM Tools,
+Updated 2026-09-25. Scope: every version-controlled Markdown document in DM Tools,
 plus the vendored license notice, including the three documents added in this
-planning batch. Generated builds, caches, dependency documentation and private
-campaign files are excluded. The public JSON schemas and reference dependency
+world-source implementation batch. Generated builds, caches, dependency
+documentation and private campaign files are excluded. The public JSON schemas and reference dependency
 lock are listed separately as supporting contracts, not counted as prose docs.
 
-**163 Markdown files + 1 legal notice = 164 documentation files.**
+**166 Markdown files + 1 legal notice = 167 documentation files.**
 Each file appears once below, including this inventory. Document titles describe
 their subject; the group description identifies their role and authority.
 
-For the new proposal, read the world-context plan, its dated research report,
-then the main strategy and TODO. The selective reading guide remains the
-entry point for normal use. All are individually linked in the list below.
+For the new workflow, read the world user guide and implementation report,
+then the world-context plan, main strategy and TODO. The selective reading guide
+remains the entry point for normal use. All are individually linked in the list below.
 
 | Group | Files |
 |---|---:|
 | Project entry and guidance | 4 |
 | Active plans and indexes | 10 |
-| User guides and current contracts | 14 |
+| User guides and current contracts | 15 |
 | Developer and reference guides | 8 |
-| Architecture decision records | 69 |
-| Dated research reports | 56 |
+| Architecture decision records | 70 |
+| Dated research reports | 57 |
 | Maintenance reports | 2 |
 | Legal notice | 1 |
-| **Total** | **164** |
+| **Total** | **167** |
 
 ## Project entry and guidance (4)
 
@@ -54,7 +54,7 @@ Current direction and navigation. Plans mark unimplemented features explicitly; 
 | [docs/strategy/landscape-evolution.md](strategy/landscape-evolution.md) | LE0-LE6 evolution, authoring, conservation and regional-history gates. |
 | [docs/strategy/world-context.md](strategy/world-context.md) | WC0-WC6 full-world import, shared context, climate and regional-history plan. |
 
-## User guides and current contracts (14)
+## User guides and current contracts (15)
 
 Current user workflows and numeric/file semantics, with future limits labelled in each guide.
 
@@ -73,6 +73,7 @@ Current user workflows and numeric/file semantics, with future limits labelled i
 | [docs/terrain-seeds.md](terrain-seeds.md) | Reproducible terrain seeds |
 | [docs/terrain-water-budget.md](terrain-water-budget.md) | Forecast water-sampling demand |
 | [docs/terrain-water.md](terrain-water.md) | Authored lakes and dry basins |
+| [docs/terrain-worlds.md](terrain-worlds.md) | Import, map, validate and save retained world sources; geographic and workflow limits. |
 | [src/dmtools/terrain/README.md](../src/dmtools/terrain/README.md) | Current desktop authoring workflow, tools and shortcuts. |
 
 ## Developer and reference guides (8)
@@ -84,13 +85,13 @@ Subsystem, fixture, schema, test and benchmark guidance.
 | [benchmarks/README.md](../benchmarks/README.md) | Public performance/quality probes, commands and measurement boundaries. |
 | [benchmarks/evolution/README.md](../benchmarks/evolution/README.md) | Isolated evolution setup, runnable comparisons and current limits. |
 | [examples/README.md](../examples/README.md) | Public example projects and their supported behaviors. |
-| [schemas/README.md](../schemas/README.md) | Current public file-format inventory and unsupported world-contract boundary. |
+| [schemas/README.md](../schemas/README.md) | Current world-source and local-terrain formats; generated world-context contracts remain planned. |
 | [src/dmtools/terrain/adapters/README.md](../src/dmtools/terrain/adapters/README.md) | File-format/render/export adapter responsibilities. |
 | [src/dmtools/terrain/domain/README.md](../src/dmtools/terrain/domain/README.md) | Dependency-light domain values and validation responsibilities. |
 | [src/dmtools/terrain/pipeline/README.md](../src/dmtools/terrain/pipeline/README.md) | Numeric generation and inspection responsibilities. |
 | [tests/README.md](../tests/README.md) | Test organization, commands and verification expectations. |
 
-## Architecture decision records (69)
+## Architecture decision records (70)
 
 Accepted historical decisions. Preserve their original context; consult the current status and implementation for later changes. The ADR index is listed among active indexes.
 
@@ -165,14 +166,16 @@ Accepted historical decisions. Preserve their original context; consult the curr
 | [docs/adr/0067-own-preview-images-and-tile-water.md](adr/0067-own-preview-images-and-tile-water.md) | ADR-0067: Own preview images and tile water |
 | [docs/adr/0068-share-terrain-detail-across-edges.md](adr/0068-share-terrain-detail-across-edges.md) | ADR-0068: Share terrain detail across parent-cell edges |
 | [docs/adr/0069-connect-and-scale-drainage-review.md](adr/0069-connect-and-scale-drainage-review.md) | ADR-0069: Connect and scale drainage review |
+| [docs/adr/0070-retain-world-source-and-workspaces.md](adr/0070-retain-world-source-and-workspaces.md) | Retain world sources in a dedicated workspace. |
 
-## Dated research reports (56)
+## Dated research reports (57)
 
 Primary-source reviews, experiments and implementation evidence at their recorded date/revision. A title or citation is not evidence that a tool was adopted. Current status is listed above.
 
 | File | Purpose or document title |
 |---|---|
 | [docs/research/2026-09-24-world-context-enrichment.md](research/2026-09-24-world-context-enrichment.md) | World context before continental terrain: research and recommendation |
+| [docs/research/2026-09-25-world-source-workspace.md](research/2026-09-25-world-source-workspace.md) | WC0 implementation, UI/contract validation and bounded world import/render timings. |
 | [docs/research/2026-09-24-progress-and-generation-strategy.md](research/2026-09-24-progress-and-generation-strategy.md) | Progress and generation strategy reassessment — 2026-09-24 |
 | [docs/research/2026-09-24-landscape-evolution-reference.md](research/2026-09-24-landscape-evolution-reference.md) | First executable landscape-evolution batch |
 | [docs/research/2026-09-24-landscape-evolution-models.md](research/2026-09-24-landscape-evolution-models.md) | Landscape evolution: models, existing tools and selection |
@@ -246,7 +249,7 @@ Attribution/license documentation for a vendored asset.
 |---|---|
 | [docs/licenses/SCIENTIFIC_COLOUR_MAPS_LICENSE.txt](licenses/SCIENTIFIC_COLOUR_MAPS_LICENSE.txt) | Scientific Colour Maps attribution and redistribution license text. |
 
-## Supporting machine-readable contracts (6)
+## Supporting machine-readable contracts (7)
 
 These are operational specifications rather than prose documentation. They
 are included for a complete route from plans to the current usable formats.
@@ -258,6 +261,7 @@ are included for a complete route from plans to the current usable formats.
 | [schemas/terrain/parent-region-v1.schema.json](../schemas/terrain/parent-region-v1.schema.json) | Current parent sampling/experimental detail artifact contract. |
 | [schemas/terrain/project-v6.schema.json](../schemas/terrain/project-v6.schema.json) | Current authored local terrain project format; no world context fields. |
 | [schemas/terrain/regional-samples-v2.schema.json](../schemas/terrain/regional-samples-v2.schema.json) | Current bounded unchanged-field sampling artifact contract. |
+| [schemas/world/project-v1.schema.json](../schemas/world/project-v1.schema.json) | Portable retained world-source snapshot, explicit spherical frame/radius and semantic ownership. |
 | [benchmarks/evolution/requirements-windows-py314.txt](../benchmarks/evolution/requirements-windows-py314.txt) | Hashed isolated Windows/Python 3.14 scientific reference environment. |
 
 ## Maintaining this inventory

@@ -10,7 +10,13 @@ interface should call the same engine rather than replacing it.
 
 ## Status
 
-The desktop workbench imports and dissolves closed SVG land shapes; authors
+The desktop workbench now has **World** and **Terrain** workspaces.
+[World import](docs/terrain-worlds.md) retains the original SVG, continent/island
+ownership, an explicit spherical frame and planet radius in portable
+`.dmworld.json` files. It provides mapping, validation, pan/zoom and saved-world
+inspection. Shared climate and world terrain remain planned.
+
+The Terrain workspace imports and dissolves closed SVG land shapes; authors
 absolute/relative brush, point, ridge and valley constraints; draws plain, hill,
 plateau and mountain regions; and saves those inputs as `.dmterrain.json`.
 The editor keeps the last result as a placement reference, supports instruction
@@ -34,8 +40,8 @@ builds and generate separate regional samples or explicitly experimental added
 detail. Python sessions reuse verified parents and bounded numeric results with
 freshness checks and [shared memory admission estimates](docs/terrain-regional-memory.md).
 Visual/spectral acceptance, finer hydrology, workbench zoom jobs and broader
-native/application-memory calibration remain open. World placement and validated river
-vectors also remain future work. See the
+native/application-memory calibration remain open. World-linked terrain builds
+and validated river vectors also remain future work. See the
 [current research status](docs/research/status.md).
 
 An [experimental landscape-evolution command](benchmarks/evolution/README.md)
@@ -43,11 +49,11 @@ now generates public comparison terrain through uplift and erosion epochs, with
 inspectable snapshots and numerical checks. It uses a separate scientific
 environment; history generation is not yet part of the desktop or saved-project CLI.
 
-The [planned world-context workflow](docs/strategy/world-context.md) will retain
-an imported world and its continent identities, generate provisional context and
-rough terrain, then refine selected regions with shared climate and geological
-history. World coordinates, climate and regional history replay are not implemented;
-this plan extends the local terrain and experimental evolution foundations.
+The [world-context workflow](docs/strategy/world-context.md) begins with the
+implemented WC0 source workspace. Next come provisional geographic/ocean context,
+rough terrain and selected regional refinement with shared climate and geological
+history. Climate, world-linked terrain and regional history replay are not
+implemented; the saved world is a source project, not a generated parent.
 See the [research review](docs/research/2026-09-24-world-context-enrichment.md).
 
 ## Requirements
@@ -70,7 +76,7 @@ python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -e ".[dev]"
 ```
 
-Then open the terrain workbench and run the tests:
+Then open Map Workbench and run the tests:
 
 ```powershell
 .\.venv\Scripts\dmtools.exe --help
@@ -82,6 +88,11 @@ GitHub CI uses Windows and Python 3.14 to run the complete pytest suite, Ruff,
 and strict Pyright checks, including the display-free Tcl settings tests.
 Pytest reports are retained for 14 days. Secret scanning runs separately with
 the complete Git history available.
+
+Try the complete world-source workflow with
+`dmtools terrain gui --world examples/world/four-shores.dmworld.json`; see the
+[world guide](docs/terrain-worlds.md). With no startup file the World tab opens.
+Select **Terrain** to generate local terrain.
 
 Open the public
 [`example.dmterrain.json`](examples/terrain/example.dmterrain.json) project or
@@ -122,7 +133,8 @@ dmtools terrain build examples/terrain/example.dmterrain.json --output artifacts
 Read the [numeric build guide](docs/terrain-builds.md) for products, coordinate
 limits, diagnostics and completion checks. Builds include lossless NPY arrays
 and [Float32 GeoTIFF](docs/terrain-geotiff.md) in an explicit local metric frame.
-World placement remains planned.
+World placement of generated DEMs remains planned; saved worlds already retain
+source-to-sphere coordinates independently of local terrain builds.
 
 The current [project and build schemas](schemas/README.md) and
 [named stage seed algorithm](docs/terrain-seeds.md) describe implemented behavior.

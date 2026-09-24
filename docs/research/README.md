@@ -12,6 +12,11 @@ in the current status or a new dated report.
 
 ## Current reassessment
 
+- [World-source workspace — 2026-09-25](2026-09-25-world-source-workspace.md)
+  implements and validates WC0 source import, spherical placement, semantic
+  mapping, portable saves and World/Terrain navigation. Records public-fixture
+  checks and bounded timing observations; world context/terrain remain planned.
+
 - [World-context enrichment — 2026-09-24](2026-09-24-world-context-enrichment.md)
   evaluates retained world import, geography/oceans, tectonic hypotheses, seasonal
   climate and same-present regional aging; compares established tools and newer

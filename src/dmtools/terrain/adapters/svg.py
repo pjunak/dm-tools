@@ -184,7 +184,7 @@ def _flatten_curve(
     ]
 
 
-def _flatten_path(path: Path, tolerance: float) -> list[tuple[float, float]]:
+def flatten_svg_path(path: Path, tolerance: float) -> list[tuple[float, float]]:
     if path.first_point is None:
         return []
     points = [_point_coordinates(path.first_point)]
@@ -292,7 +292,7 @@ def load_svg_coastline(source: FilePath, *, sample_count: int = 4_096) -> Coastl
             raise CoastlineInputError(
                 f"Land object {index} is open; join its final node to its first node."
             )
-        sampled = _flatten_path(path, flatten_tolerance)
+        sampled = flatten_svg_path(path, flatten_tolerance)
         if sampled and sampled[-1] != sampled[0]:
             sampled.append(sampled[0])
         polygon = Polygon(sampled)

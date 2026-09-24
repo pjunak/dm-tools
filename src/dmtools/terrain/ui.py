@@ -14,6 +14,7 @@ from math import hypot
 from pathlib import Path
 from time import monotonic
 from tkinter import filedialog, messagebox, ttk
+from typing import cast
 
 from PIL import Image, ImageTk
 from shapely.geometry import LineString, MultiPolygon, Point, Polygon
@@ -64,6 +65,7 @@ from dmtools.terrain.pipeline import GeneratedTerrain, generate_terrain
 from dmtools.terrain.pipeline.control import CancellationToken, GenerationCancelled
 from dmtools.terrain.viewport import MapViewport
 from dmtools.terrain.workbench import GenerationInputs, InstructionHistory, move_instruction
+from dmtools.terrain.world_ui import WorldWorkspace
 
 _INK = "#172225"
 _MUTED = "#65716f"
@@ -171,11 +173,12 @@ _CONTROLS = (
 class TerrainApp:
     """Small local workbench for importing, generating, previewing, and exporting."""
 
-    def __init__(self, root: tk.Tk, project: Path | None = None) -> None:
+    def __init__(self, root: tk.Tk, project: Path | None = None,
+                 *, world: Path | None = None) -> None:
         self.root = root
-        self.root.title("DM Tools — Terrain Lab")
-        self.root.geometry("1280x840")
-        self.root.minsize(1040, 700)
+        self.root.title("DM Tools — Map Workbench")
+        self.root.geometry("1440x900")
+        self.root.minsize(1160, 760)
         self.root.configure(background=_PAPER)
 
         self._coastline: Coastline | None = None
@@ -275,7 +278,10 @@ class TerrainApp:
         self._set_busy(False)
         self._poll_after_id = self.root.after(80, self._poll_events)
         if project is not None:
+            self.workspaces.select(self.terrain_page)
             self.root.after_idle(partial(self._load_project, project))
+        elif world is not None:
+            self.root.after_idle(partial(self.world_workspace.load_world, world))
 
     def _configure_styles(self) -> None:
         style = ttk.Style(self.root)
@@ -314,24 +320,32 @@ class TerrainApp:
         )
 
     def _build_layout(self) -> None:
-        page = ttk.Frame(self.root, style="Paper.TFrame", padding=(24, 20, 24, 22))
-        page.grid(row=0, column=0, sticky="nsew")
+        self.workspaces = ttk.Notebook(self.root)
+        self.workspaces.grid(row=0, column=0, sticky="nsew")
         self.root.rowconfigure(0, weight=1)
         self.root.columnconfigure(0, weight=1)
+        self.world_workspace = WorldWorkspace(self.workspaces, self._refresh_document_state)
+        self.workspaces.add(self.world_workspace, text="  World  ")
+        page = self.terrain_page = ttk.Frame(
+            self.workspaces, style="Paper.TFrame", padding=(18, 12, 18, 16))
+        self.workspaces.add(page, text="  Terrain  ")
+        self.workspaces.bind(
+            "<<NotebookTabChanged>>", lambda _event: self._refresh_document_state())
         page.columnconfigure(1, weight=1)
         page.rowconfigure(1, weight=1)
 
         header = ttk.Frame(page, style="Paper.TFrame")
         header.grid(row=0, column=0, columnspan=2, sticky="ew", pady=(0, 16))
-        ttk.Label(header, text="DM TOOLS  /  TERRAIN", style="Eyebrow.TLabel").grid(
+        ttk.Label(header, text="DM TOOLS  /  LOCAL TERRAIN", style="Eyebrow.TLabel").grid(
             row=0, column=0, sticky="w"
         )
-        ttk.Label(header, text="Coastline Terrain Lab", style="Header.TLabel").grid(
+        ttk.Label(header, text="Terrain workspace", style="Header.TLabel").grid(
             row=1, column=0, sticky="w"
         )
         ttk.Label(
             header,
-            text="Edit generation instructions over the last map, then regenerate.",
+            text="Author instructions over a read-only reference, then regenerate. "
+                 "World-linked terrain follows shared context.",
             style="Eyebrow.TLabel",
         ).grid(row=2, column=0, sticky="w", pady=(3, 0))
 
@@ -1872,9 +1886,13 @@ class TerrainApp:
     def _refresh_document_state(self, *_args: str) -> None:
         if self._syncing_selection:
             return
-        name = self._project_path.name if self._project_path else "Unsaved project"
-        marker = "* " if self._document_is_dirty() else ""
-        self.root.title(f"{marker}{name} — DM Tools Terrain Lab")
+        if self._world_active():
+            world = self.world_workspace
+            name = world.path.name if world.path else world.values["name"].get()
+        else:
+            name = self._project_path.name if self._project_path else "Local terrain"
+        marker = "* " if self._document_is_dirty() or self.world_workspace.dirty else ""
+        self.root.title(f"{marker}{name} — DM Tools Map Workbench")
 
     def _set_busy(self, busy: bool) -> None:
         self._busy = busy
@@ -1920,13 +1938,21 @@ class TerrainApp:
         elif answer is False:
             action()
 
+    def _world_active(self) -> bool:
+        return cast("str", self.workspaces.select()) == str(self.world_workspace)
+
     def _request_close(self) -> None:
-        self._guard_unsaved(self._close)
+        if self._busy:
+            self.workspaces.select(self.terrain_page)
+            self._guard_unsaved(self._close)
+            return
+        self.world_workspace.guard(lambda: self._guard_unsaved(self._close))
 
     def _close(self) -> None:
         if self._closed:
             return
         self._closed = True
+        self.world_workspace.close()
         if self._poll_after_id is not None:
             self.root.after_cancel(self._poll_after_id)
             self._poll_after_id = None
@@ -1944,7 +1970,18 @@ class TerrainApp:
             "Entry", "TEntry", "Spinbox", "TSpinbox", "TCombobox", "Text",
         ):
             return None
-        if not self._busy:
+        if self._world_active():
+            world = self.world_workspace
+            actions = {
+                self._choose_project: world.choose_world, self._save_project: world.save,
+                self._undo_constraint: world.undo, self._redo_constraint: world.redo,
+                self._fit_view: world.fit, self._generate: world.validate,
+            }
+            if isinstance(command, partial) and command.func == self._save_project:
+                world.save(save_as=True)
+            elif command in actions:
+                actions[command]()
+        elif not self._busy:
             command()
         return "break"
 
@@ -2187,6 +2224,7 @@ class TerrainApp:
         coastline: Coastline,
         source: CoastlineSource | None = None,
     ) -> None:
+        self.workspaces.select(self.terrain_page)
         self._coastline = coastline
         self._coastline_source = source
         self._project_path = None
@@ -2325,6 +2363,8 @@ class TerrainApp:
             self._generate()
 
     def _escape(self) -> str:
+        if self._world_active():
+            return "break"
         if self._generation_cancel is not None:
             self._cancel_generation()
         elif not self._busy:
@@ -3227,9 +3267,9 @@ class TerrainApp:
         self.status_label.configure(text=f"Exported {Path(selected).name}")
 
 
-def run(project: Path | None = None) -> None:
-    """Launch the local terrain workbench."""
+def run(project: Path | None = None, *, world: Path | None = None) -> None:
+    """Launch the world-source and local-terrain workspaces."""
 
     root = tk.Tk()
-    TerrainApp(root, project)
+    TerrainApp(root, project, world=world)
     root.mainloop()

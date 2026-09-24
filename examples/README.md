@@ -6,6 +6,24 @@ documentation, integration tests, and performance comparisons.
 Do not copy private campaign maps here. Every generated example artifact must be
 rebuildable, and large outputs should remain outside Git.
 
+## World
+
+[`world/four-shores.dmworld.json`](world/four-shores.dmworld.json) embeds the
+synthetic [`world/coastlines.svg`](world/coastlines.svg): four invented continents,
+touching mainlands, owned islands, an inland hole, excluded furniture and a
+periodic seam-crossing island. The source is purpose-built for this repository
+and contains no campaign geography. Use **Save As** for your working copy.
+
+```powershell
+dmtools terrain gui --world examples/world/four-shores.dmworld.json
+dmtools world inspect examples/world/four-shores.dmworld.json
+```
+
+The explicit full-sphere frame is (10, 10)..(370, 190), central meridian 0°,
+radius 6,500 km. Its SVG display size intentionally differs from source units.
+The [world guide](../docs/terrain-worlds.md) explains importing the raw SVG,
+confirming ownership/frame and the boundary before planned context generation.
+
 ## Terrain
 
 [`terrain/example.dmterrain.json`](terrain/example.dmterrain.json) is a complete

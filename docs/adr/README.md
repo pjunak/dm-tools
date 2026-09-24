@@ -97,3 +97,4 @@ supersedes their legacy compatibility commitments during early development.
 - [ADR-0067: Own preview images and tile water](0067-own-preview-images-and-tile-water.md)
 - [ADR-0068: Share terrain detail across parent-cell edges](0068-share-terrain-detail-across-edges.md)
 - [ADR-0069: Connect and scale drainage review](0069-connect-and-scale-drainage-review.md)
+- [ADR-0070: Retain world sources in a dedicated workspace](0070-retain-world-source-and-workspaces.md)

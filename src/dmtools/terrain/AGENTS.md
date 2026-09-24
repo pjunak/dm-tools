@@ -23,7 +23,8 @@ reproduction.
 - `adapters/` owns concrete files, GIS libraries, rendering libraries, and
   external processes.
 - This `README.md` owns the current terrain-tool overview. Public schemas under
-  `/schemas/terrain/` own serialized field names and validation rules.
+  `/schemas/terrain/` and `/schemas/world/` own serialized field names and
+  validation rules for their respective project/product families.
 
 Dependencies point inward. Domain modules must not import adapters or interface
 frameworks. Pipeline stages operate on typed domain values rather than loose

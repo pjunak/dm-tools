@@ -1,0 +1,168 @@
+# pyright: reportPrivateUsage=false, reportUnknownMemberType=false
+"""Real Tk world workflow: identity editing, document guards and workspace isolation."""
+
+import time
+import tkinter as tk
+from collections.abc import Iterator
+from pathlib import Path
+
+import pytest
+
+from dmtools.terrain import ui, world_ui
+from dmtools.terrain.adapters.world_svg import load_world_svg
+from dmtools.terrain.application.world import open_world
+
+EXAMPLES = Path(__file__).parents[1] / "examples/world"
+
+
+@pytest.fixture
+def app() -> Iterator[ui.TerrainApp]:
+    try:
+        root = tk.Tk()
+    except tk.TclError as error:
+        pytest.skip(f"Tk unavailable: {error}")
+    root.withdraw()
+    application = ui.TerrainApp(root)
+    root.update()
+    yield application
+    if not application._closed:
+        application._close()
+
+
+def wait_world(app: ui.TerrainApp) -> None:
+    deadline = time.monotonic() + 5
+    while app.world_workspace.busy and time.monotonic() < deadline:
+        app.root.update()
+        time.sleep(0.01)
+    app.root.update()
+    assert not app.world_workspace.busy
+
+
+def test_world_import_assignment_validate_save_and_reopen(
+    app: ui.TerrainApp,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    view = app.world_workspace
+    assert app._world_active()
+    view.load_svg(EXAMPLES / "coastlines.svg")
+    wait_world(app)
+    assert view.source is not None and not view.assignments and view.dirty
+    view.suggest_groups()
+    assert len(view.continents) == 4
+    before = view.assignments
+    view.undo()
+    assert not view.assignments
+    view.redo()
+    assert view.assignments == before
+    view.values["radius"].set("6500")
+    for key, value in (("x", "10"), ("y", "10"), ("width", "360"), ("height", "180")):
+        view.values[key].set(value)
+    view.validate()
+    wait_world(app)
+    assert view.validated is not None and view.dirty
+    destination = tmp_path / "world.dmworld.json"
+
+    def save_path(**_kwargs: object) -> str:
+        return str(destination)
+
+    monkeypatch.setattr(world_ui.filedialog, "asksaveasfilename", save_path)
+    view.save()
+    wait_world(app)
+    assert not view.dirty and view.path == destination
+    assert len(open_world(destination).continents) == 4
+    view.values["name"].set("Edited")
+    assert view.dirty and view.validated is None
+    view.load_world(destination)
+    wait_world(app)
+    assert not view.dirty and view.values["name"].get() != "Edited"
+
+
+def test_world_assign_exclude_and_rename_retain_identity(
+    app: ui.TerrainApp,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from tkinter import simpledialog
+
+    view = app.world_workspace
+    view.accept_world(
+        open_world(EXAMPLES / "four-shores.dmworld.json"), EXAMPLES / "four-shores.dmworld.json"
+    )
+    west = next(c for c in view.continents if c.name == "Westreach")
+    view.owner.set("Westreach")
+
+    def rename_reply(*_args: object, **_kwargs: object) -> str:
+        return "Renamed"
+
+    monkeypatch.setattr(simpledialog, "askstring", rename_reply)
+    view.rename_continent()
+    assert next(c for c in view.continents if c.id == west.id).name == "Renamed"
+    view.tree.selection_set("south-island")
+    view.owner.set("Westreach")
+    view.role.set("Island")
+    view.assign_selected()
+    added = next(c for c in view.continents if c.name == "Westreach")
+    assert added.id != west.id
+    assert next(a for a in view.assignments if a.feature_id == "west-main").continent_id == west.id
+    view.tree.selection_set("south-island")
+    view.role.set("Exclude")
+    view.assign_selected()
+    assert next(a for a in view.assignments if a.feature_id == "south-island").continent_id is None
+    assert added.id not in {c.id for c in view.continents}
+
+
+def test_world_shortcuts_do_not_edit_hidden_terrain(app: ui.TerrainApp) -> None:
+    view = app.world_workspace
+    view.accept_source(load_world_svg(EXAMPLES / "coastlines.svg"))
+    view.suggest_groups()
+    assert view.assignments
+    app._shortcut(app._undo_constraint, editing=True)
+    assert not view.assignments and not app._history.constraints
+    app.workspaces.select(app.terrain_page)
+    app.root.update()
+    assert not app._world_active()
+    app._shortcut(app._redo_constraint, editing=True)
+    assert not view.assignments
+    app.workspaces.select(view)
+    app.root.update()
+    app._shortcut(app._redo_constraint, editing=True)
+    assert view.assignments
+
+
+def test_world_close_cancel_and_failed_load_preserve_work(
+    app: ui.TerrainApp,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    view = app.world_workspace
+    view.accept_source(load_world_svg(EXAMPLES / "coastlines.svg"))
+    retained = view.source
+
+    def cancel_reply(*_args: object, **_kwargs: object) -> None:
+        return None
+
+    monkeypatch.setattr(world_ui.messagebox, "askyesnocancel", cancel_reply)
+    app._request_close()
+    assert not app._closed and view.source is retained
+    errors: list[str] = []
+
+    def collect_error(*args: object, **_kwargs: object) -> None:
+        errors.append(str(args))
+
+    monkeypatch.setattr(world_ui.messagebox, "showerror", collect_error)
+    view.load_world(tmp_path / "missing.dmworld.json")
+    wait_world(app)
+    assert errors and view.source is retained and view.dirty
+
+
+def test_world_busy_guard_and_cleanup(app: ui.TerrainApp) -> None:
+    view = app.world_workspace
+    calls: list[bool] = []
+    view._set_busy(True)
+    view.guard(lambda: calls.append(True))
+    assert not calls
+    view._set_busy(False)
+    view.guard(lambda: calls.append(True))
+    assert calls
+    app._close()
+    assert view._closed and view._poll_id is None and view._draw_id is None

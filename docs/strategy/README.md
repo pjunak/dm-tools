@@ -1,6 +1,6 @@
 # Current development strategy
 
-Re-evaluated 2026-09-24. DM Tools is a usable terrain research workbench with
+Re-evaluated 2026-09-24; WC0 implementation checkpoint 2026-09-25. DM Tools is a usable terrain research workbench with
 strong numeric/build foundations; believable drainage and connected landform
 structure are the next product milestone. See the
 [assessment and primary-source research](../research/2026-09-24-progress-and-generation-strategy.md)
@@ -16,10 +16,11 @@ engine has been adopted into the application.
 
 The subsequent [world-context research](../research/2026-09-24-world-context-enrichment.md)
 and [WC0-WC6 plan](world-context.md) advance retained world import and shared
-context from the former final climate phase. The next foundation is explicit
-world placement and continent identity. Physical path/landform acceptance remains
-a prerequisite for world-informed production terrain; ecological classifications
-remain downstream. This is a planning change, not an implemented world importer.
+context from the former final climate phase. [WC0 is now implemented](../terrain-worlds.md):
+retained source, explicit spherical placement, continent/island mapping and a
+portable World workspace. WC1 geography/ocean context is the next foundation.
+Physical path/landform acceptance remains a prerequisite for world-informed
+production terrain; ecological classifications remain downstream.
 
 This is the authoritative execution order. [TODO](../../TODO.md) remains the
 complete grouped backlog; P0 there can mean a prerequisite within a later
@@ -50,14 +51,14 @@ Dated reports and accepted ADRs remain historical evidence.
 
 ## Development checkpoints
 
-| Milestone | Position on 2026-09-24 | Next exit condition |
+| Milestone | Position on 2026-09-25 | Next exit condition |
 |---|---|---|
 | Usable authoring and reproducible build | Implemented | Maintain it while changing generation |
 | Measured quality baseline | Partial: eight-case profile probe plus paired evolution/control gallery completed | One comparable gallery and structural scorecard, including known failures |
 | Terrain-aligned drainage | Frozen-graph reconstruction measured; production not accepted | Shared physical paths, lower grid bias, hard constraints and resolution acceptance |
 | Coherent landform families | Partial recipes; two-epoch reference implemented and measured, quality gate open | Related range/pass/tributary/lowland structure that survives multiple seeds and scales |
 | Useful zoom enrichment | Experimental | Accepted regional shape, transition and inherited-flow behavior; then viewport scheduling |
-| World import and shared context | Planned; current SVG import dissolves identities and uses a local scale | WC0 retained world frame/continent ownership, then WC1 geography/ocean/province context |
+| World import and shared context | WC0 implemented: independent World workspace, retained SVG, spherical frame and ownership; context planned | WC1 geography/ocean/province context with topology and scale controls |
 | World-informed rough terrain and history | Planned, dependent on physical terrain acceptance | WC2/WC3 coarse relief, seasonal runoff and bounded feedback; WC4 reviewed parent |
 | Hydrological water and ecology | Later dependent work | Flux/storage/river-size evidence and WC6 ecological layers; shared world context comes earlier |
 
@@ -108,12 +109,16 @@ unblocks B; the analogue atlas can grow alongside later quality work.
 ### W. Establish world inputs, then couple shared context to rough terrain
 
 The [world-context plan](world-context.md) is the detailed R49 feature contract.
-**Next foundation batch: WC0.** Preserve the source projection/frame, radius and
-continent/island identities before deriving the physical land union. Add explicit
-mapping and a source preview; do not interpret a larger local SVG as georeferenced.
-WC1 then derives ocean connectivity/exposure and inspectable province/history
-hypotheses. These bounded contracts can precede the remaining B/C quality work.
-They do not require an erosion engine, climate simulation or private-map import.
+**WC0 delivered:** source-preserving SVG import, explicit spherical frame/radius,
+continent/island assignment, portable saves and a source preview. The
+[implementation report](../research/2026-09-25-world-source-workspace.md) records
+validation and limits. The local terrain importer remains a separate operation.
+**Next foundation batch: WC1 geography.** Establish spherical cell areas and
+periodic water connectivity with narrow-strait/island controls, then geographic
+exposure and inspectable province/history hypotheses. Do not infer ocean depth
+from width or introduce climate fields without their budgets. These bounded
+contracts precede the remaining B/C quality work and require no erosion engine
+or private-map import.
 
 After B/C and the relevant LE2/LE3 gates, WC2 supplies rough world relief and
 bathymetric context using a tested physical process/domain representation. WC3
@@ -125,7 +130,7 @@ This splits the former F phase: geographic placement and shared forcing move
 earlier; ecological interpretation stays later. Product sequence is import →
 provisional context → rough terrain → climate/history feedback → selected world
 parent → detailed continents/regions. Build order is not seven parallel workstreams:
-start WC0/WC1, resolve B/C acceptance, then WC2-WC4 and D/WC5.
+finish WC1 after delivered WC0, resolve B/C acceptance, then WC2-WC4 and D/WC5.
 
 **Exit:** preserved authored vectors and semantic membership, validated spherical
 coordinates/topology, explicit hypotheses and one bounded world candidate with

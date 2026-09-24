@@ -22,7 +22,7 @@ def test_terrain_gui_help_is_available(capsys: pytest.CaptureFixture[str]) -> No
         main(["terrain", "gui", "--help"])
 
     assert exit_info.value.code == 0
-    assert "closed SVG land shapes" in capsys.readouterr().out
+    assert "closed SVG land shapes" in " ".join(capsys.readouterr().out.split())
 
 
 def test_gui_accepts_a_startup_project(monkeypatch: pytest.MonkeyPatch) -> None:

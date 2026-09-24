@@ -10,7 +10,14 @@ completed terrain is a read-only result.
 .\.venv\Scripts\dmtools.exe terrain gui
 ```
 
-The current workbench imports closed SVG land shapes, dissolves adjacent
+The window opens with **World** and **Terrain** tabs. World retains complete SVG
+source maps, continental ownership and an explicit spherical geographic frame.
+Read the [world guide](../../../docs/terrain-worlds.md), or try
+`dmtools terrain gui --world examples/world/four-shores.dmworld.json`.
+Context/world-terrain generation is planned. Select Terrain for the workflow below;
+`--project` opens a local terrain file directly in that tab.
+
+The Terrain workspace imports closed SVG land shapes, dissolves adjacent
 mainland sections, and retains disconnected islands in the same map. It exposes
 numeric generator settings as sliders and steppers, and lets
 the user draw absolute/relative height points, ridges and valleys, landform
@@ -36,8 +43,8 @@ internal-network demand before a build; see the
 Saved-parent regional commands and sessions now support explicit
 [memory admission budgets](../../../docs/terrain-regional-memory.md).
 See the [numeric build guide](../../../docs/terrain-builds.md). The coordinate
-model remains the local SVG plane. Builds now include a
-[local-metric GeoTIFF](../../../docs/terrain-geotiff.md); world placement is still planned.
+model for generated terrain remains the local SVG plane. Builds include a
+[local-metric GeoTIFF](../../../docs/terrain-geotiff.md); world placement of generated terrain is still planned.
 
 [`examples/terrain/example.dmterrain.json`](../../../examples/terrain/example.dmterrain.json)
 is a small public project for trying the complete workflow; its referenced

@@ -2,7 +2,8 @@
 
 ## Where to start
 
-1. To use the application, read the
+1. To import and review a whole world, read the [world guide](terrain-worlds.md).
+   To generate local terrain, read the
    [terrain tool guide](../src/dmtools/terrain/README.md).
    For stopping work safely, read [generation cancellation](terrain-generation-control.md).
 2. To contribute or choose the next implementation, read the
@@ -27,7 +28,8 @@
 For the requested full-world workflow, start with the
 [WC0-WC6 implementation plan](strategy/world-context.md) and its
 [primary-source/tool review](research/2026-09-24-world-context-enrichment.md).
-World import and context are planned; the current tool still uses local geometry.
+WC0 world import/mapping is implemented; context and world-linked terrain remain
+planned. Existing terrain generation still uses local geometry.
 
 The [complete documentation file inventory](FILE_INDEX.md) lists every tracked
 Markdown document and legal notice individually, with purpose and current versus

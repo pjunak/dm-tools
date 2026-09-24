@@ -1,0 +1,827 @@
+# pyright: reportUnknownMemberType=false
+"""World-source workspace: review geography and ownership before generation."""
+
+from __future__ import annotations
+
+import queue
+import threading
+import tkinter as tk
+from collections.abc import Callable
+from dataclasses import dataclass
+from pathlib import Path
+from tkinter import filedialog, messagebox, ttk
+from uuid import uuid4
+
+from PIL import ImageTk
+from shapely.geometry import Point, Polygon
+
+from dmtools.terrain.adapters.world_project import WORLD_EXTENSION
+from dmtools.terrain.adapters.world_render import OCEAN, render_world_source
+from dmtools.terrain.adapters.world_svg import load_world_svg
+from dmtools.terrain.application.world import (
+    continent_from_name,
+    open_world,
+    propose_group_assignments,
+    save_world,
+)
+from dmtools.terrain.domain.world import (
+    WorldAssignment,
+    WorldContinent,
+    WorldFrame,
+    WorldProject,
+    WorldRole,
+    WorldSource,
+)
+from dmtools.terrain.pipeline.world import WorldMap, prepare_world_map
+from dmtools.terrain.viewport import MapViewport
+
+
+@dataclass(frozen=True)
+class _Opened:
+    world: WorldMap
+    path: Path
+
+
+@dataclass(frozen=True)
+class _Saved:
+    world: WorldMap
+    path: Path
+
+
+type _Event = WorldSource | WorldMap | _Opened | _Saved | Exception
+type _Ownership = tuple[tuple[WorldContinent, ...], tuple[WorldAssignment, ...]]
+
+
+class WorldWorkspace(ttk.Frame):
+    def __init__(self, parent: tk.Misc, on_change: Callable[[], None]) -> None:
+        super().__init__(parent, style="Paper.TFrame", padding=(18, 12))
+        self.on_change = on_change
+        self._scheduler = self.winfo_toplevel()
+        self.source: WorldSource | None = None
+        self.path: Path | None = None
+        self.validated: WorldMap | None = None
+        self.continents: tuple[WorldContinent, ...] = ()
+        self.assignments: tuple[WorldAssignment, ...] = ()
+        self._undo: list[_Ownership] = []
+        self._redo: list[_Ownership] = []
+        self._saved_signature: object = None
+        self._loading = False
+        self.busy = False
+        self._closed = False
+        self._events: queue.Queue[_Event] = queue.Queue()
+        self._after_save: Callable[[], None] | None = None
+        self._poll_id: str | None = None
+        self._draw_id: str | None = None
+        self._photo: ImageTk.PhotoImage | None = None
+        self.viewport = MapViewport()
+        self._pan: tuple[float, float] | None = None
+        self._controls: list[tuple[ttk.Widget, str]] = []
+        self.values = {
+            key: tk.StringVar(self, value=value)
+            for key, value in (
+                ("name", "Untitled world"),
+                ("radius", ""),
+                ("meridian", "0"),
+                ("x", "0"),
+                ("y", "0"),
+                ("width", "360"),
+                ("height", "180"),
+            )
+        }
+        self.owner = tk.StringVar(self)
+        self.role = tk.StringVar(self, value="Mainland")
+        self.status = tk.StringVar(self, value="Import an SVG world map, or open a saved world.")
+        self.summary = tk.StringVar(
+            self,
+            value="Your source map stays intact. Assign each shape "
+            "to a continent or exclude it, then confirm the world frame.",
+        )
+        self.inspection = tk.StringVar(
+            self, value="Wheel: zoom  ·  Middle/right drag: pan  ·  F: fit"
+        )
+        self.show_excluded = tk.BooleanVar(self, value=True)
+        self._build()
+        for value in self.values.values():
+            value.trace_add("write", self._changed)
+        self._poll_id = self._scheduler.after(80, self._poll)
+
+    @property
+    def dirty(self) -> bool:
+        return self.source is not None and self._signature() != self._saved_signature
+
+    def _signature(self) -> object:
+        return (
+            self.source.sha256 if self.source else None,
+            tuple((k, v.get()) for k, v in self.values.items()),
+            self.continents,
+            self.assignments,
+        )
+
+    def _button(
+        self, parent: tk.Misc, label: str, action: Callable[[], object], *, accent: bool = False
+    ) -> ttk.Button:
+        button = ttk.Button(
+            parent,
+            text=label,
+            command=action,
+            style="Accent.TButton" if accent else "Quiet.TButton",
+        )
+        self._controls.append((button, "normal"))
+        return button
+
+    def _build(self) -> None:
+        self.columnconfigure(1, weight=1)
+        self.rowconfigure(2, weight=1)
+        header = ttk.Frame(self, style="Paper.TFrame")
+        header.grid(row=0, column=0, columnspan=2, sticky="ew", pady=(0, 8))
+        ttk.Label(header, text="World map", style="Header.TLabel").pack(side="left")
+        for label, action in (
+            ("Import SVG…", self.choose_svg),
+            ("Open world…", self.choose_world),
+            ("Save", self.save),
+            ("Save As…", lambda: self.save(save_as=True)),
+        ):
+            self._button(header, label, action).pack(side="left", padx=(10, 0))
+        ttk.Label(
+            self,
+            text="1  WORLD SOURCE     →     2  CONTEXT     →     3  ROUGH TERRAIN"
+            "     →     4  REGIONAL DETAIL",
+            style="Eyebrow.TLabel",
+        ).grid(row=1, column=0, columnspan=2, sticky="w", pady=(0, 12))
+        sidebar = ttk.Frame(self, style="Panel.TFrame", padding=12)
+        sidebar.grid(row=2, column=0, sticky="nsew", padx=(0, 12))
+        sidebar.columnconfigure(0, weight=1)
+        sidebar.rowconfigure(0, weight=1)
+        pages = ttk.Notebook(sidebar, width=390)
+        pages.grid(row=0, column=0, sticky="nsew")
+        mapping = ttk.Frame(pages, style="Panel.TFrame", padding=8)
+        frame_page = ttk.Frame(pages, style="Panel.TFrame", padding=12)
+        pages.add(mapping, text="Continents & shapes")
+        pages.add(frame_page, text="World frame")
+        mapping.columnconfigure(0, weight=1)
+        mapping.rowconfigure(1, weight=1)
+        tools = ttk.Frame(mapping, style="Panel.TFrame")
+        tools.grid(row=0, column=0, columnspan=2, sticky="ew", pady=(0, 6))
+        self._button(tools, "Suggest from groups", self.suggest_groups).pack(side="left")
+        self._button(tools, "Undo", self.undo).pack(side="left", padx=4)
+        self._button(tools, "Redo", self.redo).pack(side="left")
+        self.tree = ttk.Treeview(mapping, columns=("owner",), selectmode="extended", height=10)
+        self.tree.heading("#0", text="Source shape")
+        self.tree.heading("owner", text="Assignment")
+        self.tree.column("#0", width=215, minwidth=110, stretch=True)
+        self.tree.column("owner", width=120, minwidth=95, stretch=False)
+        self.tree.grid(row=1, column=0, sticky="nsew")
+
+        def scroll_tree(*args: str) -> None:
+            self.tree.yview(*args)
+
+        scrollbar = ttk.Scrollbar(mapping, orient="vertical", command=scroll_tree)
+        scrollbar.grid(row=1, column=1, sticky="ns")
+        self.tree.configure(yscrollcommand=scrollbar.set)
+        self.tree.bind("<<TreeviewSelect>>", self._selection)
+        self.detail = ttk.Label(
+            mapping,
+            text="Select shapes here or click the map.",
+            style="Muted.TLabel",
+            wraplength=370,
+        )
+        self.detail.grid(row=2, column=0, columnspan=2, sticky="ew", pady=8)
+        ttk.Label(mapping, text="Continent name (choose or enter)", style="Body.TLabel").grid(
+            row=3, column=0, sticky="w"
+        )
+        self.owner_input = ttk.Combobox(mapping, textvariable=self.owner)
+        self.owner_input.grid(row=4, column=0, columnspan=2, sticky="ew", pady=(3, 6))
+        self._controls.append((self.owner_input, "normal"))
+        self.role_input = ttk.Combobox(
+            mapping,
+            textvariable=self.role,
+            state="readonly",
+            values=("Mainland", "Island", "Exclude"),
+        )
+        self.role_input.grid(row=5, column=0, columnspan=2, sticky="ew")
+        self._controls.append((self.role_input, "readonly"))
+        self._button(mapping, "Assign selected shapes", self.assign_selected).grid(
+            row=6, column=0, columnspan=2, sticky="ew", pady=6
+        )
+        self._button(mapping, "Rename assigned continent…", self.rename_continent).grid(
+            row=7, column=0, columnspan=2, sticky="ew"
+        )
+        self._button(mapping, "Select all shapes", self.select_all).grid(
+            row=8, column=0, columnspan=2, sticky="ew", pady=6
+        )
+        ttk.Label(frame_page, text="Full-world spherical Plate Carrée", style="Value.TLabel").grid(
+            row=0, column=0, columnspan=2, sticky="w", pady=(0, 10)
+        )
+        for row, (key, label) in enumerate(
+            (
+                ("name", "World name"),
+                ("radius", "Planet radius · km"),
+                ("meridian", "Central meridian · °"),
+                ("x", "Frame left · source units"),
+                ("y", "Frame top · source units"),
+                ("width", "Frame width · source units"),
+                ("height", "Frame height · source units"),
+            ),
+            start=1,
+        ):
+            ttk.Label(frame_page, text=label, style="Body.TLabel").grid(
+                row=row * 2, column=0, sticky="w", pady=(7, 2)
+            )
+            entry = ttk.Entry(frame_page, textvariable=self.values[key], width=32)
+            entry.grid(row=row * 2 + 1, column=0, sticky="ew")
+            self._controls.append((entry, "normal"))
+        ttk.Label(
+            frame_page,
+            text="This frame represents 360° longitude and 180° latitude. "
+            "Confirm its bounds from your map's projection; exclude legends and margins. "
+            "SVG display size is not planetary scale. Enter your planet's radius.",
+            style="Muted.TLabel",
+            wraplength=335,
+        ).grid(row=17, column=0, sticky="ew", pady=12)
+        self._button(sidebar, "Validate world", self.validate, accent=True).grid(
+            row=1, column=0, sticky="ew", pady=(10, 5)
+        )
+        self.progress = ttk.Progressbar(sidebar, mode="indeterminate")
+        self.progress.grid(row=2, column=0, sticky="ew")
+        viewer = ttk.Frame(self, style="Panel.TFrame")
+        viewer.grid(row=2, column=1, sticky="nsew")
+        viewer.columnconfigure(0, weight=1)
+        viewer.rowconfigure(1, weight=1)
+        toolbar = ttk.Frame(viewer, style="Panel.TFrame", padding=6)
+        toolbar.grid(row=0, column=0, sticky="ew")
+        ttk.Button(toolbar, text="Fit world", command=self.fit).pack(side="left")
+        ttk.Checkbutton(
+            toolbar,
+            text="Show excluded shapes",
+            variable=self.show_excluded,
+            command=self._schedule_draw,
+        ).pack(side="left", padx=12)
+        ttk.Label(
+            toolbar, text="Source geography · context and terrain are planned", style="Muted.TLabel"
+        ).pack(side="right", padx=5)
+        self.canvas = tk.Canvas(viewer, background=OCEAN, highlightthickness=0)
+        self.canvas.grid(row=1, column=0, sticky="nsew")
+        self.canvas.bind("<Configure>", lambda _e: self._schedule_draw())
+        self.canvas.bind("<MouseWheel>", self._wheel)
+        self.canvas.bind("<Button-1>", self._pick)
+        self.canvas.bind("<Motion>", self._motion)
+        for button in (2, 3):
+            self.canvas.bind(f"<ButtonPress-{button}>", self._pan_start)
+            self.canvas.bind(f"<B{button}-Motion>", self._pan_move)
+            self.canvas.bind(f"<ButtonRelease-{button}>", self._pan_end)
+        ttk.Label(viewer, textvariable=self.inspection, style="Muted.TLabel", padding=6).grid(
+            row=2, column=0, sticky="ew"
+        )
+        ttk.Label(
+            viewer, textvariable=self.summary, style="Body.TLabel", padding=10, wraplength=720
+        ).grid(row=3, column=0, sticky="ew")
+        ttk.Label(self, textvariable=self.status, style="Eyebrow.TLabel", wraplength=1100).grid(
+            row=3, column=0, columnspan=2, sticky="ew", pady=(10, 0)
+        )
+
+    def _changed(self, *_args: str) -> None:
+        if self._loading:
+            return
+        self.validated = None
+        if self.source:
+            remaining = len(self.source.features) - len(self.assignments)
+            self.summary.set(
+                f"{len(self.continents)} continents · {remaining} unassigned shapes. "
+                "Review assignments and world frame, then validate."
+            )
+        self.on_change()
+        self._schedule_draw()
+
+    def _frame(self) -> WorldFrame:
+        try:
+            x, y, w, h = (float(self.values[k].get()) for k in ("x", "y", "width", "height"))
+            return WorldFrame(
+                (x, y, x + w, y + h),
+                float(self.values["radius"].get()),
+                float(self.values["meridian"].get()),
+            )
+        except ValueError as error:
+            raise ValueError(
+                "Confirm numeric world-frame bounds, central meridian and a positive "
+                f"planet radius in the World frame tab. {error}"
+            ) from error
+
+    def project(self) -> WorldProject:
+        if self.source is None:
+            raise ValueError("Import or open a world map first.")
+        return WorldProject(
+            self.values["name"].get().strip(),
+            self.source,
+            self._frame(),
+            self.continents,
+            self.assignments,
+        )
+
+    def _set_busy(self, busy: bool) -> None:
+        self.busy = busy
+        for control, normal in self._controls:
+            control["state"] = "disabled" if busy else normal
+        if busy:
+            self.progress.start(12)
+        else:
+            self.progress.stop()
+
+    def _work(self, label: str, operation: Callable[[], _Event]) -> None:
+        if self.busy:
+            return
+        self.status.set(label)
+        self._set_busy(True)
+
+        def worker() -> None:
+            try:
+                self._events.put(operation())
+            except Exception as error:
+                self._events.put(error)
+
+        threading.Thread(target=worker, name="world-source-worker", daemon=True).start()
+
+    def _poll(self) -> None:
+        if self._closed:
+            return
+        self._poll_id = None
+        while not self._events.empty():
+            event = self._events.get_nowait()
+            self._set_busy(False)
+            if isinstance(event, Exception):
+                self._after_save = None
+                self.status.set(str(event))
+                messagebox.showerror("World map needs attention", str(event), parent=self)
+            elif isinstance(event, WorldSource):
+                self.accept_source(event)
+            elif isinstance(event, _Opened):
+                self.accept_world(event.world, event.path)
+            else:
+                result = event.world if isinstance(event, _Saved) else event
+                self.validated = result
+                self._show_summary(result)
+                if isinstance(event, _Saved):
+                    self.path = event.path
+                    self._saved_signature = self._signature()
+                    self.status.set(f"Saved {event.path.name}. Original SVG is embedded.")
+                    self.on_change()
+                    callback, self._after_save = self._after_save, None
+                    if callback:
+                        callback()
+                        if self._closed:
+                            return
+                else:
+                    self.status.set(
+                        "World source validated. Save it to retain this geography and "
+                        "continent assignment. Context generation follows later."
+                    )
+        self._poll_id = self._scheduler.after(80, self._poll)
+
+    def choose_svg(self) -> None:
+        def choose() -> None:
+            selected = filedialog.askopenfilename(
+                parent=self, title="Import full world SVG", filetypes=[("SVG world map", "*.svg")]
+            )
+            if selected:
+                self.load_svg(Path(selected))
+
+        self.guard(choose)
+
+    def load_svg(self, path: Path) -> None:
+        self._work("Reading world source and retained shapes…", lambda: load_world_svg(path))
+
+    def choose_world(self) -> None:
+        def choose() -> None:
+            selected = filedialog.askopenfilename(
+                parent=self, title="Open world", filetypes=[("DM Tools world", "*.dmworld.json")]
+            )
+            if selected:
+                self.load_world(Path(selected))
+
+        self.guard(choose)
+
+    def load_world(self, path: Path) -> None:
+        self._work("Opening and checking portable world…", lambda: _Opened(open_world(path), path))
+
+    def accept_source(self, source: WorldSource) -> None:
+        self._loading = True
+        self.source, self.path, self.validated = source, None, None
+        self.continents, self.assignments = (), ()
+        self._undo.clear()
+        self._redo.clear()
+        self._saved_signature = None
+        x0, y0, x1, y1 = source.suggested_bounds
+        for key, value in (
+            ("name", Path(source.name).stem),
+            ("radius", ""),
+            ("meridian", "0"),
+            ("x", str(x0)),
+            ("y", str(y0)),
+            ("width", str(x1 - x0)),
+            ("height", str(y1 - y0)),
+        ):
+            self.values[key].set(value)
+        self._loading = False
+        self.viewport.fit()
+        self._populate()
+        self._changed()
+        self.status.set(
+            f"Imported {source.name}: {len(source.features)} shapes. "
+            "Assign continents (or suggest from groups), then confirm the World frame."
+        )
+
+    def accept_world(self, world: WorldMap, path: Path) -> None:
+        self.accept_source(world.project.source)
+        self._loading = True
+        self.continents = world.project.continents
+        self.assignments = world.project.assignments
+        frame = world.project.frame
+        for key, value in (
+            ("name", world.project.name),
+            ("radius", str(frame.radius_km)),
+            ("meridian", str(frame.central_meridian_deg)),
+            ("x", str(frame.bounds[0])),
+            ("y", str(frame.bounds[1])),
+            ("width", str(frame.width)),
+            ("height", str(frame.height)),
+        ):
+            self.values[key].set(value)
+        self._loading = False
+        self.path, self.validated = path, world
+        self._saved_signature = self._signature()
+        self._populate()
+        self._show_summary(world)
+        self.status.set(f"Opened {path.name}. Source geometry and ownership verified.")
+        self.on_change()
+        self._schedule_draw()
+
+    def _populate(self) -> None:
+        selected = self.tree.selection()
+        self.tree.delete(*self.tree.get_children())
+        owners = {c.id: c.name for c in self.continents}
+        assignments = {a.feature_id: a for a in self.assignments}
+        if self.source:
+            for feature in self.source.features:
+                assignment = assignments.get(feature.id)
+                label = "Unassigned"
+                if assignment:
+                    label = (
+                        "Excluded"
+                        if assignment.continent_id is None
+                        else owners[assignment.continent_id]
+                        + (" · island" if assignment.role == "island" else "")
+                    )
+                self.tree.insert("", "end", iid=feature.id, text=feature.label, values=(label,))
+        self.owner_input.configure(values=sorted(owners.values(), key=str.casefold))
+        self.tree.selection_set([key for key in selected if self.tree.exists(key)])
+        self._schedule_draw()
+
+    def _selection(self, _event: tk.Event[tk.Misc] | None = None) -> None:
+        selection = self.tree.selection()
+        if self.source and selection:
+            feature = next(f for f in self.source.features if f.id == selection[0])
+            self.detail.configure(
+                text=f"{len(selection)} selected · {feature.label}"
+                + (f"\nGroup: {' / '.join(feature.groups)}" if feature.groups else "")
+                + (f"\n{feature.issue}" if feature.issue else "")
+            )
+            assignment = next((a for a in self.assignments if a.feature_id == selection[0]), None)
+            if assignment:
+                self.role.set(assignment.role.title())
+                if assignment.continent_id:
+                    self.owner.set(
+                        next(c.name for c in self.continents if c.id == assignment.continent_id)
+                    )
+        else:
+            self.detail.configure(text="Select shapes here or click the map.")
+        self._schedule_draw()
+
+    def _commit_ownership(
+        self, continents: tuple[WorldContinent, ...], assignments: tuple[WorldAssignment, ...]
+    ) -> None:
+        if (continents, assignments) == (self.continents, self.assignments):
+            return
+        self._undo.append((self.continents, self.assignments))
+        self._undo = self._undo[-100:]
+        self._redo.clear()
+        self.continents, self.assignments = continents, assignments
+        self._populate()
+        self._changed()
+
+    def suggest_groups(self) -> None:
+        if self.source and not self.busy:
+            continents, assignments = propose_group_assignments(self.source)
+            self._commit_ownership(continents, assignments)
+            self.status.set(
+                "Group suggestions applied. Review ownership and excluded shapes; "
+                "Undo restores the previous assignments."
+            )
+
+    def assign_selected(self) -> None:
+        selected = self.tree.selection()
+        if self.busy or not selected:
+            self.status.set("Select one or more source shapes first.")
+            return
+        try:
+            roles: dict[str, WorldRole] = {
+                "Mainland": "mainland",
+                "Island": "island",
+                "Exclude": "exclude",
+            }
+            role = roles[self.role.get()]
+            continents = {c.id: c for c in self.continents}
+            owner: str | None = None
+            if role != "exclude":
+                name = self.owner.get().strip()
+                continent = next(
+                    (c for c in self.continents if c.name.casefold() == name.casefold()), None
+                )
+                if continent is None:
+                    continent = continent_from_name(name)
+                    if continent.id in continents:
+                        continent = WorldContinent(continent.id + "-" + uuid4().hex[:8], name)
+                continents[continent.id] = continent
+                owner = continent.id
+            assignments = {a.feature_id: a for a in self.assignments}
+            assignments.update((key, WorldAssignment(key, owner, role)) for key in selected)
+            used = {a.continent_id for a in assignments.values()}
+            self._commit_ownership(
+                tuple(c for c in continents.values() if c.id in used),
+                tuple(sorted(assignments.values(), key=lambda a: a.feature_id)),
+            )
+        except ValueError as error:
+            self.status.set(str(error))
+
+    def rename_continent(self) -> None:
+        from tkinter import simpledialog
+
+        if self.busy:
+            return
+        current = next((c for c in self.continents if c.name == self.owner.get()), None)
+        if current is None:
+            self.status.set("Select a shape assigned to the continent you want to rename.")
+            return
+        name = simpledialog.askstring(
+            "Rename continent", "Continent name:", initialvalue=current.name, parent=self
+        )
+        if name is None:
+            return
+        try:
+            renamed = WorldContinent(current.id, name.strip())
+            if any(
+                c.id != current.id and c.name.casefold() == renamed.name.casefold()
+                for c in self.continents
+            ):
+                raise ValueError("Another continent already has that name.")
+            self._commit_ownership(
+                tuple(renamed if c.id == current.id else c for c in self.continents),
+                self.assignments,
+            )
+            self.owner.set(renamed.name)
+        except ValueError as error:
+            self.status.set(str(error))
+
+    def undo(self) -> None:
+        if self._undo and not self.busy:
+            self._redo.append((self.continents, self.assignments))
+            self.continents, self.assignments = self._undo.pop()
+            self._populate()
+            self._changed()
+
+    def redo(self) -> None:
+        if self._redo and not self.busy:
+            self._undo.append((self.continents, self.assignments))
+            self.continents, self.assignments = self._redo.pop()
+            self._populate()
+            self._changed()
+
+    def select_all(self) -> None:
+        self.tree.selection_set(self.tree.get_children())
+
+    def validate(self) -> None:
+        if self.busy:
+            return
+        try:
+            project = self.project()
+        except ValueError as error:
+            self.status.set(str(error))
+            return
+        self._work(
+            "Checking world frame, seams, ownership and overlap…",
+            lambda: prepare_world_map(project),
+        )
+
+    def save(self, *, save_as: bool = False, after_save: Callable[[], None] | None = None) -> None:
+        if self.busy:
+            return
+        try:
+            project = self.project()
+        except ValueError as error:
+            self.status.set(str(error))
+            return
+        path = self.path
+        if save_as or path is None:
+            selected = filedialog.asksaveasfilename(
+                parent=self,
+                title="Save world inputs",
+                defaultextension=WORLD_EXTENSION,
+                initialfile=(self.path.name if self.path else "world.dmworld.json"),
+                filetypes=[("DM Tools world", "*.dmworld.json")],
+            )
+            if not selected:
+                return
+            path = Path(selected)
+        target = path
+        self._after_save = after_save
+        self._work(
+            "Validating and saving portable world…",
+            lambda: _Saved(save_world(project, target), target),
+        )
+
+    def guard(self, action: Callable[[], None]) -> None:
+        if self.busy:
+            self.status.set("Wait for the world operation to finish before continuing.")
+            return
+        if not self.dirty:
+            action()
+            return
+        answer = messagebox.askyesnocancel(
+            "Save world changes?", "Save this world's inputs before continuing?", parent=self
+        )
+        if answer is True:
+            self.save(after_save=action)
+        elif answer is False:
+            action()
+
+    def _show_summary(self, world: WorldMap) -> None:
+        names = " · ".join(f"{c.name}: {c.area_km2:,.0f} km²" for c in world.continents)
+        self.summary.set(
+            f"{len(world.continents)} continents · {world.land_fraction:.1%} land · "
+            f"radius {world.project.frame.radius_km:,.0f} km\n{names}\n"
+            "Areas use sampled boundaries on the declared sphere. "
+            "World source is ready; climate and terrain are not generated yet."
+        )
+
+    def _bounds(self) -> tuple[float, float, float, float]:
+        try:
+            return self._frame().bounds
+        except ValueError:
+            return self.source.suggested_bounds if self.source else (0.0, 0.0, 360.0, 180.0)
+
+    def _schedule_draw(self) -> None:
+        if not self._closed and self._draw_id is None:
+            self._draw_id = self._scheduler.after(25, self._draw)
+
+    def _draw(self) -> None:
+        self._draw_id = None
+        self.canvas.delete("all")
+        self._photo = None
+        width, height = max(1, self.canvas.winfo_width()), max(1, self.canvas.winfo_height())
+        if self.source is None:
+            self.canvas.create_text(
+                width / 2,
+                height / 2 - 24,
+                text="Start with your world",
+                fill="#d9e5df",
+                font=("Segoe UI", 24, "bold"),
+            )
+            self.canvas.create_text(
+                width / 2,
+                height / 2 + 25,
+                text="Import an SVG or open the public example world.\n"
+                "Continents, islands and the world frame stay connected.",
+                fill="#9bb4b3",
+                font=("Segoe UI", 11),
+                justify="center",
+            )
+            return
+        bounds = self._bounds()
+        try:
+            with render_world_source(
+                self.source,
+                bounds,
+                self.assignments,
+                self.viewport,
+                (width, height),
+                frozenset(self.tree.selection()),
+                show_excluded=self.show_excluded.get(),
+            ) as image:
+                self._photo = ImageTk.PhotoImage(image, master=self)
+        except ValueError as error:
+            self.status.set(str(error))
+            return
+        self.canvas.create_image(0, 0, image=self._photo, anchor="nw")
+        left, top, right, bottom = self.viewport.rect(
+            (width, height), (bounds[2] - bounds[0], bounds[3] - bounds[1])
+        )
+        for index in range(1, 6):
+            x = left + (right - left) * index / 6
+            self.canvas.create_line(x, top, x, bottom, fill="#476068", dash=(2, 6))
+        for index in range(1, 6):
+            y = top + (bottom - top) * index / 6
+            self.canvas.create_line(left, y, right, y, fill="#476068", dash=(2, 6))
+        self.canvas.create_rectangle(left, top, right, bottom, outline="#87a6a5")
+        self.canvas.create_text(
+            12,
+            12,
+            anchor="nw",
+            text=f"{self.source.name}  ·  {self.viewport.zoom:.1f}x  ·  source preview",
+            fill="#e3eddf",
+            font=("Segoe UI", 10, "bold"),
+        )
+
+    def fit(self) -> None:
+        self.viewport.fit()
+        self._schedule_draw()
+
+    def _size(self) -> tuple[int, int]:
+        return max(1, self.canvas.winfo_width()), max(1, self.canvas.winfo_height())
+
+    def _world_size(self) -> tuple[float, float]:
+        x0, y0, x1, y1 = self._bounds()
+        return x1 - x0, y1 - y0
+
+    def _wheel(self, event: tk.Event[tk.Misc]) -> str:
+        self.canvas.focus_set()
+        if event.delta:
+            self.viewport.zoom_at(
+                1.25 if event.delta > 0 else 0.8,
+                (event.x, event.y),
+                self._size(),
+                self._world_size(),
+            )
+            self._schedule_draw()
+        return "break"
+
+    def _pan_start(self, event: tk.Event[tk.Misc]) -> None:
+        self.canvas.focus_set()
+        self._pan = event.x, event.y
+        self.canvas.configure(cursor="fleur")
+
+    def _pan_move(self, event: tk.Event[tk.Misc]) -> None:
+        if self._pan:
+            self.viewport.pan(
+                (event.x - self._pan[0], event.y - self._pan[1]), self._size(), self._world_size()
+            )
+            self._pan = event.x, event.y
+            self._schedule_draw()
+
+    def _pan_end(self, _event: tk.Event[tk.Misc]) -> None:
+        self._pan = None
+        self.canvas.configure(cursor="")
+
+    def _position(self, event: tk.Event[tk.Misc]) -> tuple[float, float] | None:
+        left, top, right, bottom = self.viewport.rect(self._size(), self._world_size())
+        if not left <= event.x <= right or not top <= event.y <= bottom:
+            return None
+        x0, y0, x1, y1 = self._bounds()
+        return (
+            x0 + (event.x - left) / (right - left) * (x1 - x0),
+            y0 + (event.y - top) / (bottom - top) * (y1 - y0),
+        )
+
+    def _motion(self, event: tk.Event[tk.Misc]) -> None:
+        position = self._position(event)
+        if position is None:
+            return
+        try:
+            longitude, latitude = self._frame().source_to_lonlat(position)
+            self.inspection.set(
+                f"{abs(latitude):.2f}° {'N' if latitude >= 0 else 'S'}   "
+                f"{abs(longitude):.2f}° {'E' if longitude >= 0 else 'W'}   ·   "
+                "Wheel: zoom · Middle/right drag: pan · F: fit"
+            )
+        except ValueError:
+            self.inspection.set(
+                f"Source x {position[0]:.2f}, y {position[1]:.2f} · "
+                "Confirm the world frame and radius for geographic coordinates."
+            )
+
+    def _pick(self, event: tk.Event[tk.Misc]) -> None:
+        self.canvas.focus_set()
+        position = self._position(event)
+        if position is None or self.source is None:
+            return
+        span = self._world_size()[0]
+        excluded = {a.feature_id for a in self.assignments if a.role == "exclude"}
+        for feature in reversed(self.source.features):
+            if feature.id in excluded and not self.show_excluded.get():
+                continue
+            if any(
+                Polygon(c.exterior, c.holes).covers(Point(position[0] + shift, position[1]))
+                for c in feature.components
+                for shift in (-span, 0.0, span)
+            ):
+                if int(event.state) & 0x0004:
+                    self.tree.selection_add(feature.id)
+                else:
+                    self.tree.selection_set(feature.id)
+                self.tree.see(feature.id)
+                return
+
+    def close(self) -> None:
+        self._closed = True
+        for identifier in (self._poll_id, self._draw_id):
+            if identifier:
+                self._scheduler.after_cancel(identifier)
+        self._poll_id = self._draw_id = None
+        self._photo = None

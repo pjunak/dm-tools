@@ -30,7 +30,7 @@ The [research status](docs/research/status.md) separates completed slices from
 partially addressed research goals; unchecked broad items may contain completed
 substeps.
 
-## Current execution focus — 2026-09-24
+## Current execution focus — 2026-09-25
 
 The [progress reassessment](docs/research/2026-09-24-progress-and-generation-strategy.md)
 finds strong workbench/build foundations but unaccepted drainage and landform
@@ -41,7 +41,7 @@ not a physical river-water validation or a private-map result.
 | Order | Outcome and existing backlog owners | Gate |
 |---|---|---|
 | **A — quality controls** | Quality fixtures, paired maps/profiles, process-scale warnings; convergent-flat comparison (R02/R25/R27/R41/R43) | Fixed comparison set and a measured accept/reject result; no new benchmark framework |
-| **W — next foundation** | Retained world import/frame/continent identities (WC0), then ocean/geographic/province context (WC1; R01/R49) | Preserve authored vectors and global scale; context is provisional, not solved climate |
+| **W — next foundation** | Delivered WC0 world source/frame/ownership; next ocean/geographic/province context (WC1; R01/R49) | Preserve authored vectors and global scale; context is provisional, not solved climate |
 | **B — next major generation decision** | Build on the measured frozen reconstruction: physical valley/path geometry and grid/capture sensitivity (R48/R32) | Profile gains do not close direction or authoring gates; preserve anchors, cuts, junctions, terminals and coverage before LE3 |
 | **C** | Consolidate one coherent range/pass/tributary/lowland system from the selected comparison (R08/R09/R14/R40/R44) | Better structural/visual results across fixed seeds and physical scales |
 | **W — after B/C acceptance** | Rough world, seasonal climate/runoff feedback and reviewed parent (WC2-WC4; R33/R49) | Physical terrain acceptance, bounded coupling, shared world time and budgets |
@@ -60,15 +60,20 @@ from the current quality milestone; no stronger clearance claims are implied.
 The [new source/tool review](docs/research/2026-09-24-world-context-enrichment.md)
 and [WC0-WC6 plan](docs/strategy/world-context.md) refine the full-world workflow.
 This advances world placement and forcing from the former final climate phase;
-no world importer, climate engine or continent-history feature is implemented yet.
+WC0 source import and the World workspace are now implemented. Climate and
+continent-history generation remain planned.
 
 - [x] **Research and plan:** compare geographic/tectonic/climate models and existing
   tools; define fixed-coast import → provisional context → rough relief → bounded
   climate/history feedback → reviewed parent → same-present regional refinement.
-- [ ] **WC0 — Retain the world source** (R01/R49): explicit projection/frame/radius,
-  continent/island ownership, selected SVG groups and import preview. Next batch.
+- [x] **WC0 — Retain the world source** (R01/R49): explicit full-sphere
+  Plate Carrée frame/radius, continent/island mapping, source preview, portable
+  SVG snapshot and guarded saves. See the [guide](docs/terrain-worlds.md) and
+  [validation report](docs/research/2026-09-25-world-source-workspace.md).
 - [ ] **WC1 — Generate provisional context** (R07/R10/R11/R49): ocean topology and
   exposure, bathymetric hypotheses, geological provinces and inspectable defaults.
+  First slice: spherical cell areas, fractional coverage, periodic water
+  connectivity and explicit unresolved straits/islands; then fetch/interior distance.
 - [ ] **WC2 — Produce a rough physical world** (R02/R48/R49): process/domain scale,
   related macro relief and ocean basins, after B/C and relevant LE acceptance.
 - [ ] **WC3 — Couple climate/runoff and coarse history** (R33/R49): seasonal budgets,
@@ -169,7 +174,8 @@ records execution and its remaining gates; the simulation is still research-only
   parameters, working extent and units, runtime/dependency versions, warnings,
   and authoritative output hashes.
   Completed builds record named stage seeds, numeric product hashes,
-  and explicit local-only NPY/GeoTIFF coordinates. World placement remains open.
+  and explicit local-only NPY/GeoTIFF coordinates. World-bound terrain placement
+  remains open; WC0 source placement is implemented separately.
 - [x] **P0 — Export the authoritative Float32 DEM as local-metric GeoTIFF.**
   Implemented point registration, metre units, NaN nodata, embedded masks,
   numeric-source hashes and manifest linkage. See the
@@ -619,9 +625,15 @@ contracts and provisional context forward. Coupled climate/runoff follows rough
 terrain acceptance; ecological interpretations remain downstream. R49 owns the
 workflow, with shared numeric responsibilities in R01/R02/R07/R10/R11/R15/R33/R34.
 
-- [ ] **P0 — Preserve full-world import and continent identities.** Retain selected
-  SVG groups, islands, holes and explicit frame/radius; derive a separate physical
-  land union. Do not equate continents with connected land, plates or watersheds.
+- [x] **P0 — Preserve full-world import and continent identities.** World source
+  snapshots retain SVG groups/IDs, islands, holes and explicit frame/radius.
+  Derived wrapped views validate physical overlap without dissolving ownership.
+  Continents are not connected components, plates or watersheds.
+- [ ] **P1 — Extend world-source usability after measured need.** Checkpoint/cancel
+  long imports, profile dense curved coastlines and decide whether incomplete
+  mapping drafts need a separate format. The current world save requires valid
+  geography and complete assignments. Regional extraction waits for metric
+  projection/context contracts; never feed spherical page coordinates to erosion.
 - [ ] **P1 — Generate inspectable ocean and geological context.** Record connected
   water, gateways, upwind exposure, shelf/basin hypotheses and province histories.
   Keep bathymetry separate from effective mixed-layer depth and ocean heat transport.
@@ -974,8 +986,9 @@ Priorities remain conditional on the current strategy's prerequisites.
   regional working CRS. Check ground-distance distortion and a world/region
   round trip. A metric label alone must not imply geographic accuracy.
   The [shared coordinate contract](docs/terrain-coordinates.md) now preserves
-  source/local inverse conversion and explicit grid extents. World placement,
-  planetary metadata and working-CRS declarations remain future project work.
+  source/local inverse conversion and explicit grid extents. WC0 adds a separate
+  full-world frame/radius, spherical conversion and seam/area controls. Regional
+  working projections, distortion checks and world-bound terrain exports remain open.
 - [ ] **P0 — R02: Expose effective process and diagnostic spacing.** Record the
   shared 257-sample routing/diagnostic grid in the build report;
   flag landforms too small to resolve. Define versioned process resolution
@@ -1335,13 +1348,15 @@ Priorities remain conditional on the current strategy's prerequisites.
   Run public spherical/topology, continentality, rain-shadow, water/heat budget,
   old-crust/young-belt and no-double-aging controls before production adoption.
   Existing solutions and optional alternatives are recorded in the
-  [source review](docs/research/2026-09-24-world-context-enrichment.md); no new
-  runtime dependency or public schema is implied by this planned item.
+  [source review](docs/research/2026-09-24-world-context-enrichment.md). WC0 source
+  handling and its [schema](schemas/world/project-v1.schema.json) are implemented
+  without new runtime dependencies. WC1-WC6 products and acceptance remain open.
 
 ## UI / UX improvements
 
-Current priority: WC0's retained-source/mapping preview, then paired generation
-comparisons, selected-channel profiles and process-resolution/conflict feedback
+WC0's retained-source/mapping workspace is delivered. Current priorities are
+WC1 support/topology inspection, paired generation comparisons, selected-channel
+profiles and process-resolution/conflict feedback
 for A/B. The complete world wizard follows accepted WC2/WC3 products; do not
 expose controls whose backend is absent. Further polish should serve these gates.
 [ADR-0047](docs/adr/0047-edit-generation-inputs-only.md) defines input editing;

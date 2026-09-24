@@ -1,0 +1,59 @@
+"""Validated world-map open/save and explicit proposed continent assignments."""
+
+from hashlib import sha256
+from pathlib import Path
+
+from dmtools.terrain.adapters.world_project import read_world_project, write_world_project
+from dmtools.terrain.adapters.world_svg import parse_world_svg
+from dmtools.terrain.domain.world import WorldAssignment, WorldContinent, WorldProject, WorldSource
+from dmtools.terrain.pipeline.world import WorldMap, prepare_world_map
+
+
+def open_world(path: Path) -> WorldMap:
+    return prepare_world_map(read_world_project(path))
+
+
+def save_world(project: WorldProject, path: Path) -> WorldMap:
+    if parse_world_svg(project.source.svg, project.source.name) != project.source:
+        raise ValueError("World source snapshot and inspection geometry disagree; import again.")
+    result = prepare_world_map(project)
+    write_world_project(project, path)
+    return result
+
+
+def continent_from_name(name: str) -> WorldContinent:
+    name = name.strip()
+    return WorldContinent("continent-" + sha256(name.encode("utf-8")).hexdigest()[:20], name)
+
+
+def propose_group_assignments(
+    source: WorldSource,
+) -> tuple[tuple[WorldContinent, ...], tuple[WorldAssignment, ...]]:
+    """User-invoked suggestion only; unnamed/unclassified shapes remain unresolved."""
+    continents: dict[str, WorldContinent] = {}
+    assignments: list[WorldAssignment] = []
+
+    def normalized(value: str) -> str:
+        return "".join(c for c in value.casefold() if c.isalnum())
+
+    explicit_land = any("landshapes" in tuple(map(normalized, f.groups)) for f in source.features)
+    for feature in source.features:
+        groups = tuple(map(normalized, feature.groups))
+        if "mapfurniture" in groups or (explicit_land and "landshapes" not in groups):
+            assignments.append(WorldAssignment(feature.id, None, "exclude"))
+            continue
+        if feature.issue or not feature.groups:
+            continue
+        names = [
+            name
+            for name in feature.groups
+            if normalized(name) not in {"landshapes", "islands", "mainland"}
+        ]
+        if not names:
+            continue
+        name = names[-1]
+        continent = continent_from_name(name)
+        continents[continent.id] = continent
+        role = "island" if "islands" in groups else "mainland"
+        assignments.append(WorldAssignment(feature.id, continent.id, role))
+    return tuple(sorted(continents.values(), key=lambda c: c.id)), tuple(assignments)

@@ -1,7 +1,8 @@
 # Current terrain research status
 
-Reconciled on 2026-09-24 against the current implementation, recent validation
-reports, a fresh public-fixture profile run and public scientific-tool metadata.
+Reconciled on 2026-09-25 for the WC0 implementation and validation. The
+2026-09-24 generation measurements and scientific-tool audit below retain their
+own revision/date; this world-source batch does not rerun terrain-quality probes.
 This is a status map; [TODO](../../TODO.md) owns the research register and the
 [strategy](../strategy/README.md) owns execution order. Dated reports retain
 their source/runtime context. Source inspection or a compatible wheel is not
@@ -35,7 +36,7 @@ including plot/test tools and current application dependencies. Landlab/SciPy
 now execute and are benchmarked; the application dependencies are unchanged.
 The dependency register distinguishes this reference from a shipped engine.
 
-## Planned world-context workflow
+## Implemented world source; planned context workflow
 
 The [new source review](2026-09-24-world-context-enrichment.md) compares existing
 geographic, tectonic and climate models, including the 2026 Generic-PCM reduced
@@ -44,11 +45,14 @@ import/placement and provisional context before world-informed terrain. Rough
 relief feeds seasonal climate/runoff, followed by bounded history feedback and
 a reviewed world parent. Ecological classifications remain downstream.
 
-This research/planning batch adds no runtime or schema and installs no engine.
-The current SVG importer dissolves semantic identities and the coordinate frame
-is local; WC0 retained world import is the next foundation batch. World climate,
-ocean basins, continent/province histories and same-present regional geological
-replay are not implemented. Existing local detail is not history replay. Source
+The [WC0 implementation](2026-09-25-world-source-workspace.md) now adds retained
+SVG source import, explicit spherical frame/radius, semantic continent/island
+assignments, portable saves and a World workspace. Its world-source schema is
+independent of local terrain projects. No new runtime dependency or scientific
+engine is installed. The local terrain importer still dissolves geometry for its
+own workflow. WC1 geographic/ocean descriptors are next. World climate, ocean
+basins, continent/province histories and same-present regional geological replay
+are not implemented. Existing local detail is not history replay. Source
 and license checks for Climlab/GPlates/ExoPlaSim are not local execution evidence.
 B/LE2's physical paths, authoring and resolution gates remain prerequisites to
 production WC2; the new world plan does not promote the current history candidate.
@@ -84,12 +88,13 @@ later dependent work. No post-generation modification is introduced.
 
 | Area | Implemented behavior | Remaining boundary |
 |---|---|---|
+| World source (WC0) | Retained embedded SVG, full-sphere frame/radius, seam/polar/area controls, continent/island mapping, independent World tab, portable atomic saves and CLI inspect ([guide](../terrain-worlds.md)) | WC1 connectivity/exposure, partial-draft save, cancel/checkpoint imports, other projections and world-linked terrain |
 | Input editor | Retained reference with freshness, geographic pan/zoom, property/geometry edits, undo/redo, guarded Save/Save As, resolution presets, ground inspection and cooperative Cancel/Esc with elapsed stage progress ([ADR-0064](../adr/0064-cancel-generation-at-safe-checkpoints.md)) | Automatic draft preview, comparison views, vertex insertion/removal, climate-region inputs; individual native steps have no stop-latency bound |
 | Local numeric builds | Saved-project CLI, Float32 NPY/GeoTIFF, review NPZ, previews, diagnostics and completion hashes | World placement, vector products, external desktop GIS acceptance |
 | Scale-aware water display | Cached sampled-pool screen areas, fading small lakes, fixed-size viewport rendering, native PNG policy and actual ground-spacing readout ([ADR-0057](../adr/0057-display-water-at-the-appropriate-scale.md)) | Physical river size/width model and resolution-gated local hydrology; connected scale selection and complete diagnostic review are implemented ([ADR-0069](../adr/0069-connect-and-scale-drainage-review.md)) |
 | Zoom-driven local detail | Unchanged-field sampling, verified saved-parent replay and explicit experimental residual CLI/API; exact shared samples, terrain-weighted shared edges, protected authored/water/channel context, bounded cell support and serial parent/result sessions with freshness checks and shared admission estimates ([ADR-0061](../adr/0061-verify-parents-and-isolate-local-detail.md), [ADR-0062](../adr/0062-reuse-bounded-detail-cell-support.md), [ADR-0063](../adr/0063-reuse-verified-parent-region-sessions.md)) | Remaining grid direction, visual/coarse-power acceptance, parent-view transitions, broader slope/bound checks, finer inherited hydrology, small-river readiness, zoom jobs and broader native/application-memory calibration |
 | Detail-band amplitudes (R34) | Fixed geometric coefficients, explicit finer-band tails and fixed regional shape carriers; base macro fields agree exactly across 2/6/12 bands ([ADR-0059](../adr/0059-preserve-noise-band-amplitudes.md)) | Coarse-cell averages and authored drainage still change; finished-parent restriction, coarse spectral power and route inheritance remain open |
-| Coordinates/seeds (R01-R03) | Source/local round trips, endpoint grids, actual spacing metadata and portable named seeds | Planetary CRS, configurable process spacing, cell-average/resampling policy |
+| Coordinates/seeds (R01-R03) | Source/local round trips, endpoint grids, actual spacing metadata and portable named seeds | World-bound terrain CRS, configurable process spacing, cell-average/resampling policy |
 | Authored macro routing (R04-R05) | Authored macro, regular crest probes and bounded carrier-root/tangent searches shape a shared Priority-Flood/D8/MFD graph; topology and finished-field conflicts are exported | Other hidden extrema, filled barriers and unresolved final-ground climbs remain; routes are not validated rivers |
 | Network floor conditioning | Downstream cut limits propagate upstream before receiver cuts; finite nodal feasibility and signed cut corrections | Between-node conflicts, impossible source/cut intervals and route alternatives |
 | Valley reconstruction | Bounded cubic fields, selected-diagonal shaping and sampled attainable floor targets; canonical nodes and cut ceilings preserved | D8 turns, hidden crests beyond cut limits, endpoint/retention conflicts and complete-field error bounds |
@@ -188,8 +193,8 @@ terrain composition and its water decisions remain open.
 Local RBF/screened-Poisson replacement, adopted history generation, bedrock/sediment
 transport, coupled ridge/drainage generation, specialized glacial/wind/volcanic
 families, Earth-analogue synthesis and learned proposals remain candidates.
-World source/context and climate/runoff contracts are now specified as planned
-WC0-WC4 work; implementation and validation remain open. Ecology follows WC6.
+WC0 source contracts are implemented and tested. World context and climate/runoff
+remain planned WC1-WC4 work. Ecology follows WC6.
 The input editor is followed by generation, including planned zoom-driven local
 enrichment. [ADR-0048](../adr/0048-keep-zoom-driven-detail-generation.md) corrects
 the earlier exclusion of regional generation; manual sculpting of completed
@@ -211,8 +216,8 @@ measured benefit and packaging/workflow evidence; it is not the next prerequisit
 
 ## Evidence and next experiments
 
-The first history comparison is implemented. Current order advances WC0/WC1
-world-source/context foundations, retains A's controls and B/C's physical-path,
+The first history comparison and WC0 source workspace are implemented. Current
+order advances WC1 context, retains A's controls and B/C's physical-path,
 resolution and authoring acceptance, then couples WC2-WC4 rough-world climate/history
 before world-linked D/WC5 enrichment. Local comparisons do not need a whole-world
 climate engine. See [strategy A/W/B-F](../strategy/README.md#next-implementation-order),

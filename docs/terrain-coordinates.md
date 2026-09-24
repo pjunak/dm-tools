@@ -54,24 +54,39 @@ exactly; exported axes own the precise rounded positions. Bounds round outwards
 and the halo clips only at the full source boundary. The manifest distinguishes
 reference, core, buffered and complete-source canonical routing grids.
 
-## World positioning remains explicit future work
+## Retained world coordinates and local terrain remain separate
 
-Current projects have no declared source-to-world correspondence, working CRS
-or planetary radius. Their coordinate model remains local. A source origin
-recorded in parsed SVG units is not enough to infer its relationship to an
-original document or global projection.
+[World projects](terrain-worlds.md) now declare a full-world spherical Plate Carrée
+frame, radius in kilometres and central meridian. `WorldFrame` in
+[the world domain](../src/dmtools/terrain/domain/world.py) owns reversible
+source-to-sphere conversion and great-circle distances:
 
-World support must preserve a campaign's established frame, declare source
-placement explicitly, choose appropriate metric working coordinates, and
-validate distortion and round trips. It must also distinguish node sample
-extents from raster pixel outer corners. Existing projects must not silently
-acquire a different physical scale.
+```text
+longitude = central_meridian + 360 * (source_x - frame_left) / frame_width - 180
+latitude  = 90 - 180 * (source_y - frame_top) / frame_height
+```
 
-This is now the next WC0 foundation in the [world-context plan](strategy/world-context.md),
-which also retains continent/island identities, longitude wrapping, polar policy
-and custom-planet CRS semantics. Its proposed cell-centred climate fields must
-remain distinct from current endpoint-node terrain rasters. No world metadata or
-geographic reprojection is supplied by the current formats described above.
+Longitude normally wraps into [-180°, 180°); conversion with wrapping disabled
+retains the explicit side of the seam for round-trip controls. Latitude outside
+[-90°, 90°] fails. The full declared frame covers the entire sphere, independently
+of export pixels, source margins or a continent's bounds. The radius must be
+explicit; this custom sphere is not Earth EPSG:4326. Other projections and partial
+worlds are not accepted by the initial format.
+
+Original SVG remains unchanged. Derived inspection geometry splits continuous
+seam-crossing shapes into periodic clipped views without losing ownership or
+counting area twice. Spherical area integrates sampled source-linear boundaries,
+including holes; it does not use flat pixel areas or geodesic-chord polygons.
+Tests cover offset frames, changed meridians, great-circle distances, seam
+ownership, polar caps and whole-sphere area. Curve flattening has the explicit
+source-space tolerance documented in the world guide.
+
+**Generated terrain projects and builds still have no source-to-world binding or
+regional working CRS.** Their scale and endpoint-node model above remain local.
+A saved world does not silently rescale a terrain project or georeference its
+GeoTIFF. World-to-region metric projections, distortion gates and transfers to
+proposed cell-centred climate grids remain future work. Node samples are not
+cell means. [WC1-WC5](strategy/world-context.md) owns those staged contracts.
 
 The [ADR](adr/0025-centralize-local-frames-and-endpoint-grids.md) records the
 implementation boundary and alternatives. See the [build guide](terrain-builds.md)

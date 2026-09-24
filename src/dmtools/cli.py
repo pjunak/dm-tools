@@ -25,10 +25,13 @@ def create_parser() -> argparse.ArgumentParser:
     terrain_commands = terrain.add_subparsers(dest="terrain_command", title="terrain commands")
     gui = terrain_commands.add_parser(
         "gui",
-        help="Open the local land-geometry terrain workbench.",
-        description="Import closed SVG land shapes and generate a colour height map.",
+        help="Open the world-map and terrain workbench.",
+        description="Import a full world map with retained continents, or import closed SVG land "
+                    "shapes and generate a local colour height map.",
     )
-    gui.add_argument("--project", type=Path, help="Open a saved terrain project on startup.")
+    startup = gui.add_mutually_exclusive_group()
+    startup.add_argument("--project", type=Path, help="Open a saved local terrain project.")
+    startup.add_argument("--world", type=Path, help="Open a portable .dmworld.json world project.")
     gui.set_defaults(_handler=_run_terrain_gui)
     build = terrain_commands.add_parser(
         "build",
@@ -85,13 +88,40 @@ def create_parser() -> argparse.ArgumentParser:
             parent.add_argument("--amplitude-m", type=float, default=12.,
                                 help="Maximum residual budget in metres, (0, 100], default 12.")
         parent.set_defaults(_handler=_run_parent_region, _experimental_detail=experimental)
+    world = commands.add_parser(
+        "world", help="Inspect retained world maps and continent ownership.")
+    world.set_defaults(_command_parser=world)
+    world_commands = world.add_subparsers(dest="world_command", title="world commands")
+    inspect = world_commands.add_parser("inspect", help="Validate and summarize a saved world map.")
+    inspect.add_argument("project", type=Path, help="Portable .dmworld.json project.")
+    inspect.set_defaults(_handler=_run_world_inspect)
     return parser
+
+
+def _run_world_inspect(arguments: argparse.Namespace) -> int:
+    from dmtools.terrain.application.world import open_world
+    try:
+        result = open_world(arguments.project)
+    except (OSError, ValueError) as error:
+        print(f"World inspection failed: {error}", file=sys.stderr)
+        return 1
+    print(f"World: {result.project.name}")
+    print(f"Spherical Plate Carree, radius {result.project.frame.radius_km:g} km")
+    print(f"Continents: {len(result.continents)}; land coverage: {result.land_fraction:.2%}")
+    for continent in result.continents:
+        print(f"  {continent.name}: {continent.area_km2:,.0f} km²; "
+              f"{continent.land_shapes} shapes, {continent.island_shapes} island shapes")
+    print("Source map only: world climate and terrain generation are not implemented yet.")
+    return 0
 
 
 def _run_terrain_gui(arguments: argparse.Namespace) -> int:
     from dmtools.terrain.ui import run
 
-    run(arguments.project)
+    if arguments.world is not None:
+        run(world=arguments.world)
+    else:
+        run(arguments.project)
     return 0
 
 
