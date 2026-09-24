@@ -70,8 +70,10 @@ For the experimental uplift/erosion history model, read the
 and [detailed implementation plan](strategy/landscape-evolution.md). The
 [first executable batch](research/2026-09-24-landscape-evolution-reference.md)
 includes numerical controls and measured comparisons; production acceptance
-remains open. The [reference guide](../benchmarks/evolution/README.md) owns setup
-and the testable comparison command.
+remains open. The [frozen reconstruction follow-up](research/2026-09-24-frozen-channel-reconstruction.md)
+measures surface/path agreement without rerunning erosion. The
+[reference guide](../benchmarks/evolution/README.md) owns setup and both testable
+comparison commands.
 The [2026-09-13 audit](maintenance/2026-09-13-documentation-and-research-status.md)
 and [2026-09-10 checkpoint](maintenance/2026-09-10-sanity-and-performance.md)
 retain earlier documentation, structure and performance evidence.

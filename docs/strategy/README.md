@@ -9,7 +9,10 @@ for current measurements, alternatives and platform checks. The subsequent
 and [detailed implementation plan](landscape-evolution.md) promote a bounded
 uplift/erosion history comparison into the generation decision. The
 [first implementation](../research/2026-09-24-landscape-evolution-reference.md)
-now runs that comparison; no external engine has been adopted into the application.
+now runs that comparison. The [frozen reconstruction follow-up](../research/2026-09-24-frozen-channel-reconstruction.md)
+removes measured interpolation humps on descending paths while preserving their
+coverage; direction, authoring and grid-sensitivity gates remain open. No external
+engine has been adopted into the application.
 
 This is the authoritative execution order. [TODO](../../TODO.md) remains the
 complete grouped backlog; P0 there can mean a prerequisite within a later
@@ -44,7 +47,7 @@ Dated reports and accepted ADRs remain historical evidence.
 |---|---|---|
 | Usable authoring and reproducible build | Implemented | Maintain it while changing generation |
 | Measured quality baseline | Partial: eight-case profile probe plus paired evolution/control gallery completed | One comparable gallery and structural scorecard, including known failures |
-| Terrain-aligned drainage | Not accepted | Shared physical paths, lower grid bias, feasible sampled profiles and explicit conflicts |
+| Terrain-aligned drainage | Frozen-graph reconstruction measured; production not accepted | Shared physical paths, lower grid bias, hard constraints and resolution acceptance |
 | Coherent landform families | Partial recipes; two-epoch reference implemented and measured, quality gate open | Related range/pass/tributary/lowland structure that survives multiple seeds and scales |
 | Useful zoom enrichment | Experimental | Accepted regional shape, transition and inherited-flow behavior; then viewport scheduling |
 | Hydrological water and world ecology | Later dependent work | Runoff/storage/river-size evidence; world placement and climate for ecological layers |
@@ -109,12 +112,23 @@ conservation alone does not make its continuous river paths acceptable. The
 promotion of the current D8/bilinear reconstruction and records remaining grid
 sensitivity. Keep the useful history candidate, not its artifacts as defaults.
 
-**Next bounded batch:** implement the shared terrain/channel reconstruction
-comparison below on both frozen current-generator and evolved snapshots. Check
-matched profiles/coverage and direction, then repeat time and process-grid
-refinement before a full LE3 constraint integration. The history engine is already
-available; do not build another erosion framework or add sediment/UI/zoom work to
-avoid this gate. There will be one accepted production path.
+**Reconstruction checkpoint:** the [frozen-state comparison](../research/2026-09-24-frozen-channel-reconstruction.md)
+now tests identical ground nodes and required graphs across all 22 completed
+history/current-generator states. A required-diagonal triangle surface has zero
+sampled ascent on all 1,030 nodally nonascending full routes at 100 m and 25 m
+stations. All 153 routes with nodal climbs remain unresolved; no route is removed.
+This is a numerical control, not an accepted physical river model. Grid directions
+stay unchanged, slope creases remain and off-grid authored targets can be violated.
+Reconstruction volume changes are recorded separately from erosion.
+
+**Next bounded batch:** compare the physical valley/path prototype below against
+that monotonic-profile control, and diagnose receiver/outlet sensitivity using
+the existing spacing/time states. Preserve the same coverage and native hard
+constraint controls. Fix the physical process policy before another expensive
+finer simulation or full LE3 integration. The history engine and paired report
+already exist; do not build another erosion/report framework or add sediment,
+history UI or zoom jobs to avoid this gate. There will be one accepted production
+path.
 
 For the path prototype, compare the current D8 control against terrain-guided
 subgrid paths inside allowed corridors. Keep exact junctions and coastal/lake

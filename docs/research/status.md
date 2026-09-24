@@ -46,9 +46,19 @@ knickpoints. The first LE2 matrix covers frozen seeds, chronology, ablations,
 orientation, extent and process spacing. These are executable experiments, not
 terrain-project settings or a default generation stage.
 
-Next: B/R48 continuous terrain/channel reconstruction and resolution acceptance
-using these frozen fixtures, then full LE3 authored-input integration if accepted.
-Peak/pass structure, real basins/coasts and matched physical-route acceptance
+The [frozen reconstruction follow-up](2026-09-24-frozen-channel-reconstruction.md)
+now compares bilinear ground with required-diagonal triangles using unchanged
+Float32 nodes and saved Float64-snapshot routing. All 22 completed cases retain
+identical network coverage. Candidate sampled ascent is zero on 1,030 nodally
+nonascending full routes; 153 routes with nodal climbs remain unresolved. This
+comparison uses a different explicit graph/station policy from the original
+final metrics, so those numbers are not a direct before/after baseline.
+
+The candidate remains research-only: D8 geometry and grid sensitivity persist,
+slopes have creases, off-grid targets can fail and reconstruction changes volume.
+The next bounded B/R48 batch is physical valley/path geometry and receiver/outlet
+sensitivity on the existing spacing/time controls, followed by hard-constraint
+acceptance before full LE3 integration. Peak/pass structure and real basins/coasts
 remain open. Sediment, epoch editor controls and evolved local enrichment remain
 later dependent work. No post-generation modification is introduced.
 

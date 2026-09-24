@@ -1,7 +1,8 @@
 # Landscape-evolution implementation plan
 
-Updated 2026-09-24. **LE1 implemented; LE2 comparison executable and measured.
-Production-quality acceptance and application integration remain open.**
+Updated 2026-09-24. **LE1 implemented; LE2 history and frozen reconstruction
+comparisons measured. Production-quality acceptance and application integration
+remain open.**
 The [primary-source review](../research/2026-09-24-landscape-evolution-models.md)
 records the scientific basis, tool comparison and dependency probe.
 The [main strategy](README.md) remains the authoritative project order; this
@@ -26,10 +27,38 @@ this D8/bilinear surface into the application. Good node-level drainage does not
 prevent internal rises on reconstructed diagonal channels. Grid direction and
 whole-landscape resolution sensitivity also remain acceptance questions.
 Follow the report's measured limits rather than counting analytic tests as realism.
-The next bounded B/R48 experiment must compare actual continuous terrain/channel
-reconstruction on the frozen current and evolved fixtures, then repeat spatial
-and time refinement. Do that before a full LE3 integration, sediment, history UI
-or zoom scheduling. Keep one eventual production path.
+The bounded B/R48 reconstruction comparison is now measured, as recorded below.
+Physical path geometry, grid/capture sensitivity and hard authoring constraints
+still precede full LE3 integration, sediment, history UI or zoom scheduling.
+Keep one eventual production path.
+
+## Frozen reconstruction checkpoint
+
+The [follow-up implementation and evidence](../research/2026-09-24-frozen-channel-reconstruction.md)
+compare a required-diagonal triangle surface with bilinear reconstruction of the
+same delivered Float32 nodes and saved final Float64-snapshot routing. The saved
+graph is not the previous report's separately rerouted Float32 delivery graph.
+The comparison runs in the base environment without the scientific engine.
+
+All 22 completed source cases retain all 19,228 selected edges and 1,183 full
+head-to-terminal routes. On the 1,030 nodally nonascending routes, candidate
+ascent is zero at both 100 m and 25 m stations; 689 of those routes had control
+rises. The other 153 routes remain unresolved because their input graph climbs.
+The failed 156.25 m history remains an explicit missing result. These coverage
+totals include the original repeated case, not independent statistical samples.
+
+This experiment is complete, but its surface is not accepted for integration.
+It keeps D8 geometry, has C0 slope creases, can violate off-grid targets and
+changes reconstructed volume independently of the solver's material ledger.
+Explicit crossing rejection, anchor residual controls, paired actual-ground
+figures and whole-route metrics now make those limits testable. Uphill affected
+length uses a whole-climb tolerance so dense sampling cannot hide gentle rises.
+
+Next use this as a descending-profile control for physical valley/path geometry,
+then evaluate receiver/outlet changes and feature support across the existing
+spacing/time states. Preserve real authoring/cut controls before promotion.
+Do not repeat the failed finer history with a larger budget or add a second
+report framework.
 
 ## Outcome and decision
 
@@ -44,11 +73,11 @@ Use two epochs and two rock-resistance regions. Compare against the current
 recipe/incision output before deciding whether to integrate an existing component
 or implement a narrow project kernel. Keep Python and existing application layers.
 
-**Sequence:** the first paired history report and LE1/LE2 execution are in place.
-The bounded B/R48 reconstruction comparison is next: terrain, channel paths,
-probes and display must agree. Only an accepted continuous surface justifies
-full LE3 integration. Keep the current and evolved fixtures as controls, not as
-permanent competing product backends. LE4/LE5 depend on that acceptance.
+**Sequence:** the paired history and bounded B/R48 frozen reconstruction reports
+are in place. Physical terrain/path agreement, direction, capture/grid sensitivity
+and authoring constraints now govern acceptance before full LE3 integration.
+Keep current and evolved fixtures as controls, not permanent competing product
+backends. LE4/LE5 depend on that acceptance.
 
 LE numbers identify work packages, not a competing execution order. LE1 and the
 first paired evidence are complete. The remaining path is A's outstanding
@@ -265,9 +294,10 @@ integration but should not delay unrelated baseline-quality reporting.
 
 ### LE2 — Two-epoch mountain-to-lowland proof
 
-**Comparison implemented; acceptance not passed.** See the measured first-batch
-report for completed cases, resource limits and remaining morphology/reconstruction
-gates. Preserve that cohort when testing improvements.
+**History and frozen reconstruction comparisons implemented; acceptance not
+passed.** See the linked reports for completed cases, resource limits, profile
+gains and remaining morphology/authoring/grid gates. Preserve that cohort when
+testing improvements.
 
 Depends on LE1. The first experiment is executed; the requirements below
 continue to govern acceptance and follow-up comparisons.
@@ -419,7 +449,7 @@ boundaries are conditional integration work. Avoid a generic simulation framewor
 
 | Area | Planned responsibility |
 |---|---|
-| `benchmarks/evolution/` (implemented) | Reference adapter/runner, public scenarios, numerical controls, fresh-process comparisons and paired reports; optional engine imports stay here |
+| `benchmarks/evolution/` (implemented) | Reference adapter/runner, frozen-state reconstruction and whole-route comparison, public controls and paired reports; optional engine imports stay here |
 | `domain/evolution.py` (implemented) | Typed epochs, physical grid, history and budgets with validation; no Landlab/filesystem dependency, no saved-project fields yet |
 | `pipeline/evolution.py` (proposed) | Accepted deterministic orchestration and model-state transitions; numeric primitives only where justified |
 | `pipeline/evolution_surface.py` (proposed if needed) | Frozen-state reconstruction and constraint/path composition, separated from time stepping |
@@ -492,7 +522,8 @@ Prose-only follow-ups need link/claim/diff checks; reuse unchanged runtime evide
 - R01/R33 and strategy F: world placement, climate/runoff feedback, aridity and
   ecological layers; separate authored wetness from inferred planetary climate.
 
-The first visible, measured LE1/LE2 comparison is delivered. The next decision
-is whether a constrained continuous terrain/channel surface can retain its
-useful process response without the measured grid/reconstruction failures.
-Production adoption stays gated; a large rewrite is not the next step.
+The first LE1/LE2 history comparison and frozen reconstruction follow-up are
+delivered. Between-node humps are now isolated and removable on fixed descending
+paths. The next decision is whether physical valley/channel geometry can retain
+that property, preserve authoring and reduce grid/capture sensitivity. Production
+adoption stays gated; a large rewrite is not the next step.

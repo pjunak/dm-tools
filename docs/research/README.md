@@ -25,6 +25,12 @@ in the current status or a new dated report.
 
 ## Implemented and measured work
 
+- [Frozen terrain/channel reconstruction — 2026-09-24](2026-09-24-frozen-channel-reconstruction.md)
+  measures a drainage-aligned triangle surface on all 22 completed history/control
+  states: preserved route coverage and zero sampled ascent on nodally descending
+  routes, with nodal climbs, direction bias, authoring conflicts and composition
+  volume retained as explicit limits. Runs without the optional scientific stack.
+
 - [Landscape-evolution reference — 2026-09-24](2026-09-24-landscape-evolution-reference.md)
   implements LE1 and the first LE2 comparison: ordered uplift/runoff/incision/
   hillslope transport, numerical controls, pinned reference, figures and cost.

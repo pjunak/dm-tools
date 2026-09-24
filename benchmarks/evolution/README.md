@@ -129,3 +129,56 @@ remain limitations. Off-grid authored targets, multipart coasts, retained basins
 shared physical channel geometry, history controls in the editor and conditioned
 local detail require LE3 and later gates. Successful analytic controls prove
 specific numerical behavior, not realistic geology.
+
+
+## Frozen reconstruction comparison
+
+After generating completed reference cases, compare their unchanged Float32
+nodes and saved final Float64-snapshot routing using the base environment:
+
+```powershell
+.\.venv\Scripts\python.exe -m benchmarks.evolution.reconstruction --source artifacts/my-evolution-comparison --output artifacts/my-reconstruction-comparison
+Start-Process artifacts/my-reconstruction-comparison/index.html
+```
+
+`--source` accepts one or more cohort directories or individual completed worker
+directories. Select at most 64 completed cases; use a new output directory.
+No Landlab, SciPy or Matplotlib is imported or needed for this command. It does
+not run evolution or modify the supplied states. Source container/numeric hashes,
+coordinate conventions and delivery precision are checked, along with unchanged
+source/runtime identity before completion. Failed/unfinished source workers are
+listed explicitly. A source cohort need not be wholly complete, but an unfinished
+worker is never treated as a completed state.
+
+Both samplers use every interior outgoing edge at the fixed 25 km2 contributing
+area threshold. Profiles cover every unique edge and every complete head-to-terminal
+route at 100 m and 25 m arclength spacing, plus all original vertices. The saved
+graph is **not** the separately Float32-rerouted graph behind the first report's
+`final_metrics`. See the [measured follow-up](../../docs/research/2026-09-24-frozen-channel-reconstruction.md)
+for metric definitions and all provenance limits.
+
+The candidate splits required diagonal cells into linear triangles; other cells
+remain bilinear. Crossing required diagonals are explicit rejections. It preserves
+nodes and grid borders, not arbitrary off-grid authored targets or incision
+budgets. Reports keep nodal uphill failures, reconstruction volume and C0 slope
+creases visible. D8 direction bias and process-grid sensitivity remain unresolved.
+The command is a comparison of candidate generation surfaces, not an output editor.
+
+The output contains `index.html`, completion-last `comparison.json`, and per-case
+`comparison.png` plus `result.json` with all edges/routes, identities and timing.
+Figures use actual sampled ground, the same path overlay and shared height range.
+Work bounds are one million stations per profile and eight million per sampler
+pass, with 32 million as the internal API ceiling. Full-route totals repeat
+shared downstream reaches; unique-network measures count edges once. Whole-process
+peak includes verification, arrays and rendering, not just interpolation.
+
+The final 2026-09-24 matrix can be reproduced from its existing frozen artifacts:
+
+```powershell
+.\.venv\Scripts\python.exe -m benchmarks.evolution.reconstruction --source artifacts/evolution-cohort-20260924 artifacts/evolution-ablations-20260924 artifacts/evolution-spacing-20260924 artifacts/evolution-rotated-20260924 artifacts/evolution-extent-20260924 artifacts/evolution-repeat-20260924 artifacts/evolution-timestep-20260924 --output artifacts/my-frozen-reconstruction
+.\.venv\Scripts\python.exe -m pytest tests/test_evolution_surface.py tests/test_evolution_comparison.py
+```
+
+These artifacts are ignored local results. On another checkout, first regenerate
+the reference cohort with the commands above; do not substitute a private map.
+The initial failed 156.25 m state remains excluded and explicitly listed.

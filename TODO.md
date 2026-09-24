@@ -41,7 +41,7 @@ not a physical river-water validation or a private-map result.
 | Order | Outcome and existing backlog owners | Gate |
 |---|---|---|
 | **A — next** | Quality fixtures, paired maps/profiles, process-scale warnings; convergent-flat comparison (R02/R25/R27/R41/R43) | Fixed comparison set and a measured accept/reject result; no new benchmark framework |
-| **B — next major generation decision** | Use the implemented LE1/LE2 reference to compare continuous terrain/channel reconstruction (R48/R32), then resolve grid sensitivity | Current D8/bilinear candidate is not accepted; preserve anchors, cuts, junctions, terminals and coverage before LE3 |
+| **B — next major generation decision** | Build on the measured frozen reconstruction: physical valley/path geometry and grid/capture sensitivity (R48/R32) | Profile gains do not close direction or authoring gates; preserve anchors, cuts, junctions, terminals and coverage before LE3 |
 | **C** | Consolidate one coherent range/pass/tributary/lowland system from the selected comparison (R08/R09/R14/R40/R44) | Better structural/visual results across fixed seeds and physical scales |
 | **D** | Accepted parent-conditioned detail and inherited fine hydrology, then zoom jobs (R15/R34) | Overlap, coarse-scale, boundary/flow and visual acceptance before real small rivers |
 | **E** | Runoff, river size, lake hierarchy and sediment (R16/R18/R33) | Explicit flux, storage and material accounting |
@@ -77,10 +77,20 @@ records execution and its remaining gates; the simulation is still research-only
 - [x] **LE2 evidence — Make experiments inspectable and reproducible.** New output
   directories contain epoch images, numeric states, profiles, input/runtime hashes,
   fresh-process timing/memory, conservation checks and explicit incomplete results.
-- [ ] **Next — Compare continuous terrain/channel reconstruction** (R48/R32).
-  Use frozen current and evolved fixtures, matched source/terminal coverage and
-  the existing hard-constraint controls. Then rerun temporal/spatial refinement;
-  do not promote a smoother drawing or unrelated automatic-edge count as success.
+- [x] **Reconstruction experiment — Compare frozen terrain and complete paths**
+  (R48/R32). The [measured follow-up](docs/research/2026-09-24-frozen-channel-reconstruction.md)
+  preserves every selected edge/head/terminal on 22 completed cases. A triangle
+  control removes sampled ascent on all 1,030 nodally nonascending routes at
+  100 m/25 m spacing; 153 nodally uphill routes remain unresolved. Hash checks,
+  paired ground figures, crossing rejection, off-grid anchor conflicts, separate
+  reconstruction volume and whole-climb affected length are implemented.
+  This closes the experiment, not the broader authoring or production gate.
+- [ ] **Next — Physical valley/path geometry and capture sensitivity** (R48/R32/R02).
+  Use the triangle surface as a descending-profile control, reduce directional
+  grooves through shared physical paths, and diagnose receiver/outlet changes
+  across existing spacing/time states. Preserve native authored/cut controls.
+  Resolve physical feature support before another finer history; C0 facets,
+  off-grid anchor errors and nodal climbs prevent candidate promotion.
 - [ ] **LE2 follow-up — Complete structural acceptance** (R40/R41/R43). Add the
   missing peak/pass and matched physical-route scorecard, resolve long D8 grooves
   and quantify capture sensitivity. The finest-grid budget failure is a stopping
@@ -1264,9 +1274,11 @@ Priorities remain conditional on the current strategy's prerequisites.
   complete-network coverage when segmentation changes. Batch B's acceptance
   targets and fallback to network-led surface construction are in the strategy.
   Process spacing remains independent of output pixels. LE2's executable
-  co-evolution reference shows chronology response but still fails reconstructed
-  profiles; use its frozen states in the next bounded comparison. LE3 must meet the same final
-  surface/path contract. A failed evolution candidate returns to the bounded
+  co-evolution reference shows chronology response; the frozen triangle comparison
+  now removes sampled rises on unchanged nodally descending paths. It retains
+  D8 bias and fails general authoring constraints, so use it as a numerical
+  control for physical paths and capture/grid analysis. LE3 must meet the same
+  final surface/path contract. A failed evolution candidate returns to the bounded
   terrain-guided prototype. Do not count changed automatic D8 edges as matched
   route improvements. Remove superseded runtime paths after acceptance; preserve
   current inputs/contracts without legacy support.
@@ -1384,6 +1396,9 @@ geometry movement and project-saving behavior.
 
 ## Related decisions and research
 
+- [Frozen terrain/channel reconstruction — 2026-09-24](docs/research/2026-09-24-frozen-channel-reconstruction.md)
+  records complete-route profile gains, remaining nodal failures, authoring limits,
+  explicit composition volume and base-environment cost on the frozen cohort.
 - [Landscape-evolution reference implementation — 2026-09-24](docs/research/2026-09-24-landscape-evolution-reference.md)
   records the executed first batch, isolated command, numerical controls,
   public comparisons and failed product-quality gates.
