@@ -288,6 +288,19 @@ def test_context_generate_inspect_export_and_invalidate(
     assert view.display_layer.get() == "Land coverage"
     assert "connected water regions" in view.context_detail.get()
     assert not view.dirty
+    generated = view.context_run
+    view.display_layer.set("Water exposure")
+    view._layer_changed()
+    assert str(view.bearing_input.cget("state")) == "readonly"
+    view.exposure_bearing.set("W")
+    view._layer_changed()
+    view._draw()
+    assert view.context_run is generated and not view.dirty
+    assert "not rainfall" in view.context_legend.get()
+    view.display_layer.set("Shore distance")
+    view._layer_changed()
+    assert str(view.bearing_input.cget("state")) == "disabled"
+    assert "inland shores" in view.context_legend.get()
     view.display_layer.set("Resolution support")
     view._layer_changed()
     view._draw()

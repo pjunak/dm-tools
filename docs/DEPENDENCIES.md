@@ -14,6 +14,7 @@ need, supported-platform validation, and a completed license review.
 |---|---:|---|---|
 | CPython Tk/ttk | 3.14 / Tk 9 | Native desktop widgets, progress, and file dialogs | PSF / Tcl-Tk BSD-style |
 | NumPy | 2.5.2 | Deterministic array computation and Float32 elevation grids | BSD-3-Clause |
+| SciPy | 1.18.1 | Exact unit-sphere shoreline sample queries through KDTree | BSD-3-Clause; retain bundled native notices |
 | Pillow | 12.3.0 | In-app raster preview and PNG export | MIT-CMU |
 | Shapely | 2.1.2 | Polygon validity, land mask, and distance-to-coast queries | BSD-3-Clause |
 | svgelements | 1.9.6 | SVG shape/path parsing, transforms, and curve evaluation | MIT |
@@ -68,12 +69,22 @@ permit redistribution with attribution/notice retention. GDAL uses an
 When packaging native wheels, retain their bundled third-party notices too.
 
 
+## Spherical distance runtime
+
+SciPy 1.18.1 was installed from its Windows x64 CPython 3.14 wheel and exercised
+with NumPy 2.5.2 for [geographic exposure](world-context.md). The installed license
+permits redistribution under BSD-3-Clause and includes bundled native notices.
+Retain all applicable wheel notices when packaging; no SciPy source is vendored.
+Runtime identity includes its version. See [ADR-0075](adr/0075-measure-spherical-geographic-exposure.md)
+and the [KDTree API](https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.KDTree.html).
+This does not adopt Landlab, py-richdem or the rest of the reference environment.
+
 ## Isolated landscape-evolution reference
 
 The repository-only [evolution experiment](../benchmarks/evolution/README.md)
-now runs an isolated Landlab stack on Windows x86-64 / CPython 3.14.7. It is
-installed under ignored `artifacts/`, not in the application environment or
-`pyproject.toml`. The [wheel lock](../benchmarks/evolution/requirements-windows-py314.txt)
+now runs an isolated Landlab stack on Windows x86-64 / CPython 3.14.7. The reference stack is
+installed under ignored `artifacts/`, separately from the application. SciPy is
+also an application dependency for the independent geographic use above. The [wheel lock](../benchmarks/evolution/requirements-windows-py314.txt)
 pins all 53 distributions and SHA-256 hashes used by the experiment, including
 plotting and test tooling and existing application dependencies.
 

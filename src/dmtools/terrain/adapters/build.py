@@ -76,7 +76,7 @@ def runtime_identity() -> dict[str, object]:
         "byteorder": sys.byteorder,
         "dependencies": {
             name: version(name)
-            for name in ("numpy", "Pillow", "shapely", "svgelements", "rasterio", "affine")
+            for name in ("numpy", "scipy", "Pillow", "shapely", "svgelements", "rasterio", "affine")
         },
         "geos": shapely.geos_version_string,
         "gdal": gdal,

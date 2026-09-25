@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://dmtools.local/schemas/world/context-v2.schema.json",
-  "title": "DM Tools spherical geographic context v2",
+  "$id": "https://dmtools.local/schemas/world/context-v3.schema.json",
+  "title": "DM Tools spherical geographic context v3",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -19,17 +19,19 @@
     "water_bodies",
     "outputs",
     "context_sha256",
-    "gateways"
+    "gateways",
+    "shore_distance",
+    "exposure"
   ],
   "properties": {
     "schema": {
       "const": "dmtools.world-context"
     },
     "version": {
-      "const": 2
+      "const": 3
     },
     "algorithm": {
-      "const": "spherical-geography-v2"
+      "const": "spherical-geography-v3"
     },
     "importer": {
       "const": "retained-svg-v2"
@@ -109,7 +111,8 @@
             "shapely",
             "svgelements",
             "rasterio",
-            "affine"
+            "affine",
+            "scipy"
           ],
           "properties": {
             "numpy": {
@@ -133,6 +136,10 @@
               "minLength": 1
             },
             "affine": {
+              "type": "string",
+              "minLength": 1
+            },
+            "scipy": {
               "type": "string",
               "minLength": 1
             }
@@ -323,7 +330,11 @@
         "land.png",
         "water.png",
         "support.png",
-        "gateways.png"
+        "gateways.png",
+        "exposure.npz",
+        "shore-distance.png",
+        "exposure-north.png",
+        "exposure-support-north.png"
       ],
       "properties": {
         "world.dmworld.json": {
@@ -433,6 +444,78 @@
               "minimum": 1
             }
           }
+        },
+        "exposure.npz": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "sha256",
+            "bytes"
+          ],
+          "properties": {
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "bytes": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        "shore-distance.png": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "sha256",
+            "bytes"
+          ],
+          "properties": {
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "bytes": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        "exposure-north.png": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "sha256",
+            "bytes"
+          ],
+          "properties": {
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "bytes": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        "exposure-support-north.png": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "sha256",
+            "bytes"
+          ],
+          "properties": {
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "bytes": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
         }
       }
     },
@@ -473,6 +556,100 @@
           "type": "integer",
           "minimum": 0,
           "maximum": 258480
+        }
+      }
+    },
+    "shore_distance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "measurement",
+        "units",
+        "includes_inland_water",
+        "no_shoreline",
+        "sample_count",
+        "max_error_km"
+      ],
+      "properties": {
+        "measurement": {
+          "const": "cell-centre-to-nearest-sampled-shore"
+        },
+        "units": {
+          "const": "km"
+        },
+        "includes_inland_water": {
+          "const": true
+        },
+        "no_shoreline": {
+          "const": "nan"
+        },
+        "sample_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 500000
+        },
+        "max_error_km": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 12.5
+        }
+      }
+    },
+    "exposure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "measurement",
+        "bearings",
+        "range_km",
+        "distance_samples",
+        "sample_step_km",
+        "weight",
+        "mixed_support",
+        "land_blocks_rays",
+        "preview_bearing"
+      ],
+      "properties": {
+        "measurement": {
+          "const": "great-circle-weighted-water-fraction"
+        },
+        "bearings": {
+          "const": [
+            "N",
+            "NE",
+            "E",
+            "SE",
+            "S",
+            "SW",
+            "W",
+            "NW"
+          ]
+        },
+        "range_km": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 3000
+        },
+        "distance_samples": {
+          "type": "integer",
+          "minimum": 32,
+          "maximum": 256
+        },
+        "sample_step_km": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "weight": {
+          "const": "exp(-3*distance/range); normalized-midpoints"
+        },
+        "mixed_support": {
+          "const": "quadrature-weight-on-mixed-cells; not-error-bound"
+        },
+        "land_blocks_rays": {
+          "const": false
+        },
+        "preview_bearing": {
+          "const": "N"
         }
       }
     }

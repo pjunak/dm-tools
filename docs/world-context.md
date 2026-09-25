@@ -1,7 +1,8 @@
 # Generate geographic world context
 
 The World workspace now implements the first WC1 stage: fractional land coverage,
-connected water regions, finite shared-edge water openings and resolution support
+connected water regions, finite shared-edge water openings, shoreline distance,
+eight directional water-exposure fields and resolution support
 on a custom spherical planet. Completed context bundles can be reopened for inspection.
 It consumes the validated source and its reported preparation adjustments.
 Climate, ocean depth, tectonic provinces, rough world terrain and world-linked
@@ -18,8 +19,11 @@ not a generated terrain parent.
    row progress. **Cancel context job** stops at a checkpoint. Individual SVG/GEOS
    operations cannot be interrupted mid-call; cancellation is cooperative.
 4. Use the preview selector for **Source**, **Land coverage**, **Connected water**,
-   **Resolution support** or **Water openings**. Zoom and pan inspect the same
-   cells. Hover shows
+   **Resolution support**, **Water openings**, **Shore distance**, **Water exposure**
+   or **Exposure support**. The compass selector changes the initial look direction
+   for exposure layers without regeneration or input edits. Zoom and pan inspect the same
+   cells. Source outlines remain visible over the three exposure/distance layers;
+   those outlines do not increase numeric resolution. Hover shows
    land fraction, the dominant water ID and whether local support is mixed. In
    Water openings, hover reports the longest north/east/south/west openings in km.
 5. **Export context…** creates a new result directory. It includes the complete
@@ -61,8 +65,8 @@ Verify an existing result from a manifest or directory:
 Viewing retains the recorded producer runtime and accepts a supported current
 format even if this installation's code/dependencies differ. The CLI reports that
 mismatch. Export still requires the exact producing runtime: regenerate to create
-new results under changed software. Context v1 is superseded; regenerate it from
-its source snapshot. There is no compatibility loader or migration.
+new results under changed software. Context v1/v2 are superseded; regenerate from
+their retained source snapshots. There is no compatibility loader or migration.
 
 ## What the layers mean
 
@@ -71,6 +75,9 @@ its source snapshot. There is no compatibility loader or migration.
 | Land coverage | Area-weighted land fraction from 0 to 1 in each spherical cell. Tiny islands and water holes remain in these fractions. |
 | Connected water | Water regions derived from continuous prepared vectors, joined across the longitude seam. Cell colour uses the body with the greatest aggregated water area within that cell. |
 | Water openings | Blue edges: fully open; orange: partial opening; dark: closed. Three display pixels per cell reveal the shared edges when zoomed. Hover supplies physical widths. |
+| Shore distance | Cream at 0 km to purple at 3,000+ km; nearest sampled shoreline from the cell centre, including inland shores. Grey means no shoreline exists. Hover includes the distance overestimate bound. |
+| Water exposure | Tan at 0% to blue at 100% distance-weighted water along the selected initial look direction. Land does not block the ray. |
+| Exposure support | Dark at 0% to gold at 100% of exposure quadrature weight falling in mixed coastal cells. Not a numerical error bound. |
 | Resolution support | Orange: land absent at the cell centre. Cyan: water absent at the centre. Violet: disconnected water pieces within one cell. Amber is other mixed coverage. |
 
 Water IDs are ranked by area, with deterministic geometric tie-breaking. They
@@ -108,6 +115,36 @@ cell. The split-water flag remains authoritative: joining all those faces throug
 one raster node would create false routes. A component-aware transport graph
 and bathymetry are still required before a physical flow solver uses these data.
 
+## Shore distance and directional exposure
+
+Shore distance is measured on the declared sphere, including lake shores and
+water-cell distances to land. Artificial map-frame and polar edges are removed;
+land/water differences across the longitude seam are true shores. The source is
+not moved. Source-linear curves are sampled with gaps bounded by the smaller of
+25 km and one quarter of north-south cell spacing. An exact 3D nearest-sample
+query gives an upper estimate of true retained-shore distance; its overestimate
+is at most half the largest gap, apart from roundoff. The displayed bound does
+not include SVG flattening error. A shore-free world has NaN distances throughout.
+
+Exposure looks along great circles in eight initial compass directions, clockwise
+from true north. The maximum range is 3,000 km, or pi*R/2 on smaller worlds. Water
+fraction at each sample comes from its containing context cell. Nearer samples
+receive more weight, exp(-3*d/range), normalized over the sampled ray. This is
+geographic context, not a prediction of wind or rainfall and not uninterrupted
+open-water fetch. Inland water contributes; land does not stop the ray.
+
+There are 32–256 midpoint samples per ray, targeting one quarter of north-south
+cell spacing until capped. The manifest records the actual range and step. The
+support layer shows the weighted share of samples in mixed coastal cells. A ray
+can miss narrow islands or straits even where support is zero, so this is not an
+error bound. Pole crossings and the seam are handled on the sphere. A finer
+preview zoom adds no information; compare context resolutions for sensitivity.
+
+Shoreline admission is capped at 500,000 samples. Distance queries process 4,096
+centres at a time and exposure processes 1,024 origins per chunk. SciPy's spatial
+index avoids all-pairs distance work. These allocation/work limits and cooperative
+cancellation do not cap native geometry call time or OS process memory.
+
 ## Numeric and geographic contract
 
 The grid covers the declared full-sphere Plate Carrée frame, with cell centres
@@ -132,10 +169,11 @@ latitude. This context does not reuse the local terrain endpoint-node grid.
 
 ## Export contract
 
-[Context v2](../schemas/world/context-v2.schema.json) owns the manifest. It records
-`spherical-geography-v2`, importer/preparation identities, the canonical complete
+[Context v3](../schemas/world/context-v3.schema.json) owns the manifest. It records
+`spherical-geography-v3`, importer/preparation identities, the canonical complete
 input hash, software/runtime identity, frame, grid, settings, area checks, water
-regions, support counts, gateway semantics/counts and SHA-256/byte counts for every
+regions, support counts, gateway semantics/counts, shoreline error bound, exposure
+range/quadrature semantics and SHA-256/byte counts for every
 output. `context_sha256` fingerprints the entire canonical manifest excluding
 that field; `input_sha256` identifies the complete source/settings/algorithm.
 
@@ -144,9 +182,11 @@ that field; `input_sha256` identifies the complete source/settings/algorithm.
 | `world.dmworld.json` | Portable original SVG, assignments, frame and source identity. |
 | `geography.npz` | Numeric arrays listed below; load with `allow_pickle=False`. |
 | `land.png`, `water.png`, `support.png`, `gateways.png` | Derived previews; gateways use three pixels per cell to show shared faces. |
+| `exposure.npz` | Float64 `shore_distance_km` [rows, columns]; Float32 `water_exposure` and `exposure_mixed_support` [8, rows, columns]. Bearings follow N, NE, E, SE, S, SW, W, NW. |
+| `shore-distance.png`, `exposure-north.png`, `exposure-support-north.png` | Cell-resolution previews; exposure PNGs show north. The numeric archive retains every direction. |
 | `context.json` | Completion manifest, published last with an atomic rename. |
 
-NPZ fields: `land_fraction` Float64 [rows, columns], `water_body` Int32
+Geography NPZ fields: `land_fraction` Float64 [rows, columns], `water_body` Int32
 [rows, columns] (0 means no assigned water), `support_flags` UInt8 [rows, columns],
 `cell_area_km2` Float64 [rows] (broadcast across columns), and Float64 centre
 coordinates `latitude_deg` [rows], `longitude_deg` [columns]. `east_opening_km` and
@@ -158,9 +198,10 @@ C-order numeric NPY entries, with no object/pickle payloads. Flags are bitwise:
 Opening checks exact output/member names, product lengths and hashes, canonical
 input/manifest identity, supported algorithm/importer/preparation, source geometry,
 coordinate and area consistency, water IDs, support flags, finite numeric ranges,
-edge-length bounds and preview dimensions. It rechecks files before accepting
+edge-length bounds, exposure fractions, shoreline distance/nodata, sampling bounds
+and preview dimensions. It rechecks files before accepting
 the captured snapshot. Manifest input is capped at 4 MiB, world input at 32 MiB,
-and other products at 16 MiB each. NPY shape/dtype/order and exact payload length
+and other products at 24 MiB each. NPY shape/dtype/order and exact payload length
 are checked before allocation; each compressed entry is bounded by its admitted
 array size plus 10,000 header bytes. These are allocation guards, not an OS memory cap.
 
@@ -169,6 +210,6 @@ rerun of every geometric measurement. Preview layers are rebuilt from verified
 arrays when displayed. Loaded arrays are read-only.
 
 Generated results do not alter the world source. They are not yet accepted parents
-for terrain/climate solvers. Geodesic exposure, component-aware transport and
+for terrain/climate solvers. Component-aware transport, bathymetry and
 province hypotheses remain WC1 work. See [the staged plan](strategy/world-context.md)
-and [current implementation evidence](research/2026-09-25-context-reopening-and-gateways.md).
+and [current implementation evidence](research/2026-09-25-geographic-exposure.md).

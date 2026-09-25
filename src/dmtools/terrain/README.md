@@ -15,7 +15,8 @@ source maps, continental ownership and an explicit spherical geographic frame.
 Read the [world guide](../../../docs/terrain-worlds.md), or try
 `dmtools terrain gui --world examples/world/four-shores.dmworld.json`.
 The **Context** page generates spherical coverage, connected water and resolution
-support, shared-edge openings and verified saved-context inspection; see
+support, shared-edge openings, shore distance and directional water exposure,
+with verified saved-context inspection; see
 [geographic context](../../../docs/world-context.md). Climate and
 world terrain remain planned. Select Terrain for the workflow below;
 `--project` opens a local terrain file directly in that tab.

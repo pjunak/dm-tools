@@ -4,7 +4,7 @@ from colorsys import hls_to_rgb
 from typing import Literal
 
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageDraw
 
 from dmtools.terrain.adapters.world_render import OCEAN
 from dmtools.terrain.domain.world_context import (
@@ -17,17 +17,32 @@ from dmtools.terrain.pipeline.world_context import WorldContext
 from dmtools.terrain.viewport import MapViewport
 
 type ContextLayer = Literal[
-    "Land coverage", "Connected water", "Resolution support", "Water openings"
+    "Land coverage",
+    "Connected water",
+    "Resolution support",
+    "Water openings",
+    "Shore distance",
+    "Water exposure",
+    "Exposure support",
 ]
 CONTEXT_LAYERS: tuple[ContextLayer, ...] = (
     "Land coverage",
     "Connected water",
     "Resolution support",
     "Water openings",
+    "Shore distance",
+    "Water exposure",
+    "Exposure support",
 )
 
 
-def context_image(context: WorldContext, layer: ContextLayer) -> Image.Image:
+def context_image(
+    context: WorldContext,
+    layer: ContextLayer,
+    bearing: int = 0,
+) -> Image.Image:
+    if type(bearing) is not int or not 0 <= bearing < 8:
+        raise ValueError("Context exposure bearing must be an index from 0 to 7.")
     land = np.array((157, 177, 119), dtype=np.float64)
     water = np.array((24, 70, 89), dtype=np.float64)
     fraction = context.land_fraction[..., None]
@@ -46,6 +61,19 @@ def context_image(context: WorldContext, layer: ContextLayer) -> Image.Image:
         rgb[(flags & SUBCELL_LAND) != 0] = (221, 135, 82)
         rgb[(flags & SUBCELL_WATER) != 0] = (110, 200, 224)
         rgb[(flags & SPLIT_WATER) != 0] = (201, 130, 203)
+    elif layer in ("Shore distance", "Water exposure", "Exposure support"):
+        if layer == "Shore distance":
+            value = np.nan_to_num(np.clip(context.shore_distance_km / 3000, 0, 1))
+            low, high = (229, 220, 178), (102, 52, 111)
+        elif layer == "Water exposure":
+            value = context.water_exposure[bearing]
+            low, high = (193, 156, 104), (47, 133, 185)
+        else:
+            value = context.exposure_mixed_support[bearing]
+            low, high = (36, 69, 76), (238, 177, 73)
+        rgb = np.array(low) + value[..., None] * (np.array(high) - np.array(low))
+        if layer == "Shore distance":
+            rgb[np.isnan(context.shore_distance_km)] = (90, 90, 90)
     pixels = np.rint(rgb).astype(np.uint8)
     if layer == "Water openings":
         # Three pixels per cell expose shared faces when zoomed; no interpolation.
@@ -77,17 +105,34 @@ def render_world_context(
     viewport: MapViewport,
     size: tuple[int, int],
     layer: ContextLayer,
+    bearing: int = 0,
 ) -> Image.Image:
     if min(size) <= 0 or size[0] * size[1] > 16_777_216:
         raise ValueError("World preview must contain 1-16,777,216 pixels.")
     frame = context.grid.frame
     left, top, right, bottom = viewport.rect(size, (frame.width, frame.height))
-    with context_image(context, layer) as source:
+    with context_image(context, layer, bearing) as source:
         sx, sy = source.width / (right - left), source.height / (bottom - top)
-        return source.transform(
+        preview = source.transform(
             size,
             Image.Transform.AFFINE,
             (sx, 0, -left * sx, 0, sy, -top * sy),
             resample=Image.Resampling.NEAREST,
             fillcolor=OCEAN,
         )
+    if layer in ("Shore distance", "Water exposure", "Exposure support"):
+        # Source outlines are a geographic reference; they do not refine the field.
+        painter = ImageDraw.Draw(preview)
+        sx, sy = (right - left) / frame.width, (bottom - top) / frame.height
+        for feature in context.world.land:
+            for component in feature.components:
+                for ring in (component.exterior, *component.holes):
+                    painter.line(
+                        [
+                            (left + (x - frame.bounds[0]) * sx, top + (y - frame.bounds[1]) * sy)
+                            for x, y in ring
+                        ],
+                        fill=(24, 49, 57),
+                        width=1,
+                    )
+    return preview

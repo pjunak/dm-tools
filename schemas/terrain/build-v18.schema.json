@@ -113,7 +113,8 @@
             "shapely",
             "svgelements",
             "rasterio",
-            "affine"
+            "affine",
+            "scipy"
           ],
           "properties": {
             "numpy": {
@@ -133,6 +134,10 @@
             },
             "affine": {
               "type": "string"
+            },
+            "scipy": {
+              "type": "string",
+              "minLength": 1
             }
           }
         },

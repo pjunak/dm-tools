@@ -41,7 +41,7 @@ not a physical river-water validation or a private-map result.
 | Order | Outcome and existing backlog owners | Gate |
 |---|---|---|
 | **A — quality controls** | Quality fixtures, paired maps/profiles, process-scale warnings; convergent-flat comparison (R02/R25/R27/R41/R43) | Fixed comparison set and a measured accept/reject result; no new benchmark framework |
-| **W — next foundation** | Delivered WC0 and WC1 coverage/water topology, edge widths and reopening; next exposure/province context (R01/R49) | Preserve authored vectors and global scale; context is provisional, not solved climate |
+| **W — next foundation** | Delivered WC0 and WC1 coverage/water topology, edge widths, exposure and reopening; next province/default hypotheses (R01/R49) | Preserve authored vectors and global scale; context is provisional, not solved climate |
 | **B — next major generation decision** | Build on the measured frozen reconstruction: physical valley/path geometry and grid/capture sensitivity (R48/R32) | Profile gains do not close direction or authoring gates; preserve anchors, cuts, junctions, terminals and coverage before LE3 |
 | **C** | Consolidate one coherent range/pass/tributary/lowland system from the selected comparison (R08/R09/R14/R40/R44) | Better structural/visual results across fixed seeds and physical scales |
 | **W — after B/C acceptance** | Rough world, seasonal climate/runoff feedback and reviewed parent (WC2-WC4; R33/R49) | Physical terrain acceptance, bounded coupling, shared world time and budgets |
@@ -99,13 +99,25 @@ continent-history generation remain planned.
   before using edge openings as solver links; measure channel/sill depth and
   capacity only with explicit bathymetric hypotheses. Edge widths alone do not
   resolve connectivity through split cells.
-- [ ] **WC1 next batch:** add geodesic interior distance/directional water exposure, then authored
-  province/default inputs. Dominant cell water IDs must not imply a resolved flow
-  link; native vector connectivity alone does not specify transport capacity.
+- [x] **WC1 exposure batch:** cell-centre spherical shore distance with a retained-curve
+  error bound, eight-direction water exposure and mixed-cell support, direction
+  previews/hover and verified v3 export/reopen. Public analytic, seam/pole,
+  orientation, island/interior, bounds and UI controls pass. See
+  [evidence](docs/research/2026-09-25-geographic-exposure.md).
+- [ ] **WC1 next batch:** authored province/default hypotheses in a separate context
+  recipe, with overlay editing, units, explicit overlap priority, distinct
+  crust/rejuvenation/simulation ages and one common present. Test cross-continent
+  belts, conflict handling, source identity and undo/save/reopen. Hypotheses must
+  not imply implemented tectonic/erosion forcing before their consumer exists.
+- [ ] **WC1 exposure follow-up:** compare alternate geographic ranges/weighting
+  when downstream scenarios need them; distinguish connected-ocean fetch from
+  the current all-water geographic score. Retain coarse-cell and quadrature
+  aliasing limits, including features missed without a mixed-support flag.
 - [ ] **WC1 — Generate provisional context** (R07/R10/R11/R49): ocean topology and
   exposure, bathymetric hypotheses, geological provinces and inspectable defaults.
   Spherical coverage and periodic connected-water inspection are delivered.
-  Exposure, bathymetry/province hypotheses and their acceptance controls remain.
+  Shore distance and directional geographic exposure are delivered. Bathymetry,
+  province hypotheses and physical transport acceptance remain.
 - [ ] **WC2 — Produce a rough physical world** (R02/R48/R49): process/domain scale,
   related macro relief and ocean basins, after B/C and relevant LE acceptance.
 - [ ] **WC3 — Couple climate/runoff and coarse history** (R33/R49): seasonal budgets,
@@ -1383,13 +1395,15 @@ Priorities remain conditional on the current strategy's prerequisites.
   [source review](docs/research/2026-09-24-world-context-enrichment.md). WC0 source
   handling and its [schema](schemas/world/project-v1.schema.json) are implemented
   without new runtime dependencies. WC1 geographic context and its
-  [schema](schemas/world/context-v2.schema.json) are also delivered. Exposure,
-  province inputs and WC2-WC6 products/acceptance remain open.
+  [schema](schemas/world/context-v3.schema.json) now include shoreline distance and
+  directional water/support fields using SciPy. Province inputs, bathymetry,
+  transport and WC2-WC6 products/acceptance remain open.
 
 ## UI / UX improvements
 
 WC0's source/mapping workspace and WC1 geographic preview/export/reopening and
-shared-edge water measurements are delivered. Current priorities are exposure/province authoring,
+shared-edge water, shore-distance and directional-exposure measurements are
+delivered. Current priorities are province/default authoring,
 paired generation comparisons, selected-channel
 profiles and process-resolution/conflict feedback
 for A/B. The complete world wizard follows accepted WC2/WC3 products; do not
@@ -1398,6 +1412,11 @@ expose controls whose backend is absent. Further polish should serve these gates
 [ADR-0048](docs/adr/0048-keep-zoom-driven-detail-generation.md) keeps local enrichment in scope.
 [ADR-0049](docs/adr/0049-navigate-and-save-authored-inputs.md) records navigation,
 geometry movement and project-saving behavior.
+
+- [ ] **P1 — Scroll long World context summaries in compact windows.** All job/view
+  controls and legends remain usable at 1160 x 760, but the fixed summary label
+  clips lower metadata. Add a scrollable/responsive information region and check
+  long source summaries too; the default 1440 x 900 view shows the context details.
 
 ### Editing and navigation
 

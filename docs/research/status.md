@@ -33,7 +33,8 @@ wheel whose dependency inventory includes GPL `py-richdem`. A subsequent
 succeeds with 45 distributions, including two prereleases. The Landlab/SciPy
 stack was subsequently installed in an isolated 53-wheel reference environment,
 including plot/test tools and current application dependencies. Landlab/SciPy
-now execute and are benchmarked; the application dependencies are unchanged.
+execute and are benchmarked. SciPy is now also adopted in the application for
+unit-sphere shoreline queries; the larger Landlab stack remains isolated.
 The dependency register distinguishes this reference from a shipped engine.
 
 ## Implemented world source and geographic context
@@ -48,13 +49,15 @@ a reviewed world parent. Ecological classifications remain downstream.
 The [WC0 implementation](2026-09-25-world-source-workspace.md) now adds retained
 SVG source import, explicit spherical frame/radius, semantic continent/island
 assignments, portable saves and a World workspace. Its world-source schema is
-independent of local terrain projects. No new runtime dependency or scientific
-engine is installed. The local terrain importer still dissolves geometry for its
+independent of local terrain projects. Source-only import introduced no new
+runtime dependency or scientific engine. The local terrain importer still dissolves geometry for its
 own workflow. The [geographic WC1 batch](2026-09-25-geographic-world-context.md)
 now generates spherical coverage, connected water, resolution support, previews
 and reproducible exports. The [consumption/edge batch](2026-09-25-context-reopening-and-gateways.md)
 adds verified reopening, physical shared-edge widths and the fractional-origin
-seam correction. These measurements are not transport links. Exposure/province inputs, world climate, ocean
+seam correction. The [exposure batch](2026-09-25-geographic-exposure.md) adds
+shoreline distance, eight directional water/support fields and inspection, using
+SciPy KDTree. These measurements are not climate or transport links. Province inputs, world climate, ocean
 bathymetry, continent/province histories and same-present regional geological replay
 are not implemented. Existing local detail is not history replay. Source
 and license checks for Climlab/GPlates/ExoPlaSim are not local execution evidence.
@@ -107,7 +110,7 @@ later dependent work. No post-generation modification is introduced.
 |---|---|---|
 | World source (WC0) | Retained embedded SVG, full-sphere frame/radius, seam/polar/area controls, continent/island mapping, bounded preparation with selectable adjustments, independent World tab, portable atomic saves and CLI inspect ([guide](../terrain-worlds.md)) | Partial-draft save, cancel/checkpoint imports, other projections and world-linked terrain |
 | Input editor | Retained reference with freshness, geographic pan/zoom, property/geometry edits, undo/redo, guarded Save/Save As, resolution presets, ground inspection and cooperative Cancel/Esc with elapsed stage progress ([ADR-0064](../adr/0064-cancel-generation-at-safe-checkpoints.md)) | Automatic draft preview, comparison views, vertex insertion/removal, climate-region inputs; individual native steps have no stop-latency bound |
-| Geographic context (WC1 subset) | Area-conserving spherical coverage, vector water topology, mixed/subcell support, Context preview/cancellation and portable hashed exports ([guide](../world-context.md)) | Verified reopening/consumption, finite gateway capacity, geodesic exposure and province inputs; no climate or terrain |
+| Geographic context (WC1 subset) | Spherical coverage, vector water topology, shared-edge widths, shore distance, directional water/support, Context previews/cancellation and verified portable exports/reopening ([guide](../world-context.md)) | Province inputs, bathymetry and component-aware transport/capacity; no climate or terrain |
 | Local numeric builds | Saved-project CLI, Float32 NPY/GeoTIFF, review NPZ, previews, diagnostics and completion hashes | World placement, vector products, external desktop GIS acceptance |
 | Scale-aware water display | Cached sampled-pool screen areas, fading small lakes, fixed-size viewport rendering, native PNG policy and actual ground-spacing readout ([ADR-0057](../adr/0057-display-water-at-the-appropriate-scale.md)) | Physical river size/width model and resolution-gated local hydrology; connected scale selection and complete diagnostic review are implemented ([ADR-0069](../adr/0069-connect-and-scale-drainage-review.md)) |
 | Zoom-driven local detail | Unchanged-field sampling, verified saved-parent replay and explicit experimental residual CLI/API; exact shared samples, terrain-weighted shared edges, protected authored/water/channel context, bounded cell support and serial parent/result sessions with freshness checks and shared admission estimates ([ADR-0061](../adr/0061-verify-parents-and-isolate-local-detail.md), [ADR-0062](../adr/0062-reuse-bounded-detail-cell-support.md), [ADR-0063](../adr/0063-reuse-verified-parent-region-sessions.md)) | Remaining grid direction, visual/coarse-power acceptance, parent-view transitions, broader slope/bound checks, finer inherited hydrology, small-river readiness, zoom jobs and broader native/application-memory calibration |
@@ -212,14 +215,16 @@ Local RBF/screened-Poisson replacement, adopted history generation, bedrock/sedi
 transport, coupled ridge/drainage generation, specialized glacial/wind/volcanic
 families, Earth-analogue synthesis and learned proposals remain candidates.
 WC0 source contracts and WC1 geographic coverage/topology are implemented and
-tested. Exposure/province context and climate/runoff remain planned WC1-WC4 work. Ecology follows WC6.
+tested. Geographic shore distance and exposure are now implemented. Province
+hypotheses and climate/runoff remain planned WC1-WC4 work. Ecology follows WC6.
 The input editor is followed by generation, including planned zoom-driven local
 enrichment. [ADR-0048](../adr/0048-keep-zoom-driven-detail-generation.md) corrects
 the earlier exclusion of regional generation; manual sculpting of completed
 outputs remains out of scope. The complete alternatives and gates remain in TODO.
 
-Landlab and SciPy are now installed and executed only in the separate reference
-environment. Fastscapelib and Numba remain uninstalled here. The
+Landlab executes only in the separate reference environment. SciPy also runs
+in the application for spherical shoreline queries. Fastscapelib and Numba
+remain uninstalled here. The
 [earlier source/platform audit](2026-09-24-progress-and-generation-strategy.md#current-tool-and-platform-check)
 retains its pre-installation evidence, including the GPL dependency and missing
 Fastscapelib wheel. GRASS, Whitebox, SPACE, HighMap, GPU transport, geological

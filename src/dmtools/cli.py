@@ -122,6 +122,9 @@ def _run_world_context_inspect(arguments: argparse.Namespace) -> int:
     print(f"Verified context: {result.world.project.name}; {columns} x {rows} cells")
     print(f"{len(result.water_bodies)} water regions; land {result.land_area_km2:,.0f} km²")
     print("Shared-edge water openings in km; no depth or transport capacity inferred.")
+    print(f"Shore distance: {result.shore_sampling.sample_count:,} samples; "
+          f"maximum overestimate {result.shore_sampling.max_error_km:.3f} km.")
+    print("Water exposure in 8 look directions; mixed-cell support recorded. Not rainfall.")
     print("Producer matches current runtime." if run.runtime == runtime_identity()
           else "Saved producer differs; viewing is supported, regenerate before exporting.")
     return 0
@@ -137,7 +140,7 @@ def _run_world_context(arguments: argparse.Namespace) -> int:
         print(f"World context failed: {error}", file=sys.stderr)
         return 1
     print(f"Geographic context complete: {path}")
-    print("Land coverage and connected water; climate, bathymetry and terrain follow later.")
+    print("Geography, shoreline distance and water exposure; climate and terrain follow later.")
     return 0
 
 

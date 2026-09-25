@@ -19,9 +19,9 @@ and [WC0-WC6 plan](world-context.md) advance retained world import and shared
 context from the former final climate phase. [WC0 is now implemented](../terrain-worlds.md):
 retained source, explicit spherical placement, continent/island mapping and a
 portable World workspace. [WC1 geographic context](../world-context.md) now adds
-fractional coverage, connected water, shared-edge openings and verified
-inspection/export/reopening. Exposure and
-province inputs are the next foundation.
+fractional coverage, connected water, shared-edge openings, shore distance and
+directional water exposure with verified inspection/export/reopening. Authored
+province/default hypotheses are the next foundation.
 Physical path/landform acceptance remains a prerequisite for world-informed
 production terrain; ecological classifications remain downstream.
 
@@ -61,7 +61,7 @@ Dated reports and accepted ADRs remain historical evidence.
 | Terrain-aligned drainage | Frozen-graph reconstruction measured; production not accepted | Shared physical paths, lower grid bias, hard constraints and resolution acceptance |
 | Coherent landform families | Partial recipes; two-epoch reference implemented and measured, quality gate open | Related range/pass/tributary/lowland structure that survives multiple seeds and scales |
 | Useful zoom enrichment | Experimental | Accepted regional shape, transition and inherited-flow behavior; then viewport scheduling |
-| World import and shared context | WC0 plus WC1 geographic coverage, water topology, finite edge widths and preview/export/reopening implemented | Geodesic exposure, component-aware transport and province inputs |
+| World import and shared context | WC0 plus WC1 geographic coverage, water topology, edge widths, shore distance, directional exposure and preview/export/reopening implemented | Province hypotheses, bathymetry and component-aware transport |
 | World-informed rough terrain and history | Planned, dependent on physical terrain acceptance | WC2/WC3 coarse relief, seasonal runoff and bounded feedback; WC4 reviewed parent |
 | Hydrological water and ecology | Later dependent work | Flux/storage/river-size evidence and WC6 ecological layers; shared world context comes earlier |
 
@@ -118,8 +118,10 @@ continent/island assignment, portable saves and a source preview. The
 validation and limits. The local terrain importer remains a separate operation.
 **WC1 geography delivered:** spherical coverage and vector-derived periodic water,
 with narrow-strait/island controls, support previews, hashed exports, verified
-reopening and finite shared-edge measurements. Next add geodesic exposure and
-inspectable province/history hypotheses. Do not infer ocean depth
+reopening, shared-edge measurements, shoreline distance with an error bound and
+eight-direction water exposure with mixed-cell support. Next add inspectable
+authored province/default hypotheses in a separate context recipe, including
+explicit overlap/priority and distinct ages/duration at one common present. Do not infer ocean depth
 from width or introduce climate fields without their budgets. These bounded
 contracts precede the remaining B/C quality work and require no erosion engine
 or private-map import.

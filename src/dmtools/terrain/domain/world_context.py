@@ -1,11 +1,11 @@
 """Cell-centred full-sphere geography, distinct from local terrain node grids."""
 
 from dataclasses import dataclass
-from math import cos, pi, sin
+from math import ceil, cos, pi, sin
 
 from dmtools.terrain.domain.world import WorldFrame
 
-WORLD_CONTEXT_ALGORITHM = "spherical-geography-v2"
+WORLD_CONTEXT_ALGORITHM = "spherical-geography-v3"
 MAX_CONTEXT_ROWS = 360
 MIXED_COAST = 1
 SPLIT_WATER = 2
@@ -73,3 +73,29 @@ class ConnectedWater:
     area_km2: float
     crosses_seam: bool
     displayed_cells: int
+
+
+EXPOSURE_BEARINGS = ("N", "NE", "E", "SE", "S", "SW", "W", "NW")
+MAX_SHORE_SAMPLES = 500_000
+MAX_EXPOSURE_STEPS = 256
+
+
+def exposure_range_km(grid: SphericalContextGrid) -> float:
+    """Geographic look distance, limited to a quarter great circle on small worlds."""
+    return min(3000.0, pi * grid.frame.radius_km / 2)
+
+
+def exposure_steps(grid: SphericalContextGrid) -> int:
+    return min(
+        MAX_EXPOSURE_STEPS, max(32, ceil(4 * exposure_range_km(grid) / grid.north_south_spacing_km))
+    )
+
+
+def shore_spacing_km(grid: SphericalContextGrid) -> float:
+    return min(25.0, grid.north_south_spacing_km / 4)
+
+
+@dataclass(frozen=True, slots=True)
+class ShoreSampling:
+    sample_count: int
+    max_error_km: float

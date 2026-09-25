@@ -5,7 +5,7 @@ import json
 from collections.abc import Callable
 from hashlib import sha256
 from itertools import pairwise
-from math import isfinite
+from math import isfinite, pi
 from pathlib import Path
 from typing import Any, cast
 
@@ -16,6 +16,7 @@ from dmtools.terrain.adapters.build import canonical_json
 from dmtools.terrain.adapters.numeric import read_numeric_archive
 from dmtools.terrain.adapters.world_context import (
     CONTEXT_OUTPUTS,
+    CONTEXT_PREVIEWS,
     CONTEXT_SCHEMA,
     CONTEXT_VERSION,
     MAX_CONTEXT_MANIFEST_BYTES,
@@ -25,14 +26,17 @@ from dmtools.terrain.adapters.world_project import MAX_WORLD_PROJECT_BYTES, worl
 from dmtools.terrain.adapters.world_svg import WORLD_IMPORTER
 from dmtools.terrain.domain.world import WORLD_PREPARATION
 from dmtools.terrain.domain.world_context import (
+    MAX_SHORE_SAMPLES,
     MIXED_COAST,
     SPLIT_WATER,
     SUBCELL_LAND,
     SUBCELL_WATER,
     WORLD_CONTEXT_ALGORITHM,
     ConnectedWater,
+    ShoreSampling,
     SphericalContextGrid,
     WorldContextSettings,
+    shore_spacing_km,
 )
 from dmtools.terrain.pipeline.world import prepare_world_map
 from dmtools.terrain.pipeline.world_context import WorldContext
@@ -97,7 +101,8 @@ def _runtime(value: object) -> dict[str, object]:
     _digest(record["package_source_sha256"])
     dependencies = _object(record["dependencies"])
     if (
-        set(dependencies) != {"numpy", "Pillow", "shapely", "svgelements", "rasterio", "affine"}
+        set(dependencies)
+        != {"numpy", "scipy", "Pillow", "shapely", "svgelements", "rasterio", "affine"}
         or any(not isinstance(v, str) or not v for v in dependencies.values())
         or record["byteorder"] not in ("little", "big")
     ):
@@ -152,7 +157,7 @@ def read_world_context(
         for name in CONTEXT_OUTPUTS:
             checkpoint()
             record = _object(outputs[name])
-            limit = MAX_WORLD_PROJECT_BYTES if name == "world.dmworld.json" else 16 * 1024 * 1024
+            limit = MAX_WORLD_PROJECT_BYTES if name == "world.dmworld.json" else 24 * 1024 * 1024
             if (
                 set(record) != {"bytes", "sha256"}
                 or type(record["bytes"]) is not int
@@ -250,6 +255,40 @@ def read_world_context(
             > tolerance
         ):
             raise ValueError("Context does not conserve prepared source or sphere area.")
+        exposure = read_numeric_archive(
+            products["exposure.npz"],
+            {
+                "shore_distance_km": (grid.shape, "<f8"),
+                "water_exposure": ((8, rows, columns), "<f4"),
+                "exposure_mixed_support": ((8, rows, columns), "<f4"),
+            },
+        )
+        shore_record = _object(doc["shore_distance"])
+        samples, bound = shore_record["sample_count"], shore_record["max_error_km"]
+        if (
+            type(samples) is not int
+            or not 0 <= samples <= MAX_SHORE_SAMPLES
+            or type(bound) not in (int, float)
+            or not isfinite(bound)
+            or not 0 <= bound <= shore_spacing_km(grid) / 2 * (1 + 1e-12)
+        ):
+            raise ValueError("Invalid shoreline sampling support.")
+        shore = exposure["shore_distance_km"]
+        if samples == 0:
+            if (
+                bound != 0
+                or not np.isnan(shore).all()
+                or not (np.all(fraction == 0) or np.all(fraction == 1))
+            ):
+                raise ValueError("Missing shoreline distances require a shore-free world.")
+        elif not np.isfinite(shore).all() or np.any(
+            (shore < 0) | (shore > pi * grid.frame.radius_km)
+        ):
+            raise ValueError("Shore distance must be finite and within half the circumference.")
+        for key in ("water_exposure", "exposure_mixed_support"):
+            value = exposure[key]
+            if not np.isfinite(value).all() or np.any((value < 0) | (value > 1)):
+                raise ValueError("Geographic exposure fractions must be finite and within 0-1.")
         context = WorldContext(
             world,
             grid,
@@ -259,13 +298,17 @@ def read_world_context(
             arrays["cell_area_km2"],
             arrays["east_opening_km"],
             arrays["south_opening_km"],
+            shore,
+            exposure["water_exposure"],
+            exposure["exposure_mixed_support"],
+            ShoreSampling(samples, bound),
             tuple(bodies),
             measured,
             error,
         )
         if canonical_json(doc) != canonical_json(context_document(context, runtime, outputs)):
             raise ValueError("Context metadata disagrees with its source or numeric products.")
-        for name in CONTEXT_OUTPUTS[2:]:
+        for name in CONTEXT_PREVIEWS:
             checkpoint()
             factor = 3 if name == "gateways.png" else 1
             with Image.open(io.BytesIO(products[name])) as preview:

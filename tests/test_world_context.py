@@ -190,7 +190,7 @@ def test_export_schema_hashes_snapshot_numeric_fields_and_no_overwrite(tmp_path:
     target = tmp_path / "context"
     path = application.export_context(run, target)
     manifest = json.loads(path.read_text(encoding="utf-8"))
-    schema = json.loads((ROOT / "schemas/world/context-v2.schema.json").read_text(encoding="utf-8"))
+    schema = json.loads((ROOT / "schemas/world/context-v3.schema.json").read_text(encoding="utf-8"))
     Draft202012Validator(schema).validate(manifest)  # pyright: ignore[reportUnknownMemberType]
     assert manifest["input_sha256"] == context_input_sha256(run.context)
     assert open_world(target / "world.dmworld.json").project == world.project
@@ -406,3 +406,19 @@ def test_integer_frame_coordinates_have_the_same_saved_context_identity(tmp_path
     assert context_input_sha256(run.context) == context_input_sha256(loaded.context)
     np.testing.assert_array_equal(run.context.land_fraction, loaded.context.land_fraction)
     assert loaded.context.world.project == p
+
+
+
+def test_shore_free_world_exports_reopens_and_renders_nodata(tmp_path: Path) -> None:
+    from dmtools.terrain.adapters.world_context_render import context_image
+
+    run = application.generate_context(
+        project('<path d="M0 0 H360 V180 H0 Z"/>'), WorldContextSettings(12)
+    )
+    manifest = application.export_context(run, tmp_path / "shore-free")
+    reopened = application.open_context(manifest).context
+    assert np.isnan(reopened.shore_distance_km).all()
+    assert reopened.shore_sampling.sample_count == 0
+    assert not reopened.water_exposure.any()
+    with context_image(reopened, "Shore distance") as image:
+        assert image.getpixel((0, 0)) == (90, 90, 90)

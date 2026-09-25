@@ -20,11 +20,13 @@ from dmtools.terrain.domain.world_context import (
     SUBCELL_LAND,
     SUBCELL_WATER,
     ConnectedWater,
+    ShoreSampling,
     SphericalContextGrid,
     WorldContextSettings,
 )
 from dmtools.terrain.pipeline.control import CancellationToken, ProgressCallback, check_cancelled
 from dmtools.terrain.pipeline.world import WorldMap, component_area_km2, components_from_geometry
+from dmtools.terrain.pipeline.world_exposure import measure_shore_distance, measure_water_exposure
 from dmtools.terrain.pipeline.world_gateways import measure_water_openings
 
 
@@ -38,6 +40,10 @@ class WorldContext:
     cell_area_km2: NDArray[np.float64]
     east_opening_km: NDArray[np.float64]
     south_opening_km: NDArray[np.float64]
+    shore_distance_km: NDArray[np.float64]
+    water_exposure: NDArray[np.float32]
+    exposure_mixed_support: NDArray[np.float32]
+    shore_sampling: ShoreSampling
     water_bodies: tuple[ConnectedWater, ...]
     land_area_km2: float
     area_error_km2: float
@@ -151,7 +157,7 @@ def generate_world_context(
     # Work one row at a time; coastline intersection scratch does not scale with
     # all cells times all vector vertices. Grid admission is bounded in settings.
     for row in range(rows):
-        report(0.05 + 0.65 * row / rows, f"Measuring geographic cells: row {row + 1}/{rows}")
+        report(0.05 + 0.4 * row / rows, f"Measuring geographic cells: row {row + 1}/{rows}")
         strip = box(xs[0], ys[row], xs[-1], ys[row + 1])
         row_land = land.intersection(strip)
         shapely.prepare(row_land)
@@ -212,12 +218,35 @@ def generate_world_context(
     east, south = measure_water_openings(
         land,
         grid,
-        lambda f, message: report(0.7 + 0.29 * f, message),
+        lambda f, message: report(0.45 + 0.15 * f, message),
+        cancellation=cancellation,
+    )
+    report(0.60, "Measuring geodesic shoreline distance")
+    shore, sampling = measure_shore_distance(land, grid, cancellation=cancellation)
+    exposure, mixed_support = measure_water_exposure(
+        grid,
+        fraction,
+        flags,
+        lambda f, message: report(0.65 + 0.34 * f, message),
         cancellation=cancellation,
     )
     for array in (fraction, water_id, flags, row_area, east, south):
         array.flags.writeable = False
     report(1, "Geographic context ready; mixed cells retain unresolved local detail")
     return WorldContext(
-        world, grid, fraction, water_id, flags, row_area, east, south, bodies, measured, error
+        world,
+        grid,
+        fraction,
+        water_id,
+        flags,
+        row_area,
+        east,
+        south,
+        shore,
+        exposure,
+        mixed_support,
+        sampling,
+        bodies,
+        measured,
+        error,
     )

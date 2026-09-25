@@ -8,6 +8,7 @@ import threading
 import tkinter as tk
 from collections.abc import Callable
 from dataclasses import dataclass
+from math import isfinite
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 from typing import cast
@@ -45,7 +46,12 @@ from dmtools.terrain.domain.world import (
     WorldRole,
     WorldSource,
 )
-from dmtools.terrain.domain.world_context import WorldContextSettings
+from dmtools.terrain.domain.world_context import (
+    EXPOSURE_BEARINGS,
+    WorldContextSettings,
+    exposure_range_km,
+    exposure_steps,
+)
 from dmtools.terrain.pipeline.control import CancellationToken, GenerationCancelled
 from dmtools.terrain.pipeline.world import WorldMap, prepare_world_map
 from dmtools.terrain.viewport import MapViewport
@@ -153,6 +159,8 @@ class WorldWorkspace(ttk.Frame):
         self.show_excluded = tk.BooleanVar(self, value=True)
         self.context_rows = tk.StringVar(self, value="180")
         self.display_layer = tk.StringVar(self, value="Source")
+        self.exposure_bearing = tk.StringVar(self, value="N")
+        self.context_legend = tk.StringVar(self)
         self.context_detail = tk.StringVar(
             self, value="Generate geographic context from the current world."
         )
@@ -380,11 +388,7 @@ class WorldWorkspace(ttk.Frame):
         ).grid(row=7, column=0, sticky="nw", pady=12)
         ttk.Label(
             self.context_page,
-            text="Support colours: orange = land missed by centre sampling; "
-            "cyan = water missed by centre sampling; violet = disconnected water in one cell. "
-            "Water openings: blue = full edge, orange = partial, dark = closed. "
-            "Zoom inspects these cells; it does not refine them. Climate, ocean depth and "
-            "rough terrain are later stages.",
+            textvariable=self.context_legend,
             style="Muted.TLabel",
             wraplength=335,
         ).grid(row=8, column=0, sticky="ew", pady=6)
@@ -402,7 +406,7 @@ class WorldWorkspace(ttk.Frame):
         ttk.Button(toolbar, text="Fit world", command=self.fit).pack(side="left")
         self.excluded_toggle = ttk.Checkbutton(
             toolbar,
-            text="Show excluded shapes",
+            text="Excluded shapes",
             variable=self.show_excluded,
             command=self._schedule_draw,
         )
@@ -416,6 +420,15 @@ class WorldWorkspace(ttk.Frame):
         )
         self.layer_input.pack(side="left", padx=4)
         self.layer_input.bind("<<ComboboxSelected>>", self._layer_changed)
+        self.bearing_input = ttk.Combobox(
+            toolbar,
+            textvariable=self.exposure_bearing,
+            values=EXPOSURE_BEARINGS,
+            state="disabled",
+            width=4,
+        )
+        self.bearing_input.pack(side="left", padx=4)
+        self.bearing_input.bind("<<ComboboxSelected>>", self._layer_changed)
         ttk.Label(toolbar, textvariable=self.viewer_note, style="Muted.TLabel").pack(
             side="right", padx=5
         )
@@ -611,6 +624,7 @@ class WorldWorkspace(ttk.Frame):
             "the declared sphere. Small features remain in the source "
             "even when a cell cannot resolve them."
         )
+        self._layer_changed()
 
     def _context_settings_changed(self, *_args: str) -> None:
         if self.context_run is not None and self.context_rows.get() == str(
@@ -629,8 +643,34 @@ class WorldWorkspace(ttk.Frame):
         self.excluded_toggle.configure(
             state="normal" if self.display_layer.get() == "Source" else "disabled"
         )
+        layer = self.display_layer.get()
+        self.bearing_input.configure(
+            state="readonly"
+            if context and layer in ("Water exposure", "Exposure support")
+            else "disabled"
+        )
+        legends = {
+            "Source": "Select a context layer after generation. Zoom inspects existing cells; "
+            "it does not refine them. Climate and terrain are later stages.",
+            "Land coverage": "Green = land; blue = water. Mixed colours retain fractional "
+            "coverage of unresolved shores, islands and straits.",
+            "Connected water": "Different colours identify connected water regions. "
+            "Each cell displays its largest water region.",
+            "Resolution support": "Orange = land missed by centre sampling; cyan = water "
+            "missed by centre sampling; violet = disconnected water in one cell.",
+            "Water openings": "Blue = full edge; orange = partial; dark = closed. Width is "
+            "the longest continuous wet edge, not channel depth or transport capacity.",
+            "Shore distance": "Cream = 0 km; purple = 3,000+ km. Distance is measured at "
+            "cell centres and includes inland shores. Grey = no shoreline exists.",
+            "Water exposure": "Tan = 0% water; blue = 100%. Choose the initial look direction "
+            "beside the layer. Nearer water has more weight. This is not rainfall. "
+            "Outlines show source geography.",
+            "Exposure support": "Dark = 0%; gold = 100% of exposure weight falls in mixed "
+            "coastal cells. This flags unresolved geography; it is not an error bound.",
+        }
+        self.context_legend.set(legends.get(layer, legends["Source"]))
         self.viewer_note.set(
-            f"{context.grid.angular_step_deg:g}° cells · geographic context"
+            f"{context.grid.angular_step_deg:g}° cells"
             if context and self.display_layer.get() != "Source"
             else "Retained source geography"
         )
@@ -641,21 +681,20 @@ class WorldWorkspace(ttk.Frame):
             return
         result = self.context_run.context
         rows, columns = result.grid.shape
-        largest = max((b.area_km2 for b in result.water_bodies), default=0)
         invisible = sum(b.displayed_cells == 0 for b in result.water_bodies)
         self.context_detail.set(
             f"{columns} x {rows} cells · {result.grid.angular_step_deg:g}°\n"
-            f"North-south spacing: {result.grid.north_south_spacing_km:,.1f} km; "
-            "east-west spacing decreases towards the poles.\n\n"
-            f"{len(result.water_bodies)} connected water regions\n"
-            f"Largest: {largest:,.0f} km²\n"
-            f"{invisible} smaller regions have no dominant display cell.\n\n"
-            f"{result.mixed_cells:,} mixed land/water cells\n"
-            f"{result.subcell_land_cells:,} contain land missed by centre sampling\n"
-            f"{result.subcell_water_cells:,} contain water missed by centre sampling\n"
-            f"{result.split_water_cells:,} contain disconnected water pieces\n\n"
-            "Water connectivity comes from retained coastlines, including the longitude seam. "
-            "Edge openings are measured in km. They do not establish depth or transport capacity."
+            f"North-south spacing: {result.grid.north_south_spacing_km:,.1f} km\n"
+            "East-west spacing decreases towards the poles.\n\n"
+            f"{len(result.water_bodies)} connected water regions; {invisible} below display scale\n"
+            f"{result.mixed_cells:,} mixed coastal cells\n"
+            f"{result.split_water_cells:,} cells with disconnected water\n\n"
+            f"Shore distance: {result.shore_sampling.sample_count:,} samples; "
+            f"overestimate at most {result.shore_sampling.max_error_km:.2f} km.\n\n"
+            f"Water exposure: 8 directions over {exposure_range_km(result.grid):,.0f} km; "
+            f"{exposure_steps(result.grid)} samples per ray.\n"
+            "Sampling may miss narrow features. Inspect Exposure support and compare "
+            "grid resolutions before drawing conclusions."
         )
 
     def generate_context(self) -> None:
@@ -1125,6 +1164,7 @@ class WorldWorkspace(ttk.Frame):
                     self.viewport,
                     (width, height),
                     cast(ContextLayer, self.display_layer.get()),
+                    EXPOSURE_BEARINGS.index(self.exposure_bearing.get()),
                 )
             else:
                 preview = render_world_source(
@@ -1233,7 +1273,22 @@ class WorldWorkspace(ttk.Frame):
                         else "single surface"
                     )
                 )
-                if self.display_layer.get() == "Water openings":
+                if self.display_layer.get() == "Shore distance":
+                    distance = float(context.shore_distance_km[row, col])
+                    detail = (
+                        f"Cell-centre shore distance: {distance:,.1f} km · "
+                        f"overestimate <= {context.shore_sampling.max_error_km:.2f} km"
+                        if isfinite(distance)
+                        else "No shoreline exists in this world"
+                    )
+                elif self.display_layer.get() in ("Water exposure", "Exposure support"):
+                    direction = EXPOSURE_BEARINGS.index(self.exposure_bearing.get())
+                    detail = (
+                        f"Looking {self.exposure_bearing.get()}: "
+                        f"{context.water_exposure[direction, row, col]:.1%} weighted water · "
+                        f"{context.exposure_mixed_support[direction, row, col]:.1%} mixed support"
+                    )
+                elif self.display_layer.get() == "Water openings":
                     north = context.south_opening_km[row - 1, col] if row else 0.0
                     detail = (
                         f"Cell {row + 1}, {col + 1} · longest water opening (km): "

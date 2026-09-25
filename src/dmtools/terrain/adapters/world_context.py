@@ -13,13 +13,26 @@ from dmtools.terrain.adapters.world_context_render import CONTEXT_LAYERS, contex
 from dmtools.terrain.adapters.world_project import world_project_document
 from dmtools.terrain.adapters.world_svg import WORLD_IMPORTER
 from dmtools.terrain.domain.world import WORLD_PREPARATION
-from dmtools.terrain.domain.world_context import WORLD_CONTEXT_ALGORITHM
+from dmtools.terrain.domain.world_context import (
+    EXPOSURE_BEARINGS,
+    WORLD_CONTEXT_ALGORITHM,
+    exposure_range_km,
+    exposure_steps,
+)
 from dmtools.terrain.pipeline.world_context import WorldContext
 
 CONTEXT_SCHEMA = "dmtools.world-context"
-CONTEXT_VERSION = 2
-CONTEXT_PREVIEWS = ("land.png", "water.png", "support.png", "gateways.png")
-CONTEXT_OUTPUTS = ("world.dmworld.json", "geography.npz", *CONTEXT_PREVIEWS)
+CONTEXT_VERSION = 3
+CONTEXT_PREVIEWS = (
+    "land.png",
+    "water.png",
+    "support.png",
+    "gateways.png",
+    "shore-distance.png",
+    "exposure-north.png",
+    "exposure-support-north.png",
+)
+CONTEXT_OUTPUTS = ("world.dmworld.json", "geography.npz", "exposure.npz", *CONTEXT_PREVIEWS)
 MAX_CONTEXT_MANIFEST_BYTES = 4 * 1024 * 1024
 
 
@@ -88,6 +101,24 @@ def context_document(
             "positive_east_faces": int(np.count_nonzero(context.east_opening_km)),
             "positive_south_faces": int(np.count_nonzero(context.south_opening_km)),
         },
+        "shore_distance": {
+            "measurement": "cell-centre-to-nearest-sampled-shore",
+            "units": "km",
+            "includes_inland_water": True,
+            "no_shoreline": "nan",
+            **asdict(context.shore_sampling),
+        },
+        "exposure": {
+            "measurement": "great-circle-weighted-water-fraction",
+            "bearings": list(EXPOSURE_BEARINGS),
+            "range_km": exposure_range_km(context.grid),
+            "distance_samples": exposure_steps(context.grid),
+            "sample_step_km": exposure_range_km(context.grid) / exposure_steps(context.grid),
+            "weight": "exp(-3*distance/range); normalized-midpoints",
+            "mixed_support": "quadrature-weight-on-mixed-cells; not-error-bound",
+            "land_blocks_rays": False,
+            "preview_bearing": "N",
+        },
         "outputs": outputs,
     }
     document["context_sha256"] = sha256(canonical_json(document)).hexdigest()
@@ -126,7 +157,15 @@ def write_world_context(
             [context.grid.longitude_deg(c) for c in range(columns)], dtype="<f8"
         ),
     )
-    names = ["world.dmworld.json", "geography.npz"]
+    verify()
+    np.savez_compressed(
+        target / "exposure.npz",
+        allow_pickle=False,
+        shore_distance_km=context.shore_distance_km.astype("<f8", copy=False),
+        water_exposure=context.water_exposure.astype("<f4", copy=False),
+        exposure_mixed_support=context.exposure_mixed_support.astype("<f4", copy=False),
+    )
+    names = ["world.dmworld.json", "geography.npz", "exposure.npz"]
     for layer, name in zip(CONTEXT_LAYERS, CONTEXT_PREVIEWS, strict=True):
         verify()
         with context_image(context, layer) as image:

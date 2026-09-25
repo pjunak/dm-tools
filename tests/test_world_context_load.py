@@ -65,6 +65,9 @@ def test_saved_context_reopens_without_regeneration_and_is_immutable(
         run.context.support_flags,
         run.context.east_opening_km,
         run.context.south_opening_km,
+        run.context.shore_distance_km,
+        run.context.water_exposure,
+        run.context.exposure_mixed_support,
     ):
         assert not array.flags.writeable
     assert main(["world", "inspect-context", str(bundle)]) == 0
@@ -96,7 +99,12 @@ def test_manifest_and_product_hash_changes_are_rejected(bundle: Path) -> None:
 
 
 METADATA_EDITS: list[Callable[[dict[str, Any]], None]] = [
-    lambda d: d.update(version=1),
+    lambda d: d.update(version=2),
+    lambda d: d["shore_distance"].update(sample_count=True),
+    lambda d: d["shore_distance"].update(sample_count=500001),
+    lambda d: d["shore_distance"].update(max_error_km=-1),
+    lambda d: d["exposure"].update(range_km=20),
+    lambda d: d["exposure"].update(distance_samples=100000),
     lambda d: d.update(version=True),
     lambda d: d.update(extra="unknown"),
     lambda d: d["grid"].update(columns=25),
@@ -215,3 +223,33 @@ def test_changed_bundle_during_load_and_cancellation_are_rejected(
     token.cancel()
     with pytest.raises(GenerationCancelled):
         application.open_context(bundle, cancellation=token)
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("shore_distance_km", float("nan")),
+        ("shore_distance_km", -1),
+        ("shore_distance_km", 1e20),
+        ("water_exposure", 1.01),
+        ("water_exposure", float("inf")),
+        ("exposure_mixed_support", -0.01),
+    ],
+)
+def test_invalid_exposure_products_rejected(bundle: Path, field: str, value: float) -> None:
+    path = bundle.parent / "exposure.npz"
+    with np.load(path, allow_pickle=False) as data:
+        arrays: dict[str, NDArray[Any]] = {key: data[key] for key in data.files}
+    arrays[field].flat[0] = value
+    np.savez_compressed(path, allow_pickle=False, **arrays)
+    rehash_product(bundle, path.name)
+    with pytest.raises(ValueError):
+        application.open_context(bundle)
+
+
+def test_exposure_roundtrip_preserves_all_bearings_and_sampling(bundle: Path) -> None:
+    restored = application.open_context(bundle).context
+    original = application.generate_context(open_world(EXAMPLE).project, WorldContextSettings(12))
+    for name in ("shore_distance_km", "water_exposure", "exposure_mixed_support"):
+        np.testing.assert_array_equal(getattr(restored, name), getattr(original.context, name))
+    assert restored.shore_sampling == original.context.shore_sampling
