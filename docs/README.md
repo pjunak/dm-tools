@@ -94,8 +94,10 @@ measures surface/path agreement without rerunning erosion. The
 path/ground geometry and grid/time diagnostics, with failed constraint gates kept
 visible. The [constrained-network follow-up](research/2026-09-25-constrained-network-surface.md)
 preserves native limits and hard heights, but independent rerouting rejects its
-valley capture. The [reference guide](../benchmarks/evolution/README.md) owns setup and
-the runnable comparison commands.
+valley capture. The [bank-support follow-up](research/2026-09-25-valley-bank-feasibility.md)
+adds physical banks and conflict diagnostics, but endpoint success still fails
+cross-sections and capture; river-aligned local patches are next. The
+[reference guide](../benchmarks/evolution/README.md) owns setup and runnable commands.
 The [2026-09-13 audit](maintenance/2026-09-13-documentation-and-research-status.md)
 and [2026-09-10 checkpoint](maintenance/2026-09-10-sanity-and-performance.md)
 retain earlier documentation, structure and performance evidence.

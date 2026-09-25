@@ -252,3 +252,39 @@ completed experiment may be **rejected** for terrain use. Failed executions writ
 `incomplete.json` and never publish `comparison.json`. Use a fresh output folder.
 The measured candidate passes hard constraints but fails capture and adds sinks;
 no normal-generation or editor path uses it.
+
+
+## Valley-bank feasibility
+
+Compare bank-to-bed support under the same fixture's hard constraints:
+
+```powershell
+.\.venv\Scripts\python.exe -m benchmarks.evolution.valley_comparison --output artifacts/my-valley-support
+.\.venv\Scripts\python.exe -m pytest tests/test_valley_support.py tests/test_network_surface.py
+```
+
+The base environment uses the existing SciPy fit. Fixed 250 m physical stations
+and 500 m bank offsets are independent of process spacing. Banks refer to their
+nearest network reach, including at junctions. Required bank height differences
+taper to zero at the fixed coastal mouth. The 1,000/500/250 m cases and rotated
+250 m case keep native cut/no-fill limits, hard heights and the protected divide.
+
+Local interval conflicts report physical probes and unavoidable shortfalls.
+Joint conflicts can run a bounded diagnostic for minimum common bank shortfall
+with all other conditions fixed; its terrain is never returned. A separate
+pinned-bed control must reject without lowering the pin. Timeout/numeric failure
+is an incomplete execution, distinct from an infeasible constraint result.
+
+Reports measure 25 m inward cross-sections as well as bank endpoints, complete
+100/25 m river profiles, and independent routing at process/common 125 m spacing.
+Outputs include support and actual-route figures, full metrics and hashes,
+source/control fields and geometry. Candidate `ground_m` exists only in
+constructed cases. Completion-last `comparison.json` can record infeasible cases
+and a rejected quality decision; failed execution writes `incomplete.json`.
+Existing output directories are never overwritten.
+
+The [measured report](../../docs/research/2026-09-25-valley-bank-feasibility.md)
+rejects this candidate: all 525 endpoint checks pass at 500/250 m, but inward
+profiles and capture fail; the 250 m sink count increases from 19 to 30. The next
+experiment uses river-aligned local surface patches under the same hard bounds.
+Normal generation and the editor do not use this research candidate.

@@ -1,8 +1,8 @@
 # Landscape-evolution implementation plan
 
 Updated 2026-09-25. **LE1 implemented; LE2 history, frozen reconstruction,
-physical-path, receiver/outlet and constrained-network comparisons measured.
-Production-quality acceptance and application integration
+physical-path, receiver/outlet, constrained-network and bank-feasibility
+comparisons measured. Production-quality acceptance and application integration
 remain open.**
 The [primary-source review](../research/2026-09-24-landscape-evolution-models.md)
 records the scientific basis, tool comparison and dependency probe.
@@ -74,11 +74,21 @@ and descending physical guides at three process spacings. Repeated fits and a
 interior sinks, including at a common finer checking resolution. It remains
 research-only; this is not a history-model result or an accepted hydrological field.
 
-Next test lateral bank/confluence support and whole-route cut feasibility using
-the same fixed fixture. Establish actual valley capture and bounded transitions
-before enlarging the cohort or integrating LE3/WC2. The main strategy owns the
-exit conditions. Do not raise the failed finer history's budget, weaken authored
-constraints or create another report framework.
+## Valley-bank checkpoint
+
+The [bank-feasibility comparison](../research/2026-09-25-valley-bank-feasibility.md)
+now adds physical banks, nearest-reach junction ownership, coastal taper and
+local/joint constraint witnesses. Feasible cases preserve bank endpoint drops,
+native bounds and hard heights, but cross-sections still rise and head capture
+remains zero. At 250 m sinks worsen from 19 to 30; the 1,000 m bank conditions
+are locally infeasible. No relaxed ground is published.
+
+Next construct one river-aligned local surface-patch comparison with explicit
+cross-section/confluence/mouth geometry and bounded transitions, on the same
+fixture. Both the local field and Float32 delivery must pass actual capture and
+hard constraints before enlarging the cohort or integrating LE3/WC2. The main
+strategy owns the exit conditions. Do not replace this representation test with
+more endpoint penalties, weaken authored limits or create another framework.
 
 ## Outcome and decision
 

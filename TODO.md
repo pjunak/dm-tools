@@ -42,7 +42,7 @@ not a physical river-water validation or a private-map result.
 |---|---|---|
 | **A — quality controls** | Quality fixtures, paired maps/profiles, process-scale warnings; convergent-flat comparison (R02/R25/R27/R41/R43) | Fixed comparison set and a measured accept/reject result; no new benchmark framework |
 | **W — bounded foundation delivered** | WC0 plus WC1 geography, geology inputs, bathymetry and water-piece incidence (R01/R49); return to B/C physical paths and landforms | Preserve source and unresolved support; context is provisional, not solved climate |
-| **B — next major generation decision** | Constrained network-led fit measured; solve lateral valley feasibility and capture (R48/R32) | Hard heights and native bounds pass; actual routing still misses mouths and creates sinks; resolve capture before LE3 |
+| **B — next major generation decision** | Bank feasibility measured; construct river-aligned local surface patches (R48/R32) | Feasible bank endpoints and hard limits pass, but cross-sections and capture fail; resolve actual drainage before LE3 |
 | **C** | Consolidate one coherent range/pass/tributary/lowland system from the selected comparison (R08/R09/R14/R40/R44) | Better structural/visual results across fixed seeds and physical scales |
 | **W — after B/C acceptance** | Rough world, seasonal climate/runoff feedback and reviewed parent (WC2-WC4; R33/R49) | Physical terrain acceptance, bounded coupling, shared world time and budgets |
 | **D / WC5** | Accepted parent-conditioned detail, same-present historical refinement and inherited fine hydrology, then zoom jobs (R15/R34/R49) | Exact overlap, coarse-scale, time-dependent boundary/flow and visual acceptance before real small rivers |
@@ -127,10 +127,14 @@ continent-history generation remain planned.
   fixture, hard divide/off-grid heights, native cut/no-fill limits, whole-cell
   descent constraints and repeat/rotation controls. Independent routing at common
   125 m spacing rejects capture; see the [report](docs/research/2026-09-25-constrained-network-surface.md).
-- [ ] **Next concrete batch — B/C lateral valley feasibility and capture.** Follow
-  the [main strategy](docs/strategy/README.md): retain the fixture and bounds,
-  constrain bank/confluence support, diagnose impossible routes and require actual
-  head-to-mouth capture with no new unintended sinks before LE3/WC2.
+- [x] **B/C bank feasibility and capture comparison:** physical probes,
+  junction ownership, coastal taper and local/joint conflict witnesses. Feasible
+  endpoint checks pass; cross-sections and capture fail, with more sinks at 250 m.
+  See the [measured report](docs/research/2026-09-25-valley-bank-feasibility.md).
+- [ ] **Next concrete batch — B/C river-aligned local surface patches.** Follow
+  the [main strategy](docs/strategy/README.md): retain the fixture and hard bounds,
+  construct explicit valley/confluence/mouth shape and require actual head-to-mouth
+  capture with no new unintended sinks before LE3/WC2.
 - [ ] **WC1 transport follow-up:** consume finite-face incidence only after support
   admission, conservative area/depth integration, explicit sill/capacity geometry
   and paired flux/storage budgets. Add a stable local-coordinate or exact-predicate
@@ -211,12 +215,20 @@ records execution and its remaining gates; the simulation is still research-only
   descending physical guides and explicit infeasible-route rejection. Complete
   profiles pass; independently rerouted catchments fail. This closes the bounded
   experiment, not the production drainage gate.
-- [ ] **Next — Lateral valley capture under the same hard limits** (R48/R32/R02).
-  Constrain physical bank/confluence support and longitudinal/transverse shape;
-  diagnose cut feasibility at lowland/protected transitions. Reroute or relocate
-  automatic guidance when needed; report incompatible fixed instructions. Preserve
-  the common 125 m check, process-spacing/rotation controls and no-new-sink gate.
-  Do not replace this failure with more erosion, hidden fill or larger cut limits.
+- [x] **Physical bank/confluence feasibility experiment** (R48/R32/R02).
+  Fixed physical support, explicit mouth taper, native-bound and joint-height
+  conflict diagnostics, and independent inward-profile/capture checks are measured.
+  The [report](docs/research/2026-09-25-valley-bank-feasibility.md) rejects promotion:
+  525 endpoint constraints pass in feasible cases, but no required head is captured
+  and the 250 m candidate adds sinks. No fixed constraint was softened.
+- [ ] **Next — River-aligned local surface patches** (R48/R32/R02). Couple
+  longitudinal bed profiles and transverse valley shape with explicit junction
+  and mouth geometry. Preserve source/caps/heights/divide and bound transitions;
+  test both the local field and Float32 raster delivery. For infeasible automatic
+  guidance compare rerouting/relocation separately; report fixed input conflicts.
+  Require four captured heads, no new sinks, rotation/process-spacing checks and
+  actual-ground inspection before broadening the cohort. More endpoint penalties,
+  hidden fill, larger cuts or uniformly finer whole-world grids are not the plan.
 - [ ] **LE2 follow-up — Complete structural acceptance** (R40/R41/R43). Add the
   missing peak/pass and matched physical-route scorecard, resolve long D8 grooves
   and quantify capture sensitivity. The finest-grid budget failure is a stopping
@@ -1422,10 +1434,12 @@ Priorities remain conditional on the current strategy's prerequisites.
   D8 bias and fails general authoring constraints, so use it as a numerical
   control for physical paths and capture/grid analysis. LE3 must meet the same
   final surface/path contract. The network-led fit now preserves hard heights,
-  native bounds and downhill guides, but rerouted valley capture still fails.
-  Test lateral support/feasibility next. Do not count changed automatic D8 edges
-  as matched route improvements. Remove superseded runtime paths after acceptance; preserve
-  current inputs/contracts without legacy support.
+  native bounds and downhill guides. Bank/confluence feasibility is now measured:
+  endpoint support passes in feasible cases, but intervening rises and capture fail.
+  Test river-aligned local surface patches next, preserving the hard constraints.
+  Do not count changed automatic D8 edges as matched route improvements. Remove
+  superseded runtime paths after acceptance; preserve current inputs/contracts
+  without legacy support.
 
 #### Shared world context — 2026-09-24
 
@@ -1580,9 +1594,11 @@ geometry movement and project-saving behavior.
   reviews primary geographic, tectonic and climate models, existing tools and
   deployment limits. The [WC0-WC6 plan](docs/strategy/world-context.md) advances
   world inputs/context and specifies shared-time regional history refinement.
+- [Valley-bank feasibility — 2026-09-25](docs/research/2026-09-25-valley-bank-feasibility.md)
+  records physical support and conflict diagnostics, failed cross-sections/capture
+  and the next river-aligned local surface-patch experiment.
 - [Constrained network-led terrain — 2026-09-25](docs/research/2026-09-25-constrained-network-surface.md)
-  records successful hard constraints but failed actual drainage capture and the
-  next lateral-valley feasibility batch.
+  records successful hard constraints but failed actual drainage capture.
 - [Coupled physical channel paths — 2026-09-25](docs/research/2026-09-25-physical-channel-paths.md)
 - [Frozen terrain/channel reconstruction — 2026-09-24](docs/research/2026-09-24-frozen-channel-reconstruction.md)
   records complete-route profile gains, remaining nodal failures, authoring limits,

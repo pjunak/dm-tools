@@ -1,8 +1,9 @@
 # Current terrain research status
 
 Reconciled on 2026-09-25 after WC1 foundations, physical-path diagnostics and
-the constrained network-led terrain comparison. Earlier generation measurements and scientific
-tool audits retain their own revision/date; new evidence is linked below.
+the constrained-network and valley-bank comparisons. Earlier generation
+measurements and scientific tool audits retain their own revision/date; new
+evidence is linked below.
 This is a status map; [TODO](../../TODO.md) owns the research register and the
 [strategy](../strategy/README.md) owns execution order. Dated reports retain
 their source/runtime context. Source inspection or a compatible wheel is not
@@ -113,9 +114,14 @@ moves many outlets. The [constrained network-led follow-up](2026-09-25-constrain
 now constructs downhill guides within native regional limits while preserving
 hard heights and a protected divide. Rotation/repeat checks pass, but independent
 common-grid routing misses mouths and exposes interior sinks. It is rejected for
-production. Lateral valley feasibility/capture is next before a larger cohort,
-LE3 or WC2. Peak/pass structure and real basins/coasts remain open. Sediment, epoch editor controls and evolved local enrichment remain
-later dependent work. No post-generation modification is introduced.
+production. The [bank-support comparison](2026-09-25-valley-bank-feasibility.md)
+now preserves endpoint drops in feasible cases and reports local/joint conflicts.
+Cross-sections still climb, all four heads miss their mouths and the 250 m sink
+count worsens from 19 to 30. River-aligned local patches with explicit valley,
+junction and mouth geometry are next before a larger cohort, LE3 or WC2.
+Peak/pass structure and real basins/coasts remain open. Sediment, epoch editor
+controls and evolved local enrichment remain later dependent work. No
+post-generation modification is introduced.
 
 ## Implemented baseline
 

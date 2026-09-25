@@ -12,10 +12,16 @@ in the current status or a new dated report.
 
 ## Current reassessment
 
+- [Valley-bank feasibility — 2026-09-25](2026-09-25-valley-bank-feasibility.md)
+  implements fixed physical bank support, junction ownership, mouth taper and
+  native-bound/hard-height conflict diagnostics. Feasible endpoint checks pass;
+  intervening rises and actual capture fail, with more sinks at 250 m. The next
+  bounded construction uses river-aligned local surface patches.
+
 - [Constrained network-led terrain — 2026-09-25](2026-09-25-constrained-network-surface.md)
   implements a unique surface fit with hard heights, native cut/no-fill limits,
   protected divides and whole-cell channel descent. Independent finer-grid routing
-  exposes failed capture and interior sinks; lateral valley feasibility is next.
+  exposes failed capture and interior sinks; the bank comparison above follows it.
 
 - [Coupled physical channel paths — 2026-09-25](2026-09-25-physical-channel-paths.md)
   implements a shared path/ground mesh, complete route comparison, cut/fill and

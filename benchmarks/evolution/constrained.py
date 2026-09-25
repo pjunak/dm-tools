@@ -19,6 +19,7 @@ from numpy.typing import NDArray
 from benchmarks.evolution.metrics import sample_grid
 from benchmarks.evolution.network import RiverNetwork
 from benchmarks.evolution.paths import FloatArray
+from benchmarks.evolution.valley_support import VALLEY_SUPPORT_ID, ValleySupport
 from dmtools.terrain.domain.evolution import EvolutionGrid
 
 # SciPy currently has no installed type stubs in the base environment. Keep its
@@ -31,6 +32,10 @@ CONSTRAINED_MODEL_ID = "network-constrained-bilinear@1"
 
 class InfeasibleSurface(ValueError):
     """No admitted solution; hard constraints are never softened automatically."""
+
+    def __init__(self, message: str, diagnostics: dict[str, Any] | None = None) -> None:
+        super().__init__(message)
+        self.diagnostics = diagnostics or {}
 
 
 @dataclass(frozen=True, slots=True)
@@ -178,6 +183,7 @@ def fit(
     *,
     minimum_slope: float = 0.0005,
     maximum_seconds: float = 20.0,
+    valley: ValleySupport | None = None,
 ) -> FittedSurface:
     n = grid.shape[0] * grid.shape[1]
     if n > 16384:
@@ -208,22 +214,50 @@ def fit(
             f"Hard height indices outside local cut/no-fill bounds: {conflicts.tolist()}"
         )
     descent, lengths = channel_constraints(grid, network, minimum_slope)
+    bank_rows = sparse.csr_matrix((0, n))
+    bank_rhs = np.empty(0, dtype=np.float64)
+    if valley is not None:
+        if valley.network_identity != network.identity():
+            raise ValueError("Valley support belongs to a different physical network.")
+        bank_rows = weights(grid, valley.beds_m) - weights(grid, valley.banks_m)
+        bank_rows.eliminate_zeros()
+        bank_rhs = -valley.drops_m
+        attainable = np.asarray(bank_rows.maximum(0) @ lower + bank_rows.minimum(0) @ upper).ravel()
+        deficits = attainable - bank_rhs
+        impossible = np.flatnonzero(deficits > 1.0e-7)
+        if impossible.size:
+            raise InfeasibleSurface(
+                "Valley banks conflict with local cut/no-fill bounds.",
+                {
+                    "kind": "bank-local-bounds",
+                    "conflict_count": int(impossible.size),
+                    "maximum_unavoidable_shortfall_m": float(deficits[impossible].max()),
+                    "witnesses": [
+                        {**valley.witness(int(i)), "unavoidable_shortfall_m": float(deficits[i])}
+                        for i in impossible[:16]
+                    ],
+                },
+            )
+    inequalities = sparse.vstack((descent, bank_rows), format="csr")
+    required = np.concatenate((-minimum_slope * lengths, bank_rhs))
     # Only nodes participating in a hard constraint need numerical optimization.
     # Other nodes have the exact minimizer: the target clipped to their bounds.
-    active = np.asarray(abs(descent).sum(axis=0) + abs(equality).sum(axis=0)).ravel() > 0
+    active = np.asarray(abs(inequalities).sum(axis=0) + abs(equality).sum(axis=0)).ravel() > 0
     active &= lower < upper
     if np.count_nonzero(active) > 2048:
         raise ValueError("Constrained comparison is limited to 2,048 free constrained nodes.")
     solution = np.clip(target_m.ravel(), lower, upper)
     solution[active] = 0.0
-    a = descent[:, active]
-    b = -minimum_slope * lengths - descent @ solution
+    a = inequalities[:, active]
+    b = required - inequalities @ solution
     eq = equality[:, active]
     rhs = hard.heights_m - equality @ solution
     moving = np.asarray(abs(a).sum(axis=1)).ravel() > 0
     moving_eq = np.asarray(abs(eq).sum(axis=1)).ravel() > 0
     if np.any(b[~moving] < -1.0e-8) or np.any(np.abs(rhs[~moving_eq]) > 1.0e-8):
         raise InfeasibleSurface("Fixed ground and required channel heights are incompatible.")
+    is_bank = np.arange(len(b)) >= descent.shape[0]
+    is_bank = is_bank[moving]
     a, b = a[moving], b[moving]
     eq, rhs = eq[moving_eq], rhs[moving_eq]
     started = perf_counter()
@@ -246,8 +280,55 @@ def fit(
             },
         )
         if admitted.status == 2:
+            diagnostics: dict[str, Any] = {"kind": "joint-constraints"}
+            if valley is not None:
+                # Diagnostic only: minimize one common bank shortfall while
+                # retaining every height, cut bound and longitudinal condition.
+                # Its solution must never be returned as a generated surface.
+                remaining = maximum_seconds - (perf_counter() - started)
+                if remaining <= 0:
+                    raise RuntimeError("Surface fit did not complete: feasibility budget reached.")
+                relaxed = optimize.linprog(
+                    np.concatenate((np.zeros(np.count_nonzero(active)), [1.0])),
+                    A_ub=sparse.hstack((a, sparse.csr_matrix(-is_bank.astype(float)[:, None]))),
+                    b_ub=b,
+                    A_eq=sparse.hstack((eq, sparse.csr_matrix((eq.shape[0], 1)))),
+                    b_eq=rhs,
+                    bounds=np.vstack(
+                        (np.column_stack((lower[active], upper[active])), [0, np.inf])
+                    ),
+                    method="highs",
+                    options={
+                        "time_limit": remaining,
+                        "primal_feasibility_tolerance": 1.0e-8,
+                        "dual_feasibility_tolerance": 1.0e-8,
+                    },
+                )
+                if relaxed.success:
+                    residual = np.asarray(a @ relaxed.x[:-1]).ravel() - b
+                    bank_indices = np.flatnonzero(moving)[is_bank] - descent.shape[0]
+                    # Nonzero dual weights identify bank rows participating
+                    # in this optimum; this is not a minimal conflict set.
+                    multipliers = -np.asarray(relaxed.ineqlin.marginals)[is_bank]
+                    worst = np.flatnonzero(multipliers > 1.0e-8)
+                    diagnostics.update(
+                        minimum_common_bank_shortfall_m=float(relaxed.x[-1]),
+                        witnesses=[
+                            {
+                                **valley.witness(int(bank_indices[i])),
+                                "diagnostic_shortfall_m": float(residual[is_bank][i]),
+                                "dual_weight": float(multipliers[i]),
+                            }
+                            for i in worst[:16]
+                        ],
+                        diagnostic_only=True,
+                    )
+                else:
+                    diagnostics["bank_diagnostic_status"] = str(relaxed.message)
             raise InfeasibleSurface(
-                "Channel descent, hard heights and local cut bounds are incompatible."
+                "Channel descent, hard heights, bank support and local cut bounds "
+                "are incompatible.",
+                diagnostics,
             )
         if not admitted.success:
             raise RuntimeError(f"Surface fit did not complete: {admitted.message}")
@@ -304,19 +385,24 @@ def fit(
     anchor_error = np.asarray(equality @ z).ravel() - hard.heights_m
     delivered_slopes = np.asarray(descent @ z).ravel() / lengths
     downhill_residual = delivered_slopes + minimum_slope
+    bank_residual = np.asarray(bank_rows @ z).ravel() - bank_rhs
     if (
         np.any(z < lower)
         or np.any(z > upper)
         or np.max(np.abs(anchor_error), initial=0) > 0.01
         or np.max(downhill_residual, initial=0) > 1.0e-5
         or np.max(delivered_slopes, initial=0) > 1.0e-10
+        or np.max(bank_residual, initial=0) > 0.0001
     ):
-        raise InfeasibleSurface("Float32 delivery violates the admitted constraints.")
+        raise RuntimeError("Float32 delivery violates the admitted constraints.")
     return FittedSurface(
         grid,
         ground,
         {
             "model_id": CONSTRAINED_MODEL_ID,
+            "valley_support_id": VALLEY_SUPPORT_ID if valley is not None else None,
+            "bank_constraints": len(bank_rhs),
+            "maximum_bank_residual_m": float(np.max(bank_residual, initial=0)),
             "node_count": n,
             "descent_constraints": descent.shape[0],
             "hard_height_count": len(hard.heights_m),

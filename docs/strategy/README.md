@@ -1,6 +1,6 @@
 # Current development strategy
 
-Re-evaluated 2026-09-24; WC0/WC1 foundations and the constrained network-led
+Re-evaluated 2026-09-24; WC0/WC1 foundations and the valley-bank feasibility
 checkpoint updated 2026-09-25. DM Tools is a usable terrain research workbench with
 strong numeric/build foundations; believable drainage and connected landform
 structure are the next product milestone. See the
@@ -16,8 +16,9 @@ coverage. The [physical-path follow-up](../research/2026-09-25-physical-channel-
 reduces grid-direction alignment but fails authoring admission and measures
 substantial process-grid sensitivity. The [constrained network-led follow-up](../research/2026-09-25-constrained-network-surface.md)
 now preserves native bounds, protected heights and downhill guides, but actual
-rerouting fails capture and introduces interior sinks. Lateral valley feasibility
-and capture are next.
+rerouting fails capture and introduces interior sinks. The [bank-support follow-up](../research/2026-09-25-valley-bank-feasibility.md)
+now diagnoses infeasible banks and preserves endpoint support, but intervening
+rises and capture still fail. River-aligned local surface patches are next.
 No external erosion engine has been adopted into the application.
 
 The subsequent [world-context research](../research/2026-09-24-world-context-enrichment.md)
@@ -68,7 +69,7 @@ Dated reports and accepted ADRs remain historical evidence.
 |---|---|---|
 | Usable authoring and reproducible build | Implemented | Maintain it while changing generation |
 | Measured quality baseline | Partial: eight-case profile probe plus paired evolution/control gallery completed | One comparable gallery and structural scorecard, including known failures |
-| Terrain-aligned drainage | Constrained network-led fit preserves hard heights and native bounds; capture fails | Lateral valley feasibility, actual outlet capture and process-grid stability |
+| Terrain-aligned drainage | Native bounds, hard heights and bank endpoints pass in feasible cases; cross-sections and capture fail | River-aligned local patches, actual outlet capture and process-grid stability |
 | Coherent landform families | Partial recipes; two-epoch reference implemented and measured, quality gate open | Related range/pass/tributary/lowland structure that survives multiple seeds and scales |
 | Useful zoom enrichment | Experimental | Accepted regional shape, transition and inherited-flow behavior; then viewport scheduling |
 | World import and shared context | WC0 plus WC1 geographic coverage, water topology, edge widths, shore distance, directional exposure, verified products, authored geology recipes, bathymetric hypotheses and water-piece incidence implemented | B/C terrain acceptance; later physical forcing and conservative transport |
@@ -203,17 +204,32 @@ Float32 output also pass. Independently rerouted ground still fails: at common
 reaches its intended mouth. A descending guide is not necessarily a valley bottom.
 This is a completed comparison, not accepted drainage or LE3/WC2 integration.
 
-**Next bounded terrain-quality batch:** retain this fixture and solve lateral
-valley feasibility/capture. Add bank-to-bed and confluence support at fixed physical
-offsets; check feasibility with the same native cuts, hard heights and divide.
-Couple transverse and longitudinal shape through lowland/protected transitions.
-For impossible automatic guidance compare rerouting/relocation; report fixed
-input conflicts rather than increasing cuts or applying depression fill. Require
-all four heads to reach their mouths and no new unintended interior sinks on the
-common evaluation grid, with hard constraints unchanged. Repeat rotation, process
-spacing and actual-ground inspection; broaden the landform/seed cohort only after
-this passes. The existing history and comparison infrastructure are sufficient;
-no new framework, sediment, history UI or zoom jobs are needed for this gate.
+**Bank-support checkpoint:** the [bounded feasibility comparison](../research/2026-09-25-valley-bank-feasibility.md)
+adds fixed physical bank probes, nearest-reach ownership at junctions, a sea-level
+mouth taper and explicit local/joint conflict diagnostics. At 500/250 m all
+525 endpoint checks pass with the original hard inputs. Between those points,
+255/273 cross-sections still climb; no head reaches its mouth. At 250 m sinks
+increase from 19 to 30. The 1,000 m case rejects six locally impossible bank pairs.
+Endpoint constraints alone do not establish a valley. The candidate remains
+rejected; constraints are not relaxed to make the comparison pass.
+
+**Next bounded terrain-quality batch:** construct river-aligned local surface
+patches on this same fixture. Carry explicit cross-sections and confluence/mouth
+geometry into the terrain field; keep longitudinal and transverse shape coupled
+through lowland and protected transitions. Test the continuous patch behavior
+and its actual Float32 raster delivery. Reuse the current solver, native cut/no-fill
+admission, hard heights, divide and reports. The primary-source basis and the
+limited bilinear representation analysis are in the bank-support report; this is
+one experiment, not adoption of a full irregular-mesh backend.
+
+For impossible automatic guidance compare bounded rerouting/relocation separately;
+report fixed input conflicts. Require all four heads to reach their mouths and
+no new unintended interior sinks on the common 125 m checking grid. Repeat
+process-spacing, rotation and actual-ground inspection with unchanged hard
+constraints. Broaden landforms/seeds and integrate LE3/WC2 only after capture
+passes. Do not substitute more endpoint penalties, hidden fill, larger cuts or
+uniform whole-world refinement. No new framework, sediment, history UI or zoom
+jobs are needed for this gate.
 
 The physical-path comparator now supplies terrain-guided subgrid paths inside
 bounded corridors. A production candidate must additionally satisfy the native
@@ -251,8 +267,9 @@ parallel legacy paths.
   remains sampled evidence, never continuous-water certification.
 
 The failed evolution/reconstruction and shared-path gates activated the bounded
-network-led construction above. Its longitudinal constraints now pass; lateral
-capture is the remaining failed assumption to test before another floor patch.
+network-led construction above. Longitudinal and bank-endpoint constraints now
+pass in feasible cases; the next local representation must establish inward
+cross-sections and actual capture, not just more successful point constraints.
 For changed automatic networks, match authored source/outlet routes and spatial
 catchment coverage as specified in LE3; D8 edge counts are not comparable.
 D-infinity can be an accumulation comparator; it is not a substitute for channel

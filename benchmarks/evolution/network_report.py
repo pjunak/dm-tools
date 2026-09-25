@@ -10,6 +10,7 @@ from benchmarks.evolution.constrained import FittedSurface
 from benchmarks.evolution.network_fixture import NetworkFixture
 from benchmarks.evolution.paths import Sampler
 from benchmarks.evolution.surface_report import render_panel
+from benchmarks.evolution.valley_support import ValleySupport
 
 
 def render(output: Path, f: NetworkFixture, samplers: dict[str, Sampler], label: str) -> None:
@@ -85,5 +86,44 @@ def render_routes(
     for i, (name, panel) in enumerate(panels):
         x = 20 + i * 640
         draw.text((x, 70), name, fill="#161b22", font=ImageFont.load_default(size=18))
+        image.paste(panel, (x, 100))
+    image.save(output)
+
+
+def render_banks(
+    output: Path,
+    f: NetworkFixture,
+    support: ValleySupport,
+    fields: dict[str, FittedSurface],
+    conflicts: list[int],
+    label: str,
+) -> None:
+    bounds = (0.0, 0.0, f.source.grid.width_m, f.source.grid.height_m)
+    panels: list[tuple[str, Image.Image]] = []
+    for name, field in fields.items():
+        panel = render_panel(field.sample, f.network, bounds, 1000.0)
+        draw = ImageDraw.Draw(panel)
+        scale = (panel.width - 1) / field.grid.width_m
+        for i, (bank, bed) in enumerate(zip(support.banks_m, support.beds_m, strict=True)):
+            colour = "#da143e" if i in conflicts else "#77939b"
+            points = [tuple(float(v) for v in point * scale) for point in (bank, bed)]
+            draw.line(points, fill=colour, width=2 if i in conflicts else 1)
+            if i in conflicts:
+                x, y = points[0]
+                draw.ellipse((x - 3, y - 3, x + 3, y + 3), fill=colour)
+        panels.append((name, panel))
+    height = max(panel.height for _, panel in panels)
+    image = Image.new("RGB", (1280, height + 115), "#fafafa")
+    draw = ImageDraw.Draw(image)
+    draw.text((20, 10), label, fill="#161b22", font=ImageFont.load_default(size=18))
+    draw.text(
+        (20, 40),
+        "Grey: bank-to-nearest-reach support. Red: reported conflict probes.",
+        fill="#161b22",
+        font=ImageFont.load_default(size=16),
+    )
+    for i, (name, panel) in enumerate(panels):
+        x = 20 + 640 * i
+        draw.text((x, 75), name, fill="#161b22", font=ImageFont.load_default(size=16))
         image.paste(panel, (x, 100))
     image.save(output)
