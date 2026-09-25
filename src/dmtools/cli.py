@@ -106,7 +106,31 @@ def create_parser() -> argparse.ArgumentParser:
         "inspect-context", help="Verify and inspect a completed geographic context.")
     verify_context.add_argument("context", type=Path, help="Context directory or context.json.")
     verify_context.set_defaults(_handler=_run_world_context_inspect)
+    geology = world_commands.add_parser(
+        "inspect-geology", help="Resolve and inspect authored geology inputs.")
+    geology.add_argument("recipe", type=Path, help="Portable .dmgeology.json recipe.")
+    geology.set_defaults(_handler=_run_world_geology_inspect)
     return parser
+
+
+def _run_world_geology_inspect(arguments: argparse.Namespace) -> int:
+    from dmtools.terrain.application.world_geology import open_geology
+    try:
+        result = open_geology(arguments.recipe).coverage
+    except (OSError, ValueError, RuntimeError) as error:
+        print(f"Geology inspection failed: {error}", file=sys.stderr)
+        return 1
+    print(f"Geology inputs: {result.recipe.world.name}; {len(result.recipe.provinces)} provinces")
+    print("Ages: Ma before one common present; simulation span is a separate duration.")
+    for region in result.regions:
+        p = region.profile
+        ages = "; ".join(f"{label} {value:g} Ma" if value is not None else f"{label} unknown"
+                        for label, value in (("crust", p.crust_age_ma),
+                                             ("rejuvenation", p.rejuvenation_age_ma),
+                                             ("simulation span", p.evolution_duration_ma)))
+        print(f"  {region.name}: {region.area_km2:,.0f} km²; {p.setting}; {ages}")
+    print("Hypotheses only; no relief, erosion or climate generated.")
+    return 0
 
 
 def _run_world_context_inspect(arguments: argparse.Namespace) -> int:

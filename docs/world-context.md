@@ -210,6 +210,7 @@ rerun of every geometric measurement. Preview layers are rebuilt from verified
 arrays when displayed. Loaded arrays are read-only.
 
 Generated results do not alter the world source. They are not yet accepted parents
-for terrain/climate solvers. Component-aware transport, bathymetry and
-province hypotheses remain WC1 work. See [the staged plan](strategy/world-context.md)
+for terrain/climate solvers. [Geology inputs](world-geology.md) can now be drawn
+over this read-only context in a separate editor/recipe. Component-aware transport,
+bathymetry and physical geology forcing remain WC1 work. See [the staged plan](strategy/world-context.md)
 and [current implementation evidence](research/2026-09-25-geographic-exposure.md).

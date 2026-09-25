@@ -11,6 +11,10 @@ Only the current formats are supported:
   water exposure, resolution support and hashes of the numeric
   arrays, previews and original world snapshot. This is not a terrain parent.
 
+- [World geology v1](world/geology-v1.schema.json): separate `.dmgeology.json`
+  input recipe with retained world identity, continent defaults, priority provinces
+  and independent ages/duration. This does not modify geography or generate terrain.
+
 - [Project v6](terrain/project-v6.schema.json): authored `.dmterrain.json` inputs.
 - [Build v18](terrain/build-v18.schema.json): numeric products, coordinates,
   algorithm identities, named stage seeds and output hashes.

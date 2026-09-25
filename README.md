@@ -54,8 +54,10 @@ environment; history generation is not yet part of the desktop or saved-project 
 The [world-context workflow](docs/strategy/world-context.md) begins with the
 implemented WC0 source workspace and the geographic subset of WC1: coverage,
 connected water, shared-edge openings, shore distance, directional water exposure
-and verified reopening. Next come province hypotheses, rough terrain and selected regional
-refinement with shared climate and geological history. Climate, world-linked terrain and regional history replay are not
+and verified reopening. [Geology inputs](docs/world-geology.md) add continent
+defaults and drawable provinces with separate ages and overlap priorities.
+Next come bathymetric hypotheses, rough terrain and selected regional refinement
+with shared climate and geological history. Climate, world-linked terrain and regional history replay are not
 implemented; the saved world is a source project, not a generated parent.
 See the [research review](docs/research/2026-09-24-world-context-enrichment.md).
 

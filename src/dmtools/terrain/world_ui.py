@@ -22,6 +22,7 @@ from dmtools.terrain.adapters.world_context_render import (
     ContextLayer,
     render_world_context,
 )
+from dmtools.terrain.adapters.world_geology import world_fingerprint
 from dmtools.terrain.adapters.world_project import WORLD_EXTENSION
 from dmtools.terrain.adapters.world_render import OCEAN, render_world_source
 from dmtools.terrain.adapters.world_svg import load_world_svg
@@ -37,6 +38,7 @@ from dmtools.terrain.application.world_context import (
     generate_context,
     open_context,
 )
+from dmtools.terrain.application.world_geology import GeologyFile
 from dmtools.terrain.domain.world import (
     WorldAssignment,
     WorldContinent,
@@ -55,6 +57,12 @@ from dmtools.terrain.domain.world_context import (
 from dmtools.terrain.pipeline.control import CancellationToken, GenerationCancelled
 from dmtools.terrain.pipeline.world import WorldMap, prepare_world_map
 from dmtools.terrain.viewport import MapViewport
+from dmtools.terrain.world_geology_ui import GeologyEditor
+
+
+@dataclass(frozen=True)
+class _GeologyReady:
+    world: WorldMap
 
 
 @dataclass(frozen=True)
@@ -97,6 +105,7 @@ type _Event = (
     WorldSource
     | WorldMap
     | _Opened
+    | _GeologyReady
     | _Saved
     | _ContextReady
     | _ContextOpened
@@ -115,6 +124,8 @@ class WorldWorkspace(ttk.Frame):
         self.source: WorldSource | None = None
         self.path: Path | None = None
         self.validated: WorldMap | None = None
+        self.geology_editor: GeologyEditor | None = None
+        self._geology_file: GeologyFile | None = None
         self.context_run: WorldContextRun | None = None
         self._context_cancellation: CancellationToken | None = None
         self.continents: tuple[WorldContinent, ...] = ()
@@ -206,6 +217,7 @@ class WorldWorkspace(ttk.Frame):
             ("Open world…", self.choose_world),
             ("Save", self.save),
             ("Save As…", lambda: self.save(save_as=True)),
+            ("Geology…", self.edit_geology),
         ):
             self._button(header, label, action).pack(side="left", padx=(10, 0))
         ttk.Label(
@@ -536,6 +548,10 @@ class WorldWorkspace(ttk.Frame):
             self._set_busy(False)
             if isinstance(event, GenerationCancelled):
                 self.status.set("Context job cancelled. No new completed result was published.")
+            elif isinstance(event, _GeologyReady):
+                self.validated = event.world
+                self._show_summary(event.world)
+                self._open_geology_editor(event.world)
             elif isinstance(event, _ContextReady):
                 if (
                     event.signature != self._signature()
@@ -1022,6 +1038,36 @@ class WorldWorkspace(ttk.Frame):
     def select_all(self) -> None:
         self.tree.selection_set(self.tree.get_children())
 
+    def edit_geology(self) -> None:
+        if self.busy:
+            return
+        if self.geology_editor is not None:
+            self.geology_editor.lift()
+            return
+        try:
+            project = self.project()
+        except ValueError as error:
+            self.status.set(str(error))
+            return
+        if self.validated is not None:
+            self._open_geology_editor(self.validated)
+        else:
+            self._work("Preparing world for geology inputs…",
+                       lambda: _GeologyReady(prepare_world_map(project)))
+
+    def _open_geology_editor(self, world: WorldMap) -> None:
+        saved = self._geology_file
+        if (saved and world_fingerprint(saved.coverage.recipe.world)
+                != world_fingerprint(world.project)):
+            saved = None
+
+        def closed(file: GeologyFile | None) -> None:
+            self._geology_file = file
+            self.geology_editor = None
+        self.geology_editor = GeologyEditor(self, world, self.context_run, on_close=closed,
+                                             saved=saved)
+        self.status.set("Geology inputs open in their own editor; world source retained.")
+
     def validate(self) -> None:
         if self.busy:
             return
@@ -1067,6 +1113,14 @@ class WorldWorkspace(ttk.Frame):
         )
 
     def guard(self, action: Callable[[], None]) -> None:
+        if self.geology_editor is not None:
+            editor = self.geology_editor
+
+            def continue_after_geology() -> None:
+                editor.close()
+                self.guard(action)
+            editor.guard(continue_after_geology)
+            return
         if self.busy:
             self.status.set("Wait for the world operation to finish before continuing.")
             return
@@ -1333,6 +1387,8 @@ class WorldWorkspace(ttk.Frame):
 
     def close(self) -> None:
         self._closed = True
+        if self.geology_editor is not None:
+            self.geology_editor.close()
         if self._context_cancellation is not None:
             self._context_cancellation.cancel()
         for identifier in (self._poll_id, self._draw_id):

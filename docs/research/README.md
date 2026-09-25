@@ -12,10 +12,15 @@ in the current status or a new dated report.
 
 ## Current reassessment
 
+- [Authored world geology — 2026-09-25](2026-09-25-authored-world-geology.md)
+  adds retained-world recipes, continent defaults, cross-label/seam provinces,
+  independent ages and priority coverage, with editor/save/history controls.
+  These inputs do not yet drive rough terrain, climate or erosion.
+
 - [Geographic exposure — 2026-09-25](2026-09-25-geographic-exposure.md)
   adds bounded spherical shoreline distance, eight directional water-exposure and
-  mixed-support fields, current-format reopening and editor inspection. Province
-  hypotheses, bathymetry and physical transport remain later WC1 work.
+  mixed-support fields, current-format reopening and editor inspection. The later
+  authored-geology batch is linked above; bathymetry and physical transport remain.
 
 - [Context reopening and water openings — 2026-09-25](2026-09-25-context-reopening-and-gateways.md)
   implements verified context loading, finite shared-face widths, seam-roundoff

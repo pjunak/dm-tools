@@ -17,8 +17,10 @@ Read the [world guide](../../../docs/terrain-worlds.md), or try
 The **Context** page generates spherical coverage, connected water and resolution
 support, shared-edge openings, shore distance and directional water exposure,
 with verified saved-context inspection; see
-[geographic context](../../../docs/world-context.md). Climate and
-world terrain remain planned. Select Terrain for the workflow below;
+[geographic context](../../../docs/world-context.md). **Geology…** opens the
+[province/default input editor](../../../docs/world-geology.md), with its own
+recipe saves and source/context backgrounds. These hypotheses do not yet affect
+terrain. Climate and world terrain remain planned. Select Terrain for the workflow below;
 `--project` opens a local terrain file directly in that tab.
 
 The Terrain workspace imports closed SVG land shapes, dissolves adjacent

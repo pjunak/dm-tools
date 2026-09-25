@@ -1,0 +1,156 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dmtools.local/schemas/world/geology-v1.schema.json",
+  "title": "DM Tools authored world geology v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "version",
+    "time_reference",
+    "world_sha256",
+    "world",
+    "defaults",
+    "provinces"
+  ],
+  "properties": {
+    "schema": {
+      "const": "dmtools.world-geology"
+    },
+    "version": {
+      "const": 1,
+      "type": "integer"
+    },
+    "time_reference": {
+      "const": "Ma-before-common-present"
+    },
+    "world_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "world": {
+      "$ref": "https://dmtools.local/schemas/world/project-v1.schema.json"
+    },
+    "defaults": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "continent_id",
+          "profile"
+        ],
+        "properties": {
+          "continent_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "pattern": "\\S"
+          },
+          "profile": {
+            "$ref": "#/$defs/profile"
+          }
+        }
+      }
+    },
+    "provinces": {
+      "type": "array",
+      "maxItems": 128,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "name",
+          "priority",
+          "vertices",
+          "profile"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 256,
+            "pattern": "^province-[A-Za-z0-9][A-Za-z0-9_-]*$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "pattern": "\\S"
+          },
+          "priority": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "vertices": {
+            "type": "array",
+            "minItems": 3,
+            "maxItems": 256,
+            "uniqueItems": true,
+            "items": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "type": "number"
+              }
+            }
+          },
+          "profile": {
+            "$ref": "#/$defs/profile"
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "setting",
+        "crust_age_ma",
+        "rejuvenation_age_ma",
+        "evolution_duration_ma"
+      ],
+      "properties": {
+        "setting": {
+          "enum": [
+            "unspecified",
+            "stable-interior",
+            "active-belt",
+            "rift",
+            "volcanic",
+            "sedimentary-basin"
+          ]
+        },
+        "crust_age_ma": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1000000
+        },
+        "rejuvenation_age_ma": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1000000
+        },
+        "evolution_duration_ma": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1000000
+        }
+      }
+    }
+  }
+}

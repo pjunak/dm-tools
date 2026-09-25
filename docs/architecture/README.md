@@ -120,6 +120,15 @@ The adapters write numeric/previews and a last-published context manifest;
 arrays are cell coverage, centre-based measurements and support, not terrain endpoint elevations. No climate,
 depth or physical transport is inferred from connected-water IDs.
 
+The [geology input slice](../world-geology.md) adds `domain/world_geology.py`
+for profiles/provinces and a common time convention; `pipeline/world_geology.py`
+resolves priority into conservative prepared-land coverage. Dedicated adapters
+own bounded JSON, full-world fingerprints, atomic persistence and preview colours.
+`application/world_geology.py` validates source/geometry at the file boundary.
+`world_geology_ui.py` owns an independent recipe editor, background jobs and
+history; the parent World workspace includes its unsaved guard. This categorical
+input product does not feed the local terrain pipeline or modify context bundles.
+
 The remaining [world workflow](../strategy/world-context.md) changes future stage
 ownership: retained world source and explicit geography → provisional context →
 rough relief/bathymetry → bounded climate/runoff and history feedback → reviewed
@@ -129,7 +138,8 @@ This is not implemented by the current local pipeline above.
 
 Adapters now retain world source groups/IDs before derived wrapped land views;
 source ownership is separate from physical connectivity. Domain values own the
-explicit source frame/radius. Future values add province histories and units;
+explicit source frame/radius and authored geology ages/duration. Future values
+add physical forcing and epoch histories;
 application operations will own staged jobs, parent/dependency verification and
 publication. Numerical stages consume arrays and explicit boundary/forcing data,
 not UI state or implicit world globals. Exact public formats arrive with their
@@ -184,8 +194,8 @@ layer or path boundaries.
 
 ## Planned contracts and remaining decisions
 
-- WC1 province inputs, bathymetric hypotheses and component-aware transport after
-  delivered coverage/water topology, edge/exposure measurements and verified reopening;
+- WC1 bathymetric hypotheses, physical geology forcing and component-aware transport
+  after delivered geographic measurements, verified products and geology inputs;
   later WC2-WC5 coupled products and historical parent context
 - Direct per-vertex profiles, explicit passes and asymmetric structural sides
   (point-anchored longitudinal ridge/valley profiles are implemented)

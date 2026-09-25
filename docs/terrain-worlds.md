@@ -195,10 +195,12 @@ and [ADR-0072](adr/0072-bound-world-source-imperfections.md) record these identi
 ## What follows
 
 The [Context page](world-context.md) now implements spherical coverage, connected
-water, shared-edge water openings, local resolution support and verified bundle
-reopening. The remaining [WC1](strategy/world-context.md) work adds geographic exposure,
-component-aware transport and
-inspectable geological hypotheses while preserving this source contract.
+water, shared-edge openings, shoreline distance, directional exposure, resolution
+support and verified bundle reopening. **Geology…** opens the separate
+[geology-input editor](world-geology.md) for continent defaults and drawable
+provinces over source/context backgrounds. Save those hypotheses as their own
+recipe. The remaining [WC1](strategy/world-context.md) work adds bathymetry,
+component-aware transport and physical forcing while preserving this source contract.
 World terrain, climate, shared history, world-linked regional generation and
 local river enrichment require their own stage gates. Existing local terrain
 builds remain in local metric coordinates; saving a world does not georeference

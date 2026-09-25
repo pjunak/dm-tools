@@ -104,11 +104,22 @@ continent-history generation remain planned.
   previews/hover and verified v3 export/reopen. Public analytic, seam/pole,
   orientation, island/interior, bounds and UI controls pass. See
   [evidence](docs/research/2026-09-25-geographic-exposure.md).
-- [ ] **WC1 next batch:** authored province/default hypotheses in a separate context
-  recipe, with overlay editing, units, explicit overlap priority, distinct
-  crust/rejuvenation/simulation ages and one common present. Test cross-continent
-  belts, conflict handling, source identity and undo/save/reopen. Hypotheses must
-  not imply implemented tectonic/erosion forcing before their consumer exists.
+- [x] **WC1 geology inputs:** separate portable recipe, continent defaults and
+  cross-continent/seam provinces, explicit priorities and unknowns, independent
+  ages/duration at one common present, effective coverage preview, guarded
+  undo/save/reopen and cancellation. See the [guide](docs/world-geology.md) and
+  [evidence](docs/research/2026-09-25-authored-world-geology.md). These hypotheses
+  do not yet drive terrain, erosion or climate.
+- [ ] **WC1 next batch — bathymetric hypotheses:** define explicit shelf/slope/basin
+  inputs and a bounded derived depth prototype over authoritative water coverage.
+  Keep ocean-column depth separate from seasonal mixed-layer depth; test seam/pole,
+  inland-water exclusion, shoreline anchoring, dimensional scale and admission.
+  Never infer depth or age from ocean width alone.
+- [ ] **WC1 geology follow-ups:** physical forcing compilation and calibrated tapers
+  when a terrain consumer exists; multipart/holed or polar-winding provinces,
+  vertex manipulation, explicit world rebasing, optional per-field inheritance
+  and broader complexity/memory controls only as needed. Current inputs have a
+  hard categorical partition, simple rings and complete-profile replacement.
 - [ ] **WC1 exposure follow-up:** compare alternate geographic ranges/weighting
   when downstream scenarios need them; distinguish connected-ocean fetch from
   the current all-water geographic score. Retain coarse-cell and quadrature
@@ -116,8 +127,8 @@ continent-history generation remain planned.
 - [ ] **WC1 — Generate provisional context** (R07/R10/R11/R49): ocean topology and
   exposure, bathymetric hypotheses, geological provinces and inspectable defaults.
   Spherical coverage and periodic connected-water inspection are delivered.
-  Shore distance and directional geographic exposure are delivered. Bathymetry,
-  province hypotheses and physical transport acceptance remain.
+  Shore distance, directional geographic exposure and authored geology hypotheses
+  are delivered. Bathymetry, physical forcing and transport acceptance remain.
 - [ ] **WC2 — Produce a rough physical world** (R02/R48/R49): process/domain scale,
   related macro relief and ocean basins, after B/C and relevant LE acceptance.
 - [ ] **WC3 — Couple climate/runoff and coarse history** (R33/R49): seasonal budgets,

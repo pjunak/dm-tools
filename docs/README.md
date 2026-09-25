@@ -30,8 +30,9 @@ For the requested full-world workflow, start with the
 [primary-source/tool review](research/2026-09-24-world-context-enrichment.md).
 WC0 world import/mapping and the [geographic subset of WC1](world-context.md) are
 implemented, including verified reopening, shared-edge water measurements,
-shore distance and directional exposure. Province context, climate and world-linked terrain remain
-planned. Existing terrain generation still uses local geometry.
+shore distance and directional exposure. [Authored geology](world-geology.md) now
+adds a separate province/default recipe and editor. Bathymetry, physical geology
+forcing, climate and world-linked terrain remain planned. Existing terrain generation still uses local geometry.
 
 The [complete documentation file inventory](FILE_INDEX.md) lists every tracked
 Markdown document and legal notice individually, with purpose and current versus

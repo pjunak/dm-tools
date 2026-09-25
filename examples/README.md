@@ -26,6 +26,13 @@ confirming ownership/frame. Use **Context → Generate context** or the
 [context command](../docs/world-context.md) to inspect this example's spherical
 coverage, connected exterior water, inland hole and seam-island support.
 
+The separate [`four-shores.dmgeology.json`](world/four-shores.dmgeology.json)
+recipe adds invented stable-interior defaults, a cross-continent active belt and
+an explicit seam-crossing rift. Open it with **World → Geology… → Open recipe…**
+or inspect with `dmtools world inspect-geology examples/world/four-shores.dmgeology.json`.
+The [geology guide](../docs/world-geology.md) explains priorities and age/duration
+semantics. It does not run erosion or change the source coastlines.
+
 ## Terrain
 
 [`terrain/example.dmterrain.json`](terrain/example.dmterrain.json) is a complete
