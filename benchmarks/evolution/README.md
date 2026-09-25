@@ -285,6 +285,45 @@ Existing output directories are never overwritten.
 
 The [measured report](../../docs/research/2026-09-25-valley-bank-feasibility.md)
 rejects this candidate: all 525 endpoint checks pass at 500/250 m, but inward
-profiles and capture fail; the 250 m sink count increases from 19 to 30. The next
-experiment uses river-aligned local surface patches under the same hard bounds.
-Normal generation and the editor do not use this research candidate.
+profiles and capture fail; the 250 m sink count increases from 19 to 30. The
+connected-patch comparison below follows it, preserving the fixed hard control.
+Normal generation and the editor do not use these research candidates.
+
+
+## Connected valley patches and raster delivery
+
+Construct local valleys and separately inspect their actual Float32 raster:
+
+```powershell
+.\.venv\Scripts\python.exe -m benchmarks.evolution.patch_comparison --output artifacts/my-connected-valleys
+.\.venv\Scripts\python.exe -m pytest tests/test_valley_patches.py tests/test_valley_support.py tests/test_network_surface.py
+```
+
+This base-environment experiment needs no private input or external history engine.
+It keeps the fixed/native control and separately declares fresh composition with
+a 600 m cut ceiling, 120 km3 volume limit, protected divide, no fill and unchanged
+hard heights. Rounded swept sections share junctions and blend into broad relief;
+an explicit last-reach transition meets the fixture's straight coast. Guides do
+not move and no erosion history is simulated. This is not a completed-map editor.
+
+The eight cases use fixed 250 m physical profiles with 1,000/500/250 m process
+grids and a quarter-turn. Local and delivered surfaces are both rerouted at common
+125 m spacing without fill or imposed receivers. Complete guide/bank checks,
+hard targets, caps, composition volume, repeat, rotation and projection corrections
+remain visible. Height-pin projection currently supports disjoint cells only;
+arbitrary coastlines and general network layout are outside this bounded fixture.
+
+The [measured report](../../docs/research/2026-09-26-connected-valley-patches.md)
+records fresh local capture of 4/4 heads and no sinks, versus 3/4 and one sink for
+250 m raster delivery. Some local guide/bank conditions also fail. The fixed/native
+control remains rejected, and no candidate is production-eligible. The 250 m
+coastal ablation isolates the mouth transition; node-only cut bounds that failed
+between nodes were replaced by conservative incident-cell bounds without raising
+the envelope. Next compare hard-target-aware layout and delivery.
+
+A fresh output folder receives `index.html`, completion-last `comparison.json`,
+per-case `result.json`, numeric/source/artifact hashes and `fields.npz` with local,
+control and delivered ground plus prepared geometry. Figures show actual ground,
+rerouted paths and the coastal ablation. Hard-input/envelope violations fail the
+execution with `incomplete.json`; drainage failures complete with a rejected
+quality decision. Keep local artifacts ignored and retain failed runs as evidence.

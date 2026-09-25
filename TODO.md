@@ -33,19 +33,23 @@ records attempted methods, measured failures, causes, retained work and revisit
 gates. Update it alongside dated evidence and this backlog after each substantial
 experiment; do not mark a desired feature complete merely because its trial ended.
 
-## Current execution focus — 2026-09-25
+## Current execution focus — 2026-09-26
 
 The [progress reassessment](docs/research/2026-09-24-progress-and-generation-strategy.md)
 finds strong workbench/build foundations but unaccepted drainage and landform
 quality. A fresh eight-case probe finds internal rises of 32–132 m on some
 endpoint-descending planned channels. This is sampled diagnostic evidence,
 not a physical river-water validation or a private-map result.
+The [connected-patch follow-up](docs/research/2026-09-26-connected-valley-patches.md)
+now captures all four fresh-construction heads locally, but only three after
+250 m raster delivery; guide/bank checks and fixed-control quality remain open.
+The next batch resolves hard-target-aware layout and delivery before co-evolution.
 
 | Order | Outcome and existing backlog owners | Gate |
 |---|---|---|
 | **A — quality controls** | Quality fixtures, paired maps/profiles, process-scale warnings; convergent-flat comparison (R02/R25/R27/R41/R43) | Fixed comparison set and a measured accept/reject result; no new benchmark framework |
 | **W — bounded foundation delivered** | WC0 plus WC1 geography, geology inputs, bathymetry and water-piece incidence (R01/R49); return to B/C physical paths and landforms | Preserve source and unresolved support; context is provisional, not solved climate |
-| **B — next major generation decision** | Audit input roles; construct connected local valleys and separately test movable generated relief/guides (R48/R32) | Preserve the fixed hard control; actual capture, Float32 delivery and declared construction/history envelopes before LE3 |
+| **B — next major generation decision** | Connected-patch comparison: fresh local capture 4/4, 250 m raster 3/4; next resolve hard-target-aware layout and delivery (R48/R32) | Preserve fixed control and genuine hard targets; pass guide/bank/capture checks within declared envelopes before LE3 |
 | **C** | Consolidate one coherent range/pass/tributary/lowland system from the selected comparison (R08/R09/R14/R40/R44) | Better structural/visual results across fixed seeds and physical scales |
 | **W — after B/C acceptance** | Rough world, seasonal climate/runoff feedback and reviewed parent (WC2-WC4; R33/R49) | Physical terrain acceptance, bounded coupling, shared world time and budgets |
 | **D / WC5** | Accepted parent-conditioned detail, same-present historical refinement and inherited fine hydrology, then zoom jobs (R15/R34/R49) | Exact overlap, coarse-scale, time-dependent boundary/flow and visual acceptance before real small rivers |
@@ -134,10 +138,15 @@ continent-history generation remain planned.
   junction ownership, coastal taper and local/joint conflict witnesses. Feasible
   endpoint checks pass; cross-sections and capture fail, with more sinks at 250 m.
   See the [measured report](docs/research/2026-09-25-valley-bank-feasibility.md).
-- [ ] **Next concrete batch — B/C river-aligned local surface patches.** Follow
-  the [main strategy](docs/strategy/README.md): retain the fixture and hard bounds,
-  construct explicit valley/confluence/mouth shape and require actual head-to-mouth
-  capture with no new unintended sinks before LE3/WC2.
+- [x] **B1 connected valley patches:** local valley/confluence/coastal construction,
+  fixed versus fresh input roles, conservative delivery caps and hard-height
+  projection are measured. Fresh local capture is 4/4; 250 m raster capture is
+  3/4, and some guide/bank checks still fail. See the
+  [report](docs/research/2026-09-26-connected-valley-patches.md).
+- [ ] **Next concrete batch — B1/B2 hard-target-aware layout and delivery.**
+  Preserve the fixed control and hard inputs; compare bounded automatic guide
+  relocation and pin support, then one local representation if needed. Require
+  complete guide/bank/capture acceptance before coupling history or LE3/WC2.
 - [ ] **WC1 transport follow-up:** consume finite-face incidence only after support
   admission, conservative area/depth integration, explicit sill/capacity geometry
   and paired flux/storage budgets. Add a stable local-coordinate or exact-predicate
@@ -225,23 +234,30 @@ records execution and its remaining gates; the simulation is still research-only
   525 endpoint constraints pass in feasible cases, but no required head is captured
   and the 250 m candidate adds sinks. No fixed constraint was softened.
 - [x] **Reassess failed methods and alternative processes** (R24/R32/R48).
-  The [method register](docs/research/terrain-method-decisions.md) records eight
+  The [method register](docs/research/terrain-method-decisions.md) records nine
   groups of failed/restricted approaches and their replacement gates. The
   [groundwater/canyon review](docs/research/2026-09-25-groundwater-and-terrain-architecture.md)
   checks primary models and existing component APIs; no new simulation was run.
-- [ ] **Next — B1 input roles and connected local patches** (R48/R32/R02).
-  Keep the fixed-source/native-cap control, classify authored requirements versus
-  generated guesses, then couple bed and cross-section/confluence/mouth geometry.
-  Test the local field and Float32 delivery. Admitted fixed cases require four
-  captured heads, no new sinks, hard heights/divide/caps and rotation/spacing
-  checks. Separately compare fresh construction with movable automatic guides
-  and an explicit prospective displacement/volume/history envelope; its success
-  cannot erase the fixed-state failure. Keep contradictions visible.
-- [ ] **B2 — Select reconstruction and terrain/network co-evolution** (R48/R14).
-  Connect accepted local construction to the two-epoch reference. If delivery
-  alone blocks quality, compare one bounded channel-conforming representation.
-  Use held-out seeds, complete catchment coverage, actual-ground figures and cost
-  before LE3/WC2; stop adding endpoint penalties to the same failed formulation.
+- [x] **B1 input-role audit and connected-patch comparison** (R48/R32/R02).
+  [Measured](docs/research/2026-09-26-connected-valley-patches.md): fixed/native and
+  separate fresh construction, rounded valley unions, explicit coastal transition,
+  local versus Float32 checks and inter-node envelope protection. Fresh local
+  routing captures 4/4 heads with no sinks; 250 m raster captures 3/4 with one sink.
+  Removing the mouth transition gives 0/4 and four sinks. Both modes retain hard
+  targets; fixed/native quality and some fresh guide/bank checks remain rejected.
+  The guides are unchanged; automatic relocation and time evolution are untested.
+- [ ] **Next — B1/B2 hard-target-aware construction and delivery** (R48/R32/R02).
+  Keep the fixed control, hard heights/divide/coast and the declared fresh envelope.
+  Move only automatic guidance within bounded corridors; compare valley layout,
+  pin support and reconstruction at the observed blockage. Require guide/bank
+  support, all four captured heads, zero new sinks, limits and repeat/rotation/
+  spacing checks on local and delivered ground. Do not soften authored targets.
+  If delivery remains the blocker, compare one bounded constraint-aligned local
+  representation, not more endpoint penalties or whole-grid refinement.
+- [ ] **B2 — Terrain/network co-evolution after construction acceptance** (R48/R14).
+  Connect an accepted construction/delivery pair to the two-epoch reference.
+  Measure held-out seeds, oblique orientation, complete catchment coverage,
+  actual-ground figures and cost before broadening landforms or LE3/WC2.
 - [ ] **G1 — Test groundwater capture and drainage density** (R24/R33).
   After B's surface decision, compare an analytic shallow aquifer and combined
   storage/flux controls, then paired transmissivity/recharge cases in the existing
@@ -1467,11 +1483,12 @@ Priorities remain conditional on the current strategy's prerequisites.
   final surface/path contract. The network-led fit now preserves hard heights,
   native bounds and downhill guides. Bank/confluence feasibility is now measured:
   endpoint support passes in feasible cases, but intervening rises and capture fail.
-  B1 now audits input roles and tests connected local patches while preserving
-  that fixed hard control. A separate construction case lets generated relief
-  and automatic guides co-evolve within declared envelopes; B2 selects a useful
-  reconstruction before integration. Preserve genuine authored requirements and
-  distinguish composition volume from geological erosion. See the
+  B1 now measures connected local patches under that fixed hard control and a
+  separate 600 m / 120 km3 fresh-construction envelope. Fresh local capture is
+  4/4, but 250 m raster delivery captures 3/4; guide/bank checks still fail.
+  Automatic guide relocation and co-evolution are not implemented. Next compare
+  hard-target-aware layout and delivery before B2 history coupling. Preserve
+  genuine authored requirements and distinguish composition from erosion. See the
   [failure register](docs/research/terrain-method-decisions.md) for revisit gates.
   Do not count changed automatic D8 edges as matched route improvements. Remove
   superseded runtime paths after acceptance; preserve current inputs/contracts

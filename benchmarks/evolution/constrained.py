@@ -164,7 +164,7 @@ def channel_constraints(
     return matrix, np.asarray(lengths, dtype=np.float64)
 
 
-def _float32_bounds(lower: FloatArray, upper: FloatArray) -> tuple[FloatArray, FloatArray]:
+def float32_bounds(lower: FloatArray, upper: FloatArray) -> tuple[FloatArray, FloatArray]:
     lo, hi = lower.astype(np.float32), upper.astype(np.float32)
     lo = np.where(lo.astype(np.float64) < lower, np.nextafter(lo, np.float32(np.inf)), lo)
     hi = np.where(hi.astype(np.float64) > upper, np.nextafter(hi, np.float32(-np.inf)), hi)
@@ -202,7 +202,7 @@ def fit(
         or not 0 < maximum_seconds <= 120
     ):
         raise ValueError("Surface cut limits and solver time budget are invalid.")
-    lower, upper = _float32_bounds((source_m - cut_limit_m).ravel(), source_m.ravel())
+    lower, upper = float32_bounds((source_m - cut_limit_m).ravel(), source_m.ravel())
     equality = weights(grid, hard.points_m)
     required_low = np.asarray(equality @ lower).ravel()
     required_high = np.asarray(equality @ upper).ravel()

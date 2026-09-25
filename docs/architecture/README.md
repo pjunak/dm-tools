@@ -31,9 +31,13 @@ The [2026-09-25 reassessment](../research/2026-09-25-groundwater-and-terrain-arc
 proposes a clearer boundary between authored specification, evolving process state
 and frozen published terrain. It is not implemented by the pipeline below.
 Initial procedural relief and automatic networks may co-evolve; authored final
-heights, coasts and persistent protections keep their declared roles. Local valley
-patches are the next comparator, with an internal graph/mesh alternative conditional
-on delivery evidence. The Float32 DEM remains the authoritative delivered ground.
+heights, coasts and persistent protections keep their declared roles. The
+[local-valley comparator](../research/2026-09-26-connected-valley-patches.md) is now
+implemented under `benchmarks/evolution`, with separate local-field and raster
+checks; its production quality is rejected. Hard-target-aware layout and delivery
+come next, with a local graph/mesh alternative conditional on evidence. This does
+not introduce an application process-state layer or replace the authoritative
+Float32 DEM.
 
 Groundwater, if accepted, needs aquifer head/storage and separate subsurface links;
 surface receivers alone cannot own that state. Cave roof/floor geometry requires a

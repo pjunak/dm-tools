@@ -1,12 +1,12 @@
 # Landscape-evolution implementation plan
 
-Updated 2026-09-25. **LE1 implemented; LE2 history, frozen reconstruction,
-physical-path, receiver/outlet, constrained-network and bank-feasibility
-comparisons measured. Production-quality acceptance and application integration
+Updated 2026-09-26. **LE1 implemented; LE2 history, frozen reconstruction,
+physical-path, receiver/outlet, constrained-network, bank-feasibility and
+connected-patch construction comparisons measured. Production-quality acceptance and application integration
 remain open.** The
 [method register](../research/terrain-method-decisions.md) preserves the failed
 approaches and revisit gates. The [groundwater/canyon reassessment](../research/2026-09-25-groundwater-and-terrain-architecture.md)
-revises the next construction experiment and adds untested process alternatives.
+motivates the construction comparison and adds untested process alternatives.
 The [primary-source review](../research/2026-09-24-landscape-evolution-models.md)
 records the scientific basis, tool comparison and dependency probe.
 The [main strategy](README.md) remains the authoritative project order; this
@@ -86,16 +86,27 @@ native bounds and hard heights, but cross-sections still rise and head capture
 remains zero. At 250 m sinks worsen from 19 to 30; the 1,000 m bank conditions
 are locally infeasible. No relaxed ground is published.
 
-Next audit input roles and construct river-aligned local patches with explicit
-cross-section/confluence/mouth geometry and bounded transitions. Preserve the
-same fixed-source/native-cap fixture as a control. Add a separately identified
-fresh-construction case where generated initial relief and automatic guides can
-co-evolve within declared envelopes; authored hard targets keep their meaning.
-Compare both local fields and Float32 delivery before enlarging the cohort or
-integrating LE3/WC2. The main strategy owns B1/B2 gates, including rejection of
-conflicting inputs and the limited alternative-representation comparison.
-Do not replace this test with more endpoint penalties, relax hard limits, or
-report success on a new case as a repair of the rejected fixed-state result.
+The next construction comparison has now run, as recorded below. The fixed-state
+failure remains a control rather than being erased by a different envelope.
+
+## Connected-valley checkpoint
+
+The [local-patch comparison](../research/2026-09-26-connected-valley-patches.md) now
+constructs rounded valley unions and explicit confluence/coastal transitions.
+Input roles separate native fixed-source cuts from fresh composition under a
+600 m / 120 km3 envelope; final hard heights, divide and coast remain fixed. Local
+fresh routing captures all four heads with no interior sinks, but 250 m Float32
+raster delivery captures three with one sink. Some guide/bank conditions still
+fail locally; fixed/native capture remains rejected. Automatic guide relocation
+and terrain/network co-evolution have not been implemented by this comparator.
+
+The coastal ablation supports the explicit mouth transition. Conservative
+incident-cell caps fix an initial between-node cut violation without increasing
+budgets. Next compare hard-target-aware layout, bounded automatic guide movement
+and pin support, then one local reconstruction if necessary. Require local and
+delivered guide/bank/capture acceptance before history coupling, a larger cohort
+or LE3/WC2. The main strategy owns B1/B2 gates. More endpoint inequalities,
+softened hard targets and unexplained groundwater outlets do not close them.
 
 ## Outcome and decision
 

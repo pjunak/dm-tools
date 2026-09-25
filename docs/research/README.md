@@ -14,6 +14,12 @@ in the current status or a new dated report.
 
 ## Current reassessment
 
+- [Connected valley patches and raster delivery — 2026-09-26](2026-09-26-connected-valley-patches.md)
+  implements fixed/fresh construction, analytic valley unions, coastal transitions
+  and bounded Float32 delivery. Fresh local capture is 4/4, while 250 m delivery
+  captures 3/4; fixed/native and guide/bank quality remain rejected. Records the
+  mouth ablation, inter-node cap correction and next hard-target-aware comparison.
+
 - [Groundwater, canyons and terrain architecture — 2026-09-25](2026-09-25-groundwater-and-terrain-architecture.md)
   reviews porous groundwater, seepage, karst, lateral erosion and joint terrain/network
   construction. Revises input-role and representation comparisons, with staged
@@ -23,9 +29,9 @@ in the current status or a new dated report.
 - [Valley-bank feasibility — 2026-09-25](2026-09-25-valley-bank-feasibility.md)
   implements fixed physical bank support, junction ownership, mouth taper and
   native-bound/hard-height conflict diagnostics. Feasible endpoint checks pass;
-  intervening rises and actual capture fail, with more sinks at 250 m. The next
-  bounded construction uses river-aligned local surface patches; the reassessment
-  above adds an input-role audit and a separate fresh-construction comparison.
+  intervening rises and actual capture fail, with more sinks at 250 m. The later
+  connected-patch report above follows it with explicit input roles, local valley
+  construction and a separate fresh-construction envelope.
 
 - [Constrained network-led terrain — 2026-09-25](2026-09-25-constrained-network-surface.md)
   implements a unique surface fit with hard heights, native cut/no-fill limits,

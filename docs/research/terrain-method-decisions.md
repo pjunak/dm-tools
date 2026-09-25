@@ -1,6 +1,7 @@
 # Terrain method decisions and failed experiments
 
-Updated 2026-09-25 against implementation `97ae47a`. This is the living record of
+Updated 2026-09-26 against baseline `788913d` and the connected-patch implementation
+accompanying T09. This is the living record of
 material generation approaches that were rejected, constrained or retained only
 as references. A failed method does not remove its desired feature from the plan.
 The [strategy](../strategy/README.md) owns execution order; dated reports own the
@@ -10,7 +11,8 @@ Supporting sampling/convergence and performance rejections remain indexed in
 [coast-index candidate](2026-09-05-selective-terrain-sampling.md). This register
 concentrates on methods that change the generation-quality decision.
 The [groundwater and architecture reassessment](2026-09-25-groundwater-and-terrain-architecture.md)
-explains the replacement proposals. Those proposals have not been simulated here.
+explains the replacement proposals. Groundwater, karst and lateral erosion remain
+untested here; T09 now measures connected-valley construction.
 
 ## How to maintain this record
 
@@ -169,6 +171,44 @@ local patches, then bounded alternate representation if delivery itself remains
 the blocker. An open-draining control still needs four captured heads and zero new
 sinks; groundwater is not an exemption for this fixture.
 
+## T09 - Construct connected local valleys then deliver a raster
+
+**Tried:** analytic rounded valley unions, explicit coastal transitions and compact
+hard-height support, followed by bounded Float32 raster projection. The
+[report](2026-09-26-connected-valley-patches.md) keeps the fixed/native control and
+a separately declared 600 m / 120 km3 fresh-construction envelope. The same guides
+are retained; automatic relocation and history evolution are not yet tested.
+
+**Measured:** fresh local routing on the common 125 m grid captures 4/4 heads with
+zero interior sinks. At 250 m, raster delivery captures 3/4 with one sink; at
+500/1,000 m it captures none. Fixed/native quality remains rejected. One fresh
+local guide route, 29/525 inward sections and six bank endpoints still fail, so
+successful capture does not accept the complete local field. Removing only the
+mouth transition changes fresh local capture to 0/4 with four sinks. Repeat and
+quarter-turn checks pass; no general-angle or world-scale result is claimed.
+
+**Why / boundary:** coastal approach geometry affects actual capture. The remaining
+250 m raster blockage is near a hard-height correction of up to 121.756 m; the
+local field routes around that neighbourhood. This diagnoses a layout/support/
+delivery interaction, not proof that the hard target is impossible or rasters are
+unsuitable. Uniform refinement does not resolve the coarse failures by itself.
+
+**Failed assumptions corrected:** node cut bounds allowed 376/262/210 inter-node
+violations of a nonlinear fresh cap. Conservative incident-cell bounds remove
+them without increasing budgets. Computing pin corrections from an unclipped
+proposal also falsely rejected a feasible case; use the admitted field as the
+base. Regression controls and hard-admission checks cover both errors. Genuine
+constraint conflicts and unsupported overlapping pin cells remain explicit.
+
+**Retained / replacement:** retain analytic sections, shared junctions, the
+coastal transition, separate composition accounting and local/delivery diagnostics.
+Keep production rejection. Next compare hard-target-aware layout and bounded
+automatic guide movement, then one local reconstruction if delivery still blocks
+quality. Preserve the fixed control, hard targets, coast/divide and declared
+envelopes. Require guide/bank/capture acceptance on actual delivery before coupling
+history, expanding the cohort or adopting LE3/WC2. Groundwater cannot hide this
+open-drainage failure.
+
 ## What the failures change
 
 Preserve the feature goals: believable rivers, geological aging, useful zoom detail
@@ -178,6 +218,6 @@ procedural guesses before fitting; test coupled relief and network evolution bef
 freezing a final DEM. Keep the application and Python implementation boundaries.
 
 Groundwater, karst and lateral erosion are **new, untested hypotheses here**, not
-explanations established by T01-T08. They need independent controls and budgets.
+explanations established by T01-T09. They need independent controls and budgets.
 The [reassessment's staged experiments](2026-09-25-groundwater-and-terrain-architecture.md#implementation-sequence-and-stop-rules)
 define the next comparisons and when a larger structural change is justified.

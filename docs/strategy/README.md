@@ -1,13 +1,15 @@
 # Current development strategy
 
-Re-evaluated 2026-09-25 after the failed bank-support comparison and the
-[groundwater/canyon and architecture review](../research/2026-09-25-groundwater-and-terrain-architecture.md).
+Re-evaluated 2026-09-26 after the
+[connected-valley construction comparison](../research/2026-09-26-connected-valley-patches.md),
+following the [groundwater/canyon and architecture review](../research/2026-09-25-groundwater-and-terrain-architecture.md).
 DM Tools is a usable terrain research workbench with strong numeric/build
 foundations; believable drainage and connected landforms remain the next milestone.
 The [method decision register](../research/terrain-method-decisions.md) now records
-failed approaches, causes, retained work and replacement gates. The next batch
-separates authored requirements from generated guesses and constructs connected
-local valleys, then tests terrain/network co-evolution. Groundwater is a bounded
+failed approaches, causes, retained work and replacement gates. Connected local
+valleys now capture the fresh fixture, but delivered ground and some guide/bank
+checks still fail. Next resolve hard-target-aware layout and delivery before
+terrain/network co-evolution. Groundwater is a bounded
 mechanism experiment, not a remedy for unexplained surface sinks. No external
 erosion or groundwater engine has been adopted into application generation.
 
@@ -55,11 +57,11 @@ Dated reports and accepted ADRs remain historical evidence.
 
 ## Development checkpoints
 
-| Milestone | Position on 2026-09-25 | Next exit condition |
+| Milestone | Position on 2026-09-26 | Next exit condition |
 |---|---|---|
 | Usable authoring and reproducible build | Implemented | Maintain it while changing generation |
 | Measured quality baseline | Partial: eight-case profile probe plus paired evolution/control gallery completed | One comparable gallery and structural scorecard, including known failures |
-| Terrain-aligned drainage | Native bounds, hard heights and bank endpoints pass in feasible cases; cross-sections and capture fail | Input-role audit, connected local patches and separately bounded co-evolution; actual capture and process-grid stability |
+| Terrain-aligned drainage | Fresh local patches capture 4/4 heads; 250 m raster captures 3/4; guide/bank and fixed-control quality remain rejected | Hard-target-aware layout and delivery; complete capture, bank/guide support and process-grid stability before co-evolution |
 | Coherent landform families | Partial recipes; two-epoch reference implemented and measured, quality gate open | Related range/pass/tributary/lowland structure that survives multiple seeds and scales |
 | Useful zoom enrichment | Experimental | Accepted regional shape, transition and inherited-flow behavior; then viewport scheduling |
 | World import and shared context | WC0 plus WC1 geographic coverage, water topology, edge widths, shore distance, directional exposure, verified products, authored geology recipes, bathymetric hypotheses and water-piece incidence implemented | B/C terrain acceptance; later physical forcing and conservative transport |
@@ -169,32 +171,42 @@ of four heads reaches its mouth, and at 250 m bank support increases sinks from
 and the different comparison denominators are in
 [T04-T08](../research/terrain-method-decisions.md#t04---evolve-a-landscape-then-deliver-its-d8-nodes-bilinearly).
 
-**Next bounded batch (B1):** first label fixture inputs as authored hard targets,
-persistent boundaries, initial relief, forcing or soft/generated guidance. The
-[existing role contract](landscape-evolution.md#authored-intent-and-geographic-boundaries)
-already requires this distinction. Keep the current fixed-source/native-cap fixture
-unchanged as a control. Construct river-aligned local patches with continuous
-cross-sections, explicit confluences and sea-level mouth transitions. Test both
-the local field and its actual Float32 delivery using the current reports.
-For admitted feasible cases require all four heads to reach their mouths and zero
-new unintended interior sinks relative to the original source, at common 125 m
-checking. Keep hard heights, divide, cut/no-fill limits, repeat, rotation and
-process-spacing checks. Proven conflicts stay visible; solver failure is not an
-infeasibility proof.
+**B1 comparison implemented:** the
+[connected-patch report](../research/2026-09-26-connected-valley-patches.md) separates
+fixed-source/native incision from fresh construction with a prospective 600 m cut
+ceiling and 120 km3 composition envelope. Both preserve final hard heights, the
+divide and coast. Rounded local valleys, confluences and a coastal transition
+capture all four fresh heads on the 125 m checking grid, with zero interior sinks.
+At 250 m, Float32 raster delivery captures three and leaves one sink near a
+hard-height correction; coarser delivery and the fixed control fail. Some fresh
+local guide/bank checks also fail. Automatic guides were not moved, and no history
+was simulated. Input roles, bounds corrections, ablation and failures are recorded
+in [T09](../research/terrain-method-decisions.md#t09---construct-connected-local-valleys-then-deliver-a-raster).
 
-Add a separately identified **fresh-construction comparison**: initial procedural
-relief and automatic guides may evolve inside declared corridors/envelopes while
-genuinely authored requirements remain fixed. Native automatic-incision ceilings
-remain unchanged for that mechanism; a construction/history envelope must be
-specified before running or tuning the new case. Report composition displacement
-and volume separately from simulated erosion. Do not call a changed fixture a pass
-on the old one. Compare bounded rerouting/relocation where automatic guidance is
-incompatible, retaining catchment coverage and intended terminals.
+**Next bounded batch (B1/B2):** retain that fixed control and the separately declared
+fresh envelope. Compare hard-target-aware valley layout, bounded automatic guide
+relocation and pin support before fitting the delivered surface. Authored hard
+targets, protected geography and required terminal/catchment coverage remain fixed;
+generated guesses may move only within declared corridors. The
+[role contract](landscape-evolution.md#authored-intent-and-geographic-boundaries)
+owns this distinction. Require all four heads to reach their mouths with no new
+interior sinks on the common 125 m check, plus complete guide/bank support, hard
+heights, cut/no-fill/volume limits and repeat/rotation/spacing checks on both local
+and delivered ground. Preserve rejected controls and distinguish unsupported input,
+verified conflict and numerical failure.
 
-**Following decision (B2):** connect a successful local construction to the existing
-two-epoch reference so relief and the automatic network can evolve together before
-publication. If the local field passes but raster delivery alone fails, compare one
-bounded channel-conforming mesh/reconstruction; do not immediately rewrite the
+The coastal ablation already isolates a useful component: removing the explicit
+transition changes fresh local capture from 4/4 to 0/4. The delivery diagnosis is
+less complete: a 121.756 m nodal pin correction accompanies the remaining 250 m
+blockage. Test its interaction with layout and conservative caps; this does not
+prove that rasters are unsuitable. If reconstruction remains the blocker, compare
+one small constraint-aligned local representation. Composition displacement and
+volume must remain separate from geological erosion.
+
+**Following decision (B2):** connect an accepted construction and delivery pair to
+the existing two-epoch reference so relief and the automatic network can evolve
+together before publication. A local capture count alone is insufficient; require
+the bank/guide and hard-target gates as well. Do not immediately rewrite the
 whole backend. Use held-out seeds, oblique orientation, process spacing, hard
 constraints and actual-ground inspection. Broaden landforms or integrate LE3/WC2
 only for an accepted capability. More endpoint penalties, hidden fill, larger
@@ -243,9 +255,10 @@ parallel legacy paths.
   remains sampled evidence, never continuous-water certification.
 
 The failed evolution/reconstruction and shared-path gates activated the bounded
-network-led construction above. Longitudinal and bank-endpoint constraints now
-pass in feasible cases; the next local representation must establish inward
-cross-sections and actual capture, not just more successful point constraints.
+network-led construction above. Connected local patches now improve sampled
+capture in a separately bounded fresh case; delivery, some guide/bank checks and
+fixed-state capture remain rejected. Resolve layout and hard-target support on
+the actual delivered ground, not just additional successful point constraints.
 For changed automatic networks, match authored source/outlet routes and spatial
 catchment coverage as specified in LE3; D8 edge counts are not comparable.
 D-infinity can be an accumulation comparator; it is not a substitute for channel

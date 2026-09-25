@@ -1,7 +1,8 @@
 # Current terrain research status
 
-Reconciled on 2026-09-25 after WC1 foundations, physical-path diagnostics,
-constrained-network/bank comparisons and the groundwater/architecture reassessment.
+Reconciled on 2026-09-26 after WC1 foundations, physical-path diagnostics,
+constrained-network/bank comparisons, the groundwater/architecture reassessment
+and the [connected-patch comparison](2026-09-26-connected-valley-patches.md).
 The [method register](terrain-method-decisions.md) tracks failed approaches and
 replacement gates. The [new source review](2026-09-25-groundwater-and-terrain-architecture.md)
 adds groundwater capture, canyon and karst hypotheses; none was simulated here.
@@ -120,11 +121,15 @@ common-grid routing misses mouths and exposes interior sinks. It is rejected for
 production. The [bank-support comparison](2026-09-25-valley-bank-feasibility.md)
 now preserves endpoint drops in feasible cases and reports local/joint conflicts.
 Cross-sections still climb, all four heads miss their mouths and the 250 m sink
-count worsens from 19 to 30. B1 next audits input roles and constructs connected
-local valleys, junctions and mouths under the same fixed hard control. A separate
-fresh-construction case lets generated relief/guides evolve within explicit
-envelopes; success there cannot erase the rejected fixed-state result. B2 tests
-coupling and delivery before a larger cohort, LE3 or WC2.
+count worsens from 19 to 30. The [connected-patch follow-up](2026-09-26-connected-valley-patches.md)
+now preserves that fixed control and measures a separate 600 m / 120 km3 fresh
+construction. Rounded local valleys and a coastal transition capture 4/4 fresh
+heads with no sinks, but 250 m raster delivery captures 3/4 with one sink near a
+hard-height correction. Some guide/bank checks still fail locally. Incident-cell
+caps fix an initial interpolated-cut violation without raising budgets. The guides
+are unchanged; automatic relocation and time evolution are not implemented. Next
+resolve hard-target-aware layout and delivery before B2 coupling, a larger cohort,
+LE3 or WC2. Neither local capture nor a changed envelope accepts the fixed control.
 Peak/pass structure and real basins/coasts remain open. Sediment, epoch editor
 controls and evolved local enrichment remain later dependent work. No
 post-generation modification is introduced.
