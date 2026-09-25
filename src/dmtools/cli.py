@@ -182,6 +182,12 @@ def _run_world_context_inspect(arguments: argparse.Namespace) -> int:
     rows, columns = result.grid.shape
     print(f"Verified context: {result.world.project.name}; {columns} x {rows} cells")
     print(f"{len(result.water_bodies)} water regions; land {result.land_area_km2:,.0f} km²")
+    graph = result.connectivity
+    print(f"{len(graph.water_body):,} water pieces; {len(graph.link_nodes):,} shared intervals; "
+          f"{graph.component_count} graph components; {graph.split_cells:,} split cells.")
+    if graph.fragmented_bodies:
+        print(f"Unresolved water regions: {graph.fragmented_bodies}; "
+              "no inferred connections; transport unsupported for these regions.")
     print("Shared-edge water openings in km; no depth or transport capacity inferred.")
     print(f"Shore distance: {result.shore_sampling.sample_count:,} samples; "
           f"maximum overestimate {result.shore_sampling.max_error_km:.3f} km.")
@@ -201,7 +207,8 @@ def _run_world_context(arguments: argparse.Namespace) -> int:
         print(f"World context failed: {error}", file=sys.stderr)
         return 1
     print(f"Geographic context complete: {path}")
-    print("Geography, shoreline distance and water exposure; climate and terrain follow later.")
+    print("Geography, water connectivity, shore distance and exposure; "
+          "climate and terrain follow later.")
     return 0
 
 

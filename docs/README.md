@@ -30,7 +30,8 @@ For the requested full-world workflow, start with the
 [primary-source/tool review](research/2026-09-24-world-context-enrichment.md).
 WC0 world import/mapping and the [geographic subset of WC1](world-context.md) are
 implemented, including verified reopening, shared-edge water measurements,
-shore distance and directional exposure. [Authored geology](world-geology.md) now
+shore distance, directional exposure and separate water-piece links with explicit
+unresolved support. [Authored geology](world-geology.md) now
 adds a separate province/default recipe and editor. [Bathymetry](world-bathymetry.md)
 now generates an explicit ocean-depth hypothesis with its own inputs, previews and
 verified result. Physical geology forcing, climate and world-linked land terrain

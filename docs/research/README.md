@@ -12,6 +12,11 @@ in the current status or a new dated report.
 
 ## Current reassessment
 
+- [Water-piece connectivity — 2026-09-25](2026-09-25-water-piece-connectivity.md)
+  implements separate pieces and shared intervals, source-verified graph products,
+  explicit precision-limit support and Context inspection. Records synthetic and
+  private-world controls and isolated graph performance; terrain quality comes next.
+
 - [Authored world bathymetry — 2026-09-25](2026-09-25-authored-world-bathymetry.md)
   implements explicit ocean selection, conservative shelf/slope/basin depths,
   numerical error and unresolved support, with independent inputs/editor/verified

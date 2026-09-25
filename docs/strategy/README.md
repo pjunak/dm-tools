@@ -1,6 +1,7 @@
 # Current development strategy
 
-Re-evaluated 2026-09-24; WC0/WC1 geography, geology-input and bathymetry checkpoint 2026-09-25. DM Tools is a usable terrain research workbench with
+Re-evaluated 2026-09-24; WC0/WC1 geography, geology-input, bathymetry and water-piece
+checkpoint 2026-09-25. DM Tools is a usable terrain research workbench with
 strong numeric/build foundations; believable drainage and connected landform
 structure are the next product milestone. See the
 [assessment and primary-source research](../research/2026-09-24-progress-and-generation-strategy.md)
@@ -24,7 +25,8 @@ directional water exposure with verified inspection/export/reopening. Authored
 [province/default hypotheses](../world-geology.md) now have their own portable
 recipe and editor. [Bathymetry](../world-bathymetry.md) now supplies an explicit
 shelf/slope/basin hypothesis with its own generation, error/support views and
-verified products. Water-piece face incidence is the next bounded context stage.
+verified products. Water-piece face incidence, source verification and explicit
+precision support are now implemented. Return to B/C physical paths and landforms.
 Physical path/landform acceptance remains a prerequisite for world-informed
 production terrain; ecological classifications remain downstream.
 
@@ -64,7 +66,7 @@ Dated reports and accepted ADRs remain historical evidence.
 | Terrain-aligned drainage | Frozen-graph reconstruction measured; production not accepted | Shared physical paths, lower grid bias, hard constraints and resolution acceptance |
 | Coherent landform families | Partial recipes; two-epoch reference implemented and measured, quality gate open | Related range/pass/tributary/lowland structure that survives multiple seeds and scales |
 | Useful zoom enrichment | Experimental | Accepted regional shape, transition and inherited-flow behavior; then viewport scheduling |
-| World import and shared context | WC0 plus WC1 geographic coverage, water topology, edge widths, shore distance, directional exposure, verified products, authored geology recipes and bathymetric hypotheses implemented | Physical forcing and component-aware transport |
+| World import and shared context | WC0 plus WC1 geographic coverage, water topology, edge widths, shore distance, directional exposure, verified products, authored geology recipes, bathymetric hypotheses and water-piece incidence implemented | B/C terrain acceptance; later physical forcing and conservative transport |
 | World-informed rough terrain and history | Planned, dependent on physical terrain acceptance | WC2/WC3 coarse relief, seasonal runoff and bounded feedback; WC4 reviewed parent |
 | Hydrological water and ecology | Later dependent work | Flux/storage/river-size evidence and WC6 ecological layers; shared world context comes earlier |
 
@@ -127,8 +129,10 @@ also delivered:** a separate recipe/editor with cross-label and seam provinces,
 explicit overlap/priority and independent ages/duration at one common present.
 **WC1 bathymetry also delivered:** explicit ocean selection, shelf/slope/basin
 inputs, conservative depth/error fields and independent editor/result contracts.
-Next retain water-piece face incidence before any transport solver uses gateway
-widths; then return to B/C physical-path and landform acceptance for rough terrain.
+**WC1 water-piece incidence also delivered:** separate pieces and finite shared
+intervals, source-verified context v4 and unresolved-connectivity support. Return
+now to B/C physical-path and landform acceptance for rough terrain. Later transport
+must admit that support and establish conservative capacity/flux contracts.
 Do not infer ocean depth from width or introduce climate fields without budgets. These bounded
 contracts precede the remaining B/C quality work and require no erosion engine
 or private-map import.

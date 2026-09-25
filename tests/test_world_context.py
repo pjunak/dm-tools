@@ -190,7 +190,7 @@ def test_export_schema_hashes_snapshot_numeric_fields_and_no_overwrite(tmp_path:
     target = tmp_path / "context"
     path = application.export_context(run, target)
     manifest = json.loads(path.read_text(encoding="utf-8"))
-    schema = json.loads((ROOT / "schemas/world/context-v3.schema.json").read_text(encoding="utf-8"))
+    schema = json.loads((ROOT / "schemas/world/context-v4.schema.json").read_text(encoding="utf-8"))
     Draft202012Validator(schema).validate(manifest)  # pyright: ignore[reportUnknownMemberType]
     assert manifest["input_sha256"] == context_input_sha256(run.context)
     assert open_world(target / "world.dmworld.json").project == world.project

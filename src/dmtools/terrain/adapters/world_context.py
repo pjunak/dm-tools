@@ -19,10 +19,11 @@ from dmtools.terrain.domain.world_context import (
     exposure_range_km,
     exposure_steps,
 )
+from dmtools.terrain.pipeline.world_connectivity import CONNECTIVITY_ALGORITHM
 from dmtools.terrain.pipeline.world_context import WorldContext
 
 CONTEXT_SCHEMA = "dmtools.world-context"
-CONTEXT_VERSION = 3
+CONTEXT_VERSION = 4
 CONTEXT_PREVIEWS = (
     "land.png",
     "water.png",
@@ -31,8 +32,15 @@ CONTEXT_PREVIEWS = (
     "shore-distance.png",
     "exposure-north.png",
     "exposure-support-north.png",
+    "connectivity.png",
 )
-CONTEXT_OUTPUTS = ("world.dmworld.json", "geography.npz", "exposure.npz", *CONTEXT_PREVIEWS)
+CONTEXT_OUTPUTS = (
+    "world.dmworld.json",
+    "geography.npz",
+    "exposure.npz",
+    "connectivity.npz",
+    *CONTEXT_PREVIEWS,
+)
 MAX_CONTEXT_MANIFEST_BYTES = 4 * 1024 * 1024
 
 
@@ -119,6 +127,21 @@ def context_document(
             "land_blocks_rays": False,
             "preview_bearing": "N",
         },
+        "connectivity": {
+            "algorithm": CONNECTIVITY_ALGORITHM,
+            "pieces": len(context.connectivity.water_body),
+            "links": len(context.connectivity.link_nodes),
+            "components": context.connectivity.component_count,
+            "fragmented_bodies": list(context.connectivity.fragmented_bodies),
+            "fragmentation_policy": "retain-pieces; no-inferred-links; transport-unsupported",
+            "split_cells": context.connectivity.split_cells,
+            "registration": "row-major-cell-offsets; zero-based-piece-indices",
+            "links_policy": "undirected-positive-intervals; east-and-south-once; periodic-east",
+            "interval_coordinates": "unit-face; east-north-to-south; south-west-to-east",
+            "sample_coordinates": "unit-source-frame; interior-sites-not-flow-paths",
+            "area_units": "km2",
+            "width_units": "km",
+        },
         "outputs": outputs,
     }
     document["context_sha256"] = sha256(canonical_json(document)).hexdigest()
@@ -165,7 +188,16 @@ def write_world_context(
         water_exposure=context.water_exposure.astype("<f4", copy=False),
         exposure_mixed_support=context.exposure_mixed_support.astype("<f4", copy=False),
     )
-    names = ["world.dmworld.json", "geography.npz", "exposure.npz"]
+    verify()
+    np.savez_compressed(
+        target / "connectivity.npz",
+        allow_pickle=False,
+        **{
+            name: value.astype(value.dtype.newbyteorder("<"), copy=False)
+            for name, value in context.connectivity.arrays().items()
+        },
+    )
+    names = ["world.dmworld.json", "geography.npz", "exposure.npz", "connectivity.npz"]
     for layer, name in zip(CONTEXT_LAYERS, CONTEXT_PREVIEWS, strict=True):
         verify()
         with context_image(context, layer) as image:

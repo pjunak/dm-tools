@@ -15,7 +15,7 @@ The desktop workbench now has **World** and **Terrain** workspaces.
 ownership, an explicit spherical frame and planet radius in portable
 `.dmworld.json` files. It provides mapping, validation, pan/zoom and saved-world
 inspection. [Geographic context](docs/world-context.md) now adds spherical land
-coverage, connected water, resolution support, preview layers and portable
+coverage, connected water, separate water-piece links, resolution support, preview layers and portable
 exports. Separate [geology](docs/world-geology.md) and
 [bathymetry](docs/world-bathymetry.md) workflows now author hypotheses and generate
 bounded ocean-floor previews. Shared climate and world land terrain remain planned.
@@ -60,8 +60,9 @@ and verified reopening. [Geology inputs](docs/world-geology.md) add continent
 defaults and drawable provinces with separate ages and overlap priorities.
 [Bathymetric hypotheses](docs/world-bathymetry.md) now provide explicit ocean
 selection, a shelf/slope/basin depth model, error/support views and verified exports.
-Next come component-aware water connections, rough terrain and selected regional
-refinement with shared climate and geological history. Climate, world-linked terrain and regional history replay are not
+Separate water-piece connections and explicit unresolved support are now retained.
+Next come accepted physical river paths/landforms, rough world terrain and selected
+regional refinement with shared climate and geological history. Climate, world-linked terrain and regional history replay are not
 implemented; the saved world is a source project, not a generated parent.
 See the [research review](docs/research/2026-09-24-world-context-enrichment.md).
 

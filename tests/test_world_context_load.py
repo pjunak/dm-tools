@@ -99,7 +99,7 @@ def test_manifest_and_product_hash_changes_are_rejected(bundle: Path) -> None:
 
 
 METADATA_EDITS: list[Callable[[dict[str, Any]], None]] = [
-    lambda d: d.update(version=2),
+    lambda d: d.update(version=3),
     lambda d: d["shore_distance"].update(sample_count=True),
     lambda d: d["shore_distance"].update(sample_count=500001),
     lambda d: d["shore_distance"].update(max_error_km=-1),
@@ -107,6 +107,10 @@ METADATA_EDITS: list[Callable[[dict[str, Any]], None]] = [
     lambda d: d["exposure"].update(distance_samples=100000),
     lambda d: d.update(version=True),
     lambda d: d.update(extra="unknown"),
+    lambda d: d["connectivity"].update(components=0),
+    lambda d: d["connectivity"].update(fragmented_bodies=[1]),
+    lambda d: d["connectivity"].update(split_cells=-1),
+    lambda d: d["connectivity"].update(registration="cell-centres"),
     lambda d: d["grid"].update(columns=25),
     lambda d: d["settings"].update(latitude_cells=361),
     lambda d: d["settings"].update(latitude_cells=True),
@@ -267,3 +271,96 @@ def test_boundary_only_cells_do_not_publish_phantom_water(tmp_path: Path) -> Non
     loaded = application.open_context(manifest)
     np.testing.assert_array_equal(loaded.context.land_fraction, context.land_fraction)
     assert len(loaded.context.water_bodies) == 2
+
+
+@pytest.mark.parametrize(
+    "field",
+    [
+        "cell_offsets",
+        "water_body",
+        "area_km2",
+        "sample_uv",
+        "link_nodes",
+        "link_axis",
+        "link_interval",
+        "link_width_km",
+    ],
+)
+def test_rehashed_water_graph_disagrees_with_actual_source(bundle: Path, field: str) -> None:
+    path = bundle.parent / "connectivity.npz"
+    with np.load(path, allow_pickle=False) as data:
+        arrays = {key: data[key] for key in data.files}
+    if field == "link_nodes":
+        # A valid node index in the same ocean is still not a valid shared face.
+        node = int(arrays[field][0, 0])
+        candidates = np.flatnonzero(arrays["water_body"] == arrays["water_body"][node])
+        arrays[field][0, 1] = candidates[-1]
+    elif field == "link_axis":
+        arrays[field][0] = 1 - arrays[field][0]
+    else:
+        arrays[field].flat[0] += 1
+    np.savez_compressed(path, allow_pickle=False, **arrays)
+    rehash_product(bundle, path.name)
+    with pytest.raises(ValueError, match="connectivity disagrees with source"):
+        application.open_context(bundle)
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [("pieces", True), ("pieces", -1), ("pieces", 500001), ("links", 1000001), ("links", 0.5)],
+)
+def test_graph_size_admission_precedes_numeric_allocation(
+    bundle: Path,
+    field: str,
+    value: object,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from dmtools.terrain.adapters import world_connectivity as graph_loader
+
+    edit_manifest(bundle, lambda doc: doc["connectivity"].update({field: value}))
+
+    def no_arrays(*_args: object, **_kwargs: object) -> None:
+        pytest.fail("Untrusted graph counts must be bounded before allocation.")
+
+    monkeypatch.setattr(graph_loader, "read_numeric_archive", no_arrays)
+    with pytest.raises(ValueError, match="connectivity count"):
+        application.open_context(bundle)
+
+
+def test_graph_header_size_is_checked_before_numpy_decoding(
+    bundle: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    path = bundle.parent / "connectivity.npz"
+    with ZipFile(path) as archive:
+        entries = {name: archive.read(name) for name in archive.namelist()}
+    stream = io.BytesIO()
+    np.lib.format.write_array_header_1_0(
+        stream,
+        {
+            "descr": "<i4",
+            "fortran_order": False,
+            "shape": (10**9,),
+        },
+    )
+    entries["cell_offsets.npy"] = stream.getvalue()
+    with ZipFile(path, "w", compression=ZIP_DEFLATED) as archive:
+        for name, data in entries.items():
+            archive.writestr(name, data)
+    rehash_product(bundle, path.name)
+
+    def no_load(*_args: object, **_kwargs: object) -> None:
+        pytest.fail("Malformed graph headers must be rejected before np.load.")
+
+    # Geography is decoded earlier, so guard only the graph's bounded reader.
+    from dmtools.terrain.adapters import world_connectivity as graph_loader
+
+    reader = graph_loader.read_numeric_archive
+
+    def guarded(*args: Any, **kwargs: Any) -> Any:
+        monkeypatch.setattr(np, "load", no_load)
+        return reader(*args, **kwargs)
+
+    monkeypatch.setattr(graph_loader, "read_numeric_archive", guarded)
+    with pytest.raises(ValueError):
+        application.open_context(bundle)

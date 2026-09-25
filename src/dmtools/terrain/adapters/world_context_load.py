@@ -14,6 +14,7 @@ from PIL import Image
 
 from dmtools.terrain.adapters.build import canonical_json
 from dmtools.terrain.adapters.numeric import read_numeric_archive
+from dmtools.terrain.adapters.world_connectivity import read_water_connectivity
 from dmtools.terrain.adapters.world_context import (
     CONTEXT_OUTPUTS,
     CONTEXT_PREVIEWS,
@@ -39,7 +40,7 @@ from dmtools.terrain.domain.world_context import (
     shore_spacing_km,
 )
 from dmtools.terrain.pipeline.world import prepare_world_map
-from dmtools.terrain.pipeline.world_context import WorldContext
+from dmtools.terrain.pipeline.world_context import WorldContext, validate_water_partition
 
 
 def _object(value: object) -> dict[str, Any]:
@@ -118,7 +119,8 @@ def read_world_context(
     """Inspect a supported format without requiring the producer's exact runtime.
 
     Hashes certify internal integrity, not origin/authenticity. This validates
-    numeric invariants and reparses prepared source, but does not rerun geography.
+    numeric invariants and rebuilds source water incidence, but does not rerun
+    shoreline distances or exposure fields.
     """
     checkpoint()
     manifest_path = source / "context.json" if source.is_dir() else source
@@ -158,6 +160,8 @@ def read_world_context(
             checkpoint()
             record = _object(outputs[name])
             limit = MAX_WORLD_PROJECT_BYTES if name == "world.dmworld.json" else 24 * 1024 * 1024
+            if name == "connectivity.npz":
+                limit = 64 * 1024 * 1024
             if (
                 set(record) != {"bytes", "sha256"}
                 or type(record["bytes"]) is not int
@@ -289,6 +293,14 @@ def read_world_context(
             value = exposure[key]
             if not np.isfinite(value).all() or np.any((value < 0) | (value > 1)):
                 raise ValueError("Geographic exposure fractions must be finite and within 0-1.")
+        connectivity = read_water_connectivity(
+            products["connectivity.npz"],
+            _object(doc["connectivity"]),
+            world,
+            grid,
+            checkpoint=checkpoint,
+        )
+        validate_water_partition(connectivity, grid, fraction, tuple(bodies))
         context = WorldContext(
             world,
             grid,
@@ -305,6 +317,7 @@ def read_world_context(
             tuple(bodies),
             measured,
             error,
+            connectivity,
         )
         if canonical_json(doc) != canonical_json(context_document(context, runtime, outputs)):
             raise ValueError("Context metadata disagrees with its source or numeric products.")

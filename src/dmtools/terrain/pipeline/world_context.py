@@ -2,6 +2,7 @@
 # pyright: reportUnknownVariableType=false, reportUnknownArgumentType=false
 """Area-conserving geographic context with vector-derived periodic water topology."""
 
+from collections.abc import Callable
 from dataclasses import dataclass
 
 import numpy as np
@@ -26,6 +27,7 @@ from dmtools.terrain.domain.world_context import (
 )
 from dmtools.terrain.pipeline.control import CancellationToken, ProgressCallback, check_cancelled
 from dmtools.terrain.pipeline.world import WorldMap, component_area_km2, components_from_geometry
+from dmtools.terrain.pipeline.world_connectivity import WaterConnectivity, build_water_connectivity
 from dmtools.terrain.pipeline.world_exposure import measure_shore_distance, measure_water_exposure
 from dmtools.terrain.pipeline.world_gateways import measure_water_openings
 
@@ -47,6 +49,7 @@ class WorldContext:
     water_bodies: tuple[ConnectedWater, ...]
     land_area_km2: float
     area_error_km2: float
+    connectivity: WaterConnectivity
 
     @property
     def mixed_cells(self) -> int:
@@ -73,7 +76,10 @@ def water_topology(
     land: BaseGeometry,
     frame: WorldFrame,
     cancellation: CancellationToken | None,
+    *,
+    checkpoint: Callable[[], None] = lambda: None,
 ) -> tuple[list[Polygon], list[int], tuple[ConnectedWater, ...]]:
+    checkpoint()
     water = box(*frame.bounds).difference(land)
     polygons = [Polygon(c.exterior, c.holes) for c in components_from_geometry(water)]
     parent = list(range(len(polygons)))
@@ -98,6 +104,7 @@ def water_topology(
     # polar contacts, are not finite gateways and must not bypass a land barrier.
     for i, a in left_edges:
         check_cancelled(cancellation)
+        checkpoint()
         for j, b in right_edges:
             if a.intersection(b).length > 0:
                 parent[root(j)] = root(i)
@@ -115,6 +122,48 @@ def water_topology(
         for key in ordered
     )
     return polygons, [ids[root(i)] for i in range(len(polygons))], bodies
+
+
+def source_water_connectivity(
+    world: WorldMap,
+    grid: SphericalContextGrid,
+    *,
+    checkpoint: Callable[[], None],
+) -> WaterConnectivity:
+    """Rebuild source incidence when accepting stored graph data."""
+    checkpoint()
+    land = unary_union(
+        [Polygon(c.exterior, c.holes) for feature in world.land for c in feature.components]
+    )
+    polygons, ids, _bodies = water_topology(land, grid.frame, None, checkpoint=checkpoint)
+    checkpoint()
+    return build_water_connectivity(land, polygons, ids, grid, checkpoint=checkpoint)
+
+
+def validate_water_partition(
+    graph: WaterConnectivity,
+    grid: SphericalContextGrid,
+    fraction: NDArray[np.float64],
+    bodies: tuple[ConnectedWater, ...],
+) -> None:
+    """Reject lost area or crossed barriers; retain unresolved finite-face support."""
+    node_cells = np.repeat(np.arange(fraction.size), np.diff(graph.cell_offsets))
+    wet_area = np.bincount(node_cells, weights=graph.area_km2, minlength=fraction.size)
+    row_area = np.array([grid.cell_area_km2(r) for r in range(grid.shape[0])])[:, None]
+    expected = (1 - fraction) * row_area
+    if np.any(np.abs(wet_area.reshape(grid.shape) - expected) > np.maximum(row_area * 1e-9, 1e-8)):
+        raise ValueError("Water pieces do not conserve geographic cell areas.")
+    body_area = np.bincount(graph.water_body, weights=graph.area_km2, minlength=len(bodies) + 1)
+    if not np.allclose(body_area[1:], [b.area_km2 for b in bodies], rtol=1e-9, atol=1e-8):
+        raise ValueError("Water pieces do not conserve source water-body areas.")
+    identities = np.unique(np.column_stack((graph.component, graph.water_body)), axis=0)
+    if len(identities) != graph.component_count or not np.array_equal(
+        np.unique(graph.water_body), [b.id for b in bodies]
+    ):
+        raise ValueError("Water-piece components cross or omit source water regions.")
+    # Floating-point clipping can close an unrepresentably thin source sliver.
+    # Retain its area and isolated pieces, expose fragmented_bodies, and require
+    # future transport consumers to reject them. Never invent an epsilon bridge.
 
 
 def generate_world_context(
@@ -227,13 +276,22 @@ def generate_world_context(
         lambda f, message: report(0.45 + 0.15 * f, message),
         cancellation=cancellation,
     )
-    report(0.60, "Measuring geodesic shoreline distance")
+    connectivity = build_water_connectivity(
+        land,
+        polygons,
+        body_ids,
+        grid,
+        checkpoint=lambda: check_cancelled(cancellation),
+        progress=lambda f, message: report(0.60 + 0.15 * f, message),
+    )
+    validate_water_partition(connectivity, grid, fraction, bodies)
+    report(0.75, "Measuring geodesic shoreline distance")
     shore, sampling = measure_shore_distance(land, grid, cancellation=cancellation)
     exposure, mixed_support = measure_water_exposure(
         grid,
         fraction,
         flags,
-        lambda f, message: report(0.65 + 0.34 * f, message),
+        lambda f, message: report(0.80 + 0.19 * f, message),
         cancellation=cancellation,
     )
     for array in (fraction, water_id, flags, row_area, east, south):
@@ -255,4 +313,5 @@ def generate_world_context(
         bodies,
         measured,
         error,
+        connectivity,
     )

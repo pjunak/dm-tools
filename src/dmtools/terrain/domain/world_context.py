@@ -5,7 +5,7 @@ from math import ceil, cos, pi, sin
 
 from dmtools.terrain.domain.world import WorldFrame
 
-WORLD_CONTEXT_ALGORITHM = "spherical-geography-v3"
+WORLD_CONTEXT_ALGORITHM = "spherical-geography-v4"
 MAX_CONTEXT_ROWS = 360
 MIXED_COAST = 1
 SPLIT_WATER = 2

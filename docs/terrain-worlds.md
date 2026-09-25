@@ -202,8 +202,9 @@ provinces over source/context backgrounds. Save those hypotheses as their own
 recipe. **Bathymetry…** opens the separate [ocean-depth workflow](world-bathymetry.md)
 from matching geographic context: select oceans, author a margin profile, generate
 and inspect depth/error/support, then export or reopen a verified result.
-The remaining [WC1](strategy/world-context.md) work adds component-aware transport
-and physical forcing while preserving this source contract.
+The [WC1](strategy/world-context.md) graph now retains separate water pieces and
+finite shared intervals. Physical transport and geology forcing remain planned
+while preserving this source contract.
 World terrain, climate, shared history, world-linked regional generation and
 local river enrichment require their own stage gates. Existing local terrain
 builds remain in local metric coordinates; saving a world does not georeference

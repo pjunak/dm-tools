@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://dmtools.local/schemas/world/context-v3.schema.json",
-  "title": "DM Tools spherical geographic context v3",
+  "$id": "https://dmtools.local/schemas/world/context-v4.schema.json",
+  "title": "DM Tools spherical geographic context v4",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -21,17 +21,18 @@
     "context_sha256",
     "gateways",
     "shore_distance",
-    "exposure"
+    "exposure",
+    "connectivity"
   ],
   "properties": {
     "schema": {
       "const": "dmtools.world-context"
     },
     "version": {
-      "const": 3
+      "const": 4
     },
     "algorithm": {
-      "const": "spherical-geography-v3"
+      "const": "spherical-geography-v4"
     },
     "importer": {
       "const": "retained-svg-v2"
@@ -334,7 +335,9 @@
         "exposure.npz",
         "shore-distance.png",
         "exposure-north.png",
-        "exposure-support-north.png"
+        "exposure-support-north.png",
+        "connectivity.npz",
+        "connectivity.png"
       ],
       "properties": {
         "world.dmworld.json": {
@@ -516,6 +519,42 @@
               "minimum": 1
             }
           }
+        },
+        "connectivity.npz": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "sha256",
+            "bytes"
+          ],
+          "properties": {
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "bytes": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        "connectivity.png": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "sha256",
+            "bytes"
+          ],
+          "properties": {
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "bytes": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
         }
       }
     },
@@ -650,6 +689,80 @@
         },
         "preview_bearing": {
           "const": "N"
+        }
+      }
+    },
+    "connectivity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "algorithm",
+        "pieces",
+        "links",
+        "components",
+        "split_cells",
+        "registration",
+        "links_policy",
+        "interval_coordinates",
+        "sample_coordinates",
+        "area_units",
+        "width_units",
+        "fragmented_bodies",
+        "fragmentation_policy"
+      ],
+      "properties": {
+        "algorithm": {
+          "const": "cell-water-pieces-v1"
+        },
+        "pieces": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 500000
+        },
+        "links": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000
+        },
+        "components": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 500000
+        },
+        "split_cells": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 259200
+        },
+        "registration": {
+          "const": "row-major-cell-offsets; zero-based-piece-indices"
+        },
+        "links_policy": {
+          "const": "undirected-positive-intervals; east-and-south-once; periodic-east"
+        },
+        "interval_coordinates": {
+          "const": "unit-face; east-north-to-south; south-west-to-east"
+        },
+        "sample_coordinates": {
+          "const": "unit-source-frame; interior-sites-not-flow-paths"
+        },
+        "area_units": {
+          "const": "km2"
+        },
+        "width_units": {
+          "const": "km"
+        },
+        "fragmented_bodies": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "maxItems": 500000,
+          "uniqueItems": true
+        },
+        "fragmentation_policy": {
+          "const": "retain-pieces; no-inferred-links; transport-unsupported"
         }
       }
     }

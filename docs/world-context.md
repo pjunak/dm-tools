@@ -1,12 +1,13 @@
 # Generate geographic world context
 
 The World workspace now implements the first WC1 stage: fractional land coverage,
-connected water regions, finite shared-edge water openings, shoreline distance,
+connected water regions, separate water pieces and their shared intervals, shoreline distance,
 eight directional water-exposure fields and resolution support
 on a custom spherical planet. Completed context bundles can be reopened for inspection.
 It consumes the validated source and its reported preparation adjustments.
-Climate, ocean depth, tectonic provinces, rough world terrain and world-linked
-regional generation remain later stages. This result is geographic context,
+Separate [geology inputs](world-geology.md) and [ocean-depth hypotheses](world-bathymetry.md)
+are implemented. Climate, rough world terrain and world-linked regional generation
+remain later stages. This result is geographic context,
 not a generated terrain parent.
 
 ## In the editor
@@ -20,9 +21,10 @@ not a generated terrain parent.
    operations cannot be interrupted mid-call; cancellation is cooperative.
 4. Use the preview selector for **Source**, **Land coverage**, **Connected water**,
    **Resolution support**, **Water openings**, **Shore distance**, **Water exposure**
-   or **Exposure support**. The compass selector changes the initial look direction
+   **Exposure support**, and **Water connectivity**. The compass selector changes
+   the initial look direction
    for exposure layers without regeneration or input edits. Zoom and pan inspect the same
-   cells. Source outlines remain visible over the three exposure/distance layers;
+   cells. Source outlines remain visible over exposure/distance and connectivity layers;
    those outlines do not increase numeric resolution. Hover shows
    land fraction, the dominant water ID and whether local support is mixed. In
    Water openings, hover reports the longest north/east/south/west openings in km.
@@ -65,8 +67,11 @@ Verify an existing result from a manifest or directory:
 Viewing retains the recorded producer runtime and accepts a supported current
 format even if this installation's code/dependencies differ. The CLI reports that
 mismatch. Export still requires the exact producing runtime: regenerate to create
-new results under changed software. Context v1/v2 are superseded; regenerate from
-their retained source snapshots. There is no compatibility loader or migration.
+new results under changed software. Reopening also rebuilds water incidence from
+source: a changed geometry runtime that produces different ordered graph arrays
+requires regeneration. Context v1-v3 are superseded; regenerate from retained world
+snapshots. Recreate v3-linked bathymetry recipes/results against current geography.
+There is no compatibility loader or migration.
 
 ## What the layers mean
 
@@ -75,6 +80,7 @@ their retained source snapshots. There is no compatibility loader or migration.
 | Land coverage | Area-weighted land fraction from 0 to 1 in each spherical cell. Tiny islands and water holes remain in these fractions. |
 | Connected water | Water regions derived from continuous prepared vectors, joined across the longitude seam. Cell colour uses the body with the greatest aggregated water area within that cell. |
 | Water openings | Blue edges: fully open; orange: partial opening; dark: closed. Three display pixels per cell reveal the shared edges when zoomed. Hover supplies physical widths. |
+| Water connectivity | Blue: one water piece; gold: several; green: dry. Pink marks pieces whose source region has unresolved connectivity. Hover lists piece IDs, source regions and incident interval counts. |
 | Shore distance | Cream at 0 km to purple at 3,000+ km; nearest sampled shoreline from the cell centre, including inland shores. Grey means no shoreline exists. Hover includes the distance overestimate bound. |
 | Water exposure | Tan at 0% to blue at 100% distance-weighted water along the selected initial look direction. Land does not block the ray. |
 | Exposure support | Dark at 0% to gold at 100% of exposure quadrature weight falling in mixed coastal cells. Not a numerical error bound. |
@@ -117,10 +123,49 @@ A positive opening is evidence of a shared wet edge. It is **not** a strait's
 minimum width, a navigable passage, depth, sill height, or discharge capacity.
 Several face openings can touch different disconnected water pieces inside a
 cell. The split-water flag remains authoritative: joining all those faces through
-one raster node would create false routes. A component-aware transport graph
-and physical sill/capacity geometry are still required before a flow solver uses
-these data. [Bathymetry](world-bathymetry.md) now supplies explicit depth scenarios,
+one raster node would create false routes. Use the separate water-piece graph
+below for incidence. Physical sill/capacity geometry and conservation gates are
+still required before a flow solver uses these data. [Bathymetry](world-bathymetry.md) now supplies explicit depth scenarios,
 but its centre samples alone cannot establish exchange capacity.
+
+## Water-piece connectivity
+
+Each disconnected positive-area part of water inside a cell has its own node,
+even when it belongs to the same ocean as another piece. Links require a shared
+open boundary interval of positive length. Separate gaps between the same node
+pair remain separate links. Each undirected link is stored once, from west to
+east or north to south; the east seam joins the last column to the first. There
+are no diagonal or polar point links. No proximity bridge or minimum-width cutoff
+is applied. An interior sample point identifies a piece for inspection; connecting
+sample points with straight lines would not establish an in-water route.
+
+Clipped pieces retain spherical areas in km² and source water-body IDs. Their
+areas match geographic cell water area within `max(cell area * 1e-9, 1e-8 km²)`;
+per-body area uses relative tolerance 1e-9 and absolute tolerance 1e-8 km².
+Area agreement does not prove connectivity. Connected-component labels are
+computed separately and checked against vector region membership.
+
+Some source slivers are thinner than floating-point clipping can represent at a
+cell face. Their graph can have more components than the continuous source.
+`fragmented_bodies` records those source IDs: retain their pieces and areas, show
+pink support in the preview and declare transport unsupported for those regions.
+Generation does not erase the water or join it by an epsilon. Component membership
+across different source regions, lost area beyond tolerance, nonpositive piece
+areas and exceeded complexity limits still reject generation. A future transport
+consumer must inspect this support before accepting any region.
+
+The pipeline retains boundary traces for only the current and previous rows,
+with analytic full-water cells. Admission caps are 500,000 pieces, 1,000,000
+shared intervals, 4,096 pieces in one cell, 2,000,000 clipped polygon vertices
+and 8,192 intervals per piece face. These are geometry/work bounds, not an OS
+memory or native-call deadline. Cancellation is cooperative at rows and cell
+chunks. The Context summary is scrollable in compact windows; the preview stays
+at its generated grid resolution when zoomed.
+
+This is two-dimensional incidence. No water volume, sill depth, exchange rate,
+flow direction, heat storage or climate is inferred. See
+[ADR-0078](adr/0078-retain-water-piece-connectivity.md) and
+[implementation evidence](research/2026-09-25-water-piece-connectivity.md).
 
 ## Shore distance and directional exposure
 
@@ -176,11 +221,11 @@ latitude. This context does not reuse the local terrain endpoint-node grid.
 
 ## Export contract
 
-[Context v3](../schemas/world/context-v3.schema.json) owns the manifest. It records
-`spherical-geography-v3`, importer/preparation identities, the canonical complete
+[Context v4](../schemas/world/context-v4.schema.json) owns the manifest. It records
+`spherical-geography-v4`, importer/preparation identities, the canonical complete
 input hash, software/runtime identity, frame, grid, settings, area checks, water
 regions, support counts, gateway semantics/counts, shoreline error bound, exposure
-range/quadrature semantics and SHA-256/byte counts for every
+range/quadrature semantics, graph counts/registration/fragmentation support and SHA-256/byte counts for every
 output. `context_sha256` fingerprints the entire canonical manifest excluding
 that field; `input_sha256` identifies the complete source/settings/algorithm.
 
@@ -191,6 +236,8 @@ that field; `input_sha256` identifies the complete source/settings/algorithm.
 | `land.png`, `water.png`, `support.png`, `gateways.png` | Derived previews; gateways use three pixels per cell to show shared faces. |
 | `exposure.npz` | Float64 `shore_distance_km` [rows, columns]; Float32 `water_exposure` and `exposure_mixed_support` [8, rows, columns]. Bearings follow N, NE, E, SE, S, SW, W, NW. |
 | `shore-distance.png`, `exposure-north.png`, `exposure-support-north.png` | Cell-resolution previews; exposure PNGs show north. The numeric archive retains every direction. |
+| `connectivity.npz` | Typed piece and shared-interval arrays below; graph algorithm `cell-water-pieces-v1`. |
+| `connectivity.png` | Cell-resolution piece count and unresolved-region support preview. |
 | `context.json` | Completion manifest, published last with an atomic rename. |
 
 Geography NPZ fields: `land_fraction` Float64 [rows, columns], `water_body` Int32
@@ -202,13 +249,33 @@ C-order numeric NPY entries, with no object/pickle payloads. Flags are bitwise:
 1 mixed land/water, 2 disconnected water pieces, 4 land absent at centre,
 8 water absent at centre. A cell can carry several flags.
 
+Connectivity arrays use `N` pieces and `M` links:
+
+| Field | Type and shape | Meaning |
+|---|---|---|
+| `cell_offsets` | Int32 [rows*columns + 1] | Row-major cell ranges into piece arrays; starts at 0, ends at N |
+| `water_body` | Int32 [N] | Positive vector water-region IDs |
+| `area_km2` | Float64 [N] | Spherical area of each water piece |
+| `sample_uv` | Float64 [N, 2] | Interior point in the unit source frame, u eastward and v southward; not a centroid or routing segment |
+| `link_nodes` | Int32 [M, 2] | Zero-based piece indices, stored once in east or south orientation |
+| `link_axis` | UInt8 [M] | 0 east including seam, 1 south |
+| `link_interval` | Float64 [M, 2] | Increasing [lo, hi] on a unit face: north-to-south on east faces, west-to-east on south faces |
+| `link_width_km` | Float64 [M] | Positive physical length of that shared interval |
+
+Derived component labels and incident-interval counts are rebuilt, not persisted.
+The manifest records fragmented source IDs and the unsupported-transport policy.
+Piece/link counts are admitted before allocation; every ordered graph array is
+compared with a reconstruction from retained source geometry. Rehashed links that
+cross land or connect the wrong faces are rejected. The scalar longest-opening
+arrays remain diagnostics, not replacements for this graph.
+
 Opening checks exact output/member names, product lengths and hashes, canonical
 input/manifest identity, supported algorithm/importer/preparation, source geometry,
 coordinate and area consistency, water IDs, support flags, finite numeric ranges,
 edge-length bounds, exposure fractions, shoreline distance/nodata, sampling bounds
 and preview dimensions. It rechecks files before accepting
 the captured snapshot. Manifest input is capped at 4 MiB, world input at 32 MiB,
-and other products at 24 MiB each. NPY shape/dtype/order and exact payload length
+connectivity NPZ at 64 MiB, and other products at 24 MiB each. NPY shape/dtype/order and exact payload length
 are checked before allocation; each compressed entry is bounded by its admitted
 array size plus 10,000 header bytes. These are allocation guards, not an OS memory cap.
 
@@ -221,5 +288,5 @@ for terrain/climate solvers. [Geology inputs](world-geology.md) can now be drawn
 over this read-only context in a separate editor/recipe.
 [Bathymetry](world-bathymetry.md) consumes matching geography to build explicit
 ocean-floor hypotheses, refreshing the geographic producer when necessary.
-Component-aware transport and physical geology forcing remain WC1 work. See [the staged plan](strategy/world-context.md)
-and [current implementation evidence](research/2026-09-25-geographic-exposure.md).
+Water-piece incidence is implemented; physical transport/capacity and geology forcing remain WC1 work. See [the staged plan](strategy/world-context.md)
+and [current implementation evidence](research/2026-09-25-water-piece-connectivity.md).

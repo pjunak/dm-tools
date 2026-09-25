@@ -499,3 +499,19 @@ hierarchy and immutable ground. Counts separate generated density from display
 selection, and every sampled uphill edge remains in the review. It measures
 preparation and viewport wall time without promising physical river geometry or
 finer hydrology. See the [measurements](../docs/research/2026-09-24-connected-drainage-review.md).
+
+
+## World water-piece connectivity
+
+```powershell
+.\.venv\Scripts\python.exe -m benchmarks.world_connectivity --output artifacts/world-connectivity.json
+```
+
+One fresh process per `--rows` value (default 90, 180, 360), with two deterministic
+source-water graph constructions. The default source is public Four Shores;
+`--source path/to/world.dmworld.json` accepts another retained world without edits.
+Records physical area bounds, graph components, fragmented source support, array
+identity/bytes, source/runtime identity and native process peaks. Timings exclude
+source preparation, shore/exposure fields, rendering and serialization. Peaks
+include imports and allocator retention. No full-context memory or latency bound
+is inferred. See the [measured implementation](../docs/research/2026-09-25-water-piece-connectivity.md).

@@ -15,7 +15,7 @@ source maps, continental ownership and an explicit spherical geographic frame.
 Read the [world guide](../../../docs/terrain-worlds.md), or try
 `dmtools terrain gui --world examples/world/four-shores.dmworld.json`.
 The **Context** page generates spherical coverage, connected water and resolution
-support, shared-edge openings, shore distance and directional water exposure,
+support, shared-edge openings, separate water-piece links, shore distance and exposure,
 with verified saved-context inspection; see
 [geographic context](../../../docs/world-context.md). **Geology…** opens the
 [province/default input editor](../../../docs/world-geology.md), with its own

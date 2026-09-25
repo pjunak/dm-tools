@@ -22,7 +22,7 @@
       "const": 1
     },
     "geography_algorithm": {
-      "const": "spherical-geography-v3"
+      "const": "spherical-geography-v4"
     },
     "world_sha256": {
       "type": "string",

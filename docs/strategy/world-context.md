@@ -340,8 +340,8 @@ adds current-format verified reopening and longest continuous shared-edge water
 openings in kilometres, with editor inspection and canonical manifest identity.
 The source snapshot cannot become the automatic Save target. Producer runtime is
 retained for viewing; new exports require the producing runtime. Edge measurements
-also fix false seam closure at fractional source origins. They do not yet provide
-a component-aware transport graph, minimum strait width or bathymetric capacity.
+also fix false seam closure at fractional source origins. The later water-piece checkpoint below adds incidence; these scalar widths
+still do not establish minimum strait width or bathymetric capacity.
 
 **WC1 exposure checkpoint:** [ADR-0075](../adr/0075-measure-spherical-geographic-exposure.md)
 adds spherical shoreline distance with a retained-curve sampling bound, eight
@@ -374,18 +374,24 @@ provide cancellable generation, stale/current previews and verified reopening.
 A single margin profile and constant basin are deliberate first limits; the
 product does not establish volumes, capacities, heat storage or terrain quality.
 
-**Next concrete batch: water-piece transport topology.** Preserve individual
-water pieces and shared-face incidence through mixed/split cells, with dry-barrier,
-seam/pole, shared-face symmetry and complexity controls. This is a connectivity
-foundation, not a circulation model. Keep physical geometry and budgets explicit
-before assigning sill depth or exchange capacity. Follow with B/C physical-path
-and landform gates before WC2 rough land terrain; do not indefinitely expand
-optional input panels or assume more metadata alone improves terrain quality.
+**WC1 water-piece checkpoint:** [ADR-0078](../adr/0078-retain-water-piece-connectivity.md)
+implements individual pieces and finite shared-face incidence through mixed/split
+cells, with spherical areas, dry-barrier/seam/pole controls, bounded complexity
+and source-verified context v4. The viewer and CLI expose precision-limited
+fragmented source regions; no inferred connection repairs them. This is a
+connectivity foundation, not a circulation model.
 
-Before a transport solver uses gateway arrays, retain individual water pieces
-and face incidence through split cells; positive faces and dominant water IDs
-must not create false links. Add channel/sill depth and capacity only with an
-explicit bathymetric contract. Expose exposure ranges/weighting as authored
+**Next concrete batch: B/C physical paths and landform acceptance.** Resume the
+shared physical-path/finished-ground comparison, rotation/grid sensitivity and
+hard-constraint controls before WC2 rough land terrain. Keep physical geometry
+and budgets explicit before assigning sill depth or exchange capacity. Do not
+indefinitely expand optional input panels or assume more metadata alone improves
+terrain quality.
+
+A transport solver must use the implemented piece/interval graph, reject
+fragmented source-region support and establish conservative transfer budgets;
+positive scalar faces and dominant IDs cannot stand in for incidence. Add
+channel/sill depth and capacity only with an explicit bathymetric contract. Expose exposure ranges/weighting as authored
 scenarios only when a consuming comparison requires them, and test sensitivity
 rather than interpreting current geographic scores as calibrated climate.
 

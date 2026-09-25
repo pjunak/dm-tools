@@ -1,6 +1,6 @@
 # Current terrain research status
 
-Reconciled on 2026-09-25 for WC0 preparation and the delivered WC1 geography, geology-input and bathymetry stages. The
+Reconciled on 2026-09-25 for WC0 preparation and the delivered WC1 geography, geology-input, bathymetry and water-piece stages. The
 2026-09-24 generation measurements and scientific-tool audit below retain their
 own revision/date; this world-source batch does not rerun terrain-quality probes.
 This is a status map; [TODO](../../TODO.md) owns the research register and the
@@ -62,6 +62,9 @@ SciPy KDTree. These measurements are not climate or transport links. The
 independent provinces, explicit time/priority and an inspectable recipe/editor.
 The [bathymetry batch](2026-09-25-authored-world-bathymetry.md) adds explicit ocean
 selection, shelf/slope/basin depths, numerical bounds and independent editor/results.
+The [water-piece batch](2026-09-25-water-piece-connectivity.md) adds individual
+pieces, shared intervals, source-verified graphs, bounded work and visible support
+for precision-limited source regions. Return to B/C physical paths and landforms.
 World climate, physical province histories and same-present regional geological
 replay are not implemented. Existing local detail is not history replay. Source
 and license checks for Climlab/GPlates/ExoPlaSim are not local execution evidence.
@@ -114,7 +117,7 @@ later dependent work. No post-generation modification is introduced.
 |---|---|---|
 | World source (WC0) | Retained embedded SVG, full-sphere frame/radius, seam/polar/area controls, continent/island mapping, bounded preparation with selectable adjustments, independent World tab, portable atomic saves and CLI inspect ([guide](../terrain-worlds.md)) | Partial-draft save, cancel/checkpoint imports, other projections and world-linked terrain |
 | Input editor | Retained reference with freshness, geographic pan/zoom, property/geometry edits, undo/redo, guarded Save/Save As, resolution presets, ground inspection and cooperative Cancel/Esc with elapsed stage progress ([ADR-0064](../adr/0064-cancel-generation-at-safe-checkpoints.md)) | Automatic draft preview, comparison views, vertex insertion/removal, climate-region inputs; individual native steps have no stop-latency bound |
-| Geographic context (WC1 subset) | Spherical coverage, vector water topology, shared-edge widths, shore distance, directional water/support, Context previews/cancellation and verified portable exports/reopening ([guide](../world-context.md)) | Component-aware transport/capacity; bathymetry is a separate hypothesis product, not climate or land terrain |
+| Geographic context (WC1 subset) | Spherical coverage, vector water topology, shared-edge widths, water-piece incidence/unresolved support, shore distance, directional water/support, Context previews/cancellation and verified portable exports/reopening ([guide](../world-context.md)) | Component-aware transport/capacity; bathymetry is a separate hypothesis product, not climate or land terrain |
 | Local numeric builds | Saved-project CLI, Float32 NPY/GeoTIFF, review NPZ, previews, diagnostics and completion hashes | World placement, vector products, external desktop GIS acceptance |
 | Scale-aware water display | Cached sampled-pool screen areas, fading small lakes, fixed-size viewport rendering, native PNG policy and actual ground-spacing readout ([ADR-0057](../adr/0057-display-water-at-the-appropriate-scale.md)) | Physical river size/width model and resolution-gated local hydrology; connected scale selection and complete diagnostic review are implemented ([ADR-0069](../adr/0069-connect-and-scale-drainage-review.md)) |
 | Zoom-driven local detail | Unchanged-field sampling, verified saved-parent replay and explicit experimental residual CLI/API; exact shared samples, terrain-weighted shared edges, protected authored/water/channel context, bounded cell support and serial parent/result sessions with freshness checks and shared admission estimates ([ADR-0061](../adr/0061-verify-parents-and-isolate-local-detail.md), [ADR-0062](../adr/0062-reuse-bounded-detail-cell-support.md), [ADR-0063](../adr/0063-reuse-verified-parent-region-sessions.md)) | Remaining grid direction, visual/coarse-power acceptance, parent-view transitions, broader slope/bound checks, finer inherited hydrology, small-river readiness, zoom jobs and broader native/application-memory calibration |

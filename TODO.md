@@ -41,7 +41,7 @@ not a physical river-water validation or a private-map result.
 | Order | Outcome and existing backlog owners | Gate |
 |---|---|---|
 | **A — quality controls** | Quality fixtures, paired maps/profiles, process-scale warnings; convergent-flat comparison (R02/R25/R27/R41/R43) | Fixed comparison set and a measured accept/reject result; no new benchmark framework |
-| **W — next foundation** | Delivered WC0 and WC1 coverage/water topology, edge widths, exposure and reopening; next province/default hypotheses (R01/R49) | Preserve authored vectors and global scale; context is provisional, not solved climate |
+| **W — bounded foundation delivered** | WC0 plus WC1 geography, geology inputs, bathymetry and water-piece incidence (R01/R49); return to B/C physical paths and landforms | Preserve source and unresolved support; context is provisional, not solved climate |
 | **B — next major generation decision** | Build on the measured frozen reconstruction: physical valley/path geometry and grid/capture sensitivity (R48/R32) | Profile gains do not close direction or authoring gates; preserve anchors, cuts, junctions, terminals and coverage before LE3 |
 | **C** | Consolidate one coherent range/pass/tributary/lowland system from the selected comparison (R08/R09/R14/R40/R44) | Better structural/visual results across fixed seeds and physical scales |
 | **W — after B/C acceptance** | Rough world, seasonal climate/runoff feedback and reviewed parent (WC2-WC4; R33/R49) | Physical terrain acceptance, bounded coupling, shared world time and budgets |
@@ -97,7 +97,7 @@ continent-history generation remain planned.
   See [evidence](docs/research/2026-09-25-context-reopening-and-gateways.md).
 - [x] **WC1 exposure batch:** cell-centre spherical shore distance with a retained-curve
   error bound, eight-direction water exposure and mixed-cell support, direction
-  previews/hover and verified v3 export/reopen. Public analytic, seam/pole,
+  previews/hover and verified current-format export/reopen. Public analytic, seam/pole,
   orientation, island/interior, bounds and UI controls pass. See
   [evidence](docs/research/2026-09-25-geographic-exposure.md).
 - [x] **WC1 geology inputs:** separate portable recipe, continent defaults and
@@ -113,10 +113,21 @@ continent-history generation remain planned.
   nested-context result bundles, CLI and schema controls are implemented. See the
   [guide](docs/world-bathymetry.md) and
   [evidence](docs/research/2026-09-25-authored-world-bathymetry.md).
-- [ ] **WC1 next — water-piece transport topology:** retain individual water pieces
-  and continuous face incidence through split cells. Test dry barriers, seam/poles,
-  shared-face symmetry and bounded complexity before a solver uses gateway widths.
-  Bathymetry centre samples do not establish sill depth, capacity or water volume.
+- [x] **WC1 water-piece topology:** separate positive-area pieces per cell, finite
+  shared intervals, periodic seam and closed polar/corner contacts, spherical areas,
+  bounded geometry and source-verified current context v4. Preview/hover and CLI
+  expose split pieces and precision-limited fragmented source regions. Those regions
+  retain their water and remain unsupported for transport. See the
+  [guide](docs/world-context.md) and [evidence](docs/research/2026-09-25-water-piece-connectivity.md).
+- [ ] **Next concrete batch — B/C physical paths and landform acceptance.** Resume
+  the [main strategy](docs/strategy/README.md): compare shared physical river paths
+  and finished ground, rotated-grid bias and resolution response before WC2 rough
+  world terrain. More optional context inputs must not displace this quality gate.
+- [ ] **WC1 transport follow-up:** consume finite-face incidence only after support
+  admission, conservative area/depth integration, explicit sill/capacity geometry
+  and paired flux/storage budgets. Add a stable local-coordinate or exact-predicate
+  comparison for source slivers if a real consumer needs them; never infer an
+  epsilon bridge. Bathymetry centre samples alone cannot establish water volume.
 - [ ] **WC1 bathymetry follow-ups:** per-margin profiles and optional ridge/trench
   guidance when a consumer requires them; physical-resolution/convergence controls,
   conservative water-area/depth integration and model-uncertainty scenarios. Keep
@@ -1414,15 +1425,16 @@ Priorities remain conditional on the current strategy's prerequisites.
   [source review](docs/research/2026-09-24-world-context-enrichment.md). WC0 source
   handling and its [schema](schemas/world/project-v1.schema.json) are implemented
   without new runtime dependencies. WC1 geographic context and its
-  [schema](schemas/world/context-v3.schema.json) now include shoreline distance and
-  directional water/support fields using SciPy. Separate province inputs and
+  [schema](schemas/world/context-v4.schema.json) now include shore distance,
+  directional water/support and separate water-piece incidence using SciPy.
+  Separate province inputs and
   [authored bathymetry](docs/world-bathymetry.md) are implemented. Physical forcing,
   component-aware transport and WC2-WC6 products/acceptance remain open.
 
 ## UI / UX improvements
 
 WC0's source/mapping workspace and WC1 geographic preview/export/reopening and
-shared-edge water, shore-distance and directional-exposure measurements are
+shared-edge water, water-piece connectivity, shore-distance and exposure measurements are
 delivered, together with independent geology and bathymetry input editors.
 Current priorities are paired generation comparisons, selected-channel
 profiles and process-resolution/conflict feedback
@@ -1433,10 +1445,12 @@ expose controls whose backend is absent. Further polish should serve these gates
 [ADR-0049](docs/adr/0049-navigate-and-save-authored-inputs.md) records navigation,
 geometry movement and project-saving behavior.
 
-- [ ] **P1 — Scroll long World context summaries in compact windows.** All job/view
-  controls and legends remain usable at 1160 x 760, but the fixed summary label
-  clips lower metadata. Add a scrollable/responsive information region and check
-  long source summaries too; the default 1440 x 900 view shows the context details.
+- [x] **P1 — Scroll long World context summaries in compact windows.** The Context
+  details use a read-only scrollable text region; jobs and legends remain visible
+  at 1160 x 760. Larger windows expose more details without changing the map.
+- [ ] **P1 — Reflow long World source summaries in compact windows.** The separate
+  nine-continent source summary below the map can still clip horizontally at
+  1160 x 760; bind its wrapping width or give it a bounded scrollable region.
 
 ### Editing and navigation
 

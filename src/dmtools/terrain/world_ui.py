@@ -396,13 +396,29 @@ class WorldWorkspace(ttk.Frame):
             state="disabled",
         )
         self.context_cancel.grid(row=6, column=0, sticky="ew", pady=5)
-        ttk.Label(
-            self.context_page,
-            textvariable=self.context_detail,
-            style="Body.TLabel",
-            wraplength=335,
-            justify="left",
-        ).grid(row=7, column=0, sticky="nw", pady=12)
+        details = ttk.Frame(self.context_page, style="Panel.TFrame")
+        details.grid(row=7, column=0, sticky="nsew", pady=12)
+        details.columnconfigure(0, weight=1)
+        details.rowconfigure(0, weight=1)
+        style = ttk.Style(self)
+        self.context_text = tk.Text(
+            details,
+            height=4,
+            width=1,
+            wrap="word",
+            state="disabled",
+            borderwidth=0,
+            highlightthickness=0,
+            background=style.lookup("Body.TLabel", "background"),
+            foreground=style.lookup("Body.TLabel", "foreground"),
+            font=style.lookup("Body.TLabel", "font"),
+        )
+        self.context_text.grid(row=0, column=0, sticky="nsew")
+        details_scroll = ttk.Scrollbar(details, command=self._scroll_context_detail)
+        details_scroll.grid(row=0, column=1, sticky="ns")
+        self.context_text.configure(yscrollcommand=details_scroll.set)
+        self.context_detail.trace_add("write", self._context_detail_changed)
+        self._context_detail_changed()
         ttk.Label(
             self.context_page,
             textvariable=self.context_legend,
@@ -681,6 +697,10 @@ class WorldWorkspace(ttk.Frame):
             "missed by centre sampling; violet = disconnected water in one cell.",
             "Water openings": "Blue = full edge; orange = partial; dark = closed. Width is "
             "the longest continuous wet edge, not channel depth or transport capacity.",
+            "Water connectivity": "Blue = one water piece; gold = several separate pieces; "
+            "green = land; pink = unresolved water-region connectivity. "
+            "Hover for piece identities and shared intervals. "
+            "Outlines show the source coast. Connections do not yet model currents.",
             "Shore distance": "Cream = 0 km; purple = 3,000+ km. Distance is measured at "
             "cell centres and includes inland shores. Grey = no shoreline exists.",
             "Water exposure": "Tan = 0% water; blue = 100%. Choose the initial look direction "
@@ -697,19 +717,39 @@ class WorldWorkspace(ttk.Frame):
         )
         self._schedule_draw()
 
+    def _scroll_context_detail(self, *args: str) -> None:
+        self.context_text.yview(*args)
+
+    def _context_detail_changed(self, *_args: str) -> None:
+        self.context_text.configure(state="normal")
+        self.context_text.delete("1.0", "end")
+        self.context_text.insert("1.0", self.context_detail.get())
+        self.context_text.configure(state="disabled")
+        self.context_text.yview_moveto(0)
+
     def _show_context_details(self) -> None:
         if self.context_run is None:
             return
         result = self.context_run.context
         rows, columns = result.grid.shape
         invisible = sum(b.displayed_cells == 0 for b in result.water_bodies)
+        graph = result.connectivity
+        topology = (
+            f"{len(graph.fragmented_bodies)} source water regions have unresolved connectivity; "
+            "transport unsupported for those regions."
+            if graph.fragmented_bodies
+            else "Graph components match source regions."
+        )
         self.context_detail.set(
             f"{columns} x {rows} cells · {result.grid.angular_step_deg:g}°\n"
             f"North-south spacing: {result.grid.north_south_spacing_km:,.1f} km\n"
             "East-west spacing decreases towards the poles.\n\n"
             f"{len(result.water_bodies)} connected water regions; {invisible} below display scale\n"
             f"{result.mixed_cells:,} mixed coastal cells\n"
-            f"{result.split_water_cells:,} cells with disconnected water\n\n"
+            f"{result.connectivity.split_cells:,} cells with disconnected water\n"
+            f"{len(result.connectivity.water_body):,} water pieces; "
+            f"{len(result.connectivity.link_nodes):,} shared intervals\n"
+            f"{graph.component_count} graph components. {topology}\n\n"
             f"Shore distance: {result.shore_sampling.sample_count:,} samples; "
             f"overestimate at most {result.shore_sampling.max_error_km:.2f} km.\n\n"
             f"Water exposure: 8 directions over {exposure_range_km(result.grid):,.0f} km; "
@@ -1051,7 +1091,8 @@ class WorldWorkspace(ttk.Frame):
             return
         if self.context_run is None or not self.context_run.context.water_bodies:
             self.status.set(
-                "Generate or open geographic context with water first, then choose Bathymetry.")
+                "Generate or open geographic context with water first, then choose Bathymetry."
+            )
             self.pages.select(self.context_page)
             return
         saved = self._bathymetry_file
@@ -1061,10 +1102,13 @@ class WorldWorkspace(ttk.Frame):
         def closed(file: BathymetryFile | None) -> None:
             self._bathymetry_file = file
             self.bathymetry_editor = None
+
         self.bathymetry_editor = BathymetryEditor(
-            self, self.context_run, on_close=closed, saved=saved)
+            self, self.context_run, on_close=closed, saved=saved
+        )
         self.status.set(
-            "Bathymetry inputs open; ocean depths are generated from explicit hypotheses.")
+            "Bathymetry inputs open; ocean depths are generated from explicit hypotheses."
+        )
 
     def edit_geology(self) -> None:
         if self.busy:
@@ -1080,20 +1124,25 @@ class WorldWorkspace(ttk.Frame):
         if self.validated is not None:
             self._open_geology_editor(self.validated)
         else:
-            self._work("Preparing world for geology inputs…",
-                       lambda: _GeologyReady(prepare_world_map(project)))
+            self._work(
+                "Preparing world for geology inputs…",
+                lambda: _GeologyReady(prepare_world_map(project)),
+            )
 
     def _open_geology_editor(self, world: WorldMap) -> None:
         saved = self._geology_file
-        if (saved and world_fingerprint(saved.coverage.recipe.world)
-                != world_fingerprint(world.project)):
+        if saved and world_fingerprint(saved.coverage.recipe.world) != world_fingerprint(
+            world.project
+        ):
             saved = None
 
         def closed(file: GeologyFile | None) -> None:
             self._geology_file = file
             self.geology_editor = None
-        self.geology_editor = GeologyEditor(self, world, self.context_run, on_close=closed,
-                                             saved=saved)
+
+        self.geology_editor = GeologyEditor(
+            self, world, self.context_run, on_close=closed, saved=saved
+        )
         self.status.set("Geology inputs open in their own editor; world source retained.")
 
     def validate(self) -> None:
@@ -1147,6 +1196,7 @@ class WorldWorkspace(ttk.Frame):
             def continue_after_bathymetry() -> None:
                 floor_editor.close()
                 self.guard(action)
+
             floor_editor.guard(continue_after_bathymetry)
             return
         if self.geology_editor is not None:
@@ -1155,6 +1205,7 @@ class WorldWorkspace(ttk.Frame):
             def continue_after_geology() -> None:
                 editor.close()
                 self.guard(action)
+
             editor.guard(continue_after_geology)
             return
         if self.busy:
@@ -1378,6 +1429,20 @@ class WorldWorkspace(ttk.Frame):
                         f"{context.water_exposure[direction, row, col]:.1%} weighted water · "
                         f"{context.exposure_mixed_support[direction, row, col]:.1%} mixed support"
                     )
+                elif self.display_layer.get() == "Water connectivity":
+                    graph = context.connectivity
+                    cell = row * columns + col
+                    start, end = map(int, graph.cell_offsets[cell : cell + 2])
+                    pieces = "; ".join(
+                        f"#{node}: region {graph.water_body[node]}, "
+                        f"{graph.incident_links[node]} intervals"
+                        for node in range(start, min(end, start + 3))
+                    )
+                    detail = f"Cell {row + 1}, {col + 1}: {end - start} water pieces"
+                    if pieces:
+                        detail += " · " + pieces + ("; …" if end - start > 3 else "")
+                    if any(body in graph.fragmented_bodies for body in graph.water_body[start:end]):
+                        detail += " · unresolved connectivity"
                 elif self.display_layer.get() == "Water openings":
                     north = context.south_opening_km[row - 1, col] if row else 0.0
                     detail = (

@@ -428,3 +428,45 @@ def test_failed_cancelled_or_obsolete_context_open_preserves_current_work(
     wait_world(app)
     assert view.values["name"].get() == "Keep these edits" and view.dirty
     assert view.context_run is None and "inputs changed" in view.status.get()
+
+
+def test_water_connectivity_inspection_shows_pieces_and_finite_links(app: ui.TerrainApp) -> None:
+    import numpy as np
+    from test_world_context import project
+
+    from dmtools.terrain.application.world_context import generate_context
+    from dmtools.terrain.domain.world_context import WorldContextSettings
+
+    app.root.geometry("1160x760")
+    app.root.deiconify()
+    app.root.update()
+    p = project('<path d="M172 50 H178 V100 H172 Z"/>')
+    run = generate_context(p, WorldContextSettings(12))
+    view = app.world_workspace
+    view.accept_world(run.context.world, None)
+    view.context_run = run
+    view._show_context_details()
+    view.display_layer.set("Water connectivity")
+    view._layer_changed()
+    view._draw()
+    assert view._photo is not None
+    assert "gold" in view.context_legend.get()
+    assert "shared intervals" in view.context_detail.get()
+    assert "components match source" in view.context_detail.get()
+    view.pages.select(view.context_page)
+    app.root.update()
+    assert view.context_text.cget("state") == "disabled"
+    assert view.context_text.get("1.0", "end-1c") == view.context_detail.get()
+    view.context_text.yview_moveto(1)
+    app.root.update()
+    assert view.context_text.yview()[1] == 1
+    assert view.context_text.winfo_height() > 40
+    cell = int(np.flatnonzero(np.diff(run.context.connectivity.cell_offsets) > 1)[0])
+    row, col = divmod(cell, 24)
+    left, top, right, bottom = view.viewport.rect(view._size(), view._world_size())
+    event: tk.Event[tk.Misc] = tk.Event()
+    event.x = round(left + (col + 0.5) / 24 * (right - left))
+    event.y = round(top + (row + 0.5) / 12 * (bottom - top))
+    view._motion(event)
+    assert "2 water pieces" in view.inspection.get()
+    assert "region 1" in view.inspection.get() and "intervals" in view.inspection.get()

@@ -24,6 +24,7 @@ type ContextLayer = Literal[
     "Shore distance",
     "Water exposure",
     "Exposure support",
+    "Water connectivity",
 ]
 CONTEXT_LAYERS: tuple[ContextLayer, ...] = (
     "Land coverage",
@@ -33,6 +34,7 @@ CONTEXT_LAYERS: tuple[ContextLayer, ...] = (
     "Shore distance",
     "Water exposure",
     "Exposure support",
+    "Water connectivity",
 )
 
 
@@ -61,6 +63,15 @@ def context_image(
         rgb[(flags & SUBCELL_LAND) != 0] = (221, 135, 82)
         rgb[(flags & SUBCELL_WATER) != 0] = (110, 200, 224)
         rgb[(flags & SPLIT_WATER) != 0] = (201, 130, 203)
+    elif layer == "Water connectivity":
+        pieces = np.diff(context.connectivity.cell_offsets).reshape(context.grid.shape)
+        rgb[pieces == 0] = land
+        rgb[pieces == 1] = (52, 141, 176)
+        rgb[pieces > 1] = (241, 166, 69)
+        graph = context.connectivity
+        unresolved = np.isin(graph.water_body, graph.fragmented_bodies)
+        cells = np.repeat(np.arange(pieces.size), pieces.ravel())
+        rgb.reshape(-1, 3)[cells[unresolved]] = (214, 111, 176)
     elif layer in ("Shore distance", "Water exposure", "Exposure support"):
         if layer == "Shore distance":
             value = np.nan_to_num(np.clip(context.shore_distance_km / 3000, 0, 1))
@@ -120,7 +131,7 @@ def render_world_context(
             resample=Image.Resampling.NEAREST,
             fillcolor=OCEAN,
         )
-    if layer in ("Shore distance", "Water exposure", "Exposure support"):
+    if layer in ("Shore distance", "Water exposure", "Exposure support", "Water connectivity"):
         # Source outlines are a geographic reference; they do not refine the field.
         painter = ImageDraw.Draw(preview)
         sx, sy = (right - left) / frame.width, (bottom - top) / frame.height

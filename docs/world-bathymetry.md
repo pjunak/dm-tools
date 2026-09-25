@@ -122,3 +122,10 @@ match the producing runtime. Regeneration refreshes geography when software or
 requested resolution differs. See [ADR-0077](adr/0077-generate-authored-ocean-depths.md),
 [implementation evidence](research/2026-09-25-authored-world-bathymetry.md) and
 [the remaining WC plan](strategy/world-context.md).
+
+
+Current geographic dependency: context v4 / `spherical-geography-v4`, including
+water-piece incidence and unresolved-region support. Recreate older v3-linked
+bathymetry recipes/results from the retained world; no migration is provided.
+Depth generation remains a centre-sample hypothesis and does not consume graph
+links as volume, sill or transport coefficients.

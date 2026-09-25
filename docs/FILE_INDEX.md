@@ -6,7 +6,7 @@ export-import correction, bounded preparation and geographic context documents. 
 documentation and private campaign files are excluded. The public JSON schemas and reference dependency
 lock are listed separately as supporting contracts, not counted as prose docs.
 
-**183 Markdown files + 1 legal notice = 184 documentation files.**
+**185 Markdown files + 1 legal notice = 186 documentation files.**
 Each file appears once below, including this inventory. Document titles describe
 their subject; the group description identifies their role and authority.
 
@@ -20,11 +20,11 @@ remains the entry point for normal use. All are individually linked in the list 
 | Active plans and indexes | 10 |
 | User guides and current contracts | 18 |
 | Developer and reference guides | 8 |
-| Architecture decision records | 77 |
-| Dated research reports | 64 |
+| Architecture decision records | 78 |
+| Dated research reports | 65 |
 | Maintenance reports | 2 |
 | Legal notice | 1 |
-| **Total** | **184** |
+| **Total** | **186** |
 
 ## Project entry and guidance (4)
 
@@ -94,7 +94,7 @@ Subsystem, fixture, schema, test and benchmark guidance.
 | [src/dmtools/terrain/pipeline/README.md](../src/dmtools/terrain/pipeline/README.md) | Numeric generation and inspection responsibilities. |
 | [tests/README.md](../tests/README.md) | Test organization, commands and verification expectations. |
 
-## Architecture decision records (77)
+## Architecture decision records (78)
 
 Accepted historical decisions. Preserve their original context; consult the current status and implementation for later changes. The ADR index is listed among active indexes.
 
@@ -174,16 +174,18 @@ Accepted historical decisions. Preserve their original context; consult the curr
 | [docs/adr/0072-bound-world-source-imperfections.md](adr/0072-bound-world-source-imperfections.md) | Bound minor export imperfections in derived coverage and report adjustments. |
 | [docs/adr/0073-generate-spherical-geographic-context.md](adr/0073-generate-spherical-geographic-context.md) | Generate spherical coverage and periodic vector-water topology with explicit support limits. |
 | [docs/adr/0074-verify-context-and-measure-water-openings.md](adr/0074-verify-context-and-measure-water-openings.md) | Verified context reopening, physical shared-face widths and immutable source-save handling. |
-| [docs/adr/0075-measure-spherical-geographic-exposure.md](adr/0075-measure-spherical-geographic-exposure.md) | Spherical shoreline sampling bounds, directional geographic exposure, support and current v3 products. |
+| [docs/adr/0075-measure-spherical-geographic-exposure.md](adr/0075-measure-spherical-geographic-exposure.md) | Spherical shoreline sampling bounds, directional geographic exposure, support and the historical v3 product format. |
 | [docs/adr/0076-author-world-geology-inputs.md](adr/0076-author-world-geology-inputs.md) | Separate retained-world geology recipes, priority coverage and independent time semantics. |
 | [docs/adr/0077-generate-authored-ocean-depths.md](adr/0077-generate-authored-ocean-depths.md) | Separate authored bathymetry, conservative depth bounds, actual water-centre membership and immutable verified products. |
+| [docs/adr/0078-retain-water-piece-connectivity.md](adr/0078-retain-water-piece-connectivity.md) | Separate water pieces, finite shared intervals, source verification and explicit unresolved transport support. |
 
-## Dated research reports (64)
+## Dated research reports (65)
 
 Primary-source reviews, experiments and implementation evidence at their recorded date/revision. A title or citation is not evidence that a tool was adopted. Current status is listed above.
 
 | File | Purpose or document title |
 |---|---|
+| [docs/research/2026-09-25-water-piece-connectivity.md](research/2026-09-25-water-piece-connectivity.md) | Topology implementation, precision-limit support, synthetic/private validation and graph performance. |
 | [docs/research/2026-09-24-world-context-enrichment.md](research/2026-09-24-world-context-enrichment.md) | World context before continental terrain: research and recommendation |
 | [docs/research/2026-09-25-context-reopening-and-gateways.md](research/2026-09-25-context-reopening-and-gateways.md) | Saved-context and gateway implementation, analytic/UI checks and measured cost. |
 | [docs/research/2026-09-25-authored-world-bathymetry.md](research/2026-09-25-authored-world-bathymetry.md) | Bathymetry implementation, analytic/file/editor controls, visible review and normal/maximum-grid measurements. |
@@ -280,7 +282,7 @@ are included for a complete route from plans to the current usable formats.
 | [schemas/terrain/regional-samples-v2.schema.json](../schemas/terrain/regional-samples-v2.schema.json) | Current bounded unchanged-field sampling artifact contract. |
 | [schemas/world/bathymetry-inputs-v1.schema.json](../schemas/world/bathymetry-inputs-v1.schema.json) | Retained-world ocean selection and explicit physical shelf/slope/basin assumptions. |
 | [schemas/world/bathymetry-v1.schema.json](../schemas/world/bathymetry-v1.schema.json) | Completed depth/error arrays, verified geography dependency and source/runtime/product identity. |
-| [schemas/world/context-v3.schema.json](../schemas/world/context-v3.schema.json) | Spherical context products, source/runtime identity, coverage/topology/support, shared-edge widths, shore distance, directional exposure and manifest/product hashes. |
+| [schemas/world/context-v4.schema.json](../schemas/world/context-v4.schema.json) | Spherical context products, source/runtime identity, coverage/topology/support, shared-edge widths, water-piece incidence/unresolved support, shore distance, exposure and hashes. |
 | [schemas/world/geology-v1.schema.json](../schemas/world/geology-v1.schema.json) | Authored continent profiles and priority polygons with retained world identity and a common present. |
 | [schemas/world/project-v1.schema.json](../schemas/world/project-v1.schema.json) | Portable retained world-source snapshot, explicit spherical frame/radius and semantic ownership. |
 | [benchmarks/evolution/requirements-windows-py314.txt](../benchmarks/evolution/requirements-windows-py314.txt) | Hashed isolated Windows/Python 3.14 scientific reference environment. |

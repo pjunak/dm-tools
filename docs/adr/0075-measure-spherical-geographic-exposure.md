@@ -47,7 +47,7 @@ interruptible mid-call and the limits are not an OS process-memory guarantee.
 
 ## Products and interface
 
-[Context v3](../../schemas/world/context-v3.schema.json), algorithm
+Context v3 (superseded; [current schemas](../../schemas/README.md)), algorithm
 `spherical-geography-v3`, retains geography.npz and adds exposure.npz with distance
 and all eight exposure/support planes. Export three new previews (distance,
 north exposure and north support). Remove v2 schema/support. Rebuild from the

@@ -6,7 +6,7 @@ Only the current formats are supported:
   snapshot, full-sphere frame/radius and explicit continent/island assignments.
   This is a validated source, not a climate/terrain build or generated parent.
 
-- [World context v3](world/context-v3.schema.json): generated spherical coverage,
+- [World context v4](world/context-v4.schema.json): generated spherical coverage, separate water-piece connectivity/support,
   vector-derived water regions, shared-edge widths, shore distance, eight-direction
   water exposure, resolution support and hashes of the numeric
   arrays, previews and original world snapshot. This is not a terrain parent.

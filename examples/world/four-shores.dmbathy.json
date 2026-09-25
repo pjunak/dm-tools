@@ -1,5 +1,5 @@
 {
-  "geography_algorithm": "spherical-geography-v3",
+  "geography_algorithm": "spherical-geography-v4",
   "ocean_ids": [
     1
   ],

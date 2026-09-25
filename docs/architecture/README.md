@@ -111,6 +111,10 @@ The [geographic context stage](../world-context.md) is now implemented separatel
 `domain/world_context.py` owns spherical grid/settings, `pipeline/world_context.py`
 owns area-conserving coverage and vector-derived periodic water topology, and
 `pipeline/world_gateways.py` measures finite shared-edge water openings in km.
+`pipeline/world_connectivity.py` retains spherical water pieces and separate shared
+intervals through split cells; `adapters/world_connectivity.py` verifies stored
+incidence against retained source. Graph labels expose precision-limited source
+fragmentation, which later transport consumers must reject.
 `pipeline/world_exposure.py` measures shoreline distance through a SciPy unit-sphere
 index and directional water/support fractions through bounded great-circle sampling.
 `application/world_context.py` owns generation/export and verified reopening.
@@ -204,7 +208,8 @@ layer or path boundaries.
 ## Planned contracts and remaining decisions
 
 - WC1 physical geology forcing and component-aware transport after delivered
-  geographic measurements, verified products, geology inputs and bathymetry;
+  geographic measurements, verified products, geology inputs, bathymetry and
+  water-piece incidence/support;
   per-margin depth scenarios and conservative integration when a consumer needs them;
   later WC2-WC5 coupled products and historical parent context
 - Direct per-vertex profiles, explicit passes and asymmetric structural sides
