@@ -6,7 +6,7 @@ export-import correction, bounded preparation and geographic context documents. 
 documentation and private campaign files are excluded. The public JSON schemas and reference dependency
 lock are listed separately as supporting contracts, not counted as prose docs.
 
-**185 Markdown files + 1 legal notice = 186 documentation files.**
+**186 Markdown files + 1 legal notice = 187 documentation files.**
 Each file appears once below, including this inventory. Document titles describe
 their subject; the group description identifies their role and authority.
 
@@ -21,10 +21,10 @@ remains the entry point for normal use. All are individually linked in the list 
 | User guides and current contracts | 18 |
 | Developer and reference guides | 8 |
 | Architecture decision records | 78 |
-| Dated research reports | 65 |
+| Dated research reports | 66 |
 | Maintenance reports | 2 |
 | Legal notice | 1 |
-| **Total** | **186** |
+| **Total** | **187** |
 
 ## Project entry and guidance (4)
 
@@ -179,12 +179,13 @@ Accepted historical decisions. Preserve their original context; consult the curr
 | [docs/adr/0077-generate-authored-ocean-depths.md](adr/0077-generate-authored-ocean-depths.md) | Separate authored bathymetry, conservative depth bounds, actual water-centre membership and immutable verified products. |
 | [docs/adr/0078-retain-water-piece-connectivity.md](adr/0078-retain-water-piece-connectivity.md) | Separate water pieces, finite shared intervals, source verification and explicit unresolved transport support. |
 
-## Dated research reports (65)
+## Dated research reports (66)
 
 Primary-source reviews, experiments and implementation evidence at their recorded date/revision. A title or citation is not evidence that a tool was adopted. Current status is listed above.
 
 | File | Purpose or document title |
 |---|---|
+| [docs/research/2026-09-25-physical-channel-paths.md](research/2026-09-25-physical-channel-paths.md) | Coupled path/ground prototype, full-cohort constraints and receiver/outlet sensitivity; next generation decision. |
 | [docs/research/2026-09-25-water-piece-connectivity.md](research/2026-09-25-water-piece-connectivity.md) | Topology implementation, precision-limit support, synthetic/private validation and graph performance. |
 | [docs/research/2026-09-24-world-context-enrichment.md](research/2026-09-24-world-context-enrichment.md) | World context before continental terrain: research and recommendation |
 | [docs/research/2026-09-25-context-reopening-and-gateways.md](research/2026-09-25-context-reopening-and-gateways.md) | Saved-context and gateway implementation, analytic/UI checks and measured cost. |

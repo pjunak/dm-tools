@@ -12,6 +12,12 @@ in the current status or a new dated report.
 
 ## Current reassessment
 
+- [Coupled physical channel paths — 2026-09-25](2026-09-25-physical-channel-paths.md)
+  implements a shared path/ground mesh, complete route comparison, cut/fill and
+  anchor rejection controls and shared-coordinate receiver/outlet diagnostics.
+  Reduced direction locking does not pass authoring or landform gates; the next
+  step is one constrained catchment/network-led surface, before LE3/WC2.
+
 - [Water-piece connectivity — 2026-09-25](2026-09-25-water-piece-connectivity.md)
   implements separate pieces and shared intervals, source-verified graph products,
   explicit precision-limit support and Context inspection. Records synthetic and

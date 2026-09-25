@@ -13,7 +13,7 @@ from dmtools.terrain.adapters.render import render_ground_map
 from dmtools.terrain.domain.coordinates import EndpointGrid
 
 
-def _panel(
+def render_panel(
     sampler: Sampler,
     paths: ChannelPaths,
     bounds: tuple[float, float, float, float],
@@ -52,7 +52,10 @@ def render_pair(
     font = ImageFont.load_default(size=18)
     small = ImageFont.load_default(size=15)
     bounds = (0.0, 0.0, field.grid.width_m, field.grid.height_m)
-    pair = [_panel(sampler, paths, bounds, maximum_m) for sampler in (field.bilinear, field.sample)]
+    pair = [
+        render_panel(sampler, paths, bounds, maximum_m)
+        for sampler in (field.bilinear, field.sample)
+    ]
     worst = max(control["edges"], key=lambda row: row["maximum_excursion_m"], default=None)
     zoom: list[Image.Image] = []
     if worst is not None:
@@ -61,7 +64,7 @@ def render_pair(
         x0 = min(max(0.0, (col - 4) * field.grid.spacing_m), field.grid.width_m - size)
         y0 = min(max(0.0, (row - 4) * field.grid.spacing_m), field.grid.height_m - size)
         zoom = [
-            _panel(sampler, paths, (x0, y0, x0 + size, y0 + size), maximum_m)
+            render_panel(sampler, paths, (x0, y0, x0 + size, y0 + size), maximum_m)
             for sampler in (field.bilinear, field.sample)
         ]
     h1 = pair[0].height

@@ -1,7 +1,7 @@
 # Landscape-evolution implementation plan
 
-Updated 2026-09-24. **LE1 implemented; LE2 history and frozen reconstruction
-comparisons measured. Production-quality acceptance and application integration
+Updated 2026-09-25. **LE1 implemented; LE2 history, frozen reconstruction,
+physical-path and receiver/outlet comparisons measured. Production-quality acceptance and application integration
 remain open.**
 The [primary-source review](../research/2026-09-24-landscape-evolution-models.md)
 records the scientific basis, tool comparison and dependency probe.
@@ -54,11 +54,21 @@ Explicit crossing rejection, anchor residual controls, paired actual-ground
 figures and whole-route metrics now make those limits testable. Uphill affected
 length uses a whole-climb tolerance so dense sampling cannot hide gentle rises.
 
-Next use this as a descending-profile control for physical valley/path geometry,
-then evaluate receiver/outlet changes and feature support across the existing
-spacing/time states. Preserve real authoring/cut controls before promotion.
-Do not repeat the failed finer history with a larger budget or add a second
-report framework.
+## Physical-path checkpoint
+
+The [coupled physical-path comparison](../research/2026-09-25-physical-channel-paths.md)
+retains complete routing and zero ascent on all nodally nonascending routes while
+reducing D8-aligned length to 56.99%. Cut/fill admission fails across the cohort;
+off-grid targets, geographic divides and native regional constraints still need
+a different construction. Frozen grid/time diagnostics now quantify receiver and
+outlet changes at identical physical coordinates, without claiming area capture
+or convergence from pointwise samples.
+
+Next compare one constrained catchment/network-led range/valley/lowland surface,
+using the main strategy's existing fallback and the same profile/coverage controls.
+Fix minimum physical feature support and rerouted catchment stability before
+another fine simulation or full LE3 integration. Do not raise the failed finer
+history's budget, weaken authored constraints or create another report framework.
 
 ## Outcome and decision
 

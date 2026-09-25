@@ -182,3 +182,40 @@ The final 2026-09-24 matrix can be reproduced from its existing frozen artifacts
 These artifacts are ignored local results. On another checkout, first regenerate
 the reference cohort with the commands above; do not substitute a private map.
 The initial failed 156.25 m state remains excluded and explicitly listed.
+
+
+## Physical channel path comparison
+
+The base environment can also compare bounded physical paths and their shared
+ground against the bilinear and required-triangle controls:
+
+```powershell
+.\.venv\Scripts\python.exe -m benchmarks.evolution.physical_comparison --source artifacts/evolution-cohort-20260924 artifacts/evolution-ablations-20260924 artifacts/evolution-spacing-20260924 artifacts/evolution-rotated-20260924 artifacts/evolution-extent-20260924 artifacts/evolution-repeat-20260924 artifacts/evolution-timestep-20260924 --output artifacts/my-physical-paths
+.\.venv\Scripts\python.exe -m pytest tests/test_evolution_physical.py tests/test_evolution_surface.py tests/test_evolution_comparison.py
+```
+
+This reuses the frozen loader, station metrics and ground renderer; it does not
+run or import Landlab. It prepares fixed-boundary, positive-area meshes with at
+most 125 m / 0.24-cell node displacement. Heads, junctions, terminals, graph edges
+and their nodal bed heights stay fixed. Physical sampling uses that same mesh;
+there is no independent display smoothing. Default preparation uses eight
+iterations, 17 lateral candidates and a 25 m source-height penalty scale.
+
+The report includes complete matched-route coverage at 100/25 m, original nodal
+climbs, D8 alignment, fan area, cut/fill rejection, reproducibility and cost.
+`--maximum-cut-m` (default 30) and `--maximum-fill-m` (default 0) set **experimental
+sampled diagnostics**, not application settings or overrides of native region
+budgets. The frozen cohort carries no hard authored targets; off-grid anchor
+conflicts are covered separately by synthetic tests. Figures sample actual
+ground; `geometry.npz` retains the prepared coordinates and their numeric hash.
+
+Compatible states also receive frozen-graph receiver/outlet diagnostics at exact
+shared coordinates. Different forcing orientations or domain extents are not
+silently compared as the same geography. Results include the complete solver
+budgets because timestep and local-error controls can change together.
+
+The [measured report](../../docs/research/2026-09-25-physical-channel-paths.md)
+rejects promotion: long straight reaches, sampled fill/cut violations, nodal
+climbs, fixed-divide conflicts and process-grid sensitivity remain. The next
+comparison constructs terrain from its constrained network; it does not patch
+a completed DEM. Use a new output folder and keep artifacts untracked.

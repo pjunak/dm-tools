@@ -1,7 +1,7 @@
 # Current development strategy
 
-Re-evaluated 2026-09-24; WC0/WC1 geography, geology-input, bathymetry and water-piece
-checkpoint 2026-09-25. DM Tools is a usable terrain research workbench with
+Re-evaluated 2026-09-24; WC0/WC1 foundations and the coupled physical-path
+checkpoint updated 2026-09-25. DM Tools is a usable terrain research workbench with
 strong numeric/build foundations; believable drainage and connected landform
 structure are the next product milestone. See the
 [assessment and primary-source research](../research/2026-09-24-progress-and-generation-strategy.md)
@@ -12,8 +12,10 @@ uplift/erosion history comparison into the generation decision. The
 [first implementation](../research/2026-09-24-landscape-evolution-reference.md)
 now runs that comparison. The [frozen reconstruction follow-up](../research/2026-09-24-frozen-channel-reconstruction.md)
 removes measured interpolation humps on descending paths while preserving their
-coverage; direction, authoring and grid-sensitivity gates remain open. No external
-engine has been adopted into the application.
+coverage. The [physical-path follow-up](../research/2026-09-25-physical-channel-paths.md)
+reduces grid-direction alignment but fails authoring admission and measures
+substantial process-grid sensitivity. One constrained network-led surface is next.
+No external erosion engine has been adopted into the application.
 
 The subsequent [world-context research](../research/2026-09-24-world-context-enrichment.md)
 and [WC0-WC6 plan](world-context.md) advance retained world import and shared
@@ -63,7 +65,7 @@ Dated reports and accepted ADRs remain historical evidence.
 |---|---|---|
 | Usable authoring and reproducible build | Implemented | Maintain it while changing generation |
 | Measured quality baseline | Partial: eight-case profile probe plus paired evolution/control gallery completed | One comparable gallery and structural scorecard, including known failures |
-| Terrain-aligned drainage | Frozen-graph reconstruction measured; production not accepted | Shared physical paths, lower grid bias, hard constraints and resolution acceptance |
+| Terrain-aligned drainage | Frozen reconstruction and shared physical paths measured; production not accepted | Constrained network-led terrain, fixed geographic divides and process-grid stability |
 | Coherent landform families | Partial recipes; two-epoch reference implemented and measured, quality gate open | Related range/pass/tributary/lowland structure that survives multiple seeds and scales |
 | Useful zoom enrichment | Experimental | Accepted regional shape, transition and inherited-flow behavior; then viewport scheduling |
 | World import and shared context | WC0 plus WC1 geographic coverage, water topology, edge widths, shore distance, directional exposure, verified products, authored geology recipes, bathymetric hypotheses and water-piece incidence implemented | B/C terrain acceptance; later physical forcing and conservative transport |
@@ -179,20 +181,31 @@ This is a numerical control, not an accepted physical river model. Grid directio
 stay unchanged, slope creases remain and off-grid authored targets can be violated.
 Reconstruction volume changes are recorded separately from erosion.
 
-**Next bounded terrain-quality batch, after WC0/WC1 foundations:** compare the
-physical valley/path prototype below against
-that monotonic-profile control, and diagnose receiver/outlet sensitivity using
-the existing spacing/time states. Preserve the same coverage and native hard
-constraint controls. Fix the physical process policy before another expensive
-finer simulation or full LE3 integration. The history engine and paired report
-already exist; do not build another erosion/report framework or add sediment,
-history UI or zoom jobs to avoid this gate. There will be one accepted production
-path.
+**Physical-path checkpoint:** the [coupled prototype](../research/2026-09-25-physical-channel-paths.md)
+now shares a bounded mesh between paths and actual ground. All 1,183 routes remain;
+none becomes newly uphill. D8-aligned length falls from 100% to 56.99%, but all
+22 cases fail the sampled no-fill policy and 17 exceed a diagnostic 30 m cut.
+Native regional constraints and geographic divides are not satisfied by this
+comparison. Process-spacing changes alter receivers at about 53% of shared
+stations and move 15–17% of sampled outlets by more than one coarse cell.
+Long straight reaches and C0 creases remain visible. Do not promote this prototype.
 
-For the path prototype, compare the current D8 control against terrain-guided
-subgrid paths inside allowed corridors. Keep exact junctions and coastal/lake
-terminals, prohibit unintended crossings/divide violations, and choose a deterministic path from
-fixed preparation inputs. Path refinement must not depend on viewport pixels.
+**Next bounded terrain-quality batch:** activate the network-led fallback below.
+Freeze one public range/valley/lowland fixture with coast, confluences, a protected
+divide, off-grid heights and native regional cut limits. Compare one terrain
+construction built around the shared network, with hard equalities and cut/no-fill
+inequalities, against the existing triangle/physical controls. Reject or reroute
+infeasible routes before surface fitting; do not merely move the finished ground.
+Establish physical valley-width/feature support and rerouted catchment stability
+on the existing spacing/time controls before a finer simulation or LE3/WC2.
+The history engine and comparison infrastructure exist; no new erosion/report
+framework, sediment, history UI or zoom jobs are needed to address this gate.
+
+The physical-path comparator now supplies terrain-guided subgrid paths inside
+bounded corridors. A production candidate must additionally satisfy the native
+constraints and fixed geographic divide policy. Keep exact junctions and
+coastal/lake terminals, prohibit unintended crossings/divide violations, and
+choose a deterministic path from fixed preparation inputs. Path refinement must not depend on viewport pixels.
 Define physical process spacing independently of output resolution (R02), with
 explicit minimum feature support and bounded preparation cost. Raising all grids
 to the maximum is not the default solution.

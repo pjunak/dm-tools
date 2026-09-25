@@ -1,8 +1,8 @@
 # Current terrain research status
 
-Reconciled on 2026-09-25 for WC0 preparation and the delivered WC1 geography, geology-input, bathymetry and water-piece stages. The
-2026-09-24 generation measurements and scientific-tool audit below retain their
-own revision/date; this world-source batch does not rerun terrain-quality probes.
+Reconciled on 2026-09-25 after WC1 foundations and the coupled physical-path /
+frozen-grid sensitivity comparison. Earlier generation measurements and scientific
+tool audits retain their own revision/date; new evidence is linked below.
 This is a status map; [TODO](../../TODO.md) owns the research register and the
 [strategy](../strategy/README.md) owns execution order. Dated reports retain
 their source/runtime context. Source inspection or a compatible wheel is not
@@ -105,10 +105,13 @@ final metrics, so those numbers are not a direct before/after baseline.
 
 The candidate remains research-only: D8 geometry and grid sensitivity persist,
 slopes have creases, off-grid targets can fail and reconstruction changes volume.
-The next bounded B/R48 batch is physical valley/path geometry and receiver/outlet
-sensitivity on the existing spacing/time controls, followed by hard-constraint
-acceptance before full LE3 integration. Peak/pass structure and real basins/coasts
-remain open. Sediment, epoch editor controls and evolved local enrichment remain
+The [physical-path follow-up](2026-09-25-physical-channel-paths.md) now measures
+shared path/ground deformation and frozen receiver/outlet sensitivity. No new
+uphill routes appear and D8-aligned length falls to 56.99%, but all cases fail the
+sampled no-fill policy; 17 exceed the diagnostic cut limit. Grid spacing still
+moves many outlets. Next compare one constrained catchment/network-led surface
+with native regional limits and fixed geographic divides before LE3/WC2.
+Peak/pass structure and real basins/coasts remain open. Sediment, epoch editor controls and evolved local enrichment remain
 later dependent work. No post-generation modification is introduced.
 
 ## Implemented baseline

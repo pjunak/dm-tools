@@ -90,8 +90,10 @@ and [detailed implementation plan](strategy/landscape-evolution.md). The
 includes numerical controls and measured comparisons; production acceptance
 remains open. The [frozen reconstruction follow-up](research/2026-09-24-frozen-channel-reconstruction.md)
 measures surface/path agreement without rerunning erosion. The
-[reference guide](../benchmarks/evolution/README.md) owns setup and both testable
-comparison commands.
+[physical-path follow-up](research/2026-09-25-physical-channel-paths.md) adds shared
+path/ground geometry and grid/time diagnostics, with failed constraint gates kept
+visible. The [reference guide](../benchmarks/evolution/README.md) owns setup and
+the runnable comparison commands.
 The [2026-09-13 audit](maintenance/2026-09-13-documentation-and-research-status.md)
 and [2026-09-10 checkpoint](maintenance/2026-09-10-sanity-and-performance.md)
 retain earlier documentation, structure and performance evidence.

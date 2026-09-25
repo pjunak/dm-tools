@@ -42,7 +42,7 @@ not a physical river-water validation or a private-map result.
 |---|---|---|
 | **A — quality controls** | Quality fixtures, paired maps/profiles, process-scale warnings; convergent-flat comparison (R02/R25/R27/R41/R43) | Fixed comparison set and a measured accept/reject result; no new benchmark framework |
 | **W — bounded foundation delivered** | WC0 plus WC1 geography, geology inputs, bathymetry and water-piece incidence (R01/R49); return to B/C physical paths and landforms | Preserve source and unresolved support; context is provisional, not solved climate |
-| **B — next major generation decision** | Build on the measured frozen reconstruction: physical valley/path geometry and grid/capture sensitivity (R48/R32) | Profile gains do not close direction or authoring gates; preserve anchors, cuts, junctions, terminals and coverage before LE3 |
+| **B — next major generation decision** | Physical-path experiment measured; compare one constrained network-led terrain construction (R48/R32) | No new uphill routes, but cut/fill and catchment sensitivity fail admission; preserve native constraints before LE3 |
 | **C** | Consolidate one coherent range/pass/tributary/lowland system from the selected comparison (R08/R09/R14/R40/R44) | Better structural/visual results across fixed seeds and physical scales |
 | **W — after B/C acceptance** | Rough world, seasonal climate/runoff feedback and reviewed parent (WC2-WC4; R33/R49) | Physical terrain acceptance, bounded coupling, shared world time and budgets |
 | **D / WC5** | Accepted parent-conditioned detail, same-present historical refinement and inherited fine hydrology, then zoom jobs (R15/R34/R49) | Exact overlap, coarse-scale, time-dependent boundary/flow and visual acceptance before real small rivers |
@@ -119,10 +119,15 @@ continent-history generation remain planned.
   expose split pieces and precision-limited fragmented source regions. Those regions
   retain their water and remain unsupported for transport. See the
   [guide](docs/world-context.md) and [evidence](docs/research/2026-09-25-water-piece-connectivity.md).
-- [ ] **Next concrete batch — B/C physical paths and landform acceptance.** Resume
-  the [main strategy](docs/strategy/README.md): compare shared physical river paths
-  and finished ground, rotated-grid bias and resolution response before WC2 rough
-  world terrain. More optional context inputs must not displace this quality gate.
+- [x] **B/R48 physical-path comparison:** shared bounded path/ground geometry,
+  exact graph coverage, sampled authoring/budget rejection and frozen receiver/outlet
+  sensitivity are now measured. See the [report](docs/research/2026-09-25-physical-channel-paths.md).
+  This is an experimental comparator; native generation is not changed.
+- [ ] **Next concrete batch — B/C constrained network-led terrain.** Follow the
+  [main strategy](docs/strategy/README.md): one authored range/valley/lowland fixture,
+  hard divide/height/cut controls and a terrain surface built around its network.
+  The physical-path prototype reduces D8 alignment but fails cut/fill admission;
+  catchment stability and believable landforms still precede WC2 rough terrain.
 - [ ] **WC1 transport follow-up:** consume finite-face incidence only after support
   admission, conservative area/depth integration, explicit sill/capacity geometry
   and paired flux/storage budgets. Add a stable local-coordinate or exact-predicate
@@ -191,12 +196,18 @@ records execution and its remaining gates; the simulation is still research-only
   paired ground figures, crossing rejection, off-grid anchor conflicts, separate
   reconstruction volume and whole-climb affected length are implemented.
   This closes the experiment, not the broader authoring or production gate.
-- [ ] **Next — Physical valley/path geometry and capture sensitivity** (R48/R32/R02).
-  Use the triangle surface as a descending-profile control, reduce directional
-  grooves through shared physical paths, and diagnose receiver/outlet changes
-  across existing spacing/time states. Preserve native authored/cut controls.
-  Resolve physical feature support before another finer history; C0 facets,
-  off-grid anchor errors and nodal climbs prevent candidate promotion.
+- [x] **Physical valley/path experiment and capture diagnostics** (R48/R32/R02).
+  The [measured prototype](docs/research/2026-09-25-physical-channel-paths.md) keeps
+  all 1,183 routes and introduces no new uphill routes; D8-aligned length falls
+  to 56.99%. All 22 cases fail the sampled no-fill policy, 17 exceed the diagnostic
+  30 m cut budget, and spacing changes move many sampled outlets. Native regional
+  constraints and rerouted catchment geography are not yet preserved.
+- [ ] **Next — One constrained catchment/network-led surface** (R48/R32/R02).
+  Freeze a public range/valley/lowland fixture with coast, confluences, protected
+  divide and off-grid targets. Compare connected valley/ground construction with
+  actual regional cut/no-fill inequalities; reject or reroute infeasible paths.
+  Establish physical valley/feature support and rerouted catchment stability
+  before finer history or LE3/WC2 integration. Keep existing comparators and gates.
 - [ ] **LE2 follow-up — Complete structural acceptance** (R40/R41/R43). Add the
   missing peak/pass and matched physical-route scorecard, resolve long D8 grooves
   and quantify capture sensitivity. The finest-grid budget failure is a stopping
@@ -1559,6 +1570,7 @@ geometry movement and project-saving behavior.
   reviews primary geographic, tectonic and climate models, existing tools and
   deployment limits. The [WC0-WC6 plan](docs/strategy/world-context.md) advances
   world inputs/context and specifies shared-time regional history refinement.
+- [Coupled physical channel paths — 2026-09-25](docs/research/2026-09-25-physical-channel-paths.md)
 - [Frozen terrain/channel reconstruction — 2026-09-24](docs/research/2026-09-24-frozen-channel-reconstruction.md)
   records complete-route profile gains, remaining nodal failures, authoring limits,
   explicit composition volume and base-environment cost on the frozen cohort.

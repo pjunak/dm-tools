@@ -198,3 +198,48 @@ def test_changed_measurement_identity_blocks_completion(
     with pytest.raises(ValueError, match="Source/runtime identity changed"):
         run([frozen_worker], tmp_path / "source-change")
     assert not (tmp_path / "source-change" / "comparison.json").exists()
+
+
+def test_physical_comparison_records_constraint_failures_and_retains_every_route(
+    frozen_worker: Path, tmp_path: Path,
+) -> None:
+    from benchmarks.evolution.physical_comparison import run as run_physical
+
+    output = tmp_path / "physical"
+    result = run_physical([frozen_worker], output)
+    assert result["status"] == "complete"
+    assert result["acceptance"] == "research-only; no production promotion"
+    row = result["rows"][0]
+    assert row["matched_gates"]["25m"]["complete_matched_coverage"]
+    assert row["constraints"]["physical"]["anchor_count"] == 0
+    assert not row["constraints"]["physical"]["passes_sampled_constraints"]
+    assert "cut_violations" in row["failed_gates"]
+    assert (output / "comparison.json").is_file()
+    assert (output / "case-00" / "geometry.npz").is_file()
+    assert (output / "case-00" / "comparison.png").is_file()
+    assert not (output / "incomplete.json").exists()
+    repeated = run_physical([frozen_worker], tmp_path / "repeated-physical")
+    assert row["geometry_array_sha256"] == repeated["rows"][0]["geometry_array_sha256"]
+    assert row["summaries"] == repeated["rows"][0]["summaries"]
+    with pytest.raises(FileExistsError):
+        run_physical([frozen_worker], output)
+
+
+def test_physical_coverage_compares_identities_not_just_counts() -> None:
+    from copy import deepcopy
+
+    from benchmarks.evolution.physical_comparison import matched_gates
+
+    control: dict[str, Any] = {
+        "edges": [{"source": 6, "target": 12}],
+        "routes": [{"head": 6, "terminal": 12, "maximum_excursion_m": 0.0}],
+    }
+    candidate = deepcopy(control)
+    candidate["routes"][0]["head"] = 7
+    assert not matched_gates(control, candidate)["complete_matched_coverage"]
+    candidate = deepcopy(control)
+    candidate["edges"][0]["target"] = 13
+    assert not matched_gates(control, candidate)["complete_matched_coverage"]
+    candidate = deepcopy(control)
+    candidate["routes"][0]["maximum_excursion_m"] = 11.0
+    assert matched_gates(control, candidate)["new_rises_over_10m"] == 1
