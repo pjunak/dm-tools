@@ -14,7 +14,9 @@ The window opens with **World** and **Terrain** tabs. World retains complete SVG
 source maps, continental ownership and an explicit spherical geographic frame.
 Read the [world guide](../../../docs/terrain-worlds.md), or try
 `dmtools terrain gui --world examples/world/four-shores.dmworld.json`.
-Context/world-terrain generation is planned. Select Terrain for the workflow below;
+The **Context** page generates spherical coverage, connected water and resolution
+support; see [geographic context](../../../docs/world-context.md). Climate and
+world terrain remain planned. Select Terrain for the workflow below;
 `--project` opens a local terrain file directly in that tab.
 
 The Terrain workspace imports closed SVG land shapes, dissolves adjacent

@@ -1,6 +1,6 @@
 # World-context and staged terrain implementation plan
 
-Updated 2026-09-25. **WC0 implemented; WC1-WC6 planned.** The
+Updated 2026-09-25. **WC0 implemented; WC1 geographic slice delivered; remaining WC1-WC6 work planned.** The
 [World workspace](../terrain-worlds.md) imports retained SVG sources, validates
 explicit spherical placement and ownership, and saves portable world projects.
 Existing terrain generation is still local; no climate or continent-history
@@ -312,7 +312,7 @@ ship before preserving world coordinates.
 | Milestone | Bounded deliverable and dependencies | Exit evidence |
 |---|---|---|
 | WC0: retained world import — implemented | Explicit full-sphere frame/radius, retained SVG, stable continents/islands, mapping preview and portable saves; R01/R49 | Public touching-continent, owned-island, hole, offset-frame, seam/pole, malformed-input and UI/save controls; see implementation report |
-| WC1: provisional context | Geometry/topology descriptors, ocean/gateway hypotheses and province/default inputs; WC0, R07/R10/R11 | Preserved coastline, connected-water and fetch controls, visible unsupported straits, reproducible context preview |
+| WC1: provisional context — geographic slice delivered | Spherical fractional coverage, vector-derived periodic water and support flags, preview and export delivered; exposure/gateway/province inputs remain | Coverage/topology controls pass; verified consumption, finite gateway support, fetch and province controls remain |
 | WC2: rough physical world | Shared macro terrain/bathymetry and process-domain prototype, physical scale/support; WC1, B/C, R02/R48, LE2/LE3 acceptance for evolved output | Matched quality gallery, cross-label catchments, constraints, projections/flux and resolution gates |
 | WC3: climate/runoff feedback | Seasonal fields, moisture/storage budgets, declared epoch forcing and bounded coarse-history loop; WC2, R33 and selected LE engine | Energy/water closure, rain-shadow/continentality controls, convergence or explicit incomplete result, measured resources |
 | WC4: reviewed parent and workflow | Immutable world parent, explicit continent/province history controls, dependency invalidation and staged editor; WC0-WC3 and LE3, co-delivered with LE5 world bindings | Reopen/verify/reproduce, stale-child behavior, cancel/complete publication and one public end-to-end world |
@@ -326,17 +326,22 @@ authoritative; flattened inspection geometry and area have explicit tolerance.
 The [preparation follow-up](../research/2026-09-25-bounded-world-preparation.md)
 handles minor source imperfections with visible reports and disjoint coverage.
 Full-sphere Plate Carrée is the supported input. Partial worlds, other projections,
-world-to-metric terrain extraction and context generation remain unimplemented.
+world-to-metric terrain extraction, climate and terrain generation remain unimplemented.
 
-**Next concrete batch: WC1 geography and ocean topology.** Build a typed, bounded
-cell-centred spherical grid with exact cell areas and periodic longitude. Derive
-fractional land coverage and connected water without equating named continents
-with components. Retain explicit evidence for unresolved straits/islands and
-separate named seas from connected oceans. Add a preview with resolution/support
-and unsupported topology visible. Test polar/seam connectivity, tiny islands,
-narrow gateways and area convergence against the retained WC0 source. Then add
-directional fetch/interior distance before bathymetry and province hypotheses;
-keep context assumptions separate from the source file.
+**WC1 geographic checkpoint:** [ADR-0073](../adr/0073-generate-spherical-geographic-context.md)
+and the [implementation report](../research/2026-09-25-geographic-world-context.md)
+record exact spherical cell areas, fractional prepared-land coverage, vector-derived
+water topology, support flags, cancellation, preview and reproducible exports.
+Semantic continents remain separate from physical components. Narrow source
+straits are preserved in vector connectivity and flagged as unresolved by cells.
+
+**Next concrete batch: context consumption and exposure.** Add a verified context
+reader/reopen flow that checks source/runtime/algorithm and array hashes/shapes.
+Represent finite gateway support before using dominant water IDs as flow links.
+Then add geodesic interior distance and directional water exposure with polar,
+seam and reversed-direction controls; define these as geographic diagnostics,
+not precipitation. Follow with inspectable province/default inputs and explicit
+bathymetry assumptions. Keep context inputs separate from the source file.
 
 WC0 follow-ups to consider alongside that work: cancel/checkpoint long imports,
 measure curved-source complexity, and decide whether partial mapping drafts need

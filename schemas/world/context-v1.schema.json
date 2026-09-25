@@ -1,0 +1,335 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dmtools.local/schemas/world/context-v1.schema.json",
+  "title": "DM Tools spherical geographic context v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "version",
+    "algorithm",
+    "importer",
+    "preparation",
+    "input_sha256",
+    "runtime",
+    "settings",
+    "grid",
+    "areas_km2",
+    "support",
+    "water_bodies",
+    "outputs"
+  ],
+  "properties": {
+    "schema": {
+      "const": "dmtools.world-context"
+    },
+    "version": {
+      "const": 1
+    },
+    "algorithm": {
+      "const": "spherical-geography-v1"
+    },
+    "importer": {
+      "const": "retained-svg-v2"
+    },
+    "preparation": {
+      "const": "bounded-world-v1"
+    },
+    "input_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "runtime": {
+      "type": "object",
+      "required": [
+        "package_source_sha256",
+        "python",
+        "dependencies",
+        "geos"
+      ],
+      "properties": {
+        "package_source_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "settings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "latitude_cells"
+      ],
+      "properties": {
+        "latitude_cells": {
+          "type": "integer",
+          "minimum": 4,
+          "maximum": 360
+        }
+      }
+    },
+    "grid": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rows",
+        "columns",
+        "registration",
+        "longitude_periodic",
+        "pole_policy",
+        "angular_step_deg",
+        "north_south_spacing_km",
+        "frame",
+        "projection"
+      ],
+      "properties": {
+        "rows": {
+          "type": "integer",
+          "minimum": 4,
+          "maximum": 360
+        },
+        "columns": {
+          "type": "integer",
+          "minimum": 8,
+          "maximum": 720
+        },
+        "registration": {
+          "const": "cell-centre"
+        },
+        "longitude_periodic": {
+          "const": true
+        },
+        "pole_policy": {
+          "const": "finite-edge-gateways; no point-contact water links"
+        },
+        "angular_step_deg": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "north_south_spacing_km": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "frame": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "bounds",
+            "radius_km",
+            "central_meridian_deg"
+          ],
+          "properties": {
+            "bounds": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 4,
+              "maxItems": 4
+            },
+            "radius_km": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "central_meridian_deg": {
+              "type": "number",
+              "minimum": -180,
+              "exclusiveMaximum": 180
+            }
+          }
+        },
+        "projection": {
+          "const": "spherical-plate-carree"
+        }
+      }
+    },
+    "areas_km2": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sphere",
+        "land",
+        "water",
+        "land_conservation_error"
+      ],
+      "properties": {
+        "sphere": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "land": {
+          "type": "number",
+          "minimum": 0
+        },
+        "water": {
+          "type": "number",
+          "minimum": 0
+        },
+        "land_conservation_error": {
+          "type": "number"
+        }
+      }
+    },
+    "support": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mixed_cells",
+        "split_water_cells",
+        "land_without_centre",
+        "water_without_centre"
+      ],
+      "properties": {
+        "mixed_cells": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "split_water_cells": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "land_without_centre": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "water_without_centre": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "water_bodies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "area_km2",
+          "crosses_seam",
+          "displayed_cells"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "area_km2": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "crosses_seam": {
+            "type": "boolean"
+          },
+          "displayed_cells": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "outputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "world.dmworld.json",
+        "geography.npz",
+        "land.png",
+        "water.png",
+        "support.png"
+      ],
+      "properties": {
+        "world.dmworld.json": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "sha256",
+            "bytes"
+          ],
+          "properties": {
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "bytes": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        "geography.npz": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "sha256",
+            "bytes"
+          ],
+          "properties": {
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "bytes": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        "land.png": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "sha256",
+            "bytes"
+          ],
+          "properties": {
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "bytes": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        "water.png": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "sha256",
+            "bytes"
+          ],
+          "properties": {
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "bytes": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        "support.png": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "sha256",
+            "bytes"
+          ],
+          "properties": {
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "bytes": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        }
+      }
+    }
+  }
+}

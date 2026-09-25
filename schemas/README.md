@@ -6,6 +6,10 @@ Only the current formats are supported:
   snapshot, full-sphere frame/radius and explicit continent/island assignments.
   This is a validated source, not a climate/terrain build or generated parent.
 
+- [World context v1](world/context-v1.schema.json): generated spherical coverage,
+  vector-derived water regions, resolution support and hashes of the numeric
+  arrays, previews and original world snapshot. This is not a terrain parent.
+
 - [Project v6](terrain/project-v6.schema.json): authored `.dmterrain.json` inputs.
 - [Build v18](terrain/build-v18.schema.json): numeric products, coordinates,
   algorithm identities, named stage seeds and output hashes.
@@ -28,8 +32,9 @@ See the [build guide](../docs/terrain-builds.md) and
 
 The [world guide](../docs/terrain-worlds.md) describes the implemented source
 format and its independent geographic contract. The
-[world-context plan](../docs/strategy/world-context.md) specifies future shared
-climate/history and regional boundary products. Those generated products have no
+[context guide](../docs/world-context.md) owns the implemented geographic result.
+The [world-context plan](../docs/strategy/world-context.md) specifies future shared
+climate/history and regional boundary products. Those later products have no
 public schema yet; do not add placeholders to source or terrain formats.
 
 During early development, replace obsolete formats and update the current

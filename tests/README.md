@@ -14,6 +14,11 @@ Current coverage includes:
   and deterministic preparation; real Tk issue/adjustment selection, validate/save/
   reopen and report invalidation, World/Terrain lifecycle and shortcut isolation;
 
+- spherical cell/land/water area conservation across source units and resolution,
+  periodic vector water topology, polar barriers, subcell islands/holes/straits,
+  split-water support, context cancellation and deterministic read-only arrays;
+  context schema/output hashes, source/runtime guards, last-published completion
+  and real Tk generation/export/invalidation;
 - strict current project/schema validation, SVG hashes, atomic saves, per-tool
   settings and display-free Tcl control behavior;
 - instruction history plus real Tk selection/property editing, immutable generated

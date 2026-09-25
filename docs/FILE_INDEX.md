@@ -2,11 +2,11 @@
 
 Updated 2026-09-25. Scope: every version-controlled Markdown document in DM Tools,
 plus the vendored license notice, including world-source implementation and
-export-import correction and bounded preparation documents. Generated builds, caches, dependency
+export-import correction, bounded preparation and geographic context documents. Generated builds, caches, dependency
 documentation and private campaign files are excluded. The public JSON schemas and reference dependency
 lock are listed separately as supporting contracts, not counted as prose docs.
 
-**170 Markdown files + 1 legal notice = 171 documentation files.**
+**173 Markdown files + 1 legal notice = 174 documentation files.**
 Each file appears once below, including this inventory. Document titles describe
 their subject; the group description identifies their role and authority.
 
@@ -18,13 +18,13 @@ remains the entry point for normal use. All are individually linked in the list 
 |---|---:|
 | Project entry and guidance | 4 |
 | Active plans and indexes | 10 |
-| User guides and current contracts | 15 |
+| User guides and current contracts | 16 |
 | Developer and reference guides | 8 |
-| Architecture decision records | 72 |
-| Dated research reports | 59 |
+| Architecture decision records | 73 |
+| Dated research reports | 60 |
 | Maintenance reports | 2 |
 | Legal notice | 1 |
-| **Total** | **171** |
+| **Total** | **174** |
 
 ## Project entry and guidance (4)
 
@@ -54,7 +54,7 @@ Current direction and navigation. Plans mark unimplemented features explicitly; 
 | [docs/strategy/landscape-evolution.md](strategy/landscape-evolution.md) | LE0-LE6 evolution, authoring, conservation and regional-history gates. |
 | [docs/strategy/world-context.md](strategy/world-context.md) | WC0-WC6 full-world import, shared context, climate and regional-history plan. |
 
-## User guides and current contracts (15)
+## User guides and current contracts (16)
 
 Current user workflows and numeric/file semantics, with future limits labelled in each guide.
 
@@ -74,6 +74,7 @@ Current user workflows and numeric/file semantics, with future limits labelled i
 | [docs/terrain-water-budget.md](terrain-water-budget.md) | Forecast water-sampling demand |
 | [docs/terrain-water.md](terrain-water.md) | Authored lakes and dry basins |
 | [docs/terrain-worlds.md](terrain-worlds.md) | Import, map, validate and save retained world sources; geographic and workflow limits. |
+| [docs/world-context.md](world-context.md) | Generate spherical geography, inspect water/resolution support and export context products. |
 | [src/dmtools/terrain/README.md](../src/dmtools/terrain/README.md) | Current desktop authoring workflow, tools and shortcuts. |
 
 ## Developer and reference guides (8)
@@ -85,13 +86,13 @@ Subsystem, fixture, schema, test and benchmark guidance.
 | [benchmarks/README.md](../benchmarks/README.md) | Public performance/quality probes, commands and measurement boundaries. |
 | [benchmarks/evolution/README.md](../benchmarks/evolution/README.md) | Isolated evolution setup, runnable comparisons and current limits. |
 | [examples/README.md](../examples/README.md) | Public example projects and their supported behaviors. |
-| [schemas/README.md](../schemas/README.md) | Current world-source and local-terrain formats; generated world-context contracts remain planned. |
+| [schemas/README.md](../schemas/README.md) | Current world-source, geographic-context and local-terrain formats. |
 | [src/dmtools/terrain/adapters/README.md](../src/dmtools/terrain/adapters/README.md) | File-format/render/export adapter responsibilities. |
 | [src/dmtools/terrain/domain/README.md](../src/dmtools/terrain/domain/README.md) | Dependency-light domain values and validation responsibilities. |
 | [src/dmtools/terrain/pipeline/README.md](../src/dmtools/terrain/pipeline/README.md) | Numeric generation and inspection responsibilities. |
 | [tests/README.md](../tests/README.md) | Test organization, commands and verification expectations. |
 
-## Architecture decision records (72)
+## Architecture decision records (73)
 
 Accepted historical decisions. Preserve their original context; consult the current status and implementation for later changes. The ADR index is listed among active indexes.
 
@@ -169,14 +170,16 @@ Accepted historical decisions. Preserve their original context; consult the curr
 | [docs/adr/0070-retain-world-source-and-workspaces.md](adr/0070-retain-world-source-and-workspaces.md) | Retain world sources in a dedicated workspace. |
 | [docs/adr/0071-interpret-exported-svg-fills.md](adr/0071-interpret-exported-svg-fills.md) | Interpret exported SVG headers, labels and complex filled paths. |
 | [docs/adr/0072-bound-world-source-imperfections.md](adr/0072-bound-world-source-imperfections.md) | Bound minor export imperfections in derived coverage and report adjustments. |
+| [docs/adr/0073-generate-spherical-geographic-context.md](adr/0073-generate-spherical-geographic-context.md) | Generate spherical coverage and periodic vector-water topology with explicit support limits. |
 
-## Dated research reports (59)
+## Dated research reports (60)
 
 Primary-source reviews, experiments and implementation evidence at their recorded date/revision. A title or citation is not evidence that a tool was adopted. Current status is listed above.
 
 | File | Purpose or document title |
 |---|---|
 | [docs/research/2026-09-24-world-context-enrichment.md](research/2026-09-24-world-context-enrichment.md) | World context before continental terrain: research and recommendation |
+| [docs/research/2026-09-25-geographic-world-context.md](research/2026-09-25-geographic-world-context.md) | WC1 geographic implementation, UI/contract validation and bounded grid measurements. |
 | [docs/research/2026-09-25-bounded-world-preparation.md](research/2026-09-25-bounded-world-preparation.md) | Bounded world preparation, source retention, overlap controls and UI/save evidence. |
 | [docs/research/2026-09-25-world-import-corrections.md](research/2026-09-25-world-import-corrections.md) | SVG import corrections, regression evidence and source-quality limits. |
 | [docs/research/2026-09-25-world-source-workspace.md](research/2026-09-25-world-source-workspace.md) | WC0 implementation, UI/contract validation and bounded world import/render timings. |
@@ -253,7 +256,7 @@ Attribution/license documentation for a vendored asset.
 |---|---|
 | [docs/licenses/SCIENTIFIC_COLOUR_MAPS_LICENSE.txt](licenses/SCIENTIFIC_COLOUR_MAPS_LICENSE.txt) | Scientific Colour Maps attribution and redistribution license text. |
 
-## Supporting machine-readable contracts (7)
+## Supporting machine-readable contracts (8)
 
 These are operational specifications rather than prose documentation. They
 are included for a complete route from plans to the current usable formats.
@@ -265,6 +268,7 @@ are included for a complete route from plans to the current usable formats.
 | [schemas/terrain/parent-region-v1.schema.json](../schemas/terrain/parent-region-v1.schema.json) | Current parent sampling/experimental detail artifact contract. |
 | [schemas/terrain/project-v6.schema.json](../schemas/terrain/project-v6.schema.json) | Current authored local terrain project format; no world context fields. |
 | [schemas/terrain/regional-samples-v2.schema.json](../schemas/terrain/regional-samples-v2.schema.json) | Current bounded unchanged-field sampling artifact contract. |
+| [schemas/world/context-v1.schema.json](../schemas/world/context-v1.schema.json) | Spherical context products, source/runtime identity, coverage/topology/support and output hashes. |
 | [schemas/world/project-v1.schema.json](../schemas/world/project-v1.schema.json) | Portable retained world-source snapshot, explicit spherical frame/radius and semantic ownership. |
 | [benchmarks/evolution/requirements-windows-py314.txt](../benchmarks/evolution/requirements-windows-py314.txt) | Hashed isolated Windows/Python 3.14 scientific reference environment. |
 

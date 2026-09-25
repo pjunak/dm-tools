@@ -95,7 +95,28 @@ def create_parser() -> argparse.ArgumentParser:
     inspect = world_commands.add_parser("inspect", help="Validate and summarize a saved world map.")
     inspect.add_argument("project", type=Path, help="Portable .dmworld.json project.")
     inspect.set_defaults(_handler=_run_world_inspect)
+    context = world_commands.add_parser("context", help="Generate spherical geographic context.")
+    context.add_argument("project", type=Path, help="Portable .dmworld.json project.")
+    context.add_argument("--output", type=Path, required=True,
+                         help="New context directory (must not exist).")
+    context.add_argument("--latitude-cells", type=int, default=180,
+                         help="Latitude rows, 4-360; twice as many longitude columns; default 180.")
+    context.set_defaults(_handler=_run_world_context)
     return parser
+
+
+def _run_world_context(arguments: argparse.Namespace) -> int:
+    from dmtools.terrain.application.world_context import build_world_context
+    from dmtools.terrain.domain.world_context import WorldContextSettings
+    try:
+        path = build_world_context(arguments.project, arguments.output,
+                                   WorldContextSettings(arguments.latitude_cells))
+    except (OSError, ValueError, RuntimeError) as error:
+        print(f"World context failed: {error}", file=sys.stderr)
+        return 1
+    print(f"Geographic context complete: {path}")
+    print("Land coverage and connected water; climate, bathymetry and terrain follow later.")
+    return 0
 
 
 def _run_world_inspect(arguments: argparse.Namespace) -> int:

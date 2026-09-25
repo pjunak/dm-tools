@@ -14,7 +14,9 @@ The desktop workbench now has **World** and **Terrain** workspaces.
 [World import](docs/terrain-worlds.md) retains the original SVG, continent/island
 ownership, an explicit spherical frame and planet radius in portable
 `.dmworld.json` files. It provides mapping, validation, pan/zoom and saved-world
-inspection. Shared climate and world terrain remain planned.
+inspection. [Geographic context](docs/world-context.md) now adds spherical land
+coverage, connected water, resolution support, preview layers and portable
+exports. Shared climate and world terrain remain planned.
 
 The Terrain workspace imports and dissolves closed SVG land shapes; authors
 absolute/relative brush, point, ridge and valley constraints; draws plain, hill,
@@ -50,9 +52,9 @@ inspectable snapshots and numerical checks. It uses a separate scientific
 environment; history generation is not yet part of the desktop or saved-project CLI.
 
 The [world-context workflow](docs/strategy/world-context.md) begins with the
-implemented WC0 source workspace. Next come provisional geographic/ocean context,
-rough terrain and selected regional refinement with shared climate and geological
-history. Climate, world-linked terrain and regional history replay are not
+implemented WC0 source workspace and the geographic subset of WC1. Next come
+geodesic exposure and province hypotheses, rough terrain and selected regional
+refinement with shared climate and geological history. Climate, world-linked terrain and regional history replay are not
 implemented; the saved world is a source project, not a generated parent.
 See the [research review](docs/research/2026-09-24-world-context-enrichment.md).
 

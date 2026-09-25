@@ -12,6 +12,11 @@ in the current status or a new dated report.
 
 ## Current reassessment
 
+- [Geographic world context — 2026-09-25](2026-09-25-geographic-world-context.md)
+  implements WC1 spherical coverage, vector-derived water topology, mixed/subcell
+  support, Context generation/preview/cancellation and reproducible exports.
+  Records numeric/UI controls and measured cost; climate/terrain remain later work.
+
 - [Bounded world preparation — 2026-09-25](2026-09-25-bounded-world-preparation.md)
   handles minor edge/border discrepancies and same-owner shared land in derived
   coverage, retaining original source with selectable adjustment reports.

@@ -10,11 +10,17 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
+from typing import cast
 from uuid import uuid4
 
 from PIL import ImageTk
 from shapely.geometry import Point, Polygon
 
+from dmtools.terrain.adapters.world_context_render import (
+    CONTEXT_LAYERS,
+    ContextLayer,
+    render_world_context,
+)
 from dmtools.terrain.adapters.world_project import WORLD_EXTENSION
 from dmtools.terrain.adapters.world_render import OCEAN, render_world_source
 from dmtools.terrain.adapters.world_svg import load_world_svg
@@ -23,6 +29,11 @@ from dmtools.terrain.application.world import (
     open_world,
     propose_group_assignments,
     save_world,
+)
+from dmtools.terrain.application.world_context import (
+    WorldContextRun,
+    export_context,
+    generate_context,
 )
 from dmtools.terrain.domain.world import (
     WorldAssignment,
@@ -33,6 +44,8 @@ from dmtools.terrain.domain.world import (
     WorldRole,
     WorldSource,
 )
+from dmtools.terrain.domain.world_context import WorldContextSettings
+from dmtools.terrain.pipeline.control import CancellationToken, GenerationCancelled
 from dmtools.terrain.pipeline.world import WorldMap, prepare_world_map
 from dmtools.terrain.viewport import MapViewport
 
@@ -49,7 +62,33 @@ class _Saved:
     path: Path
 
 
-type _Event = WorldSource | WorldMap | _Opened | _Saved | Exception
+@dataclass(frozen=True)
+class _ContextReady:
+    run: WorldContextRun
+    signature: object
+    rows: int
+
+
+@dataclass(frozen=True)
+class _ContextExported:
+    path: Path
+
+
+@dataclass(frozen=True)
+class _Progress:
+    message: str
+
+
+type _Event = (
+    WorldSource
+    | WorldMap
+    | _Opened
+    | _Saved
+    | _ContextReady
+    | _ContextExported
+    | _Progress
+    | Exception
+)
 type _Ownership = tuple[tuple[WorldContinent, ...], tuple[WorldAssignment, ...]]
 
 
@@ -61,6 +100,8 @@ class WorldWorkspace(ttk.Frame):
         self.source: WorldSource | None = None
         self.path: Path | None = None
         self.validated: WorldMap | None = None
+        self.context_run: WorldContextRun | None = None
+        self._context_cancellation: CancellationToken | None = None
         self.continents: tuple[WorldContinent, ...] = ()
         self.assignments: tuple[WorldAssignment, ...] = ()
         self._undo: list[_Ownership] = []
@@ -101,7 +142,14 @@ class WorldWorkspace(ttk.Frame):
             self, value="Wheel: zoom  ·  Middle/right drag: pan  ·  F: fit"
         )
         self.show_excluded = tk.BooleanVar(self, value=True)
+        self.context_rows = tk.StringVar(self, value="180")
+        self.display_layer = tk.StringVar(self, value="Source")
+        self.context_detail = tk.StringVar(
+            self, value="Generate geographic context from the current world."
+        )
+        self.viewer_note = tk.StringVar(self, value="Source geography · context available")
         self._build()
+        self.context_rows.trace_add("write", self._context_settings_changed)
         for value in self.values.values():
             value.trace_add("write", self._changed)
         self._poll_id = self._scheduler.after(80, self._poll)
@@ -278,6 +326,55 @@ class WorldWorkspace(ttk.Frame):
             "The original SVG and assignments are retained.",
         )
         self.adjustment_detail.grid(row=2, column=0, columnspan=2, sticky="ew", pady=12)
+        self.context_page = ttk.Frame(pages, style="Panel.TFrame", padding=10)
+        pages.add(self.context_page, text="Context")
+        self.context_page.columnconfigure(0, weight=1)
+        self.context_page.rowconfigure(6, weight=1)
+        ttk.Label(self.context_page, text="Geographic context", style="Value.TLabel").grid(
+            row=0, column=0, sticky="w", pady=(0, 8)
+        )
+        ttk.Label(
+            self.context_page,
+            text="Latitude cells · longitude uses twice as many",
+            style="Body.TLabel",
+        ).grid(row=1, column=0, sticky="w")
+        resolution = ttk.Combobox(
+            self.context_page,
+            textvariable=self.context_rows,
+            values=("90", "180", "360"),
+            state="readonly",
+        )
+        resolution.grid(row=2, column=0, sticky="ew", pady=6)
+        self._controls.append((resolution, "readonly"))
+        self._button(
+            self.context_page, "Generate context", self.generate_context, accent=True
+        ).grid(row=3, column=0, sticky="ew", pady=5)
+        self._button(self.context_page, "Export context…", self.export_context).grid(
+            row=4, column=0, sticky="ew", pady=5
+        )
+        self.context_cancel = ttk.Button(
+            self.context_page,
+            text="Cancel context job",
+            command=self.cancel_context,
+            state="disabled",
+        )
+        self.context_cancel.grid(row=5, column=0, sticky="ew", pady=5)
+        ttk.Label(
+            self.context_page,
+            textvariable=self.context_detail,
+            style="Body.TLabel",
+            wraplength=335,
+            justify="left",
+        ).grid(row=6, column=0, sticky="nw", pady=12)
+        ttk.Label(
+            self.context_page,
+            text="Support colours: orange = land missed by centre sampling; "
+            "cyan = water missed by centre sampling; violet = disconnected water in one cell. "
+            "Zoom inspects these cells; it does not refine them. Climate, ocean depth and "
+            "rough terrain are later stages.",
+            style="Muted.TLabel",
+            wraplength=335,
+        ).grid(row=7, column=0, sticky="ew", pady=6)
         self._button(sidebar, "Validate world", self.validate, accent=True).grid(
             row=1, column=0, sticky="ew", pady=(10, 5)
         )
@@ -290,15 +387,25 @@ class WorldWorkspace(ttk.Frame):
         toolbar = ttk.Frame(viewer, style="Panel.TFrame", padding=6)
         toolbar.grid(row=0, column=0, sticky="ew")
         ttk.Button(toolbar, text="Fit world", command=self.fit).pack(side="left")
-        ttk.Checkbutton(
+        self.excluded_toggle = ttk.Checkbutton(
             toolbar,
             text="Show excluded shapes",
             variable=self.show_excluded,
             command=self._schedule_draw,
-        ).pack(side="left", padx=12)
-        ttk.Label(
-            toolbar, text="Source geography · context and terrain are planned", style="Muted.TLabel"
-        ).pack(side="right", padx=5)
+        )
+        self.excluded_toggle.pack(side="left", padx=12)
+        self.layer_input = ttk.Combobox(
+            toolbar,
+            textvariable=self.display_layer,
+            values=("Source", *CONTEXT_LAYERS),
+            state="readonly",
+            width=20,
+        )
+        self.layer_input.pack(side="left", padx=4)
+        self.layer_input.bind("<<ComboboxSelected>>", self._layer_changed)
+        ttk.Label(toolbar, textvariable=self.viewer_note, style="Muted.TLabel").pack(
+            side="right", padx=5
+        )
         self.canvas = tk.Canvas(viewer, background=OCEAN, highlightthickness=0)
         self.canvas.grid(row=1, column=0, sticky="nsew")
         self.canvas.bind("<Configure>", lambda _e: self._schedule_draw())
@@ -323,6 +430,7 @@ class WorldWorkspace(ttk.Frame):
         if self._loading:
             return
         self.validated = None
+        self._clear_context()
         self.adjustment_tree.delete(*self.adjustment_tree.get_children())
         self.pages.tab(self.adjustments_page, text="Adjustments")
         self.adjustment_detail.configure(text="Validate the world to inspect import adjustments.")
@@ -367,6 +475,9 @@ class WorldWorkspace(ttk.Frame):
         self.busy = busy
         for control, normal in self._controls:
             control["state"] = "disabled" if busy else normal
+        self.context_cancel.configure(
+            state="normal" if busy and self._context_cancellation is not None else "disabled"
+        )
         if busy:
             self.progress.start(12)
         else:
@@ -392,8 +503,36 @@ class WorldWorkspace(ttk.Frame):
         self._poll_id = None
         while not self._events.empty():
             event = self._events.get_nowait()
+            if isinstance(event, _Progress):
+                self.status.set(event.message)
+                continue
+            self._context_cancellation = None
             self._set_busy(False)
-            if isinstance(event, Exception):
+            if isinstance(event, GenerationCancelled):
+                self.status.set("Context job cancelled. No new completed result was published.")
+            elif isinstance(event, _ContextReady):
+                if (
+                    event.signature != self._signature()
+                    or str(event.rows) != self.context_rows.get()
+                ):
+                    self.status.set("World inputs changed; generate context again.")
+                    continue
+                self.context_run = event.run
+                self.validated = event.run.context.world
+                self._show_summary(self.validated)
+                self._show_context_details()
+                self.display_layer.set("Land coverage")
+                self.pages.select(self.context_page)
+                self._layer_changed()
+                self.status.set(
+                    "Geographic context ready. Review land, water and resolution support; "
+                    "export to retain a reproducible result."
+                )
+            elif isinstance(event, _ContextExported):
+                self.status.set(
+                    f"Context exported: {event.path}. Source snapshot and output hashes included."
+                )
+            elif isinstance(event, Exception):
                 self._after_save = None
                 self.status.set(str(event).partition("\n")[0])
                 if isinstance(event, WorldGeometryError):
@@ -427,6 +566,121 @@ class WorldWorkspace(ttk.Frame):
                         "are listed in the Adjustments tab."
                     )
         self._poll_id = self._scheduler.after(80, self._poll)
+
+    def _clear_context(self) -> None:
+        had_context = self.context_run is not None
+        self.context_run = None
+        self.display_layer.set("Source")
+        self.excluded_toggle.configure(state="normal")
+        self.viewer_note.set("Source geography · context available")
+        self.context_detail.set(
+            "Inputs changed. Generate context again."
+            if had_context
+            else "Generate geographic context from the current world. Land and water areas use "
+            "the declared sphere. Small features remain in the source "
+            "even when a cell cannot resolve them."
+        )
+
+    def _context_settings_changed(self, *_args: str) -> None:
+        if self.context_run is not None and self.context_rows.get() == str(
+            self.context_run.context.grid.settings.latitude_cells
+        ):
+            return
+        self._clear_context()
+        self._schedule_draw()
+
+    def _layer_changed(self, _event: tk.Event[tk.Misc] | None = None) -> None:
+        if self.display_layer.get() != "Source" and self.context_run is None:
+            self.display_layer.set("Source")
+            self.status.set("Generate context in the Context tab before choosing its layers.")
+            self.pages.select(self.context_page)
+        context = self.context_run.context if self.context_run else None
+        self.excluded_toggle.configure(
+            state="normal" if self.display_layer.get() == "Source" else "disabled"
+        )
+        self.viewer_note.set(
+            f"{context.grid.angular_step_deg:g}° cells · geographic context"
+            if context and self.display_layer.get() != "Source"
+            else "Retained source geography"
+        )
+        self._schedule_draw()
+
+    def _show_context_details(self) -> None:
+        if self.context_run is None:
+            return
+        result = self.context_run.context
+        rows, columns = result.grid.shape
+        largest = max((b.area_km2 for b in result.water_bodies), default=0)
+        invisible = sum(b.displayed_cells == 0 for b in result.water_bodies)
+        self.context_detail.set(
+            f"{columns} x {rows} cells · {result.grid.angular_step_deg:g}°\n"
+            f"North-south spacing: {result.grid.north_south_spacing_km:,.1f} km; "
+            "east-west spacing decreases towards the poles.\n\n"
+            f"{len(result.water_bodies)} connected water regions\n"
+            f"Largest: {largest:,.0f} km²\n"
+            f"{invisible} smaller regions have no dominant display cell.\n\n"
+            f"{result.mixed_cells:,} mixed land/water cells\n"
+            f"{result.subcell_land_cells:,} contain land missed by centre sampling\n"
+            f"{result.subcell_water_cells:,} contain water missed by centre sampling\n"
+            f"{result.split_water_cells:,} contain disconnected water pieces\n\n"
+            "Water connectivity comes from retained coastlines, including the longitude seam. "
+            "Water IDs describe connected regions; they do not name seas or assign climate."
+        )
+
+    def generate_context(self) -> None:
+        if self.busy:
+            return
+        try:
+            project = self.project()
+            settings = WorldContextSettings(int(self.context_rows.get()))
+        except ValueError as error:
+            messagebox.showerror("Context needs a valid world", str(error), parent=self)
+            return
+        signature = self._signature()
+        cancellation = CancellationToken()
+        self._context_cancellation = cancellation
+
+        def progress(_fraction: float, message: str) -> None:
+            self._events.put(_Progress(message))
+
+        self._work(
+            "Generating geographic context…",
+            lambda: _ContextReady(
+                generate_context(project, settings, progress, cancellation=cancellation),
+                signature,
+                settings.latitude_cells,
+            ),
+        )
+
+    def cancel_context(self) -> None:
+        if self._context_cancellation is not None:
+            self._context_cancellation.cancel()
+            self.status.set("Stopping the context job at the next checkpoint…")
+            self.context_cancel.configure(state="disabled")
+
+    def export_context(self) -> None:
+        if self.busy:
+            return
+        run = self.context_run
+        if run is None:
+            self.status.set("Generate context before exporting it.")
+            return
+        selected = filedialog.asksaveasfilename(
+            parent=self,
+            title="Create a new context result folder",
+            initialdir=str(self.path.parent) if self.path else None,
+            initialfile="world-context-" + uuid4().hex[:8],
+        )
+        if not selected:
+            return
+        cancellation = CancellationToken()
+        self._context_cancellation = cancellation
+        self._work(
+            "Exporting context and its source snapshot…",
+            lambda: _ContextExported(
+                export_context(run, Path(selected), cancellation=cancellation)
+            ),
+        )
 
     def choose_svg(self) -> None:
         def choose() -> None:
@@ -546,6 +800,8 @@ class WorldWorkspace(ttk.Frame):
     def _select_issues(self, identifiers: tuple[str, ...]) -> None:
         existing = [key for key in identifiers if self.tree.exists(key)]
         if existing:
+            self.display_layer.set("Source")
+            self._layer_changed()
             self.tree.selection_set(existing)
             self.tree.see(existing[0])
             self._selection()
@@ -809,15 +1065,24 @@ class WorldWorkspace(ttk.Frame):
             return
         bounds = self._bounds()
         try:
-            with render_world_source(
-                self.source,
-                bounds,
-                self.assignments,
-                self.viewport,
-                (width, height),
-                frozenset(self.tree.selection()),
-                show_excluded=self.show_excluded.get(),
-            ) as image:
+            if self.context_run is not None and self.display_layer.get() in CONTEXT_LAYERS:
+                preview = render_world_context(
+                    self.context_run.context,
+                    self.viewport,
+                    (width, height),
+                    cast(ContextLayer, self.display_layer.get()),
+                )
+            else:
+                preview = render_world_source(
+                    self.source,
+                    bounds,
+                    self.assignments,
+                    self.viewport,
+                    (width, height),
+                    frozenset(self.tree.selection()),
+                    show_excluded=self.show_excluded.get(),
+                )
+            with preview as image:
                 self._photo = ImageTk.PhotoImage(image, master=self)
         except ValueError as error:
             self.status.set(str(error))
@@ -837,7 +1102,7 @@ class WorldWorkspace(ttk.Frame):
             12,
             12,
             anchor="nw",
-            text=f"{self.source.name}  ·  {self.viewport.zoom:.1f}x  ·  source preview",
+            text=f"{self.source.name}  ·  {self.viewport.zoom:.1f}x  ·  {self.display_layer.get()}",
             fill="#e3eddf",
             font=("Segoe UI", 10, "bold"),
         )
@@ -898,10 +1163,25 @@ class WorldWorkspace(ttk.Frame):
             return
         try:
             longitude, latitude = self._frame().source_to_lonlat(position)
+            detail = "Wheel: zoom · Middle/right drag: pan · F: fit"
+            if self.context_run is not None and self.display_layer.get() != "Source":
+                context = self.context_run.context
+                frame = context.grid.frame
+                rows, columns = context.grid.shape
+                col = min(columns - 1, int((position[0] - frame.bounds[0]) / frame.width * columns))
+                row = min(rows - 1, int((position[1] - frame.bounds[1]) / frame.height * rows))
+                detail = (
+                    f"Cell {row + 1}, {col + 1}: {context.land_fraction[row, col]:.1%} land · "
+                    f"water region {context.water_body[row, col]} · "
+                    + (
+                        "mixed/subgrid support"
+                        if context.support_flags[row, col]
+                        else "single surface"
+                    )
+                )
             self.inspection.set(
                 f"{abs(latitude):.2f}° {'N' if latitude >= 0 else 'S'}   "
-                f"{abs(longitude):.2f}° {'E' if longitude >= 0 else 'W'}   ·   "
-                "Wheel: zoom · Middle/right drag: pan · F: fit"
+                f"{abs(longitude):.2f}° {'E' if longitude >= 0 else 'W'}   ·   " + detail
             )
         except ValueError:
             self.inspection.set(
@@ -911,6 +1191,9 @@ class WorldWorkspace(ttk.Frame):
 
     def _pick(self, event: tk.Event[tk.Misc]) -> None:
         self.canvas.focus_set()
+        if self.display_layer.get() != "Source":
+            self._motion(event)
+            return
         position = self._position(event)
         if position is None or self.source is None:
             return
@@ -933,6 +1216,8 @@ class WorldWorkspace(ttk.Frame):
 
     def close(self) -> None:
         self._closed = True
+        if self._context_cancellation is not None:
+            self._context_cancellation.cancel()
         for identifier in (self._poll_id, self._draw_id):
             if identifier:
                 self._scheduler.after_cancel(identifier)

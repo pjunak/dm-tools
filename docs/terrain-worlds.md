@@ -2,8 +2,9 @@
 
 The **World** workspace implements WC0: retain an authored world, confirm its
 geographic frame, assign continents and islands, inspect it and save a portable
-source project. Context, rough world terrain and regional history generation
-remain planned. The **Terrain** workspace continues to generate local terrain;
+source project. [Geographic context](world-context.md) now generates spherical
+coverage, connected water and resolution support. Climate, rough world terrain
+and regional history generation remain planned. The **Terrain** workspace continues to generate local terrain;
 it does not yet consume a saved world or extract georeferenced continents.
 
 ## Try the public example
@@ -100,7 +101,8 @@ continent's last shape elsewhere removes that now-unused owner; Undo can restore
   there is no partial-draft file format in this batch.
 - Import, open, validation and saving use a background worker. Input controls
   lock during a job; wait for it to finish before closing. World jobs have no
-  cancellation command yet. Existing Terrain generation still supports Cancel.
+  cancellation command yet. Context generation/export has its own Cancel button;
+  existing Terrain generation still supports Cancel.
 
 ## Geographic and source contract
 
@@ -192,8 +194,10 @@ and [ADR-0072](adr/0072-bound-world-source-imperfections.md) record these identi
 
 ## What follows
 
-[WC1](strategy/world-context.md) adds geographic/ocean connectivity and exposure,
-then inspectable geological hypotheses. It must preserve this source contract.
+The [Context page](world-context.md) now implements spherical coverage, connected
+water and local resolution support. The remaining [WC1](strategy/world-context.md)
+work adds verified consumption, finite gateway support, geographic exposure and
+inspectable geological hypotheses while preserving this source contract.
 World terrain, climate, shared history, world-linked regional generation and
 local river enrichment require their own stage gates. Existing local terrain
 builds remain in local metric coordinates; saving a world does not georeference

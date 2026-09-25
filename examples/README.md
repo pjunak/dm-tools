@@ -22,7 +22,9 @@ dmtools world inspect examples/world/four-shores.dmworld.json
 The explicit full-sphere frame is (10, 10)..(370, 190), central meridian 0°,
 radius 6,500 km. Its SVG display size intentionally differs from source units.
 The [world guide](../docs/terrain-worlds.md) explains importing the raw SVG,
-confirming ownership/frame and the boundary before planned context generation.
+confirming ownership/frame. Use **Context → Generate context** or the
+[context command](../docs/world-context.md) to inspect this example's spherical
+coverage, connected exterior water, inland hole and seam-island support.
 
 ## Terrain
 

@@ -270,3 +270,77 @@ def test_tolerated_import_adjustments_validate_save_reopen_and_clear(
     assert len(view.adjustment_tree.get_children()) == 3
     view.values["radius"].set("1100")
     assert view.validated is None and not view.adjustment_tree.get_children()
+
+
+def test_context_generate_inspect_export_and_invalidate(
+    app: ui.TerrainApp,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    view = app.world_workspace
+    view.accept_world(
+        open_world(EXAMPLES / "four-shores.dmworld.json"), EXAMPLES / "four-shores.dmworld.json"
+    )
+    view.context_rows.set("12")
+    view.generate_context()
+    wait_world(app)
+    assert view.context_run is not None
+    assert view.display_layer.get() == "Land coverage"
+    assert "connected water regions" in view.context_detail.get()
+    assert not view.dirty
+    view.display_layer.set("Resolution support")
+    view._layer_changed()
+    view._draw()
+    assert view._photo is not None
+    target = tmp_path / "context"
+
+    def choose_path(**_kwargs: object) -> str:
+        return str(target)
+
+    monkeypatch.setattr(world_ui.filedialog, "asksaveasfilename", choose_path)
+    view.export_context()
+    wait_world(app)
+    assert (target / "context.json").exists()
+    assert "Context exported" in view.status.get()
+    view.context_rows.set("24")
+    assert view.context_run is None and view.display_layer.get() == "Source"
+    assert not view.dirty
+    view.generate_context()
+    wait_world(app)
+    assert view.context_run is not None
+    view.values["radius"].set("5000")
+    assert view.context_run is None and view.dirty
+
+
+def test_context_cancel_and_changed_inputs_never_install_new_results(app: ui.TerrainApp) -> None:
+    view = app.world_workspace
+    view.accept_world(
+        open_world(EXAMPLES / "four-shores.dmworld.json"), EXAMPLES / "four-shores.dmworld.json"
+    )
+    view.context_rows.set("12")
+    view.generate_context()
+    view.cancel_context()
+    wait_world(app)
+    assert view.context_run is None
+    assert "cancelled" in view.status.get()
+    view.generate_context()
+    # Programmatic edits also invalidate a pending result, even though UI controls lock.
+    view.values["radius"].set("4000")
+    wait_world(app)
+    assert view.context_run is None
+    assert "inputs changed" in view.status.get()
+
+
+def test_issue_highlighting_returns_to_source_after_context(app: ui.TerrainApp) -> None:
+    view = app.world_workspace
+    view.accept_world(
+        open_world(EXAMPLES / "four-shores.dmworld.json"), EXAMPLES / "four-shores.dmworld.json"
+    )
+    view.context_rows.set("12")
+    view.generate_context()
+    wait_world(app)
+    assert view.context_run is not None and view.source is not None
+    selected = view.source.features[0].id
+    view._select_issues((selected,))
+    assert view.display_layer.get() == "Source"
+    assert view.tree.selection() == (selected,)

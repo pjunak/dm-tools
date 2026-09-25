@@ -100,3 +100,4 @@ supersedes their legacy compatibility commitments during early development.
 - [ADR-0070: Retain world sources in a dedicated workspace](0070-retain-world-source-and-workspaces.md)
 - [ADR-0071: Interpret exported SVG labels and filled paths](0071-interpret-exported-svg-fills.md)
 - [ADR-0072: Bound world-source imperfections in derived coverage](0072-bound-world-source-imperfections.md)
+- [ADR-0073: Generate spherical geographic context](0073-generate-spherical-geographic-context.md)

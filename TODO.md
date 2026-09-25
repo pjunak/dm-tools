@@ -41,7 +41,7 @@ not a physical river-water validation or a private-map result.
 | Order | Outcome and existing backlog owners | Gate |
 |---|---|---|
 | **A — quality controls** | Quality fixtures, paired maps/profiles, process-scale warnings; convergent-flat comparison (R02/R25/R27/R41/R43) | Fixed comparison set and a measured accept/reject result; no new benchmark framework |
-| **W — next foundation** | Delivered WC0 world source/frame/ownership; next ocean/geographic/province context (WC1; R01/R49) | Preserve authored vectors and global scale; context is provisional, not solved climate |
+| **W — next foundation** | Delivered WC0 and WC1 spherical coverage/water topology; next exposure/province context (R01/R49) | Preserve authored vectors and global scale; context is provisional, not solved climate |
 | **B — next major generation decision** | Build on the measured frozen reconstruction: physical valley/path geometry and grid/capture sensitivity (R48/R32) | Profile gains do not close direction or authoring gates; preserve anchors, cuts, junctions, terminals and coverage before LE3 |
 | **C** | Consolidate one coherent range/pass/tributary/lowland system from the selected comparison (R08/R09/R14/R40/R44) | Better structural/visual results across fixed seeds and physical scales |
 | **W — after B/C acceptance** | Rough world, seasonal climate/runoff feedback and reviewed parent (WC2-WC4; R33/R49) | Physical terrain acceptance, bounded coupling, shared world time and budgets |
@@ -85,10 +85,20 @@ continent-history generation remain planned.
   native/high-precision export comparison when needed. Current reports highlight
   affected shapes but do not automatically zoom or diagnose every export setting.
   Draft mapping saves and bounded import cancellation remain separate follow-ups.
+- [x] **WC1 geography batch:** bounded spherical cell grid, fractional land
+  coverage, vector-derived periodic water connectivity, explicit mixed/subgrid
+  support flags, Context preview, cancellation and reproducible context exports.
+  Area conservation, seam/pole behavior, islands/straits and source/runtime identity
+  controls pass. See the [guide](docs/world-context.md) and
+  [evidence report](docs/research/2026-09-25-geographic-world-context.md).
+- [ ] **WC1 next batch:** verify and reopen context bundles, expose finite gateway
+  support, add geodesic interior distance/directional water exposure, then authored
+  province/default inputs. Dominant cell water IDs must not imply a resolved flow
+  link; native vector connectivity alone does not specify transport capacity.
 - [ ] **WC1 — Generate provisional context** (R07/R10/R11/R49): ocean topology and
   exposure, bathymetric hypotheses, geological provinces and inspectable defaults.
-  First slice: spherical cell areas, fractional coverage, periodic water
-  connectivity and explicit unresolved straits/islands; then fetch/interior distance.
+  Spherical coverage and periodic connected-water inspection are delivered.
+  Exposure, bathymetry/province hypotheses and their acceptance controls remain.
 - [ ] **WC2 — Produce a rough physical world** (R02/R48/R49): process/domain scale,
   related macro relief and ocean basins, after B/C and relevant LE acceptance.
 - [ ] **WC3 — Couple climate/runoff and coarse history** (R33/R49): seasonal budgets,
@@ -1365,12 +1375,15 @@ Priorities remain conditional on the current strategy's prerequisites.
   Existing solutions and optional alternatives are recorded in the
   [source review](docs/research/2026-09-24-world-context-enrichment.md). WC0 source
   handling and its [schema](schemas/world/project-v1.schema.json) are implemented
-  without new runtime dependencies. WC1-WC6 products and acceptance remain open.
+  without new runtime dependencies. WC1 geographic context and its
+  [schema](schemas/world/context-v1.schema.json) are also delivered. Exposure,
+  province inputs and WC2-WC6 products/acceptance remain open.
 
 ## UI / UX improvements
 
-WC0's retained-source/mapping workspace is delivered. Current priorities are
-WC1 support/topology inspection, paired generation comparisons, selected-channel
+WC0's source/mapping workspace and WC1 geographic preview/export are delivered.
+Current priorities are verified context reopening, exposure/province authoring,
+paired generation comparisons, selected-channel
 profiles and process-resolution/conflict feedback
 for A/B. The complete world wizard follows accepted WC2/WC3 products; do not
 expose controls whose backend is absent. Further polish should serve these gates.

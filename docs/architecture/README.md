@@ -107,6 +107,14 @@ The CLI exposes `terrain gui --world` and `world inspect`. No new runtime
 dependency or numerical terrain stage is introduced. See
 [ADR-0070](../adr/0070-retain-world-source-and-workspaces.md).
 
+The [geographic context stage](../world-context.md) is now implemented separately:
+`domain/world_context.py` owns spherical grid/settings, `pipeline/world_context.py`
+owns area-conserving coverage and vector-derived periodic water topology, and
+`application/world_context.py` owns snapshot/runtime checks and generation/export.
+The adapters write numeric/previews and a last-published context manifest. Context
+arrays are cell averages/support, not terrain endpoint elevations. No climate,
+depth or physical transport is inferred from connected-water IDs.
+
 The remaining [world workflow](../strategy/world-context.md) changes future stage
 ownership: retained world source and explicit geography → provisional context →
 rough relief/bathymetry → bounded climate/runoff and history feedback → reviewed
@@ -171,8 +179,8 @@ layer or path boundaries.
 
 ## Planned contracts and remaining decisions
 
-- WC1 spherical coverage, connected-water/gateway and exposure context on the
-  implemented WC0 world source; later WC2-WC5 coupled products and historical
+- Verified WC1 context consumption, finite gateways, geodesic exposure and
+  province inputs after delivered spherical coverage/water topology; later WC2-WC5 coupled products and historical
   parent context
 - Direct per-vertex profiles, explicit passes and asymmetric structural sides
   (point-anchored longitudinal ridge/valley profiles are implemented)

@@ -4,7 +4,7 @@
 
 from dataclasses import dataclass
 from itertools import pairwise
-from math import pi, sin
+from math import cos, fsum, pi, sin
 from typing import Literal
 
 from shapely.affinity import translate
@@ -76,16 +76,29 @@ def _polygons(geometry: BaseGeometry) -> list[Polygon]:
 
 
 def _ring_area(ring: tuple[Point2D, ...], frame: WorldFrame) -> float:
-    # Integrate sin(latitude) d(longitude) along source-linear segments. This
-    # measures the sampled Plate Carree boundary, not geodesic chords between it.
-    integral = 0.0
+    # Integrate sin(latitude) d(longitude) along source-linear segments. Remove
+    # a constant reference sine (whose closed-ring integral is zero) before
+    # summing, so tiny pockets do not cancel large nearly equal contributions.
+    reference_y = ring[0][1]
+    reference = pi / 2 - (reference_y - frame.bounds[1]) / frame.height * pi
+    terms: list[float] = []
     for (x0, y0), (x1, y1) in pairwise(ring):
-        a = pi / 2 - (y0 - frame.bounds[1]) / frame.height * pi
-        b = pi / 2 - (y1 - frame.bounds[1]) / frame.height * pi
-        half_delta = (b - a) / 2
-        sinc = sin(half_delta) / half_delta if half_delta else 1.0
-        integral += (x1 - x0) / frame.width * 2 * pi * sin((a + b) / 2) * sinc
-    return abs(integral) * frame.radius_km**2
+        a = -(y0 - reference_y) / frame.height * pi
+        b = -(y1 - reference_y) / frame.height * pi
+        middle, half_delta = (a + b) / 2, (b - a) / 2
+        squared = half_delta * half_delta
+        # Evaluate sinc(h)-1 directly near zero instead of subtracting two
+        # rounded ones; through h^6 the omitted term is below 3e-22 at |h|=.01.
+        sinc_delta = (
+            squared * (-1 / 6 + squared * (1 / 120 - squared / 5040))
+            if abs(half_delta) < 0.01
+            else sin(half_delta) / half_delta - 1
+        )
+        mean_sine_offset = (
+            2 * cos(reference + middle / 2) * sin(middle / 2) + sin(reference + middle) * sinc_delta
+        )
+        terms.append((x1 - x0) / frame.width * 2 * pi * mean_sine_offset)
+    return abs(fsum(terms)) * frame.radius_km**2
 
 
 def component_area_km2(component: LandComponent, frame: WorldFrame) -> float:
@@ -107,7 +120,7 @@ class _PreparedShape:
     geometry: _Geometry
 
 
-def _components(geometry: BaseGeometry) -> tuple[LandComponent, ...]:
+def components_from_geometry(geometry: BaseGeometry) -> tuple[LandComponent, ...]:
     return tuple(
         LandComponent(
             tuple((float(x), float(y)) for x, y in polygon.exterior.coords),
@@ -222,7 +235,7 @@ def _reconcile_land(
                 shape.feature.id,
                 shape.continent_id,
                 shape.role,
-                _components(geometry),
+                components_from_geometry(geometry),
             )
         )
         accepted.add(index)
@@ -287,9 +300,7 @@ def prepare_world_map(project: WorldProject) -> WorldMap:
             )
         geometry = unary_union(parts)
         assert isinstance(geometry, (Polygon, MultiPolygon))
-        shapes.append(
-            _PreparedShape(feature, assignment.continent_id, assignment.role, geometry)
-        )
+        shapes.append(_PreparedShape(feature, assignment.continent_id, assignment.role, geometry))
     land, overlaps = _reconcile_land(shapes, tolerance)
     adjustments.extend(overlaps)
     summaries = tuple(
