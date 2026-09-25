@@ -98,7 +98,8 @@ neither numerical stages nor native scientific resolution; see
 The [World workspace](../terrain-worlds.md) now adds a separate implemented source
 path: retained SVG → explicit full-sphere frame and semantic assignments → topology
 and area validation → portable world source. `domain/world.py` owns immutable
-inputs and sphere conversions; `pipeline/world.py` owns typed inspection;
+inputs and sphere conversions; `pipeline/world.py` owns bounded preparation,
+non-overlapping coverage, spherical areas and typed adjustment reports;
 `adapters/world_svg.py`, `world_project.py` and `world_render.py` own concrete
 formats/previews. `application/world.py` verifies the snapshot and coordinates
 open/save. `world_ui.py` supplies background jobs, mapping and document guards.

@@ -111,6 +111,9 @@ def _run_world_inspect(arguments: argparse.Namespace) -> int:
     for continent in result.continents:
         print(f"  {continent.name}: {continent.area_km2:,.0f} km²; "
               f"{continent.land_shapes} shapes, {continent.island_shapes} island shapes")
+    print(f"Import adjustments: {len(result.adjustments)}; original SVG retained.")
+    for adjustment in result.adjustments:
+        print(f"  {adjustment.message} ({adjustment.area_source_units2:.6g} square source units)")
     print("Source map only: world climate and terrain generation are not implemented yet.")
     return 0
 

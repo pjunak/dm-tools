@@ -5,14 +5,17 @@
 from dataclasses import dataclass
 from itertools import pairwise
 from math import pi, sin
+from typing import Literal
 
 from shapely.affinity import translate
 from shapely.geometry import GeometryCollection, MultiPolygon, Polygon, box
+from shapely.geometry.base import BaseGeometry
 from shapely.ops import unary_union
 from shapely.strtree import STRtree
 
 from dmtools.terrain.domain.models import LandComponent, Point2D
 from dmtools.terrain.domain.world import (
+    WORLD_BORDER_OVERLAP_FRACTION,
     WorldFeature,
     WorldFrame,
     WorldGeometryError,
@@ -39,20 +42,31 @@ class ContinentSummary:
 
 
 @dataclass(frozen=True, slots=True)
+class WorldAdjustment:
+    kind: Literal["edge_clip", "shared_land", "border_overlap"]
+    feature_ids: tuple[str, ...]
+    area_source_units2: float
+    message: str
+
+
+@dataclass(frozen=True, slots=True)
 class WorldMap:
     project: WorldProject
     land: tuple[WorldLandView, ...]
     continents: tuple[ContinentSummary, ...]
     land_area_km2: float
+    adjustments: tuple[WorldAdjustment, ...] = ()
 
     @property
     def land_fraction(self) -> float:
         return self.land_area_km2 / self.project.frame.surface_area_km2
 
 
-def _polygons(geometry: Polygon | MultiPolygon | GeometryCollection) -> list[Polygon]:
+def _polygons(geometry: BaseGeometry) -> list[Polygon]:
     if isinstance(geometry, Polygon):
         return [] if geometry.is_empty or geometry.area <= 0 else [geometry]
+    if not isinstance(geometry, (MultiPolygon, GeometryCollection)):
+        return []
     return [
         p
         for g in geometry.geoms
@@ -82,25 +96,160 @@ def component_area_km2(component: LandComponent, frame: WorldFrame) -> float:
     )
 
 
+type _Geometry = Polygon | MultiPolygon
+
+
+@dataclass(frozen=True, slots=True)
+class _PreparedShape:
+    feature: WorldFeature
+    continent_id: str
+    role: WorldRole
+    geometry: _Geometry
+
+
+def _components(geometry: BaseGeometry) -> tuple[LandComponent, ...]:
+    return tuple(
+        LandComponent(
+            tuple((float(x), float(y)) for x, y in polygon.exterior.coords),
+            tuple(
+                tuple((float(x), float(y)) for x, y in hole.coords) for hole in polygon.interiors
+            ),
+        )
+        for polygon in sorted(_polygons(geometry), key=lambda p: (*p.bounds, p.area))
+    )
+
+
+def _reconcile_land(
+    shapes: list[_PreparedShape],
+    tolerance: float,
+) -> tuple[tuple[WorldLandView, ...], list[WorldAdjustment]]:
+    geometries = [s.geometry for s in shapes]
+    tree = STRtree(geometries)
+    neighbours: list[list[int]] = [[] for _ in shapes]
+    foreign_overlaps: dict[int, list[BaseGeometry]] = {}
+    bands: dict[int, BaseGeometry] = {}
+    adjustments: list[WorldAdjustment] = []
+    conflicts: list[str] = []
+    affected: set[str] = set()
+    for index, shape in enumerate(shapes):
+        for other in sorted(int(i) for i in tree.query(shape.geometry) if int(i) > index):
+            second = shapes[other]
+            overlap = shape.geometry.intersection(second.geometry)
+            if overlap.area <= 0:
+                continue
+            neighbours[index].append(other)
+            neighbours[other].append(index)
+            ids = (shape.feature.id, second.feature.id)
+            descriptions = f"{shape.feature.description} / {second.feature.description}"
+            if shape.continent_id == second.continent_id:
+                adjustments.append(
+                    WorldAdjustment(
+                        "shared_land",
+                        ids,
+                        float(overlap.area),
+                        f"Overlapping land within one continent is counted once: {descriptions}.",
+                    )
+                )
+                continue
+            for key in (index, other):
+                foreign_overlaps.setdefault(key, []).append(overlap)
+                if key not in bands:
+                    boundary = shapes[key].geometry.boundary
+                    assert boundary is not None  # Prepared shapes contain polygonal land.
+                    bands[key] = boundary.buffer(tolerance)
+            small = overlap.area <= min(shape.geometry.area, second.geometry.area) * (
+                WORLD_BORDER_OVERLAP_FRACTION
+            )
+            if not small or not all(bands[k].covers(overlap) for k in (index, other)):
+                affected.update(ids)
+                if len(conflicts) < 6:
+                    conflicts.append(
+                        f"{shape.feature.description} overlaps {second.feature.description} "
+                        f"by {overlap.area:.6g} square source units."
+                    )
+            else:
+                adjustments.append(
+                    WorldAdjustment(
+                        "border_overlap",
+                        ids,
+                        float(overlap.area),
+                        f"A narrow continent-border overlap is counted once: {descriptions}.",
+                    )
+                )
+    # Fragmenting a border into many small shapes must not evade the per-feature
+    # area budget. Check the union of all foreign overlaps, not only each pair.
+    for index, overlaps in foreign_overlaps.items():
+        shape = shapes[index]
+        if unary_union(overlaps).area > shape.geometry.area * WORLD_BORDER_OVERLAP_FRACTION:
+            if len(conflicts) < 6:
+                conflicts.append(
+                    f"{shape.feature.description}: combined border overlaps exceed "
+                    f"{WORLD_BORDER_OVERLAP_FRACTION:.2%} of this shape's area."
+                )
+            affected.add(shape.feature.id)
+            affected.update(
+                shapes[j].feature.id
+                for j in neighbours[index]
+                if shapes[j].continent_id != shape.continent_id
+            )
+    if affected:
+        raise WorldGeometryError(
+            "Different continents overlap beyond the export tolerance.\n"
+            + "\n".join(conflicts)
+            + "\nResolve these ownership conflicts or outlines. Large overlaps cannot "
+            "be inferred from export rounding; source geometry is unchanged.",
+            tuple(sorted(affected)),
+        )
+    # Assign shared coverage once: mainland first, then larger footprint, then ID.
+    # Subtraction preserves the union and every source ID/assignment. A contained
+    # redundant shape legitimately contributes no additional prepared coverage.
+    order = sorted(
+        range(len(shapes)),
+        key=lambda i: (
+            shapes[i].role != "mainland",
+            -geometries[i].area,
+            shapes[i].feature.id,
+        ),
+    )
+    accepted: set[int] = set()
+    land: list[WorldLandView] = []
+    for index in order:
+        shape = shapes[index]
+        prior = [geometries[j] for j in sorted(neighbours[index]) if j in accepted]
+        geometry = shape.geometry.difference(unary_union(prior)) if prior else shape.geometry
+        land.append(
+            WorldLandView(
+                shape.feature.id,
+                shape.continent_id,
+                shape.role,
+                _components(geometry),
+            )
+        )
+        accepted.add(index)
+    return tuple(sorted(land, key=lambda f: f.feature_id)), adjustments
+
+
 def prepare_world_map(project: WorldProject) -> WorldMap:
-    """Validate assignments/topology and wrap views at the declared world seam."""
+    """Prepare bounded, non-overlapping coverage while retaining the authored source."""
     frame = project.frame
     frame_polygon = box(*frame.bounds)
+    tolerance = frame.geometry_tolerance
     features = {f.id: f for f in project.source.features}
-    land: list[WorldLandView] = []
-    all_polygons: list[Polygon] = []
-    polygon_features: list[WorldFeature] = []
+    shapes: list[_PreparedShape] = []
+    adjustments: list[WorldAdjustment] = []
     for assignment in sorted(project.assignments, key=lambda a: a.feature_id):
         if assignment.continent_id is None:
             continue
         feature = features[assignment.feature_id]
         parts: list[Polygon] = []
+        clipped_area = 0.0
+        overflow = 0.0
         for component in feature.components:
             polygon = Polygon(component.exterior, component.holes)
             x0, y0, x1, y1 = polygon.bounds
+            outside = max(frame.bounds[1] - y0, y1 - frame.bounds[3], 0.0)
             if (
-                y0 < frame.bounds[1]
-                or y1 > frame.bounds[3]
+                outside > tolerance
                 or x1 - x0 > frame.width
                 or x0 < frame.bounds[0] - frame.width
                 or x1 > frame.bounds[2] + frame.width
@@ -108,55 +257,41 @@ def prepare_world_map(project: WorldProject) -> WorldMap:
                 raise WorldGeometryError(
                     f"{feature.description}: land is outside the full-world frame. "
                     f"Shape bounds: ({x0:.9g}, {y0:.9g}) to ({x1:.9g}, {y1:.9g}); "
-                    f"frame: {frame.bounds}. Check export precision and the declared frame; "
-                    "the importer does not move source geometry.",
+                    f"frame: {frame.bounds}. Allowed edge rounding: {tolerance:.6g} source units. "
+                    "Check the declared frame and source geography.",
                     (feature.id,),
                 )
+            component_parts: list[Polygon] = []
             for offset in (-frame.width, 0.0, frame.width):
                 clipped = translate(polygon, xoff=offset).intersection(frame_polygon)
                 if isinstance(clipped, (Polygon, MultiPolygon, GeometryCollection)):
-                    parts.extend(_polygons(clipped))
+                    component_parts.extend(_polygons(clipped))
+            parts.extend(component_parts)
+            if outside > 0:
+                overflow = max(overflow, outside)
+                clipped_area += max(0.0, polygon.area - sum(p.area for p in component_parts))
         if not parts:
-            raise ValueError(f"{feature.label}: no land lies inside the world frame.")
-        all_polygons.extend(parts)
-        polygon_features.extend([feature] * len(parts))
-        components = tuple(
-            LandComponent(
-                tuple((float(x), float(y)) for x, y in polygon.exterior.coords),
-                tuple(
-                    tuple((float(x), float(y)) for x, y in hole.coords)
-                    for hole in polygon.interiors
-                ),
+            raise WorldGeometryError(
+                f"{feature.description}: no land lies inside the world frame.",
+                (feature.id,),
             )
-            for polygon in sorted(parts, key=lambda p: (*p.bounds, p.area))
+        if overflow > 0:
+            adjustments.append(
+                WorldAdjustment(
+                    "edge_clip",
+                    (feature.id,),
+                    clipped_area,
+                    f"Trimmed {overflow:.6g} source units of export overflow at the world edge: "
+                    f"{feature.description}.",
+                )
+            )
+        geometry = unary_union(parts)
+        assert isinstance(geometry, (Polygon, MultiPolygon))
+        shapes.append(
+            _PreparedShape(feature, assignment.continent_id, assignment.role, geometry)
         )
-        land.append(WorldLandView(feature.id, assignment.continent_id, assignment.role, components))
-    merged = unary_union(all_polygons)
-    if sum(p.area for p in all_polygons) - merged.area > frame.width * frame.height * 1e-12:
-        # Only inspect pairs after the aggregate check fails. The spatial index
-        # keeps diagnostics bounded to nearby shapes instead of every possible pair.
-        tree = STRtree(all_polygons)
-        conflicts: list[str] = []
-        affected: set[str] = set()
-        for index, polygon in enumerate(all_polygons):
-            for other in sorted(int(i) for i in tree.query(polygon) if int(i) > index):
-                area = polygon.intersection(all_polygons[other]).area
-                if area <= 0:
-                    continue
-                first, second = polygon_features[index], polygon_features[other]
-                affected.update((first.id, second.id))
-                if len(conflicts) < 6:
-                    conflicts.append(
-                        f"{first.description} overlaps {second.description} "
-                        f"by {area:.6g} square source units."
-                    )
-        raise WorldGeometryError(
-            "Assigned land shapes overlap in area, including across the world seam.\n"
-            + "\n".join(conflicts)
-            + "\nCheck export precision, duplicate layers and source outlines. "
-            "Review these shapes; source geometry is unchanged.",
-            tuple(sorted(affected)),
-        )
+    land, overlaps = _reconcile_land(shapes, tolerance)
+    adjustments.extend(overlaps)
     summaries = tuple(
         ContinentSummary(
             continent.id,
@@ -172,4 +307,12 @@ def prepare_world_map(project: WorldProject) -> WorldMap:
         )
         for continent in sorted(project.continents, key=lambda c: (c.name.casefold(), c.id))
     )
-    return WorldMap(project, tuple(land), summaries, sum(s.area_km2 for s in summaries))
+    for summary in summaries:
+        if not any(f.components for f in land if f.continent_id == summary.id):
+            raise WorldGeometryError(
+                f"{summary.name}: no independent land remains after resolving overlaps.",
+                tuple(f.feature_id for f in land if f.continent_id == summary.id),
+            )
+    return WorldMap(
+        project, land, summaries, sum(s.area_km2 for s in summaries), tuple(adjustments)
+    )

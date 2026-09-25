@@ -9,6 +9,7 @@ from typing import cast
 
 from dmtools.terrain.adapters.world_svg import WORLD_IMPORTER, parse_world_svg
 from dmtools.terrain.domain.world import (
+    WORLD_PREPARATION,
     WorldAssignment,
     WorldContinent,
     WorldFrame,
@@ -59,6 +60,7 @@ def world_project_document(project: WorldProject) -> dict[str, object]:
         "schema": WORLD_SCHEMA,
         "version": WORLD_VERSION,
         "importer": WORLD_IMPORTER,
+        "preparation": WORLD_PREPARATION,
         "name": project.name,
         "source": {
             "name": project.source.name,
@@ -89,6 +91,7 @@ def read_world_project(path: Path) -> WorldProject:
                 "schema",
                 "version",
                 "importer",
+                "preparation",
                 "name",
                 "source",
                 "frame",
@@ -102,8 +105,11 @@ def read_world_project(path: Path) -> WorldProject:
             or type(version) is not int
             or version != WORLD_VERSION
             or document["importer"] != WORLD_IMPORTER
+            or document["preparation"] != WORLD_PREPARATION
         ):
-            raise ValueError("Unsupported world format or SVG importer version.")
+            raise ValueError(
+                "Unsupported world format, importer or preparation version; import the SVG again."
+            )
         source_record = _mapping(document["source"], {"name", "sha256", "svg"})
         source = parse_world_svg(_string(source_record["svg"]), _string(source_record["name"]))
         if source.sha256 != source_record["sha256"]:

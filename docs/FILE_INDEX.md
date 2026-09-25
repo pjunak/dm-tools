@@ -2,11 +2,11 @@
 
 Updated 2026-09-25. Scope: every version-controlled Markdown document in DM Tools,
 plus the vendored license notice, including world-source implementation and
-export-import correction documents. Generated builds, caches, dependency
+export-import correction and bounded preparation documents. Generated builds, caches, dependency
 documentation and private campaign files are excluded. The public JSON schemas and reference dependency
 lock are listed separately as supporting contracts, not counted as prose docs.
 
-**168 Markdown files + 1 legal notice = 169 documentation files.**
+**170 Markdown files + 1 legal notice = 171 documentation files.**
 Each file appears once below, including this inventory. Document titles describe
 their subject; the group description identifies their role and authority.
 
@@ -20,11 +20,11 @@ remains the entry point for normal use. All are individually linked in the list 
 | Active plans and indexes | 10 |
 | User guides and current contracts | 15 |
 | Developer and reference guides | 8 |
-| Architecture decision records | 71 |
-| Dated research reports | 58 |
+| Architecture decision records | 72 |
+| Dated research reports | 59 |
 | Maintenance reports | 2 |
 | Legal notice | 1 |
-| **Total** | **169** |
+| **Total** | **171** |
 
 ## Project entry and guidance (4)
 
@@ -91,7 +91,7 @@ Subsystem, fixture, schema, test and benchmark guidance.
 | [src/dmtools/terrain/pipeline/README.md](../src/dmtools/terrain/pipeline/README.md) | Numeric generation and inspection responsibilities. |
 | [tests/README.md](../tests/README.md) | Test organization, commands and verification expectations. |
 
-## Architecture decision records (71)
+## Architecture decision records (72)
 
 Accepted historical decisions. Preserve their original context; consult the current status and implementation for later changes. The ADR index is listed among active indexes.
 
@@ -168,14 +168,16 @@ Accepted historical decisions. Preserve their original context; consult the curr
 | [docs/adr/0069-connect-and-scale-drainage-review.md](adr/0069-connect-and-scale-drainage-review.md) | ADR-0069: Connect and scale drainage review |
 | [docs/adr/0070-retain-world-source-and-workspaces.md](adr/0070-retain-world-source-and-workspaces.md) | Retain world sources in a dedicated workspace. |
 | [docs/adr/0071-interpret-exported-svg-fills.md](adr/0071-interpret-exported-svg-fills.md) | Interpret exported SVG headers, labels and complex filled paths. |
+| [docs/adr/0072-bound-world-source-imperfections.md](adr/0072-bound-world-source-imperfections.md) | Bound minor export imperfections in derived coverage and report adjustments. |
 
-## Dated research reports (58)
+## Dated research reports (59)
 
 Primary-source reviews, experiments and implementation evidence at their recorded date/revision. A title or citation is not evidence that a tool was adopted. Current status is listed above.
 
 | File | Purpose or document title |
 |---|---|
 | [docs/research/2026-09-24-world-context-enrichment.md](research/2026-09-24-world-context-enrichment.md) | World context before continental terrain: research and recommendation |
+| [docs/research/2026-09-25-bounded-world-preparation.md](research/2026-09-25-bounded-world-preparation.md) | Bounded world preparation, source retention, overlap controls and UI/save evidence. |
 | [docs/research/2026-09-25-world-import-corrections.md](research/2026-09-25-world-import-corrections.md) | SVG import corrections, regression evidence and source-quality limits. |
 | [docs/research/2026-09-25-world-source-workspace.md](research/2026-09-25-world-source-workspace.md) | WC0 implementation, UI/contract validation and bounded world import/render timings. |
 | [docs/research/2026-09-24-progress-and-generation-strategy.md](research/2026-09-24-progress-and-generation-strategy.md) | Progress and generation strategy reassessment — 2026-09-24 |

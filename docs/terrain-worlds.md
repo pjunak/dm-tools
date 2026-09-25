@@ -52,9 +52,11 @@ remain available in the same window, with separate documents and dirty states.
 5. In **World frame**, enter your planet radius and the exact projection bounds.
    The SVG `viewBox` supplies an initial suggestion, not proof of that frame.
    Remove page margins, legends and scale bars from the geographic rectangle.
-6. Click **Validate world**. Resolve reported invalid shapes, unassigned objects,
-   out-of-frame land or overlapping land. Touching continents are allowed;
-   positive-area duplicate fills are not silently dissolved.
+6. Click **Validate world**. Tiny export overflow and narrow border overlaps are
+   handled in derived coverage, and shared land within one continent is counted
+   once. Review the **Adjustments** tab; selecting a report highlights its original
+   source shapes. Larger cross-continent conflicts, invalid shapes, unassigned
+   objects and substantial out-of-frame land still require correction.
 7. **Save As** a `.dmworld.json` file. Reopen it to review the same source and
    membership. Save rechecks the original snapshot and geometry before replacing
    an existing file atomically. Failed validation leaves the existing file intact.
@@ -84,7 +86,9 @@ continent's last shape elsewhere removes that now-unused owner; Undo can restore
 - Selecting a shape shows its source group path, exact ID and any import issue.
   Import problems are marked **Needs attention**, counted in the summary and
   selected after import. Validation selects out-of-frame or overlapping shapes
-  and reports their group paths, IDs and bounds/overlap areas. **Show excluded
+  and reports their group paths, IDs and bounds/overlap areas. Successful validation,
+  opening and saving populate **Adjustments** with bounded preparation changes.
+  Editing inputs clears that report until the next validation. **Show excluded
   shapes** affects only the preview, never assignments or validation.
 - **Ctrl+O**, **Ctrl+S**, **Ctrl+Shift+S**, **Ctrl+Z**, **Ctrl+Y**, **F** and
   **Ctrl+Enter** act on the active workspace. In World, Ctrl+Enter validates.
@@ -123,10 +127,35 @@ segments' winding numbers. This interprets SVG fill semantics; it does not heal
 coastlines. Tiny gaps and holes are not repaired away.
 The existing local terrain importer has a different dissolve/repair contract.
 
-For preview/area checks, derived geometry is wrapped and clipped at the declared
-longitude frame. Source coordinates never change. Surface areas integrate the
-sampled source-linear boundary on the declared sphere; they are neither flat-page
-areas nor geodesic-chord polygon areas. Touching shapes stay separate owners.
+Derived coverage is wrapped and clipped at the declared longitude frame. The
+preview continues to show the retained source, with selected shapes highlighted;
+it is not a view of edited SVG paths. Source coordinates never change. Surface
+areas integrate the prepared source-linear boundary on the declared sphere;
+they are neither flat-page areas nor geodesic-chord polygon areas.
+
+Preparation handles three cases and reports every affected shape:
+
+- **Rounded world edge:** north/south overflow no greater than 0.001% of the
+  shorter frame dimension is clipped in derived coverage. This tolerance scales
+  with source units. The projection frame is never enlarged. Entirely outside
+  shapes and larger overflow remain errors.
+- **Shared land within one continent:** overlapping or contained filled shapes
+  contribute their union once. Every original ID, role and ownership assignment
+  remains present; a completely redundant shape has no independent prepared area.
+  It is not changed to Exclude.
+- **Narrow continent-border overlap:** shared coverage must lie within the same
+  linear tolerance of both shape boundaries and occupy at most 0.01% of each
+  shape's area. The union of all foreign overlaps must also fit that per-shape
+  area budget. A tiny island inside a different continent and a small deep overlap
+  therefore remain ownership conflicts.
+
+Shared coverage goes to mainland before islands, then to the larger prepared
+footprint, then to the stable feature ID to break a tie. This yields disjoint
+coverage without losing the land union or double-counting spherical area.
+Touching continents retain separate owners. Gaps and holes are not filled.
+The report gives affected source IDs, group paths and shared/trimmed planar area
+in square source units. These values are diagnostics, not physical square km.
+See [ADR-0072](adr/0072-bound-world-source-imperfections.md) for the policy.
 
 The source importer accepts at most 8 MiB, 30,000 XML elements, 4,096 shapes and
 500,000 retained inspection points. These are input limits, not an OS memory
@@ -145,17 +174,21 @@ Both current Affinity (`https://www.affinity.studio/`) and Serif
 For precision-sensitive coastlines, export with more decimal places and flattened
 transforms when available; rounded transform coefficients can displace a polar
 edge or turn a shared border into a tiny overlap. Higher export precision cannot
-remove genuine duplicate/overlapping shapes. Inspect the reported IDs and fix the
-source or explicitly exclude redundant objects. Do not enlarge the established
-world frame or rescale a continent to make a validation error disappear.
+remove genuine duplicate/overlapping shapes. The bounded preparation above handles
+minor discrepancies automatically and reports them. For conflicts beyond its
+limits, inspect the reported IDs and correct the source or ownership. Do not
+enlarge the established world frame or rescale a continent to bypass validation.
 
 The [world project schema](../schemas/world/project-v1.schema.json) owns current
 serialized fields. Its `retained-svg-v2` importer identity records how inspection
-geometry is reconstructed. Saved world files are bounded to 32 MiB. Unsupported
-versions, projections and unknown fields fail rather than fall back to a guessed
-format. World files from the previous importer must be reimported from their
-original SVG; they are not migrated. This project has no legacy-save compatibility
-policy. [ADR-0071](adr/0071-interpret-exported-svg-fills.md) records the change.
+geometry is reconstructed; `preparation: bounded-world-v1` identifies the derived
+coverage rules. Reports and prepared geometry are recomputed from the retained
+source and assignments on opening, validation and saving. Saved world files are
+bounded to 32 MiB. Unsupported identities, projections and unknown fields fail
+rather than fall back to a guessed format. Previous world snapshots must be
+reimported from their original SVG; they are not migrated. This project has no
+legacy-save compatibility policy. [ADR-0071](adr/0071-interpret-exported-svg-fills.md)
+and [ADR-0072](adr/0072-bound-world-source-imperfections.md) record these identities.
 
 ## What follows
 

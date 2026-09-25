@@ -75,10 +75,15 @@ continent-history generation remain planned.
   paths with SVG winding rules. Show import/exclusion counts and select shapes
   responsible for validation failures. See the
   [follow-up report](docs/research/2026-09-25-world-import-corrections.md).
-- [ ] **WC0 source-quality follow-up:** add a reviewable import report covering
-  export precision, polar bounds and overlapping/contained shapes together, with
-  zoom-to-conflict navigation. Compare native/high-precision exports before
-  proposing any bounded derived tolerance; keep authored source and frame intact.
+- [x] **WC0 bounded source preparation:** tolerate tiny polar export overflow,
+  count same-continent shared coverage once, and resolve thin cross-continent
+  border overlaps within linear and aggregate area limits. Keep the original
+  source/frame/assignments, record preparation identity, and expose selectable
+  adjustments in the editor and CLI. See the
+  [validation report](docs/research/2026-09-25-bounded-world-preparation.md).
+- [ ] **WC0 source-quality follow-up:** add zoom-to-conflict navigation and broader
+  native/high-precision export comparison when needed. Current reports highlight
+  affected shapes but do not automatically zoom or diagnose every export setting.
   Draft mapping saves and bounded import cancellation remain separate follow-ups.
 - [ ] **WC1 — Generate provisional context** (R07/R10/R11/R49): ocean topology and
   exposure, bathymetric hypotheses, geological provinces and inspectable defaults.

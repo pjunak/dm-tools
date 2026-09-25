@@ -154,6 +154,7 @@ class WorldWorkspace(ttk.Frame):
         sidebar.columnconfigure(0, weight=1)
         sidebar.rowconfigure(0, weight=1)
         pages = ttk.Notebook(sidebar, width=390)
+        self.pages = pages
         pages.grid(row=0, column=0, sticky="nsew")
         mapping = ttk.Frame(pages, style="Panel.TFrame", padding=8)
         frame_page = ttk.Frame(pages, style="Panel.TFrame", padding=12)
@@ -240,6 +241,43 @@ class WorldWorkspace(ttk.Frame):
             style="Muted.TLabel",
             wraplength=335,
         ).grid(row=17, column=0, sticky="ew", pady=12)
+        self.adjustments_page = ttk.Frame(pages, style="Panel.TFrame", padding=8)
+        pages.add(self.adjustments_page, text="Adjustments")
+        self.adjustments_page.columnconfigure(0, weight=1)
+        self.adjustments_page.rowconfigure(1, weight=1)
+        ttk.Label(
+            self.adjustments_page,
+            text="Import adjustments",
+            style="Value.TLabel",
+        ).grid(row=0, column=0, sticky="w", pady=(0, 8))
+        self.adjustment_tree = ttk.Treeview(
+            self.adjustments_page,
+            show="tree",
+            selectmode="browse",
+            height=6,
+        )
+        self.adjustment_tree.grid(row=1, column=0, sticky="nsew")
+        self.adjustment_tree.column("#0", width=330, minwidth=160)
+
+        def scroll_adjustments(*args: str) -> None:
+            self.adjustment_tree.yview(*args)
+
+        adjustment_scroll = ttk.Scrollbar(
+            self.adjustments_page,
+            orient="vertical",
+            command=scroll_adjustments,
+        )
+        adjustment_scroll.grid(row=1, column=1, sticky="ns")
+        self.adjustment_tree.configure(yscrollcommand=adjustment_scroll.set)
+        self.adjustment_tree.bind("<<TreeviewSelect>>", self._review_adjustment)
+        self.adjustment_detail = ttk.Label(
+            self.adjustments_page,
+            style="Body.TLabel",
+            wraplength=335,
+            text="Validate the world to inspect export rounding and shared land. "
+            "The original SVG and assignments are retained.",
+        )
+        self.adjustment_detail.grid(row=2, column=0, columnspan=2, sticky="ew", pady=12)
         self._button(sidebar, "Validate world", self.validate, accent=True).grid(
             row=1, column=0, sticky="ew", pady=(10, 5)
         )
@@ -285,6 +323,9 @@ class WorldWorkspace(ttk.Frame):
         if self._loading:
             return
         self.validated = None
+        self.adjustment_tree.delete(*self.adjustment_tree.get_children())
+        self.pages.tab(self.adjustments_page, text="Adjustments")
+        self.adjustment_detail.configure(text="Validate the world to inspect import adjustments.")
         if self.source:
             remaining = len(self.source.features) - len(self.assignments)
             excluded = sum(a.role == "exclude" for a in self.assignments)
@@ -369,7 +410,10 @@ class WorldWorkspace(ttk.Frame):
                 if isinstance(event, _Saved):
                     self.path = event.path
                     self._saved_signature = self._signature()
-                    self.status.set(f"Saved {event.path.name}. Original SVG is embedded.")
+                    self.status.set(
+                        f"Saved {event.path.name}. Original SVG is embedded. "
+                        f"{len(result.adjustments)} import adjustments recorded by preparation."
+                    )
                     self.on_change()
                     callback, self._after_save = self._after_save, None
                     if callback:
@@ -379,7 +423,8 @@ class WorldWorkspace(ttk.Frame):
                 else:
                     self.status.set(
                         "World source validated. Save it to retain this geography and "
-                        "continent assignment. Context generation follows later."
+                        f"continent assignment. {len(result.adjustments)} import adjustments "
+                        "are listed in the Adjustments tab."
                     )
         self._poll_id = self._scheduler.after(80, self._poll)
 
@@ -463,7 +508,10 @@ class WorldWorkspace(ttk.Frame):
         self._saved_signature = self._signature()
         self._populate()
         self._show_summary(world)
-        self.status.set(f"Opened {path.name}. Source geometry and ownership verified.")
+        self.status.set(
+            f"Opened {path.name}. Source and ownership verified; "
+            f"{len(world.adjustments)} import adjustments."
+        )
         self.on_change()
         self._schedule_draw()
 
@@ -685,13 +733,46 @@ class WorldWorkspace(ttk.Frame):
             action()
 
     def _show_summary(self, world: WorldMap) -> None:
+        self.adjustment_tree.delete(*self.adjustment_tree.get_children())
+        titles = {
+            "edge_clip": "Rounded world edge",
+            "shared_land": "Shared land within one continent",
+            "border_overlap": "Narrow continent-border overlap",
+        }
+        for index, adjustment in enumerate(world.adjustments):
+            self.adjustment_tree.insert("", "end", iid=str(index), text=titles[adjustment.kind])
+        self.pages.tab(self.adjustments_page, text=f"Adjustments ({len(world.adjustments)})")
+        self.adjustment_detail.configure(
+            text=(
+                "Select an adjustment to highlight its source shapes. "
+                "Prepared coverage counts shared land once. "
+                "Original SVG and assignments are retained."
+                if world.adjustments
+                else "No import adjustments were needed."
+            )
+        )
         names = " · ".join(f"{c.name}: {c.area_km2:,.0f} km²" for c in world.continents)
         self.summary.set(
             f"{len(world.continents)} continents · {world.land_fraction:.1%} land · "
             f"radius {world.project.frame.radius_km:,.0f} km\n{names}\n"
-            "Areas use sampled boundaries on the declared sphere. "
+            f"{len(world.adjustments)} import adjustments; see the Adjustments tab. "
+            "Areas use prepared coverage on the declared sphere. "
             "World source is ready; climate and terrain are not generated yet."
         )
+
+    def _review_adjustment(self, _event: tk.Event[tk.Misc] | None = None) -> None:
+        selected = self.adjustment_tree.selection()
+        if self.busy or self.validated is None or not selected:
+            return
+        adjustment = self.validated.adjustments[int(selected[0])]
+        self.adjustment_detail.configure(
+            text=(
+                adjustment.message + f"\n\nShared/trimmed area: "
+                f"{adjustment.area_source_units2:.6g} square source units. "
+                "Original SVG and assignments are unchanged."
+            )
+        )
+        self._select_issues(adjustment.feature_ids)
 
     def _bounds(self) -> tuple[float, float, float, float]:
         try:

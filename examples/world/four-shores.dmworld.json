@@ -73,5 +73,6 @@
       "continent_id": "continent-992d020104e84fe8a152",
       "role": "mainland"
     }
-  ]
+  ],
+  "preparation": "bounded-world-v1"
 }

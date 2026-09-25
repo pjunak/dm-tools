@@ -12,6 +12,10 @@ in the current status or a new dated report.
 
 ## Current reassessment
 
+- [Bounded world preparation — 2026-09-25](2026-09-25-bounded-world-preparation.md)
+  handles minor edge/border discrepancies and same-owner shared land in derived
+  coverage, retaining original source with selectable adjustment reports.
+
 - [World SVG import corrections — 2026-09-25](2026-09-25-world-import-corrections.md)
   fixes exported headers, semantic layer labels and self-crossing fill semantics;
   makes exclusions and source geometry conflicts visible for review.

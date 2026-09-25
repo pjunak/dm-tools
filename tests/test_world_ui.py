@@ -203,7 +203,7 @@ def test_validation_selects_overlapping_shapes(
         parse_world_svg(
             '<svg viewBox="0 0 360 180"><g id="North">'
             '<path id="first" d="M10 10 H30 V30 H10 Z"/>'
-            '<path id="second" d="M20 20 H40 V40 H20 Z"/>'
+            '</g><g id="South"><path id="second" d="M20 20 H40 V40 H20 Z"/>'
             '<path id="separate" d="M100 100 H120 V120 H100 Z"/></g></svg>',
             "overlap.svg",
         )
@@ -221,3 +221,52 @@ def test_validation_selects_overlapping_shapes(
     assert errors and "100 square source units" in errors[0]
     assert set(view.tree.selection()) == {"first", "second"}
     assert view.validated is None
+
+
+def test_tolerated_import_adjustments_validate_save_reopen_and_clear(
+    app: ui.TerrainApp,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from dmtools.terrain.adapters.world_svg import parse_world_svg
+
+    view = app.world_workspace
+    view.accept_source(
+        parse_world_svg(
+            '<svg viewBox="0 0 360 180"><g id="West">'
+            '<path id="west" d="M10 170 H100 V180.0009 H10 Z"/>'
+            '<path id="contained" d="M20 172 H30 V175 H20 Z"/></g>'
+            '<g id="East"><path id="east" d="M99.9995 170 H180 V180 H99.9995 Z"/></g></svg>',
+            "rounding.svg",
+        )
+    )
+    source = view.source
+    view.suggest_groups()
+    assignments = view.assignments
+    view.values["radius"].set("1000")
+    view.validate()
+    wait_world(app)
+    assert view.validated is not None
+    assert len(view.validated.adjustments) == 3
+    assert "3 import adjustments" in view.summary.get()
+    view.pages.select(view.adjustments_page)
+    view.adjustment_tree.selection_set("0")
+    view._review_adjustment()
+    assert set(view.tree.selection()) == set(view.validated.adjustments[0].feature_ids)
+    assert "export overflow" in str(view.adjustment_detail.cget("text"))
+    target = tmp_path / "accepted.dmworld.json"
+
+    def save_path(**_kwargs: object) -> str:
+        return str(target)
+
+    monkeypatch.setattr(world_ui.filedialog, "asksaveasfilename", save_path)
+    view.save()
+    wait_world(app)
+    assert target.exists() and not view.dirty
+    view.load_world(target)
+    wait_world(app)
+    assert view.source == source and set(view.assignments) == set(assignments)
+    assert view.validated is not None and len(view.validated.adjustments) == 3
+    assert len(view.adjustment_tree.get_children()) == 3
+    view.values["radius"].set("1100")
+    assert view.validated is None and not view.adjustment_tree.get_children()

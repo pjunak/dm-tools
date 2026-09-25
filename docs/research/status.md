@@ -1,6 +1,6 @@
 # Current terrain research status
 
-Reconciled on 2026-09-25 for WC0 implementation and export-import corrections. The
+Reconciled on 2026-09-25 for WC0 import corrections and bounded source preparation. The
 2026-09-24 generation measurements and scientific-tool audit below retain their
 own revision/date; this world-source batch does not rerun terrain-quality probes.
 This is a status map; [TODO](../../TODO.md) owns the research register and the
@@ -61,10 +61,14 @@ The [import follow-up](2026-09-25-world-import-corrections.md) fixes ordinary
 DOCTYPE handling, modern Affinity layer labels, anonymous wrapper ownership and
 self-crossing SVG fill interpretation. Import/exclusion counts and selected
 validation conflicts make remaining source defects visible. The importer identity
-is now `retained-svg-v2`; previous world snapshots require reimport. Strict
-projection bounds and cross-shape overlap checks remain in place. A consolidated
-source-quality review and precision comparison remain follow-ups, not an automatic
-coastline repair feature.
+is now `retained-svg-v2`. The subsequent
+[bounded preparation batch](2026-09-25-bounded-world-preparation.md) adds
+`bounded-world-v1`: tiny polar overflow is clipped in derived coverage, shared
+same-continent land is counted once, and narrow foreign border overlaps are
+resolved within linear and cumulative area limits. The original SVG, frame and
+assignments remain unchanged. The editor lists selectable adjustments; larger
+conflicts still fail. Previous snapshots require reimport. Zoom-to-conflict,
+broader export comparisons, draft saves and import cancellation remain follow-ups.
 
 ## Implemented experimental history model
 
@@ -97,7 +101,7 @@ later dependent work. No post-generation modification is introduced.
 
 | Area | Implemented behavior | Remaining boundary |
 |---|---|---|
-| World source (WC0) | Retained embedded SVG, full-sphere frame/radius, seam/polar/area controls, continent/island mapping, independent World tab, portable atomic saves and CLI inspect ([guide](../terrain-worlds.md)) | WC1 connectivity/exposure, partial-draft save, cancel/checkpoint imports, other projections and world-linked terrain |
+| World source (WC0) | Retained embedded SVG, full-sphere frame/radius, seam/polar/area controls, continent/island mapping, bounded preparation with selectable adjustments, independent World tab, portable atomic saves and CLI inspect ([guide](../terrain-worlds.md)) | WC1 connectivity/exposure, partial-draft save, cancel/checkpoint imports, other projections and world-linked terrain |
 | Input editor | Retained reference with freshness, geographic pan/zoom, property/geometry edits, undo/redo, guarded Save/Save As, resolution presets, ground inspection and cooperative Cancel/Esc with elapsed stage progress ([ADR-0064](../adr/0064-cancel-generation-at-safe-checkpoints.md)) | Automatic draft preview, comparison views, vertex insertion/removal, climate-region inputs; individual native steps have no stop-latency bound |
 | Local numeric builds | Saved-project CLI, Float32 NPY/GeoTIFF, review NPZ, previews, diagnostics and completion hashes | World placement, vector products, external desktop GIS acceptance |
 | Scale-aware water display | Cached sampled-pool screen areas, fading small lakes, fixed-size viewport rendering, native PNG policy and actual ground-spacing readout ([ADR-0057](../adr/0057-display-water-at-the-appropriate-scale.md)) | Physical river size/width model and resolution-gated local hydrology; connected scale selection and complete diagnostic review are implemented ([ADR-0069](../adr/0069-connect-and-scale-drainage-review.md)) |

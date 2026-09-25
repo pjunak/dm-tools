@@ -8,6 +8,7 @@
     "schema",
     "version",
     "importer",
+    "preparation",
     "name",
     "source",
     "frame",
@@ -177,6 +178,9 @@
           }
         ]
       }
+    },
+    "preparation": {
+      "const": "bounded-world-v1"
     }
   }
 }

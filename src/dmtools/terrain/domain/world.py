@@ -9,6 +9,10 @@ from dmtools.terrain.domain.models import LandComponent, Point2D
 type WorldRole = Literal["mainland", "island", "exclude"]
 type Bounds = tuple[float, float, float, float]
 
+WORLD_PREPARATION = "bounded-world-v1"
+WORLD_EDGE_TOLERANCE_FRACTION = 1e-5
+WORLD_BORDER_OVERLAP_FRACTION = 1e-4
+
 
 def _name(value: object, label: str) -> None:
     if not isinstance(value, str) or not value.strip() or len(value) > 256:
@@ -46,6 +50,11 @@ class WorldFrame:
     @property
     def height(self) -> float:
         return self.bounds[3] - self.bounds[1]
+
+    @property
+    def geometry_tolerance(self) -> float:
+        """Source-space export tolerance, independent of display zoom and planet radius."""
+        return min(self.width, self.height) * WORLD_EDGE_TOLERANCE_FRACTION
 
     @property
     def surface_area_km2(self) -> float:

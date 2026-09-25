@@ -41,6 +41,17 @@ def world(body: str) -> WorldProject:
     )
 
 
+def different_owners(project: WorldProject) -> WorldProject:
+    return replace(
+        project,
+        continents=(WorldContinent("c", "First"), WorldContinent("other", "Second")),
+        assignments=tuple(
+            replace(a, continent_id="c" if index == 0 else "other")
+            for index, a in enumerate(project.assignments)
+        ),
+    )
+
+
 def test_explicit_frame_roundtrips_offset_radius_and_central_meridian() -> None:
     frame = WorldFrame((17, 11, 2897, 1451), 4321, 35)
     for point in ((17.0, 11.0), (2897.0, 1451.0), (1457.0, 731.0), (45.0, 400.0)):
@@ -145,7 +156,7 @@ def test_seam_and_ordinary_overlaps_are_explicit_errors() -> None:
         '<path id="a" d="M355 80 H365 V100 H355 Z"/><path id="b" d="M0 80 H10 V100 H0 Z"/>',
     ):
         with pytest.raises(ValueError, match="overlap"):
-            prepare_world_map(world(paths))
+            prepare_world_map(different_owners(world(paths)))
 
 
 def test_source_order_does_not_change_stable_feature_identity_or_area() -> None:
@@ -218,7 +229,9 @@ def test_portable_roundtrip_needs_no_original_svg(tmp_path: Path) -> None:
     )
 
 
-@pytest.mark.parametrize("change", ["hash", "projection", "version", "extra", "duplicate"])
+@pytest.mark.parametrize(
+    "change", ["hash", "projection", "version", "preparation", "extra", "duplicate"]
+)
 def test_bad_world_files_fail_without_fallback(tmp_path: Path, change: str) -> None:
     document = world_project_document(read_world_project(EXAMPLE))
     raw = json.dumps(document)
@@ -228,6 +241,8 @@ def test_bad_world_files_fail_without_fallback(tmp_path: Path, change: str) -> N
         raw = raw.replace('"plate-carree"', '"mercator"')
     elif change == "version":
         raw = raw.replace('"version": 1', '"version": true')
+    elif change == "preparation":
+        raw = raw.replace('"bounded-world-v1"', '"unknown-preparation"')
     elif change == "extra":
         raw = raw[:-1] + ', "unknown": 1}'
     else:
@@ -492,6 +507,7 @@ def test_geometry_errors_identify_exact_source_shapes(outside: bool) -> None:
         )
         + "</g>"
     )
+    project = different_owners(project)
     original = project.source
     with pytest.raises(WorldGeometryError) as error:
         prepare_world_map(project)

@@ -68,14 +68,18 @@ physical process resolution and display zoom are separate settings.
   land may cross continent labels; an island's owner cannot be guessed from its
   nearest mainland. Catchments and geology can cross these labels.
 - Exclude legends, scale bars, labels and decorative fills by explicit import
-  selection/mapping. Ambiguous groups, duplicate IDs, unusable fills, overlaps and
-  unassigned land require visible resolution; do not silently discard or dissolve
-  them. Geometry repair, if needed, is a proposed input revision with a preview.
+  selection/mapping. Ambiguous groups, duplicate IDs, unusable fills and unassigned
+  land require visible resolution. [ADR-0072](../adr/0072-bound-world-source-imperfections.md)
+  permits reported, bounded preparation of derived coverage: tiny polar overflow,
+  same-owner shared land and narrow foreign border overlaps. Original source,
+  assignments and frame remain authoritative; larger foreign conflicts still fail.
+  Source geometry repair remains a separate proposed input revision with a preview.
 - The first input is SVG plus explicit world metadata and retained element/group
   mappings. Read group transforms, holes and selected paths. SVG self-crossings
   are interpreted through their fill rule, not rejected as invalid simple rings.
-  Before WC1 uses imported geography, source-quality follow-up should consolidate
-  precision/overlap/bounds diagnostics without silently repairing coastlines.
+  Bounds/overlap adjustments are now consolidated in a selectable report and
+  prepared coverage counts area once. WC1 must consume this prepared coverage and
+  its preparation identity, not independently sum original overlapping fills.
   Raster segmentation,
   vector geospatial imports and native Affinity import are separate later options;
   do not imply that the current SVG importer reads `.af` documents.
@@ -319,6 +323,8 @@ ship before preserving world coordinates.
 and the [implementation report](../research/2026-09-25-world-source-workspace.md)
 record the shipped workspace and public controls. Original SVG remains
 authoritative; flattened inspection geometry and area have explicit tolerance.
+The [preparation follow-up](../research/2026-09-25-bounded-world-preparation.md)
+handles minor source imperfections with visible reports and disjoint coverage.
 Full-sphere Plate Carrée is the supported input. Partial worlds, other projections,
 world-to-metric terrain extraction and context generation remain unimplemented.
 
