@@ -1,6 +1,6 @@
 # World-context and staged terrain implementation plan
 
-Updated 2026-09-25. **WC0 implemented; WC1 geography/reopening/edge/exposure and authored geology slices delivered; remaining WC1-WC6 work planned.** The
+Updated 2026-09-25. **WC0 implemented; WC1 geography/reopening/edge/exposure, authored geology and bathymetry slices delivered; remaining WC1-WC6 work planned.** The
 [World workspace](../terrain-worlds.md) imports retained SVG sources, validates
 explicit spherical placement and ownership, and saves portable world projects.
 Existing terrain generation is still local; no climate or continent-history
@@ -131,7 +131,7 @@ inputs. Ocean width alone determines neither age nor depth. Report unresolved
 straits/islands at coarse resolution and retain a topology/gateway representation;
 not every one-cell ocean gap is a real passage.
 
-Ocean floor elevations may be negative in this proposed context product. That
+The separate bathymetry product stores negative ocean-floor elevations. That
 does not relax the existing land DEM contract without an explicit R07 decision.
 Use authoritative land/ocean connectivity, not the sign of elevation, to identify
 the sea. Below-datum inland basins and lakes need their own supported semantics.
@@ -312,7 +312,7 @@ ship before preserving world coordinates.
 | Milestone | Bounded deliverable and dependencies | Exit evidence |
 |---|---|---|
 | WC0: retained world import — implemented | Explicit full-sphere frame/radius, retained SVG, stable continents/islands, mapping preview and portable saves; R01/R49 | Public touching-continent, owned-island, hole, offset-frame, seam/pole, malformed-input and UI/save controls; see implementation report |
-| WC1: provisional context — geography and geology inputs delivered | Spherical coverage, periodic water/support, verified products, shared-edge widths, shore distance/exposure and authored province/default recipes delivered; bathymetry/physical consumers remain | Geographic controls and province priority, seam, area, identity and editor controls pass; physical transport/forcing acceptance remains |
+| WC1: provisional context — geography, geology inputs and bathymetry delivered | Spherical coverage, periodic water/support, verified products, shared-edge widths, shore distance/exposure, province/default recipes and an explicit ocean-depth scenario | Geographic/province controls plus conservative depth envelopes, point water membership, source identity and editor/bundle controls pass; physical transport/forcing acceptance remains |
 | WC2: rough physical world | Shared macro terrain/bathymetry and process-domain prototype, physical scale/support; WC1, B/C, R02/R48, LE2/LE3 acceptance for evolved output | Matched quality gallery, cross-label catchments, constraints, projections/flux and resolution gates |
 | WC3: climate/runoff feedback | Seasonal fields, moisture/storage budgets, declared epoch forcing and bounded coarse-history loop; WC2, R33 and selected LE engine | Energy/water closure, rain-shadow/continentality controls, convergence or explicit incomplete result, measured resources |
 | WC4: reviewed parent and workflow | Immutable world parent, explicit continent/province history controls, dependency invalidation and staged editor; WC0-WC3 and LE3, co-delivered with LE5 world bindings | Reopen/verify/reproduce, stale-child behavior, cancel/complete publication and one public end-to-end world |
@@ -362,13 +362,25 @@ age-to-erodibility mapping. Future continuous fields need their own physical tap
 units and calibration. Multipart/holed provinces, vertex editing and world rebasing
 remain bounded authoring follow-ups rather than prerequisites to every stage.
 
-**Next concrete batch: explicit bathymetric hypotheses.** Define inspectable
-shelf/slope/basin assumptions and generate a bounded depth prototype over the
-authoritative water mask. Keep world radius, negative ocean-column depth, shelf
-width and seasonal mixed-layer depth distinct. Hold coastlines fixed and preserve
-unresolved strait/island evidence. Test coast anchoring, seam/pole continuity,
-source-scale invariance, inland-water exclusion, finite values and resource bounds.
-Bathymetry is an authored hypothesis, not recovered ocean age or depth from width.
+**WC1 bathymetry checkpoint:** [ADR-0077](../adr/0077-generate-authored-ocean-depths.md)
+and the [guide](../world-bathymetry.md) add explicit connected-water selection,
+authored shelf/slope/basin parameters and a conservative bounded depth prototype.
+Actual water-centre membership prevents depth leaking into land or unselected
+lakes within dominant-ocean cells. Coast distance uses the retained-curve bound;
+the separate depth-error field covers distance and Float32 error, not uncertainty
+in geology. Independent input saves and result bundles retain world identity,
+complete geographic dependencies and unresolved support. The editor and CLI
+provide cancellable generation, stale/current previews and verified reopening.
+A single margin profile and constant basin are deliberate first limits; the
+product does not establish volumes, capacities, heat storage or terrain quality.
+
+**Next concrete batch: water-piece transport topology.** Preserve individual
+water pieces and shared-face incidence through mixed/split cells, with dry-barrier,
+seam/pole, shared-face symmetry and complexity controls. This is a connectivity
+foundation, not a circulation model. Keep physical geometry and budgets explicit
+before assigning sill depth or exchange capacity. Follow with B/C physical-path
+and landform gates before WC2 rough land terrain; do not indefinitely expand
+optional input panels or assume more metadata alone improves terrain quality.
 
 Before a transport solver uses gateway arrays, retain individual water pieces
 and face incidence through split cells; positive faces and dominant water IDs

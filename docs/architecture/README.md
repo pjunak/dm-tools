@@ -129,6 +129,15 @@ own bounded JSON, full-world fingerprints, atomic persistence and preview colour
 history; the parent World workspace includes its unsaved guard. This categorical
 input product does not feed the local terrain pipeline or modify context bundles.
 
+The [bathymetry slice](../world-bathymetry.md) adds typed ocean-selection and
+margin inputs, actual vector water-centre classification and conservative spherical
+distance-to-depth evaluation. Separate adapters own bounded recipes, grid previews
+and verified nested-geography bundles. Application jobs refresh older geographic
+producers and own cancellation/publication. `world_bathymetry_ui.py` owns independent
+input/result state and the parent unsaved guard. `pipeline/world_context.py` exposes
+the shared `water_topology` helper so water IDs are consistent across stages.
+These cell-centre values are not a land DEM, volume integral or transport capacity.
+
 The remaining [world workflow](../strategy/world-context.md) changes future stage
 ownership: retained world source and explicit geography → provisional context →
 rough relief/bathymetry → bounded climate/runoff and history feedback → reviewed
@@ -194,8 +203,9 @@ layer or path boundaries.
 
 ## Planned contracts and remaining decisions
 
-- WC1 bathymetric hypotheses, physical geology forcing and component-aware transport
-  after delivered geographic measurements, verified products and geology inputs;
+- WC1 physical geology forcing and component-aware transport after delivered
+  geographic measurements, verified products, geology inputs and bathymetry;
+  per-margin depth scenarios and conservative integration when a consumer needs them;
   later WC2-WC5 coupled products and historical parent context
 - Direct per-vertex profiles, explicit passes and asymmetric structural sides
   (point-anchored longitudinal ridge/valley profiles are implemented)

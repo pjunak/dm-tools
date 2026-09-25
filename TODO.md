@@ -95,10 +95,6 @@ continent-history generation remain planned.
   water openings in km, editor preview/hover and source-save isolation. Corrected
   fractional-origin seam closure; bounded archive and analytic/UI controls pass.
   See [evidence](docs/research/2026-09-25-context-reopening-and-gateways.md).
-- [ ] **WC1 transport follow-up:** retain water pieces and their face incidence
-  before using edge openings as solver links; measure channel/sill depth and
-  capacity only with explicit bathymetric hypotheses. Edge widths alone do not
-  resolve connectivity through split cells.
 - [x] **WC1 exposure batch:** cell-centre spherical shore distance with a retained-curve
   error bound, eight-direction water exposure and mixed-cell support, direction
   previews/hover and verified v3 export/reopen. Public analytic, seam/pole,
@@ -110,11 +106,22 @@ continent-history generation remain planned.
   undo/save/reopen and cancellation. See the [guide](docs/world-geology.md) and
   [evidence](docs/research/2026-09-25-authored-world-geology.md). These hypotheses
   do not yet drive terrain, erosion or climate.
-- [ ] **WC1 next batch — bathymetric hypotheses:** define explicit shelf/slope/basin
-  inputs and a bounded derived depth prototype over authoritative water coverage.
-  Keep ocean-column depth separate from seasonal mixed-layer depth; test seam/pole,
-  inland-water exclusion, shoreline anchoring, dimensional scale and admission.
-  Never infer depth or age from ocean width alone.
+- [x] **WC1 bathymetric hypotheses:** explicit ocean selection, shelf/slope/basin
+  inputs, conservative spherical coast-distance profile and numerical depth bound.
+  Actual water-centre membership excludes land/unselected lakes; unresolved support
+  and unsampled waters remain visible. Independent editor/input saves, verified
+  nested-context result bundles, CLI and schema controls are implemented. See the
+  [guide](docs/world-bathymetry.md) and
+  [evidence](docs/research/2026-09-25-authored-world-bathymetry.md).
+- [ ] **WC1 next — water-piece transport topology:** retain individual water pieces
+  and continuous face incidence through split cells. Test dry barriers, seam/poles,
+  shared-face symmetry and bounded complexity before a solver uses gateway widths.
+  Bathymetry centre samples do not establish sill depth, capacity or water volume.
+- [ ] **WC1 bathymetry follow-ups:** per-margin profiles and optional ridge/trench
+  guidance when a consumer requires them; physical-resolution/convergence controls,
+  conservative water-area/depth integration and model-uncertainty scenarios. Keep
+  column depth distinct from seasonal mixed-layer depth and geometry-derived
+  numerical error. Never infer ocean age from width.
 - [ ] **WC1 geology follow-ups:** physical forcing compilation and calibrated tapers
   when a terrain consumer exists; multipart/holed or polar-winding provinces,
   vertex manipulation, explicit world rebasing, optional per-field inheritance
@@ -127,8 +134,9 @@ continent-history generation remain planned.
 - [ ] **WC1 — Generate provisional context** (R07/R10/R11/R49): ocean topology and
   exposure, bathymetric hypotheses, geological provinces and inspectable defaults.
   Spherical coverage and periodic connected-water inspection are delivered.
-  Shore distance, directional geographic exposure and authored geology hypotheses
-  are delivered. Bathymetry, physical forcing and transport acceptance remain.
+  Shore distance, directional geographic exposure, authored geology and a separate
+  bathymetry hypothesis product are delivered. Physical forcing, transport and
+  downstream coupling acceptance remain.
 - [ ] **WC2 — Produce a rough physical world** (R02/R48/R49): process/domain scale,
   related macro relief and ocean basins, after B/C and relevant LE acceptance.
 - [ ] **WC3 — Couple climate/runoff and coarse history** (R33/R49): seasonal budgets,
@@ -1407,15 +1415,16 @@ Priorities remain conditional on the current strategy's prerequisites.
   handling and its [schema](schemas/world/project-v1.schema.json) are implemented
   without new runtime dependencies. WC1 geographic context and its
   [schema](schemas/world/context-v3.schema.json) now include shoreline distance and
-  directional water/support fields using SciPy. Province inputs, bathymetry,
-  transport and WC2-WC6 products/acceptance remain open.
+  directional water/support fields using SciPy. Separate province inputs and
+  [authored bathymetry](docs/world-bathymetry.md) are implemented. Physical forcing,
+  component-aware transport and WC2-WC6 products/acceptance remain open.
 
 ## UI / UX improvements
 
 WC0's source/mapping workspace and WC1 geographic preview/export/reopening and
 shared-edge water, shore-distance and directional-exposure measurements are
-delivered. Current priorities are province/default authoring,
-paired generation comparisons, selected-channel
+delivered, together with independent geology and bathymetry input editors.
+Current priorities are paired generation comparisons, selected-channel
 profiles and process-resolution/conflict feedback
 for A/B. The complete world wizard follows accepted WC2/WC3 products; do not
 expose controls whose backend is absent. Further polish should serve these gates.

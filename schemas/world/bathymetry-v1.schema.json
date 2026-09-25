@@ -1,0 +1,327 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dmtools.local/schemas/world/bathymetry-v1.schema.json",
+  "title": "DM Tools generated world bathymetry v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "version",
+    "algorithm",
+    "runtime",
+    "input_sha256",
+    "geography",
+    "measurement",
+    "coast_datum_m",
+    "nodata",
+    "distance_policy",
+    "error_scope",
+    "sampled_cells",
+    "unsampled_ocean_ids",
+    "selected_water_area_km2",
+    "deepest_sample_m",
+    "max_distance_depth_error_m",
+    "outputs",
+    "bathymetry_sha256"
+  ],
+  "properties": {
+    "schema": {
+      "const": "dmtools.world-bathymetry"
+    },
+    "version": {
+      "type": "integer",
+      "const": 1
+    },
+    "algorithm": {
+      "const": "conservative-distance-margin-v1"
+    },
+    "runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dmtools_version",
+        "package_source_sha256",
+        "python",
+        "implementation",
+        "platform",
+        "machine",
+        "byteorder",
+        "geos",
+        "gdal",
+        "proj",
+        "dependencies"
+      ],
+      "properties": {
+        "dmtools_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "package_source_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "python": {
+          "type": "string",
+          "minLength": 1
+        },
+        "implementation": {
+          "type": "string",
+          "minLength": 1
+        },
+        "platform": {
+          "type": "string",
+          "minLength": 1
+        },
+        "machine": {
+          "type": "string",
+          "minLength": 1
+        },
+        "byteorder": {
+          "enum": [
+            "little",
+            "big"
+          ]
+        },
+        "geos": {
+          "type": "string",
+          "minLength": 1
+        },
+        "gdal": {
+          "type": "string",
+          "minLength": 1
+        },
+        "proj": {
+          "type": "string",
+          "minLength": 1
+        },
+        "dependencies": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "numpy",
+            "Pillow",
+            "shapely",
+            "svgelements",
+            "rasterio",
+            "affine",
+            "scipy"
+          ],
+          "properties": {
+            "numpy": {
+              "type": "string",
+              "minLength": 1
+            },
+            "Pillow": {
+              "type": "string",
+              "minLength": 1
+            },
+            "shapely": {
+              "type": "string",
+              "minLength": 1
+            },
+            "svgelements": {
+              "type": "string",
+              "minLength": 1
+            },
+            "rasterio": {
+              "type": "string",
+              "minLength": 1
+            },
+            "affine": {
+              "type": "string",
+              "minLength": 1
+            },
+            "scipy": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    },
+    "input_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "geography": {
+      "const": "geography/context.json"
+    },
+    "measurement": {
+      "const": "cell-centre-bed-elevation-metres; selected-oceans-only"
+    },
+    "coast_datum_m": {
+      "type": "number",
+      "const": 0
+    },
+    "nodata": {
+      "const": "nan-on-land-and-unselected-water"
+    },
+    "distance_policy": {
+      "const": "max(0,shore-sample-distance-minus-error-bound)"
+    },
+    "error_scope": {
+      "const": "shore-sampling-and-float32-only; not-geological-uncertainty"
+    },
+    "sampled_cells": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 259200
+    },
+    "unsampled_ocean_ids": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 4096,
+      "uniqueItems": true,
+      "items": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 2147483647
+      }
+    },
+    "selected_water_area_km2": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "deepest_sample_m": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "max_distance_depth_error_m": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "outputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "inputs.dmbathy.json",
+        "bathymetry.npz",
+        "geography/context.json",
+        "bed.png",
+        "distance-error.png",
+        "support.png"
+      ],
+      "properties": {
+        "inputs.dmbathy.json": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "sha256",
+            "bytes"
+          ],
+          "properties": {
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "bytes": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        "bathymetry.npz": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "sha256",
+            "bytes"
+          ],
+          "properties": {
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "bytes": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        "geography/context.json": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "sha256",
+            "bytes"
+          ],
+          "properties": {
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "bytes": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        "bed.png": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "sha256",
+            "bytes"
+          ],
+          "properties": {
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "bytes": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        "distance-error.png": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "sha256",
+            "bytes"
+          ],
+          "properties": {
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "bytes": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        "support.png": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "sha256",
+            "bytes"
+          ],
+          "properties": {
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "bytes": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        }
+      }
+    },
+    "bathymetry_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "description": "Manifest published last. The nested context is independently verified. bathymetry.npz contains centre_water_body (<i4), bed_elevation_m (<f4) and distance_depth_error_m (<f4), all on the context grid. The loader verifies point membership and the numeric scenario, hashes, summaries, previews and dependencies. Depths are cell-centre samples, not cell-average depth, ocean volume or transport capacity."
+}

@@ -15,6 +15,12 @@ Only the current formats are supported:
   input recipe with retained world identity, continent defaults, priority provinces
   and independent ages/duration. This does not modify geography or generate terrain.
 
+- [Bathymetry inputs v1](world/bathymetry-inputs-v1.schema.json): portable
+  `.dmbathy.json` world snapshot, explicit water IDs and shelf/slope/basin assumptions.
+- [Bathymetry v1](world/bathymetry-v1.schema.json): negative ocean-floor centre
+  samples, numerical error/support, a retained verified geographic dependency and
+  result hashes. Neither a land DEM nor physical transport/heat capacity.
+
 - [Project v6](terrain/project-v6.schema.json): authored `.dmterrain.json` inputs.
 - [Build v18](terrain/build-v18.schema.json): numeric products, coordinates,
   algorithm identities, named stage seeds and output hashes.

@@ -12,6 +12,11 @@ in the current status or a new dated report.
 
 ## Current reassessment
 
+- [Authored world bathymetry — 2026-09-25](2026-09-25-authored-world-bathymetry.md)
+  implements explicit ocean selection, conservative shelf/slope/basin depths,
+  numerical error and unresolved support, with independent inputs/editor/verified
+  results. Records analytic tests, visible review and normal/maximum-grid cost.
+
 - [Authored world geology — 2026-09-25](2026-09-25-authored-world-geology.md)
   adds retained-world recipes, continent defaults, cross-label/seam provinces,
   independent ages and priority coverage, with editor/save/history controls.
@@ -20,7 +25,7 @@ in the current status or a new dated report.
 - [Geographic exposure — 2026-09-25](2026-09-25-geographic-exposure.md)
   adds bounded spherical shoreline distance, eight directional water-exposure and
   mixed-support fields, current-format reopening and editor inspection. The later
-  authored-geology batch is linked above; bathymetry and physical transport remain.
+  authored-geology and bathymetry batches are linked above; physical transport remains.
 
 - [Context reopening and water openings — 2026-09-25](2026-09-25-context-reopening-and-gateways.md)
   implements verified context loading, finite shared-face widths, seam-roundoff

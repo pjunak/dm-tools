@@ -104,3 +104,4 @@ supersedes their legacy compatibility commitments during early development.
 - [ADR-0074: Verify context and measure water openings](0074-verify-context-and-measure-water-openings.md)
 - [ADR-0075: Measure spherical geographic exposure](0075-measure-spherical-geographic-exposure.md)
 - [ADR-0076: Author world geology inputs](0076-author-world-geology-inputs.md)
+- [ADR-0077: Generate authored ocean-depth hypotheses](0077-generate-authored-ocean-depths.md)

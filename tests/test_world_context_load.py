@@ -253,3 +253,17 @@ def test_exposure_roundtrip_preserves_all_bearings_and_sampling(bundle: Path) ->
     for name in ("shore_distance_km", "water_exposure", "exposure_mixed_support"):
         np.testing.assert_array_equal(getattr(restored, name), getattr(original.context, name))
     assert restored.shore_sampling == original.context.shore_sampling
+
+
+def test_boundary_only_cells_do_not_publish_phantom_water(tmp_path: Path) -> None:
+    run = application.generate_context(open_world(EXAMPLE).project, WorldContextSettings(90))
+    context = run.context
+    dry = context.water_body == 0
+    assert np.all(context.land_fraction[dry] == 1)
+    assert np.all(context.support_flags[dry] == 0)
+    # Previously 161 full dry cells had fractions 1-1e-16 and mixed-water flags.
+    assert context.land_fraction[15, 23] == 1 and context.water_body[15, 23] == 0
+    manifest = application.export_context(run, tmp_path / "context-90")
+    loaded = application.open_context(manifest)
+    np.testing.assert_array_equal(loaded.context.land_fraction, context.land_fraction)
+    assert len(loaded.context.water_bodies) == 2

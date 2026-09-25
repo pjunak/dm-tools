@@ -1,6 +1,6 @@
 # Current terrain research status
 
-Reconciled on 2026-09-25 for WC0 preparation and the delivered WC1 geography and geology-input stages. The
+Reconciled on 2026-09-25 for WC0 preparation and the delivered WC1 geography, geology-input and bathymetry stages. The
 2026-09-24 generation measurements and scientific-tool audit below retain their
 own revision/date; this world-source batch does not rerun terrain-quality probes.
 This is a status map; [TODO](../../TODO.md) owns the research register and the
@@ -60,8 +60,10 @@ shoreline distance, eight directional water/support fields and inspection, using
 SciPy KDTree. These measurements are not climate or transport links. The
 [geology-input batch](2026-09-25-authored-world-geology.md) adds continent defaults,
 independent provinces, explicit time/priority and an inspectable recipe/editor.
-World climate, bathymetry, physical province histories and same-present regional
-geological replay are not implemented. Existing local detail is not history replay. Source
+The [bathymetry batch](2026-09-25-authored-world-bathymetry.md) adds explicit ocean
+selection, shelf/slope/basin depths, numerical bounds and independent editor/results.
+World climate, physical province histories and same-present regional geological
+replay are not implemented. Existing local detail is not history replay. Source
 and license checks for Climlab/GPlates/ExoPlaSim are not local execution evidence.
 B/LE2's physical paths, authoring and resolution gates remain prerequisites to
 production WC2; the new world plan does not promote the current history candidate.
@@ -112,7 +114,7 @@ later dependent work. No post-generation modification is introduced.
 |---|---|---|
 | World source (WC0) | Retained embedded SVG, full-sphere frame/radius, seam/polar/area controls, continent/island mapping, bounded preparation with selectable adjustments, independent World tab, portable atomic saves and CLI inspect ([guide](../terrain-worlds.md)) | Partial-draft save, cancel/checkpoint imports, other projections and world-linked terrain |
 | Input editor | Retained reference with freshness, geographic pan/zoom, property/geometry edits, undo/redo, guarded Save/Save As, resolution presets, ground inspection and cooperative Cancel/Esc with elapsed stage progress ([ADR-0064](../adr/0064-cancel-generation-at-safe-checkpoints.md)) | Automatic draft preview, comparison views, vertex insertion/removal, climate-region inputs; individual native steps have no stop-latency bound |
-| Geographic context (WC1 subset) | Spherical coverage, vector water topology, shared-edge widths, shore distance, directional water/support, Context previews/cancellation and verified portable exports/reopening ([guide](../world-context.md)) | Bathymetry and component-aware transport/capacity; no climate or terrain |
+| Geographic context (WC1 subset) | Spherical coverage, vector water topology, shared-edge widths, shore distance, directional water/support, Context previews/cancellation and verified portable exports/reopening ([guide](../world-context.md)) | Component-aware transport/capacity; bathymetry is a separate hypothesis product, not climate or land terrain |
 | Local numeric builds | Saved-project CLI, Float32 NPY/GeoTIFF, review NPZ, previews, diagnostics and completion hashes | World placement, vector products, external desktop GIS acceptance |
 | Scale-aware water display | Cached sampled-pool screen areas, fading small lakes, fixed-size viewport rendering, native PNG policy and actual ground-spacing readout ([ADR-0057](../adr/0057-display-water-at-the-appropriate-scale.md)) | Physical river size/width model and resolution-gated local hydrology; connected scale selection and complete diagnostic review are implemented ([ADR-0069](../adr/0069-connect-and-scale-drainage-review.md)) |
 | Zoom-driven local detail | Unchanged-field sampling, verified saved-parent replay and explicit experimental residual CLI/API; exact shared samples, terrain-weighted shared edges, protected authored/water/channel context, bounded cell support and serial parent/result sessions with freshness checks and shared admission estimates ([ADR-0061](../adr/0061-verify-parents-and-isolate-local-detail.md), [ADR-0062](../adr/0062-reuse-bounded-detail-cell-support.md), [ADR-0063](../adr/0063-reuse-verified-parent-region-sessions.md)) | Remaining grid direction, visual/coarse-power acceptance, parent-view transitions, broader slope/bound checks, finer inherited hydrology, small-river readiness, zoom jobs and broader native/application-memory calibration |
@@ -122,6 +124,7 @@ later dependent work. No post-generation modification is introduced.
 | Network floor conditioning | Downstream cut limits propagate upstream before receiver cuts; finite nodal feasibility and signed cut corrections | Between-node conflicts, impossible source/cut intervals and route alternatives |
 | Valley reconstruction | Bounded cubic fields, selected-diagonal shaping and sampled attainable floor targets; canonical nodes and cut ceilings preserved | D8 turns, hidden crests beyond cut limits, endpoint/retention conflicts and complete-field error bounds |
 | Authored geology (WC1 inputs) | Retained-world recipes, continent defaults, independent provinces, priorities, separate ages/duration and effective coverage/editor ([guide](../world-geology.md)) | Calibrated forcing/tapers, epoch consumption and world terrain; no age-derived erosion coefficients |
+| Bathymetry (WC1 hypothesis) | Explicit oceans, smooth shelf/slope/basin parameters, actual centre-water masks, conservative depth/error fields, support views and verified portable editor/CLI bundles ([guide](../world-bathymetry.md)) | Per-margin detail, model uncertainty, volume/flux integration, component-aware transport and downstream coupling |
 | Regional landforms | Plain/hill/plateau/mountain recipes, orientation, transitions and regional cut limits | Distribution targets, transition-gradient validation, related geological regions |
 | Structural authoring | Absolute/relative point-anchored profiles, directed valley floors and compatible junctions | Direct per-vertex controls, explicit passes, asymmetric sides and generated branching |
 | Basin intent and flow | Lake/dry footprints retain terrain and captured MFD area; eligible outlets transfer collected area conservatively | Runoff/discharge, equilibrium water levels, controlling sills, lake chains and nested depressions |
@@ -140,7 +143,7 @@ may have partial foundations; their broader experiment is not complete merely
 because related controls or exports exist. In particular, the four recipes do
 not close regional distribution/geology research, and shared-point equality does
 not prove cell-average equivalence. R07 remains open: dry-basin retention does not
-enable negative land heights or bathymetry.
+enable negative land heights. Negative ocean depths use a separate bathymetry product.
 
 The [cubic reconstruction comparison](2026-09-16-bounded-valley-reconstruction.md)
 records reduced cell-edge slope breaks. The
@@ -219,7 +222,8 @@ transport, coupled ridge/drainage generation, specialized glacial/wind/volcanic
 families, Earth-analogue synthesis and learned proposals remain candidates.
 WC0 source contracts and WC1 geographic coverage/topology are implemented and
 tested. Geographic shore distance/exposure and authored province hypotheses are
-implemented. Bathymetry, physical forcing and climate/runoff remain WC1-WC4 work. Ecology follows WC6.
+implemented. Bathymetry now has a bounded scenario product. Physical forcing,
+transport and climate/runoff remain WC1-WC4 work. Ecology follows WC6.
 The input editor is followed by generation, including planned zoom-driven local
 enrichment. [ADR-0048](../adr/0048-keep-zoom-driven-detail-generation.md) corrects
 the earlier exclusion of regional generation; manual sculpting of completed

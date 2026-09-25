@@ -69,7 +69,7 @@ def _area(geometry: BaseGeometry, frame: WorldFrame) -> float:
     return sum(component_area_km2(c, frame) for c in components_from_geometry(geometry))
 
 
-def _water_topology(
+def water_topology(
     land: BaseGeometry,
     frame: WorldFrame,
     cancellation: CancellationToken | None,
@@ -143,7 +143,7 @@ def generate_world_context(
     land = unary_union(
         [Polygon(c.exterior, c.holes) for feature in world.land for c in feature.components]
     )
-    polygons, body_ids, bodies = _water_topology(land, frame, cancellation)
+    polygons, body_ids, bodies = water_topology(land, frame, cancellation)
     tree = STRtree(polygons)
     shapely.prepare(polygons)
     rows, columns = grid.shape
@@ -189,6 +189,12 @@ def generate_world_context(
                     flags[row, col] |= MIXED_COAST
                     flags[row, col] |= SUBCELL_WATER if centres_land[col] else SUBCELL_LAND
             if wet.area <= 0:
+                # A boundary-only GEOS remainder has no water area. Spherical
+                # integration can round a full dry cell just below one; use
+                # empty wet geometry, never an epsilon that could erase islands.
+                fraction[row, col] = 1
+                water_id[row, col] = 0
+                flags[row, col] = 0
                 continue
             pieces = components_from_geometry(wet)
             if len(pieces) > 1:

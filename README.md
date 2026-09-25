@@ -16,7 +16,9 @@ ownership, an explicit spherical frame and planet radius in portable
 `.dmworld.json` files. It provides mapping, validation, pan/zoom and saved-world
 inspection. [Geographic context](docs/world-context.md) now adds spherical land
 coverage, connected water, resolution support, preview layers and portable
-exports. Shared climate and world terrain remain planned.
+exports. Separate [geology](docs/world-geology.md) and
+[bathymetry](docs/world-bathymetry.md) workflows now author hypotheses and generate
+bounded ocean-floor previews. Shared climate and world land terrain remain planned.
 
 The Terrain workspace imports and dissolves closed SVG land shapes; authors
 absolute/relative brush, point, ridge and valley constraints; draws plain, hill,
@@ -56,8 +58,10 @@ implemented WC0 source workspace and the geographic subset of WC1: coverage,
 connected water, shared-edge openings, shore distance, directional water exposure
 and verified reopening. [Geology inputs](docs/world-geology.md) add continent
 defaults and drawable provinces with separate ages and overlap priorities.
-Next come bathymetric hypotheses, rough terrain and selected regional refinement
-with shared climate and geological history. Climate, world-linked terrain and regional history replay are not
+[Bathymetric hypotheses](docs/world-bathymetry.md) now provide explicit ocean
+selection, a shelf/slope/basin depth model, error/support views and verified exports.
+Next come component-aware water connections, rough terrain and selected regional
+refinement with shared climate and geological history. Climate, world-linked terrain and regional history replay are not
 implemented; the saved world is a source project, not a generated parent.
 See the [research review](docs/research/2026-09-24-world-context-enrichment.md).
 

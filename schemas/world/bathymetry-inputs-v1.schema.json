@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dmtools.local/schemas/world/bathymetry-inputs-v1.schema.json",
+  "title": "DM Tools authored ocean-depth hypotheses v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "version",
+    "geography_algorithm",
+    "world_sha256",
+    "world",
+    "ocean_ids",
+    "settings"
+  ],
+  "properties": {
+    "schema": {
+      "const": "dmtools.world-bathymetry-inputs"
+    },
+    "version": {
+      "type": "integer",
+      "const": 1
+    },
+    "geography_algorithm": {
+      "const": "spherical-geography-v3"
+    },
+    "world_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "world": {
+      "$ref": "https://dmtools.local/schemas/world/project-v1.schema.json"
+    },
+    "ocean_ids": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 4096,
+      "uniqueItems": true,
+      "items": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 2147483647
+      },
+      "description": "Explicit sorted connected-water IDs from the retained geographic algorithm; IDs are not inferred ocean/lake classifications."
+    },
+    "settings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "latitude_cells",
+        "shelf_width_km",
+        "shelf_depth_m",
+        "slope_width_km",
+        "basin_depth_m"
+      ],
+      "properties": {
+        "latitude_cells": {
+          "type": "integer",
+          "minimum": 4,
+          "maximum": 360
+        },
+        "shelf_width_km": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 100000
+        },
+        "shelf_depth_m": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 100000
+        },
+        "slope_width_km": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 100000
+        },
+        "basin_depth_m": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 100000
+        }
+      }
+    }
+  },
+  "description": "The application also verifies the full world fingerprint, ascending water IDs, presence in connected water and basin_depth_m >= shelf_depth_m. Illustrative parameters are not calibrated geological ages or mixed-layer depths."
+}

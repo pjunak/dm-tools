@@ -6,7 +6,7 @@ export-import correction, bounded preparation and geographic context documents. 
 documentation and private campaign files are excluded. The public JSON schemas and reference dependency
 lock are listed separately as supporting contracts, not counted as prose docs.
 
-**180 Markdown files + 1 legal notice = 181 documentation files.**
+**183 Markdown files + 1 legal notice = 184 documentation files.**
 Each file appears once below, including this inventory. Document titles describe
 their subject; the group description identifies their role and authority.
 
@@ -18,13 +18,13 @@ remains the entry point for normal use. All are individually linked in the list 
 |---|---:|
 | Project entry and guidance | 4 |
 | Active plans and indexes | 10 |
-| User guides and current contracts | 17 |
+| User guides and current contracts | 18 |
 | Developer and reference guides | 8 |
-| Architecture decision records | 76 |
-| Dated research reports | 63 |
+| Architecture decision records | 77 |
+| Dated research reports | 64 |
 | Maintenance reports | 2 |
 | Legal notice | 1 |
-| **Total** | **181** |
+| **Total** | **184** |
 
 ## Project entry and guidance (4)
 
@@ -54,7 +54,7 @@ Current direction and navigation. Plans mark unimplemented features explicitly; 
 | [docs/strategy/landscape-evolution.md](strategy/landscape-evolution.md) | LE0-LE6 evolution, authoring, conservation and regional-history gates. |
 | [docs/strategy/world-context.md](strategy/world-context.md) | WC0-WC6 full-world import, shared context, climate and regional-history plan. |
 
-## User guides and current contracts (17)
+## User guides and current contracts (18)
 
 Current user workflows and numeric/file semantics, with future limits labelled in each guide.
 
@@ -74,6 +74,7 @@ Current user workflows and numeric/file semantics, with future limits labelled i
 | [docs/terrain-water-budget.md](terrain-water-budget.md) | Forecast water-sampling demand |
 | [docs/terrain-water.md](terrain-water.md) | Authored lakes and dry basins |
 | [docs/terrain-worlds.md](terrain-worlds.md) | Import, map, validate and save retained world sources; geographic and workflow limits. |
+| [docs/world-bathymetry.md](world-bathymetry.md) | Explicit ocean selection, shelf/slope/basin hypotheses, numerical depth/error/support and portable input/result workflow. |
 | [docs/world-context.md](world-context.md) | Generate spherical geography, inspect water/resolution support and export context products. |
 | [docs/world-geology.md](world-geology.md) | Author continent defaults and independent province hypotheses; priority, time, coverage and portable recipe contracts. |
 | [src/dmtools/terrain/README.md](../src/dmtools/terrain/README.md) | Current desktop authoring workflow, tools and shortcuts. |
@@ -93,7 +94,7 @@ Subsystem, fixture, schema, test and benchmark guidance.
 | [src/dmtools/terrain/pipeline/README.md](../src/dmtools/terrain/pipeline/README.md) | Numeric generation and inspection responsibilities. |
 | [tests/README.md](../tests/README.md) | Test organization, commands and verification expectations. |
 
-## Architecture decision records (76)
+## Architecture decision records (77)
 
 Accepted historical decisions. Preserve their original context; consult the current status and implementation for later changes. The ADR index is listed among active indexes.
 
@@ -175,8 +176,9 @@ Accepted historical decisions. Preserve their original context; consult the curr
 | [docs/adr/0074-verify-context-and-measure-water-openings.md](adr/0074-verify-context-and-measure-water-openings.md) | Verified context reopening, physical shared-face widths and immutable source-save handling. |
 | [docs/adr/0075-measure-spherical-geographic-exposure.md](adr/0075-measure-spherical-geographic-exposure.md) | Spherical shoreline sampling bounds, directional geographic exposure, support and current v3 products. |
 | [docs/adr/0076-author-world-geology-inputs.md](adr/0076-author-world-geology-inputs.md) | Separate retained-world geology recipes, priority coverage and independent time semantics. |
+| [docs/adr/0077-generate-authored-ocean-depths.md](adr/0077-generate-authored-ocean-depths.md) | Separate authored bathymetry, conservative depth bounds, actual water-centre membership and immutable verified products. |
 
-## Dated research reports (63)
+## Dated research reports (64)
 
 Primary-source reviews, experiments and implementation evidence at their recorded date/revision. A title or citation is not evidence that a tool was adopted. Current status is listed above.
 
@@ -184,6 +186,7 @@ Primary-source reviews, experiments and implementation evidence at their recorde
 |---|---|
 | [docs/research/2026-09-24-world-context-enrichment.md](research/2026-09-24-world-context-enrichment.md) | World context before continental terrain: research and recommendation |
 | [docs/research/2026-09-25-context-reopening-and-gateways.md](research/2026-09-25-context-reopening-and-gateways.md) | Saved-context and gateway implementation, analytic/UI checks and measured cost. |
+| [docs/research/2026-09-25-authored-world-bathymetry.md](research/2026-09-25-authored-world-bathymetry.md) | Bathymetry implementation, analytic/file/editor controls, visible review and normal/maximum-grid measurements. |
 | [docs/research/2026-09-25-authored-world-geology.md](research/2026-09-25-authored-world-geology.md) | Authored-geology implementation, numeric/file/editor controls and remaining physical-model limits. |
 | [docs/research/2026-09-25-geographic-exposure.md](research/2026-09-25-geographic-exposure.md) | Exposure implementation, analytic controls, dependency adoption, UI inspection and measured resource limits. |
 | [docs/research/2026-09-25-geographic-world-context.md](research/2026-09-25-geographic-world-context.md) | WC1 geographic implementation, UI/contract validation and bounded grid measurements. |
@@ -263,7 +266,7 @@ Attribution/license documentation for a vendored asset.
 |---|---|
 | [docs/licenses/SCIENTIFIC_COLOUR_MAPS_LICENSE.txt](licenses/SCIENTIFIC_COLOUR_MAPS_LICENSE.txt) | Scientific Colour Maps attribution and redistribution license text. |
 
-## Supporting machine-readable contracts (9)
+## Supporting machine-readable contracts (11)
 
 These are operational specifications rather than prose documentation. They
 are included for a complete route from plans to the current usable formats.
@@ -275,6 +278,8 @@ are included for a complete route from plans to the current usable formats.
 | [schemas/terrain/parent-region-v1.schema.json](../schemas/terrain/parent-region-v1.schema.json) | Current parent sampling/experimental detail artifact contract. |
 | [schemas/terrain/project-v6.schema.json](../schemas/terrain/project-v6.schema.json) | Current authored local terrain project format; no world context fields. |
 | [schemas/terrain/regional-samples-v2.schema.json](../schemas/terrain/regional-samples-v2.schema.json) | Current bounded unchanged-field sampling artifact contract. |
+| [schemas/world/bathymetry-inputs-v1.schema.json](../schemas/world/bathymetry-inputs-v1.schema.json) | Retained-world ocean selection and explicit physical shelf/slope/basin assumptions. |
+| [schemas/world/bathymetry-v1.schema.json](../schemas/world/bathymetry-v1.schema.json) | Completed depth/error arrays, verified geography dependency and source/runtime/product identity. |
 | [schemas/world/context-v3.schema.json](../schemas/world/context-v3.schema.json) | Spherical context products, source/runtime identity, coverage/topology/support, shared-edge widths, shore distance, directional exposure and manifest/product hashes. |
 | [schemas/world/geology-v1.schema.json](../schemas/world/geology-v1.schema.json) | Authored continent profiles and priority polygons with retained world identity and a common present. |
 | [schemas/world/project-v1.schema.json](../schemas/world/project-v1.schema.json) | Portable retained world-source snapshot, explicit spherical frame/radius and semantic ownership. |

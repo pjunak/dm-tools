@@ -108,12 +108,19 @@ output are kilometres. These are lengths along cell faces, not great-circle chor
 The seam comparison pins both edge geometries to the exact same source x coordinate,
 avoiding roundoff in `x1 - (x1 - x0)` without moving any land geometry.
 
+Fully dry cells have exact land fraction one and water ID zero. When clipping
+leaves only a zero-area boundary remainder, generation uses that geometry to
+remove floating-point phantom water/support flags. It does not round away real
+positive-area water with a fraction cutoff.
+
 A positive opening is evidence of a shared wet edge. It is **not** a strait's
 minimum width, a navigable passage, depth, sill height, or discharge capacity.
 Several face openings can touch different disconnected water pieces inside a
 cell. The split-water flag remains authoritative: joining all those faces through
 one raster node would create false routes. A component-aware transport graph
-and bathymetry are still required before a physical flow solver uses these data.
+and physical sill/capacity geometry are still required before a flow solver uses
+these data. [Bathymetry](world-bathymetry.md) now supplies explicit depth scenarios,
+but its centre samples alone cannot establish exchange capacity.
 
 ## Shore distance and directional exposure
 
@@ -211,6 +218,8 @@ arrays when displayed. Loaded arrays are read-only.
 
 Generated results do not alter the world source. They are not yet accepted parents
 for terrain/climate solvers. [Geology inputs](world-geology.md) can now be drawn
-over this read-only context in a separate editor/recipe. Component-aware transport,
-bathymetry and physical geology forcing remain WC1 work. See [the staged plan](strategy/world-context.md)
+over this read-only context in a separate editor/recipe.
+[Bathymetry](world-bathymetry.md) consumes matching geography to build explicit
+ocean-floor hypotheses, refreshing the geographic producer when necessary.
+Component-aware transport and physical geology forcing remain WC1 work. See [the staged plan](strategy/world-context.md)
 and [current implementation evidence](research/2026-09-25-geographic-exposure.md).

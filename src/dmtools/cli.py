@@ -110,7 +110,44 @@ def create_parser() -> argparse.ArgumentParser:
         "inspect-geology", help="Resolve and inspect authored geology inputs.")
     geology.add_argument("recipe", type=Path, help="Portable .dmgeology.json recipe.")
     geology.set_defaults(_handler=_run_world_geology_inspect)
+    bathymetry = world_commands.add_parser(
+        "bathymetry", help="Generate an authored ocean-depth scenario.")
+    bathymetry.add_argument("inputs", type=Path, help="Portable .dmbathy.json inputs.")
+    bathymetry.add_argument("--output", type=Path, required=True, help="New output directory.")
+    bathymetry.set_defaults(_handler=_run_world_bathymetry)
+    inspect_bathymetry = world_commands.add_parser(
+        "inspect-bathymetry", help="Verify an ocean-depth result and retained geography.")
+    inspect_bathymetry.add_argument(
+        "result", type=Path, help="Result directory or bathymetry.json.")
+    inspect_bathymetry.set_defaults(_handler=_run_world_bathymetry_inspect)
     return parser
+
+
+def _run_world_bathymetry(arguments: argparse.Namespace) -> int:
+    from dmtools.terrain.application.world_bathymetry import build_bathymetry
+    try:
+        path = build_bathymetry(arguments.inputs, arguments.output)
+    except (OSError, ValueError, RuntimeError) as error:
+        print(f"Bathymetry generation failed: {error}", file=sys.stderr)
+        return 1
+    print(f"Ocean-depth hypothesis complete: {path}")
+    print("Selected-water elevations only; no land DEM, circulation or erosion generated.")
+    return 0
+
+
+def _run_world_bathymetry_inspect(arguments: argparse.Namespace) -> int:
+    from dmtools.terrain.application.world_bathymetry import open_bathymetry
+    try:
+        run = open_bathymetry(arguments.result)
+    except (OSError, ValueError, RuntimeError) as error:
+        print(f"Bathymetry inspection failed: {error}", file=sys.stderr)
+        return 1
+    result = run.result
+    print(f"Verified ocean-depth hypothesis: {result.inputs.world.name}")
+    print(f"{result.sampled_cells:,} centre samples; selected water IDs: {result.inputs.ocean_ids}")
+    print(f"Selected waters without centre samples: {result.unsampled_ocean_ids}")
+    print("Negative bed elevation in metres. Numerical bounds are not geological uncertainty.")
+    return 0
 
 
 def _run_world_geology_inspect(arguments: argparse.Namespace) -> int:

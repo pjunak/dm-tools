@@ -20,7 +20,11 @@ with verified saved-context inspection; see
 [geographic context](../../../docs/world-context.md). **Geology…** opens the
 [province/default input editor](../../../docs/world-geology.md), with its own
 recipe saves and source/context backgrounds. These hypotheses do not yet affect
-terrain. Climate and world terrain remain planned. Select Terrain for the workflow below;
+terrain. **Bathymetry…** opens a separate
+[ocean-floor workflow](../../../docs/world-bathymetry.md) from matching context,
+with explicit ocean selection, shelf/slope/basin inputs, numerical error/support
+views and independent saves/results. Climate and world land terrain remain planned.
+Select Terrain for the workflow below;
 `--project` opens a local terrain file directly in that tab.
 
 The Terrain workspace imports closed SVG land shapes, dissolves adjacent

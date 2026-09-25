@@ -32,6 +32,7 @@ from dmtools.terrain.application.world import (
     propose_group_assignments,
     save_world,
 )
+from dmtools.terrain.application.world_bathymetry import BathymetryFile
 from dmtools.terrain.application.world_context import (
     WorldContextRun,
     export_context,
@@ -57,6 +58,7 @@ from dmtools.terrain.domain.world_context import (
 from dmtools.terrain.pipeline.control import CancellationToken, GenerationCancelled
 from dmtools.terrain.pipeline.world import WorldMap, prepare_world_map
 from dmtools.terrain.viewport import MapViewport
+from dmtools.terrain.world_bathymetry_ui import BathymetryEditor
 from dmtools.terrain.world_geology_ui import GeologyEditor
 
 
@@ -126,6 +128,8 @@ class WorldWorkspace(ttk.Frame):
         self.validated: WorldMap | None = None
         self.geology_editor: GeologyEditor | None = None
         self._geology_file: GeologyFile | None = None
+        self.bathymetry_editor: BathymetryEditor | None = None
+        self._bathymetry_file: BathymetryFile | None = None
         self.context_run: WorldContextRun | None = None
         self._context_cancellation: CancellationToken | None = None
         self.continents: tuple[WorldContinent, ...] = ()
@@ -218,6 +222,7 @@ class WorldWorkspace(ttk.Frame):
             ("Save", self.save),
             ("Save As…", lambda: self.save(save_as=True)),
             ("Geology…", self.edit_geology),
+            ("Bathymetry…", self.edit_bathymetry),
         ):
             self._button(header, label, action).pack(side="left", padx=(10, 0))
         ttk.Label(
@@ -1038,6 +1043,29 @@ class WorldWorkspace(ttk.Frame):
     def select_all(self) -> None:
         self.tree.selection_set(self.tree.get_children())
 
+    def edit_bathymetry(self) -> None:
+        if self.busy:
+            return
+        if self.bathymetry_editor is not None:
+            self.bathymetry_editor.lift()
+            return
+        if self.context_run is None or not self.context_run.context.water_bodies:
+            self.status.set(
+                "Generate or open geographic context with water first, then choose Bathymetry.")
+            self.pages.select(self.context_page)
+            return
+        saved = self._bathymetry_file
+        if saved and world_fingerprint(saved.inputs.world) != world_fingerprint(self.project()):
+            saved = None
+
+        def closed(file: BathymetryFile | None) -> None:
+            self._bathymetry_file = file
+            self.bathymetry_editor = None
+        self.bathymetry_editor = BathymetryEditor(
+            self, self.context_run, on_close=closed, saved=saved)
+        self.status.set(
+            "Bathymetry inputs open; ocean depths are generated from explicit hypotheses.")
+
     def edit_geology(self) -> None:
         if self.busy:
             return
@@ -1113,6 +1141,14 @@ class WorldWorkspace(ttk.Frame):
         )
 
     def guard(self, action: Callable[[], None]) -> None:
+        if self.bathymetry_editor is not None:
+            floor_editor = self.bathymetry_editor
+
+            def continue_after_bathymetry() -> None:
+                floor_editor.close()
+                self.guard(action)
+            floor_editor.guard(continue_after_bathymetry)
+            return
         if self.geology_editor is not None:
             editor = self.geology_editor
 
@@ -1389,6 +1425,8 @@ class WorldWorkspace(ttk.Frame):
         self._closed = True
         if self.geology_editor is not None:
             self.geology_editor.close()
+        if self.bathymetry_editor is not None:
+            self.bathymetry_editor.close()
         if self._context_cancellation is not None:
             self._context_cancellation.cancel()
         for identifier in (self._poll_id, self._draw_id):

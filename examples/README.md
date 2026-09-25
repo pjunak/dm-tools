@@ -33,6 +33,14 @@ or inspect with `dmtools world inspect-geology examples/world/four-shores.dmgeol
 The [geology guide](../docs/world-geology.md) explains priorities and age/duration
 semantics. It does not run erosion or change the source coastlines.
 
+The separate [`four-shores.dmbathy.json`](world/four-shores.dmbathy.json) selects
+Water 1 with an illustrative 100 km / 200 m shelf, 200 km slope and 4,000 m basin,
+at 90 latitude rows. Open it with **World → Bathymetry… → Open inputs…** after
+matching context is available, or run
+`dmtools world bathymetry examples/world/four-shores.dmbathy.json --output artifacts/four-shores-ocean`.
+See the [bathymetry guide](../docs/world-bathymetry.md) for numerical limits and
+reopening/export commands. The profile is a scenario, not calibrated geology.
+
 ## Terrain
 
 [`terrain/example.dmterrain.json`](terrain/example.dmterrain.json) is a complete
