@@ -1,9 +1,12 @@
 # Current terrain research status
 
-Reconciled on 2026-09-25 after WC1 foundations, physical-path diagnostics and
-the constrained-network and valley-bank comparisons. Earlier generation
-measurements and scientific tool audits retain their own revision/date; new
-evidence is linked below.
+Reconciled on 2026-09-25 after WC1 foundations, physical-path diagnostics,
+constrained-network/bank comparisons and the groundwater/architecture reassessment.
+The [method register](terrain-method-decisions.md) tracks failed approaches and
+replacement gates. The [new source review](2026-09-25-groundwater-and-terrain-architecture.md)
+adds groundwater capture, canyon and karst hypotheses; none was simulated here.
+Earlier generation measurements and scientific tool audits retain their own
+revision/date; new evidence is linked below.
 This is a status map; [TODO](../../TODO.md) owns the research register and the
 [strategy](../strategy/README.md) owns execution order. Dated reports retain
 their source/runtime context. Source inspection or a compatible wheel is not
@@ -117,11 +120,30 @@ common-grid routing misses mouths and exposes interior sinks. It is rejected for
 production. The [bank-support comparison](2026-09-25-valley-bank-feasibility.md)
 now preserves endpoint drops in feasible cases and reports local/joint conflicts.
 Cross-sections still climb, all four heads miss their mouths and the 250 m sink
-count worsens from 19 to 30. River-aligned local patches with explicit valley,
-junction and mouth geometry are next before a larger cohort, LE3 or WC2.
+count worsens from 19 to 30. B1 next audits input roles and constructs connected
+local valleys, junctions and mouths under the same fixed hard control. A separate
+fresh-construction case lets generated relief/guides evolve within explicit
+envelopes; success there cannot erase the rejected fixed-state result. B2 tests
+coupling and delivery before a larger cohort, LE3 or WC2.
 Peak/pass structure and real basins/coasts remain open. Sediment, epoch editor
 controls and evolved local enrichment remain later dependent work. No
 post-generation modification is introduced.
+
+## Groundwater and canyon research - not implemented
+
+The new review supports G1's small aquifer/stream-capture comparison, C1's layered
+and lateral canyon erosion, and K1's later explicit losing-stream/spring connection.
+Groundwater is a candidate explanation for some density variation, not a hidden
+outlet for unintended surface sinks. Existing open-draining controls keep their
+gates; basin/karst cases need explicit storage, head and terminal semantics.
+
+In the existing Python 3.14.7 / Landlab 2.11.0 reference environment,
+GroundwaterDupuitPercolator, LateralEroder, Lithology and SpaceLargeScaleEroder import
+and expose their APIs. This is only an availability check: no coupled model,
+conservation, performance or generated-map result was measured. Dependencies and
+current runtime contracts are unchanged by this review. The proposed split between
+authored specification, evolving process state and frozen delivery is planning,
+not a new engine or completed schema.
 
 ## Implemented baseline
 

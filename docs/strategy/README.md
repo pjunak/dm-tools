@@ -1,27 +1,17 @@
 # Current development strategy
 
-Re-evaluated 2026-09-24; WC0/WC1 foundations and the valley-bank feasibility
-checkpoint updated 2026-09-25. DM Tools is a usable terrain research workbench with
-strong numeric/build foundations; believable drainage and connected landform
-structure are the next product milestone. See the
-[assessment and primary-source research](../research/2026-09-24-progress-and-generation-strategy.md)
-for current measurements, alternatives and platform checks. The subsequent
-[landscape-evolution research](../research/2026-09-24-landscape-evolution-models.md)
-and [detailed implementation plan](landscape-evolution.md) promote a bounded
-uplift/erosion history comparison into the generation decision. The
-[first implementation](../research/2026-09-24-landscape-evolution-reference.md)
-now runs that comparison. The [frozen reconstruction follow-up](../research/2026-09-24-frozen-channel-reconstruction.md)
-removes measured interpolation humps on descending paths while preserving their
-coverage. The [physical-path follow-up](../research/2026-09-25-physical-channel-paths.md)
-reduces grid-direction alignment but fails authoring admission and measures
-substantial process-grid sensitivity. The [constrained network-led follow-up](../research/2026-09-25-constrained-network-surface.md)
-now preserves native bounds, protected heights and downhill guides, but actual
-rerouting fails capture and introduces interior sinks. The [bank-support follow-up](../research/2026-09-25-valley-bank-feasibility.md)
-now diagnoses infeasible banks and preserves endpoint support, but intervening
-rises and capture still fail. River-aligned local surface patches are next.
-No external erosion engine has been adopted into the application.
+Re-evaluated 2026-09-25 after the failed bank-support comparison and the
+[groundwater/canyon and architecture review](../research/2026-09-25-groundwater-and-terrain-architecture.md).
+DM Tools is a usable terrain research workbench with strong numeric/build
+foundations; believable drainage and connected landforms remain the next milestone.
+The [method decision register](../research/terrain-method-decisions.md) now records
+failed approaches, causes, retained work and replacement gates. The next batch
+separates authored requirements from generated guesses and constructs connected
+local valleys, then tests terrain/network co-evolution. Groundwater is a bounded
+mechanism experiment, not a remedy for unexplained surface sinks. No external
+erosion or groundwater engine has been adopted into application generation.
 
-The subsequent [world-context research](../research/2026-09-24-world-context-enrichment.md)
+The [world-context research](../research/2026-09-24-world-context-enrichment.md)
 and [WC0-WC6 plan](world-context.md) advance retained world import and shared
 context from the former final climate phase. [WC0 is now implemented](../terrain-worlds.md):
 retained source, explicit spherical placement, continent/island mapping and a
@@ -69,7 +59,7 @@ Dated reports and accepted ADRs remain historical evidence.
 |---|---|---|
 | Usable authoring and reproducible build | Implemented | Maintain it while changing generation |
 | Measured quality baseline | Partial: eight-case profile probe plus paired evolution/control gallery completed | One comparable gallery and structural scorecard, including known failures |
-| Terrain-aligned drainage | Native bounds, hard heights and bank endpoints pass in feasible cases; cross-sections and capture fail | River-aligned local patches, actual outlet capture and process-grid stability |
+| Terrain-aligned drainage | Native bounds, hard heights and bank endpoints pass in feasible cases; cross-sections and capture fail | Input-role audit, connected local patches and separately bounded co-evolution; actual capture and process-grid stability |
 | Coherent landform families | Partial recipes; two-epoch reference implemented and measured, quality gate open | Related range/pass/tributary/lowland structure that survives multiple seeds and scales |
 | Useful zoom enrichment | Experimental | Accepted regional shape, transition and inherited-flow behavior; then viewport scheduling |
 | World import and shared context | WC0 plus WC1 geographic coverage, water topology, edge widths, shore distance, directional exposure, verified products, authored geology recipes, bathymetric hypotheses and water-piece incidence implemented | B/C terrain acceptance; later physical forcing and conservative transport |
@@ -168,68 +158,54 @@ context, but stop treating every raster edge as the final physical centreline.
 One prepared path representation must be shared by source sampling, bed profiles,
 actual valley shaping, diagnostics and rendering.
 
-**Implemented comparison:** [LE1/LE2](landscape-evolution.md#first-implementation-checkpoint)
-now have an isolated executable reference, analytic controls, paired history
-figures and measured public cohorts. Chronology and resistance influence terrain;
-conservation alone does not make its continuous river paths acceptable. The
-[first report](../research/2026-09-24-landscape-evolution-reference.md) rejects
-promotion of the current D8/bilinear reconstruction and records remaining grid
-sensitivity. Keep the useful history candidate, not its artifacts as defaults.
+**Measured checkpoint:** LE1/LE2 chronology is useful, but interpolation and grid
+sensitivity prevented acceptance. Frozen triangles removed sampled humps on
+nodally descending routes without resolving D8 shape or general authoring. The
+coupled path/ground deformation then improved direction alignment but failed
+cut/fill admission. The constrained network fit and bank support preserve native
+limits and hard targets in feasible cases, yet actual drainage still fails: zero
+of four heads reaches its mouth, and at 250 m bank support increases sinks from
+19 to 30. These are rejected methods, not rejected terrain features. Full evidence
+and the different comparison denominators are in
+[T04-T08](../research/terrain-method-decisions.md#t04---evolve-a-landscape-then-deliver-its-d8-nodes-bilinearly).
 
-**Reconstruction checkpoint:** the [frozen-state comparison](../research/2026-09-24-frozen-channel-reconstruction.md)
-now tests identical ground nodes and required graphs across all 22 completed
-history/current-generator states. A required-diagonal triangle surface has zero
-sampled ascent on all 1,030 nodally nonascending full routes at 100 m and 25 m
-stations. All 153 routes with nodal climbs remain unresolved; no route is removed.
-This is a numerical control, not an accepted physical river model. Grid directions
-stay unchanged, slope creases remain and off-grid authored targets can be violated.
-Reconstruction volume changes are recorded separately from erosion.
+**Next bounded batch (B1):** first label fixture inputs as authored hard targets,
+persistent boundaries, initial relief, forcing or soft/generated guidance. The
+[existing role contract](landscape-evolution.md#authored-intent-and-geographic-boundaries)
+already requires this distinction. Keep the current fixed-source/native-cap fixture
+unchanged as a control. Construct river-aligned local patches with continuous
+cross-sections, explicit confluences and sea-level mouth transitions. Test both
+the local field and its actual Float32 delivery using the current reports.
+For admitted feasible cases require all four heads to reach their mouths and zero
+new unintended interior sinks relative to the original source, at common 125 m
+checking. Keep hard heights, divide, cut/no-fill limits, repeat, rotation and
+process-spacing checks. Proven conflicts stay visible; solver failure is not an
+infeasibility proof.
 
-**Physical-path checkpoint:** the [coupled prototype](../research/2026-09-25-physical-channel-paths.md)
-now shares a bounded mesh between paths and actual ground. All 1,183 routes remain;
-none becomes newly uphill. D8-aligned length falls from 100% to 56.99%, but all
-22 cases fail the sampled no-fill policy and 17 exceed a diagnostic 30 m cut.
-Native regional constraints and geographic divides are not satisfied by this
-comparison. Process-spacing changes alter receivers at about 53% of shared
-stations and move 15–17% of sampled outlets by more than one coarse cell.
-Long straight reaches and C0 creases remain visible. Do not promote this prototype.
+Add a separately identified **fresh-construction comparison**: initial procedural
+relief and automatic guides may evolve inside declared corridors/envelopes while
+genuinely authored requirements remain fixed. Native automatic-incision ceilings
+remain unchanged for that mechanism; a construction/history envelope must be
+specified before running or tuning the new case. Report composition displacement
+and volume separately from simulated erosion. Do not call a changed fixture a pass
+on the old one. Compare bounded rerouting/relocation where automatic guidance is
+incompatible, retaining catchment coverage and intended terminals.
 
-**Constrained-network checkpoint:** the [new construction](../research/2026-09-25-constrained-network-surface.md)
-now fits actual ground to one public range/valley/lowland fixture with a fixed
-physical network, native cut/no-fill bounds, protected divide and off-grid heights.
-A unique quadratic fit removes all 34.74 m of sampled source-network ascent and
-passes those constraints at three spacings; exact 90-degree rotation and repeated
-Float32 output also pass. Independently rerouted ground still fails: at common
-125 m checking, the 500 m candidate has 16 interior sinks and none of four heads
-reaches its intended mouth. A descending guide is not necessarily a valley bottom.
-This is a completed comparison, not accepted drainage or LE3/WC2 integration.
+**Following decision (B2):** connect a successful local construction to the existing
+two-epoch reference so relief and the automatic network can evolve together before
+publication. If the local field passes but raster delivery alone fails, compare one
+bounded channel-conforming mesh/reconstruction; do not immediately rewrite the
+whole backend. Use held-out seeds, oblique orientation, process spacing, hard
+constraints and actual-ground inspection. Broaden landforms or integrate LE3/WC2
+only for an accepted capability. More endpoint penalties, hidden fill, larger
+undeclared cuts and uniform whole-world refinement are not the next strategy.
 
-**Bank-support checkpoint:** the [bounded feasibility comparison](../research/2026-09-25-valley-bank-feasibility.md)
-adds fixed physical bank probes, nearest-reach ownership at junctions, a sea-level
-mouth taper and explicit local/joint conflict diagnostics. At 500/250 m all
-525 endpoint checks pass with the original hard inputs. Between those points,
-255/273 cross-sections still climb; no head reaches its mouth. At 250 m sinks
-increase from 19 to 30. The 1,000 m case rejects six locally impossible bank pairs.
-Endpoint constraints alone do not establish a valley. The candidate remains
-rejected; constraints are not relaxed to make the comparison pass.
-
-**Next bounded terrain-quality batch:** construct river-aligned local surface
-patches on this same fixture. Carry explicit cross-sections and confluence/mouth
-geometry into the terrain field; keep longitudinal and transverse shape coupled
-through lowland and protected transitions. Test the continuous patch behavior
-and its actual Float32 raster delivery. Reuse the current solver, native cut/no-fill
-admission, hard heights, divide and reports. The primary-source basis and the
-limited bilinear representation analysis are in the bank-support report; this is
-one experiment, not adoption of a full irregular-mesh backend.
-
-For impossible automatic guidance compare bounded rerouting/relocation separately;
-report fixed input conflicts. Require all four heads to reach their mouths and
-no new unintended interior sinks on the common 125 m checking grid. Repeat
-process-spacing, rotation and actual-ground inspection with unchanged hard
-constraints. Broaden landforms/seeds and integrate LE3/WC2 only after capture
-passes. Do not substitute more endpoint penalties, hidden fill, larger cuts or
-uniform whole-world refinement. No new framework, sediment, history UI or zoom
-jobs are needed for this gate.
+The [reassessment](../research/2026-09-25-groundwater-and-terrain-architecture.md#implementation-sequence-and-stop-rules)
+also specifies G1 groundwater capture and C1 layered/laterally eroded canyons after
+this surface decision. These small mechanism comparisons do not require full karst,
+chemistry, a history UI or global groundwater. Keep authored inputs, evolving
+process state and frozen delivery as separate responsibilities inside the current
+Python layers. The authoritative DEM and editor workflow remain unchanged.
 
 The physical-path comparator now supplies terrain-guided subgrid paths inside
 bounded corridors. A production candidate must additionally satisfy the native
@@ -328,10 +304,16 @@ never apply the complete history again to an already aged parent.
 
 ### E. Add water quantity and richer landform processes
 
-R16/R18/R33 extend contributing area with explicit runoff and the shared WC3
+R16/R18/R24/R33 extend contributing area with explicit runoff and the shared WC3
 climate adapter when available. Define discharge units and boundary flux before
 physical river widths, seasonal/dry channels, braided reaches or deltas. A simple
-authored runoff input does not require a complete climate simulation.
+authored runoff input does not require a complete climate simulation. The G1
+reference tests recharge, storage, stream exchange and groundwater capture after
+B's surface decision. Its small analytic/density experiment can precede this
+production phase; physical adoption still needs the combined water ledger.
+Surface and subsurface divides are separate. K1 later tests explicit losing-stream
+and spring connections in suitable substrate, preserving real closed basins.
+These mechanisms cannot excuse failed open-draining controls.
 
 Complete controlling-sill/storage and nested lake/outlet semantics before lake
 chains. Use the [LE4 comparison](landscape-evolution.md#le4--bedrock-cover-and-deposition-comparison)
@@ -375,6 +357,9 @@ remains historical background; current scope and execution order live here.
   Avoid a general framework or cosmetic reorganization.
 - Remove superseded runtime approaches once a new one is accepted. Keep dated
   reports and ADR history. Add new provenance only for an actual new product.
+- Update the [method register](../research/terrain-method-decisions.md), dated
+  evidence, status and TODO whenever a substantial candidate is tested. Preserve
+  why it failed, the control, reusable parts and the next decision.
 - End each milestone with an honest result: accepted, rejected, or still
   experimental. Failed candidates should change the next decision, not produce
   an endless sequence of slightly different repairs.
@@ -387,8 +372,12 @@ runtime versions/licenses. The [2026-09-24 platform audit](../research/2026-09-2
 found compatible Python 3.14 Windows wheels for SciPy and Numba. The subsequent
 [reference implementation](../research/2026-09-24-landscape-evolution-reference.md)
 installs and executes Landlab/SciPy in a separate research environment, with a
-53-wheel hash lock, explicit GPL `py-richdem` and two prereleases. The application
-dependency set is unchanged; Numba and Fastscapelib remain uninstalled here.
+53-wheel hash lock, explicit GPL `py-richdem` and two prereleases. SciPy is now also
+an application dependency for spherical shoreline queries;
+that adoption does not include Landlab or the reference stack. Groundwater,
+lateral erosion, lithology and SPACE component imports were checked in the
+existing reference environment on 2026-09-25; no new simulations were run.
+Numba and Fastscapelib remain uninstalled here.
 Fastscapelib lacked a matching wheel in the recorded audit. C++/GPU reference
 tools are experiments, not mandatory runtime changes.
 

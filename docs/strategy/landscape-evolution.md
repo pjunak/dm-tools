@@ -3,7 +3,10 @@
 Updated 2026-09-25. **LE1 implemented; LE2 history, frozen reconstruction,
 physical-path, receiver/outlet, constrained-network and bank-feasibility
 comparisons measured. Production-quality acceptance and application integration
-remain open.**
+remain open.** The
+[method register](../research/terrain-method-decisions.md) preserves the failed
+approaches and revisit gates. The [groundwater/canyon reassessment](../research/2026-09-25-groundwater-and-terrain-architecture.md)
+revises the next construction experiment and adds untested process alternatives.
 The [primary-source review](../research/2026-09-24-landscape-evolution-models.md)
 records the scientific basis, tool comparison and dependency probe.
 The [main strategy](README.md) remains the authoritative project order; this
@@ -83,12 +86,16 @@ native bounds and hard heights, but cross-sections still rise and head capture
 remains zero. At 250 m sinks worsen from 19 to 30; the 1,000 m bank conditions
 are locally infeasible. No relaxed ground is published.
 
-Next construct one river-aligned local surface-patch comparison with explicit
-cross-section/confluence/mouth geometry and bounded transitions, on the same
-fixture. Both the local field and Float32 delivery must pass actual capture and
-hard constraints before enlarging the cohort or integrating LE3/WC2. The main
-strategy owns the exit conditions. Do not replace this representation test with
-more endpoint penalties, weaken authored limits or create another framework.
+Next audit input roles and construct river-aligned local patches with explicit
+cross-section/confluence/mouth geometry and bounded transitions. Preserve the
+same fixed-source/native-cap fixture as a control. Add a separately identified
+fresh-construction case where generated initial relief and automatic guides can
+co-evolve within declared envelopes; authored hard targets keep their meaning.
+Compare both local fields and Float32 delivery before enlarging the cohort or
+integrating LE3/WC2. The main strategy owns B1/B2 gates, including rejection of
+conflicting inputs and the limited alternative-representation comparison.
+Do not replace this test with more endpoint penalties, relax hard limits, or
+report success on a new case as a repair of the rejected fixed-state result.
 
 ## Outcome and decision
 
@@ -272,6 +279,27 @@ support an open-draining domain without authored retention; reject unsupported
 basin inputs explicitly. LE3 must test the current basin/constraint contract
 before a general application rollout. Physical lake chains/storage belong to
 LE4 and batch E; they cannot be inferred from a filled routing raster.
+
+## Groundwater and canyon extensions - proposed
+
+The [new research and staged tests](../research/2026-09-25-groundwater-and-terrain-architecture.md#implementation-sequence-and-stop-rules)
+add G1 for groundwater capture/density, C1 for layered and lateral canyon erosion,
+and K1 for an explicit karst connection. None is implemented in the reference.
+Use the existing isolated Landlab environment; component import checks only
+establish availability. No new product engine or mandatory dependency is selected.
+
+After B chooses a surface path, test a small analytic aquifer before coupling
+recharge/stream exchange to incision. Close the combined storage/flux balance and
+resolve seconds versus geological years. C1 can proceed after surface acceptance
+without waiting for caves or karst; mechanical erosion, dissolved mass and
+composition corrections remain separate. Existing LE4 owns mobile sediment.
+
+Surface and subsurface catchments need not match. Declare geological aquifer
+boundaries independently of topographic divides, and model head/capacity for
+underground links. The existing open-draining fixture retains its no-extra-sinks
+gate; basin/karst fixtures require explicitly different terminal/storage semantics.
+A heightfield cannot represent cave roofs and floors. Keep any eventual cave
+geometry in a separate representation rather than hiding it in DEM exceptions.
 
 ## Scale, prepared fields and local enrichment
 

@@ -7,7 +7,9 @@
    [terrain tool guide](../src/dmtools/terrain/README.md).
    For stopping work safely, read [generation cancellation](terrain-generation-control.md).
 2. To contribute or choose the next implementation, read the
-   [current development strategy](strategy/README.md).
+   [current development strategy](strategy/README.md). For failed experiments,
+   reasons and replacement decisions, use the living
+   [terrain method register](research/terrain-method-decisions.md).
 3. To understand the present dependency direction and data flow, read the
    [architecture overview](architecture/README.md).
 4. To inspect categorized future work, use the
@@ -58,7 +60,9 @@ change.
   consequences; accepted ADRs are append-only history.
 - [`research/`](research/README.md) indexes implemented, measured results and
   candidate investigations. Its [status page](research/status.md) distinguishes
-  shipped work, partial experiments and work not yet run.
+  shipped work, partial experiments and work not yet run. The living
+  [method register](research/terrain-method-decisions.md) links failed candidates
+  to replacement/revisit gates; dated evidence stays historical.
 - [`DEPENDENCIES.md`](DEPENDENCIES.md) records packages and assets actually used
   at runtime, with purposes and licenses.
 

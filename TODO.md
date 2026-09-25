@@ -28,7 +28,10 @@ Input editing now retains the last generated reference, supports selection and
 property changes, and provides undo/redo for committed instructions.
 The [research status](docs/research/status.md) separates completed slices from
 partially addressed research goals; unchecked broad items may contain completed
-substeps.
+substeps. The [living method decision register](docs/research/terrain-method-decisions.md)
+records attempted methods, measured failures, causes, retained work and revisit
+gates. Update it alongside dated evidence and this backlog after each substantial
+experiment; do not mark a desired feature complete merely because its trial ended.
 
 ## Current execution focus — 2026-09-25
 
@@ -42,7 +45,7 @@ not a physical river-water validation or a private-map result.
 |---|---|---|
 | **A — quality controls** | Quality fixtures, paired maps/profiles, process-scale warnings; convergent-flat comparison (R02/R25/R27/R41/R43) | Fixed comparison set and a measured accept/reject result; no new benchmark framework |
 | **W — bounded foundation delivered** | WC0 plus WC1 geography, geology inputs, bathymetry and water-piece incidence (R01/R49); return to B/C physical paths and landforms | Preserve source and unresolved support; context is provisional, not solved climate |
-| **B — next major generation decision** | Bank feasibility measured; construct river-aligned local surface patches (R48/R32) | Feasible bank endpoints and hard limits pass, but cross-sections and capture fail; resolve actual drainage before LE3 |
+| **B — next major generation decision** | Audit input roles; construct connected local valleys and separately test movable generated relief/guides (R48/R32) | Preserve the fixed hard control; actual capture, Float32 delivery and declared construction/history envelopes before LE3 |
 | **C** | Consolidate one coherent range/pass/tributary/lowland system from the selected comparison (R08/R09/R14/R40/R44) | Better structural/visual results across fixed seeds and physical scales |
 | **W — after B/C acceptance** | Rough world, seasonal climate/runoff feedback and reviewed parent (WC2-WC4; R33/R49) | Physical terrain acceptance, bounded coupling, shared world time and budgets |
 | **D / WC5** | Accepted parent-conditioned detail, same-present historical refinement and inherited fine hydrology, then zoom jobs (R15/R34/R49) | Exact overlap, coarse-scale, time-dependent boundary/flow and visual acceptance before real small rivers |
@@ -221,14 +224,34 @@ records execution and its remaining gates; the simulation is still research-only
   The [report](docs/research/2026-09-25-valley-bank-feasibility.md) rejects promotion:
   525 endpoint constraints pass in feasible cases, but no required head is captured
   and the 250 m candidate adds sinks. No fixed constraint was softened.
-- [ ] **Next — River-aligned local surface patches** (R48/R32/R02). Couple
-  longitudinal bed profiles and transverse valley shape with explicit junction
-  and mouth geometry. Preserve source/caps/heights/divide and bound transitions;
-  test both the local field and Float32 raster delivery. For infeasible automatic
-  guidance compare rerouting/relocation separately; report fixed input conflicts.
-  Require four captured heads, no new sinks, rotation/process-spacing checks and
-  actual-ground inspection before broadening the cohort. More endpoint penalties,
-  hidden fill, larger cuts or uniformly finer whole-world grids are not the plan.
+- [x] **Reassess failed methods and alternative processes** (R24/R32/R48).
+  The [method register](docs/research/terrain-method-decisions.md) records eight
+  groups of failed/restricted approaches and their replacement gates. The
+  [groundwater/canyon review](docs/research/2026-09-25-groundwater-and-terrain-architecture.md)
+  checks primary models and existing component APIs; no new simulation was run.
+- [ ] **Next — B1 input roles and connected local patches** (R48/R32/R02).
+  Keep the fixed-source/native-cap control, classify authored requirements versus
+  generated guesses, then couple bed and cross-section/confluence/mouth geometry.
+  Test the local field and Float32 delivery. Admitted fixed cases require four
+  captured heads, no new sinks, hard heights/divide/caps and rotation/spacing
+  checks. Separately compare fresh construction with movable automatic guides
+  and an explicit prospective displacement/volume/history envelope; its success
+  cannot erase the fixed-state failure. Keep contradictions visible.
+- [ ] **B2 — Select reconstruction and terrain/network co-evolution** (R48/R14).
+  Connect accepted local construction to the two-epoch reference. If delivery
+  alone blocks quality, compare one bounded channel-conforming representation.
+  Use held-out seeds, complete catchment coverage, actual-ground figures and cost
+  before LE3/WC2; stop adding endpoint penalties to the same failed formulation.
+- [ ] **G1 — Test groundwater capture and drainage density** (R24/R33).
+  After B's surface decision, compare an analytic shallow aquifer and combined
+  storage/flux controls, then paired transmissivity/recharge cases in the existing
+  isolated environment. Measure channel survival and spring flow; underground
+  routes are not exemptions for surface reconstruction errors.
+- [ ] **C1 — Compare layered canyon and lateral erosion** (R09/R18/R19).
+  Following B acceptance, compare plateau/base-level history, rock resistance
+  and vertical-only versus lateral erosion. Validate width/rims, capture, material
+  accounting and grid sensitivity. Full groundwater/karst is not a prerequisite;
+  advanced collapse and dissolution remain separate candidates.
 - [ ] **LE2 follow-up — Complete structural acceptance** (R40/R41/R43). Add the
   missing peak/pass and matched physical-route scorecard, resolve long D8 grooves
   and quantify capture sensitivity. The finest-grid budget failure is a stopping
@@ -1222,7 +1245,9 @@ Priorities remain conditional on the current strategy's prerequisites.
 - [ ] **Research — R18: Separate catchment trees from channel regimes.** Define
   confined bedrock, alluvial, meandering, braided and delta/distributary
   networks. Relate width to discharge/material/confinement, not Strahler order
-  alone. Test connectivity, split/join flux and source-DEM consistency.
+  alone. Test connectivity, split/join flux and source-DEM consistency. C1 compares
+  layered canyon incision and lateral erosion before broader channel families;
+  see the [process reassessment](docs/research/2026-09-25-groundwater-and-terrain-architecture.md).
 - [ ] **Research — R19: Generate terraces from explicit events.** Compare
   base-level or uplift episodes with authored terrace benches. Require ordered
   levels, coherent valley continuity and a valid modern outlet; do not terrace
@@ -1243,10 +1268,16 @@ Priorities remain conditional on the current strategy's prerequisites.
   cones, shields, calderas, lava plateaus and impact rims as distinct recipes
   with optional weathering. Validate radial profiles, rim continuity,
   surrounding transitions and coast preservation; no automatic canon changes.
-- [ ] **Research — R24: Define karst and subsurface-drainage exceptions.** Allow
-  authored sinkholes, losing streams and spring connections in suitable
-  substrate. Test a routed underground connection without carving a surface
-  outlet. Caves and overhangs need a separate representation from the DEM.
+- [ ] **Research — R24: Model groundwater and explicit karst connections.**
+  First test G1's porous aquifer, recharge, storage and gaining/losing exchange
+  against analytic controls; then measure groundwater capture and active stream
+  density. Keep hydraulic conductivity/storage distinct from erodibility and
+  chemical solubility. K1 later adds an explicit head/capacity-limited connection
+  between a losing stream and a spring in suitable substrate, with a combined
+  water budget. Surface and subsurface divides can differ. Do not invent conduits
+  for accidental raster pits. Dissolution, collapse and 3-D cave geometry are
+  separate follow-ups; a DEM cannot contain cave roofs and floors. See the
+  [models, tool checks and staged gates](docs/research/2026-09-25-groundwater-and-terrain-architecture.md).
 
 #### Comparison tools, rendering, and scientific limits
 
@@ -1436,7 +1467,12 @@ Priorities remain conditional on the current strategy's prerequisites.
   final surface/path contract. The network-led fit now preserves hard heights,
   native bounds and downhill guides. Bank/confluence feasibility is now measured:
   endpoint support passes in feasible cases, but intervening rises and capture fail.
-  Test river-aligned local surface patches next, preserving the hard constraints.
+  B1 now audits input roles and tests connected local patches while preserving
+  that fixed hard control. A separate construction case lets generated relief
+  and automatic guides co-evolve within declared envelopes; B2 selects a useful
+  reconstruction before integration. Preserve genuine authored requirements and
+  distinguish composition volume from geological erosion. See the
+  [failure register](docs/research/terrain-method-decisions.md) for revisit gates.
   Do not count changed automatic D8 edges as matched route improvements. Remove
   superseded runtime paths after acceptance; preserve current inputs/contracts
   without legacy support.
@@ -1590,6 +1626,12 @@ geometry movement and project-saving behavior.
 
 ## Related decisions and research
 
+- [Living terrain method decisions](docs/research/terrain-method-decisions.md)
+  records failures, reasons, useful retained work, alternatives and revisit gates.
+- [Groundwater, canyons and architecture reassessment — 2026-09-25](docs/research/2026-09-25-groundwater-and-terrain-architecture.md)
+  reviews existing models and proposes connected construction, explicit input
+  roles, groundwater capture, layered/lateral canyons and bounded karst tests.
+  Component APIs were checked; no new solver simulation or product adoption.
 - [World-context enrichment — 2026-09-24](docs/research/2026-09-24-world-context-enrichment.md)
   reviews primary geographic, tectonic and climate models, existing tools and
   deployment limits. The [WC0-WC6 plan](docs/strategy/world-context.md) advances

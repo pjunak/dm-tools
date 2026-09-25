@@ -101,6 +101,12 @@ files. Primary package references: [Landlab](https://pypi.org/project/landlab/2.
 [py-richdem](https://pypi.org/project/py-richdem/2.2.0rc3/),
 [SciPy license](https://github.com/scipy/scipy/blob/main/LICENSE.txt), and
 [Matplotlib license](https://matplotlib.org/stable/project/license.html).
+The [2026-09-25 groundwater/canyon review](research/2026-09-25-groundwater-and-terrain-architecture.md)
+also checked imports and signatures for GroundwaterDupuitPercolator, LateralEroder,
+Lithology and SpaceLargeScaleEroder in this existing environment. No new packages
+were installed and no new groundwater/canyon simulation was run. GOEMod and
+MODFLOW/CFP remain external research candidates, not dependencies.
+
 An isolated reference installation is not adoption or redistribution approval.
 LE3 must select the actual production implementation and review all shipped
 transitive/native notices before bundling. The project distribution-license

@@ -4,7 +4,9 @@ This index preserves dated evidence: implementation rundowns, measured or
 rejected prototypes, and candidate papers/tools. A research mention does not
 mean a dependency or feature was adopted. The [current status](status.md) maps
 these findings to implemented contracts and remaining TODO work; the
-[development strategy](../strategy/README.md) owns execution order.
+[development strategy](../strategy/README.md) owns execution order. The living
+[method decision register](terrain-method-decisions.md) records what failed, why,
+what was retained and which evidence would justify a replacement or revisit.
 
 Notes are newest first. Measurements and package-support claims belong to their
 recorded revision/date. Keep historical findings intact and record later changes
@@ -12,11 +14,18 @@ in the current status or a new dated report.
 
 ## Current reassessment
 
+- [Groundwater, canyons and terrain architecture — 2026-09-25](2026-09-25-groundwater-and-terrain-architecture.md)
+  reviews porous groundwater, seepage, karst, lateral erosion and joint terrain/network
+  construction. Revises input-role and representation comparisons, with staged
+  analytic/capture/material gates. Local component imports succeeded; no new
+  simulation or product engine was adopted.
+
 - [Valley-bank feasibility — 2026-09-25](2026-09-25-valley-bank-feasibility.md)
   implements fixed physical bank support, junction ownership, mouth taper and
   native-bound/hard-height conflict diagnostics. Feasible endpoint checks pass;
   intervening rises and actual capture fail, with more sinks at 250 m. The next
-  bounded construction uses river-aligned local surface patches.
+  bounded construction uses river-aligned local surface patches; the reassessment
+  above adds an input-role audit and a separate fresh-construction comparison.
 
 - [Constrained network-led terrain — 2026-09-25](2026-09-25-constrained-network-surface.md)
   implements a unique surface fit with hard heights, native cut/no-fill limits,

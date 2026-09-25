@@ -6,7 +6,7 @@ export-import correction, bounded preparation and geographic context documents. 
 documentation and private campaign files are excluded. The public JSON schemas and reference dependency
 lock are listed separately as supporting contracts, not counted as prose docs.
 
-**188 Markdown files + 1 legal notice = 189 documentation files.**
+**190 Markdown files + 1 legal notice = 191 documentation files.**
 Each file appears once below, including this inventory. Document titles describe
 their subject; the group description identifies their role and authority.
 
@@ -17,14 +17,14 @@ remains the entry point for normal use. All are individually linked in the list 
 | Group | Files |
 |---|---:|
 | Project entry and guidance | 4 |
-| Active plans and indexes | 10 |
+| Active plans and indexes | 11 |
 | User guides and current contracts | 18 |
 | Developer and reference guides | 8 |
 | Architecture decision records | 78 |
-| Dated research reports | 68 |
+| Dated research reports | 69 |
 | Maintenance reports | 2 |
 | Legal notice | 1 |
-| **Total** | **189** |
+| **Total** | **191** |
 
 ## Project entry and guidance (4)
 
@@ -37,7 +37,7 @@ Contribution instructions and repository entry points; these are not terrain set
 | [TODO.md](../TODO.md) | Complete grouped feature/research backlog, including R01-R49 and WC/LE checkpoints. |
 | [src/dmtools/terrain/AGENTS.md](../src/dmtools/terrain/AGENTS.md) | Terrain-specific contracts and implementation/testing instructions. |
 
-## Active plans and indexes (10)
+## Active plans and indexes (11)
 
 Current direction and navigation. Plans mark unimplemented features explicitly; code, schemas, tests and accepted decisions own shipped behavior.
 
@@ -49,6 +49,7 @@ Current direction and navigation. Plans mark unimplemented features explicitly; 
 | [docs/adr/README.md](adr/README.md) | Architecture-decision index and the append-only decision policy. |
 | [docs/architecture/README.md](architecture/README.md) | Current runtime structure and explicitly planned world-stage ownership. |
 | [docs/research/README.md](research/README.md) | Dated research index, separating source review from executed experiments. |
+| [docs/research/terrain-method-decisions.md](research/terrain-method-decisions.md) | Living failed-method record, causes, retained work, alternatives and revisit gates. |
 | [docs/research/status.md](research/status.md) | Current implemented, experimental and unimplemented research status. |
 | [docs/strategy/README.md](strategy/README.md) | Authoritative implementation order and acceptance gates. |
 | [docs/strategy/landscape-evolution.md](strategy/landscape-evolution.md) | LE0-LE6 evolution, authoring, conservation and regional-history gates. |
@@ -179,12 +180,13 @@ Accepted historical decisions. Preserve their original context; consult the curr
 | [docs/adr/0077-generate-authored-ocean-depths.md](adr/0077-generate-authored-ocean-depths.md) | Separate authored bathymetry, conservative depth bounds, actual water-centre membership and immutable verified products. |
 | [docs/adr/0078-retain-water-piece-connectivity.md](adr/0078-retain-water-piece-connectivity.md) | Separate water pieces, finite shared intervals, source verification and explicit unresolved transport support. |
 
-## Dated research reports (68)
+## Dated research reports (69)
 
 Primary-source reviews, experiments and implementation evidence at their recorded date/revision. A title or citation is not evidence that a tool was adopted. Current status is listed above.
 
 | File | Purpose or document title |
 |---|---|
+| [docs/research/2026-09-25-groundwater-and-terrain-architecture.md](research/2026-09-25-groundwater-and-terrain-architecture.md) | Primary-source groundwater/canyon review, local API availability, revised construction architecture and staged experiments. |
 | [docs/research/2026-09-25-valley-bank-feasibility.md](research/2026-09-25-valley-bank-feasibility.md) | Physical bank support, local/joint conflict diagnostics, failed inward profiles/capture and the next river-aligned patch gate. |
 | [docs/research/2026-09-25-constrained-network-surface.md](research/2026-09-25-constrained-network-surface.md) | Native-bounded terrain fit, preserved hard inputs and failed actual valley capture; next feasibility gates. |
 | [docs/research/2026-09-25-physical-channel-paths.md](research/2026-09-25-physical-channel-paths.md) | Coupled path/ground prototype, full-cohort constraints and receiver/outlet sensitivity; next generation decision. |

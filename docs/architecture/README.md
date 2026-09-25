@@ -25,6 +25,24 @@ The domain and pipeline must remain usable without a web server. Adapters may
 depend on Rasterio, GDAL, GeoPackage drivers, image renderers, or external
 scientific engines; core contracts must not depend on those concrete libraries.
 
+## Proposed generation responsibility split
+
+The [2026-09-25 reassessment](../research/2026-09-25-groundwater-and-terrain-architecture.md#proposed-structural-change)
+proposes a clearer boundary between authored specification, evolving process state
+and frozen published terrain. It is not implemented by the pipeline below.
+Initial procedural relief and automatic networks may co-evolve; authored final
+heights, coasts and persistent protections keep their declared roles. Local valley
+patches are the next comparator, with an internal graph/mesh alternative conditional
+on delivery evidence. The Float32 DEM remains the authoritative delivered ground.
+
+Groundwater, if accepted, needs aquifer head/storage and separate subsurface links;
+surface receivers alone cannot own that state. Cave roof/floor geometry requires a
+separate representation. Add only state required by an accepted mechanism inside
+the current domain/pipeline/application layers, not a general solver framework.
+Sampling an immutable result never advances geological time. See the
+[method register](../research/terrain-method-decisions.md) for the failures motivating
+these proposals and the [strategy](../strategy/README.md) for adoption gates.
+
 ## Terrain pipeline
 
 The current implemented path is:

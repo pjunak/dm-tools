@@ -10,6 +10,14 @@ primary sources, existing solutions, licenses and the limits of the recommendati
 The [main strategy](README.md) owns execution order; [TODO R49](../../TODO.md)
 owns this feature's backlog. Existing landscape evolution remains governed by
 [LE0-LE6](landscape-evolution.md), rather than a second erosion engine here.
+The [groundwater/canyon reassessment](../research/2026-09-25-groundwater-and-terrain-architecture.md)
+adds conditional hydrogeology and layered-erosion experiments after the surface
+construction decision. If accepted, provinces will need explicit hydraulic
+conductivity, storage, aquifer base and soluble-rock hypotheses; existing province
+age or erodibility does not determine those properties. Aquifer boundaries need
+not follow surface divides or continent labels. Full groundwater and cave modeling
+are not prerequisites for WC2 rough terrain, and no such fields are implemented
+by the current geology recipe.
 
 ## Product outcome and sequence
 
