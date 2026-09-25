@@ -1,7 +1,8 @@
 # Landscape-evolution implementation plan
 
 Updated 2026-09-25. **LE1 implemented; LE2 history, frozen reconstruction,
-physical-path and receiver/outlet comparisons measured. Production-quality acceptance and application integration
+physical-path, receiver/outlet and constrained-network comparisons measured.
+Production-quality acceptance and application integration
 remain open.**
 The [primary-source review](../research/2026-09-24-landscape-evolution-models.md)
 records the scientific basis, tool comparison and dependency probe.
@@ -64,11 +65,20 @@ a different construction. Frozen grid/time diagnostics now quantify receiver and
 outlet changes at identical physical coordinates, without claiming area capture
 or convergence from pointwise samples.
 
-Next compare one constrained catchment/network-led range/valley/lowland surface,
-using the main strategy's existing fallback and the same profile/coverage controls.
-Fix minimum physical feature support and rerouted catchment stability before
-another fine simulation or full LE3 integration. Do not raise the failed finer
-history's budget, weaken authored constraints or create another report framework.
+## Constrained-network checkpoint
+
+The [bounded network-led fit](../research/2026-09-25-constrained-network-surface.md)
+now preserves native regional bounds, hard off-grid heights, a protected divide
+and descending physical guides at three process spacings. Repeated fits and a
+90-degree rotation pass. Actual Float32 rerouting still misses mouths and creates
+interior sinks, including at a common finer checking resolution. It remains
+research-only; this is not a history-model result or an accepted hydrological field.
+
+Next test lateral bank/confluence support and whole-route cut feasibility using
+the same fixed fixture. Establish actual valley capture and bounded transitions
+before enlarging the cohort or integrating LE3/WC2. The main strategy owns the
+exit conditions. Do not raise the failed finer history's budget, weaken authored
+constraints or create another report framework.
 
 ## Outcome and decision
 

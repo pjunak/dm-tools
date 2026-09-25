@@ -4,7 +4,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from hashlib import sha256
 from math import isfinite
-from typing import Any
+from typing import Any, Protocol
 
 import numpy as np
 from numpy.typing import NDArray
@@ -16,6 +16,21 @@ from dmtools.terrain.domain.evolution import EvolutionGrid
 type FloatArray = NDArray[np.float64]
 type Sampler = Callable[[FloatArray, FloatArray], NDArray[np.float32]]
 PROFILE_TOLERANCE_M = 0.01
+
+
+class PathNetwork(Protocol):
+    """One profile interface for raster-linked and physical vector networks."""
+
+    @property
+    def receivers(self) -> NDArray[np.int64]: ...
+
+    @property
+    def required(self) -> NDArray[np.bool_]: ...
+
+    def heads(self) -> NDArray[np.int64]: ...
+    def route(self, head: int) -> NDArray[np.int64]: ...
+    def points(self, nodes: NDArray[np.int64]) -> tuple[FloatArray, FloatArray]: ...
+    def identity(self) -> str: ...
 
 
 @dataclass(frozen=True, slots=True)
@@ -90,7 +105,7 @@ def station_distances(x: FloatArray, y: FloatArray, spacing_m: float) -> FloatAr
 
 
 def profile(
-    paths: ChannelPaths,
+    paths: PathNetwork,
     nodes: NDArray[np.int64],
     sampler: Sampler,
     spacing_m: float,
@@ -126,7 +141,7 @@ def profile_numbers(stations: FloatArray, ground: NDArray[np.float32]) -> dict[s
 
 
 def measure_paths(
-    paths: ChannelPaths,
+    paths: PathNetwork,
     sampler: Sampler,
     ground_nodes: FloatArray,
     spacing_m: float,
@@ -140,8 +155,8 @@ def measure_paths(
     """
     if type(maximum_samples) is not int or not 1 <= maximum_samples <= 32_000_000:
         raise ValueError("Profile sample budget must be from 1 to 32,000,000.")
-    if ground_nodes.shape != paths.grid.shape or not np.all(np.isfinite(ground_nodes)):
-        raise ValueError("Nodal ground must match the path grid.")
+    if ground_nodes.shape != paths.receivers.shape or not np.all(np.isfinite(ground_nodes)):
+        raise ValueError("Nodal ground must match the path network.")
     if isinstance(spacing_m, bool) or not isfinite(spacing_m) or spacing_m <= 0:
         raise ValueError("Profile spacing must be finite and positive.")
     used = 0

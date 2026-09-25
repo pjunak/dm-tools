@@ -127,18 +127,22 @@ def _regional_weights(
         yield region, inside, fade * fade * (3 - 2 * fade)
 
 
+def regional_incision_limit(background_budget_m: float, controls: LandformSettings) -> float:
+    """Native full-influence automatic-cut limit for one landform recipe."""
+    fraction = {"plain": 0.15, "hills": 0.40, "plateau": 0.25, "mountains": 0.25}
+    return min(background_budget_m, fraction[controls.character] * controls.relief_m)
+
+
 def regional_incision_budget(
     x: NDArray[np.float64], y: NDArray[np.float64], background_budget_m: float,
     regions: tuple[MetricRegion, ...],
 ) -> NDArray[np.float64]:
     """Blend heuristic automatic-cut limits; authored valleys are separate."""
-    relief_fraction = {"plain": 0.15, "hills": 0.40, "plateau": 0.25, "mountains": 0.25}
     total = np.zeros_like(x)
     target = np.zeros_like(x)
     for region, inside, weight in _regional_weights(x, y, regions):
         controls = region.source.settings
-        local_budget = min(background_budget_m,
-                           relief_fraction[controls.character] * controls.relief_m)
+        local_budget = regional_incision_limit(background_budget_m, controls)
         target[inside] += weight * local_budget
         total[inside] += weight
     influence = np.minimum(total, 1)

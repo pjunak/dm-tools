@@ -92,7 +92,9 @@ remains open. The [frozen reconstruction follow-up](research/2026-09-24-frozen-c
 measures surface/path agreement without rerunning erosion. The
 [physical-path follow-up](research/2026-09-25-physical-channel-paths.md) adds shared
 path/ground geometry and grid/time diagnostics, with failed constraint gates kept
-visible. The [reference guide](../benchmarks/evolution/README.md) owns setup and
+visible. The [constrained-network follow-up](research/2026-09-25-constrained-network-surface.md)
+preserves native limits and hard heights, but independent rerouting rejects its
+valley capture. The [reference guide](../benchmarks/evolution/README.md) owns setup and
 the runnable comparison commands.
 The [2026-09-13 audit](maintenance/2026-09-13-documentation-and-research-status.md)
 and [2026-09-10 checkpoint](maintenance/2026-09-10-sanity-and-performance.md)

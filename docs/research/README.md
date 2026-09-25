@@ -12,11 +12,16 @@ in the current status or a new dated report.
 
 ## Current reassessment
 
+- [Constrained network-led terrain — 2026-09-25](2026-09-25-constrained-network-surface.md)
+  implements a unique surface fit with hard heights, native cut/no-fill limits,
+  protected divides and whole-cell channel descent. Independent finer-grid routing
+  exposes failed capture and interior sinks; lateral valley feasibility is next.
+
 - [Coupled physical channel paths — 2026-09-25](2026-09-25-physical-channel-paths.md)
   implements a shared path/ground mesh, complete route comparison, cut/fill and
   anchor rejection controls and shared-coordinate receiver/outlet diagnostics.
-  Reduced direction locking does not pass authoring or landform gates; the next
-  step is one constrained catchment/network-led surface, before LE3/WC2.
+  Reduced direction locking did not pass authoring or landform gates; it motivated
+  the constrained network-led comparison above, before LE3/WC2.
 
 - [Water-piece connectivity — 2026-09-25](2026-09-25-water-piece-connectivity.md)
   implements separate pieces and shared intervals, source-verified graph products,

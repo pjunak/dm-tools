@@ -1,6 +1,6 @@
 # Current development strategy
 
-Re-evaluated 2026-09-24; WC0/WC1 foundations and the coupled physical-path
+Re-evaluated 2026-09-24; WC0/WC1 foundations and the constrained network-led
 checkpoint updated 2026-09-25. DM Tools is a usable terrain research workbench with
 strong numeric/build foundations; believable drainage and connected landform
 structure are the next product milestone. See the
@@ -14,7 +14,10 @@ now runs that comparison. The [frozen reconstruction follow-up](../research/2026
 removes measured interpolation humps on descending paths while preserving their
 coverage. The [physical-path follow-up](../research/2026-09-25-physical-channel-paths.md)
 reduces grid-direction alignment but fails authoring admission and measures
-substantial process-grid sensitivity. One constrained network-led surface is next.
+substantial process-grid sensitivity. The [constrained network-led follow-up](../research/2026-09-25-constrained-network-surface.md)
+now preserves native bounds, protected heights and downhill guides, but actual
+rerouting fails capture and introduces interior sinks. Lateral valley feasibility
+and capture are next.
 No external erosion engine has been adopted into the application.
 
 The subsequent [world-context research](../research/2026-09-24-world-context-enrichment.md)
@@ -65,7 +68,7 @@ Dated reports and accepted ADRs remain historical evidence.
 |---|---|---|
 | Usable authoring and reproducible build | Implemented | Maintain it while changing generation |
 | Measured quality baseline | Partial: eight-case profile probe plus paired evolution/control gallery completed | One comparable gallery and structural scorecard, including known failures |
-| Terrain-aligned drainage | Frozen reconstruction and shared physical paths measured; production not accepted | Constrained network-led terrain, fixed geographic divides and process-grid stability |
+| Terrain-aligned drainage | Constrained network-led fit preserves hard heights and native bounds; capture fails | Lateral valley feasibility, actual outlet capture and process-grid stability |
 | Coherent landform families | Partial recipes; two-epoch reference implemented and measured, quality gate open | Related range/pass/tributary/lowland structure that survives multiple seeds and scales |
 | Useful zoom enrichment | Experimental | Accepted regional shape, transition and inherited-flow behavior; then viewport scheduling |
 | World import and shared context | WC0 plus WC1 geographic coverage, water topology, edge widths, shore distance, directional exposure, verified products, authored geology recipes, bathymetric hypotheses and water-piece incidence implemented | B/C terrain acceptance; later physical forcing and conservative transport |
@@ -190,16 +193,27 @@ comparison. Process-spacing changes alter receivers at about 53% of shared
 stations and move 15–17% of sampled outlets by more than one coarse cell.
 Long straight reaches and C0 creases remain visible. Do not promote this prototype.
 
-**Next bounded terrain-quality batch:** activate the network-led fallback below.
-Freeze one public range/valley/lowland fixture with coast, confluences, a protected
-divide, off-grid heights and native regional cut limits. Compare one terrain
-construction built around the shared network, with hard equalities and cut/no-fill
-inequalities, against the existing triangle/physical controls. Reject or reroute
-infeasible routes before surface fitting; do not merely move the finished ground.
-Establish physical valley-width/feature support and rerouted catchment stability
-on the existing spacing/time controls before a finer simulation or LE3/WC2.
-The history engine and comparison infrastructure exist; no new erosion/report
-framework, sediment, history UI or zoom jobs are needed to address this gate.
+**Constrained-network checkpoint:** the [new construction](../research/2026-09-25-constrained-network-surface.md)
+now fits actual ground to one public range/valley/lowland fixture with a fixed
+physical network, native cut/no-fill bounds, protected divide and off-grid heights.
+A unique quadratic fit removes all 34.74 m of sampled source-network ascent and
+passes those constraints at three spacings; exact 90-degree rotation and repeated
+Float32 output also pass. Independently rerouted ground still fails: at common
+125 m checking, the 500 m candidate has 16 interior sinks and none of four heads
+reaches its intended mouth. A descending guide is not necessarily a valley bottom.
+This is a completed comparison, not accepted drainage or LE3/WC2 integration.
+
+**Next bounded terrain-quality batch:** retain this fixture and solve lateral
+valley feasibility/capture. Add bank-to-bed and confluence support at fixed physical
+offsets; check feasibility with the same native cuts, hard heights and divide.
+Couple transverse and longitudinal shape through lowland/protected transitions.
+For impossible automatic guidance compare rerouting/relocation; report fixed
+input conflicts rather than increasing cuts or applying depression fill. Require
+all four heads to reach their mouths and no new unintended interior sinks on the
+common evaluation grid, with hard constraints unchanged. Repeat rotation, process
+spacing and actual-ground inspection; broaden the landform/seed cohort only after
+this passes. The existing history and comparison infrastructure are sufficient;
+no new framework, sediment, history UI or zoom jobs are needed for this gate.
 
 The physical-path comparator now supplies terrain-guided subgrid paths inside
 bounded corridors. A production candidate must additionally satisfy the native
@@ -236,11 +250,11 @@ parallel legacy paths.
 - Check stage cost, memory and deterministic overlap. Finite profile success
   remains sampled evidence, never continuous-water certification.
 
-If flat handling plus the selected evolution/reconstruction or shared-path
-prototype cannot meet the gate, record the failed assumption and compare one
-catchment/network-led surface construction before adding another local floor
-patch. For changed automatic networks, match authored source/outlet routes and
-spatial catchment coverage as specified in LE3; D8 edge counts are not comparable.
+The failed evolution/reconstruction and shared-path gates activated the bounded
+network-led construction above. Its longitudinal constraints now pass; lateral
+capture is the remaining failed assumption to test before another floor patch.
+For changed automatic networks, match authored source/outlet routes and spatial
+catchment coverage as specified in LE3; D8 edge counts are not comparable.
 D-infinity can be an accumulation comparator; it is not a substitute for channel
 geometry. A full irregular/TIN backend requires separate evidence.
 

@@ -14,7 +14,7 @@ need, supported-platform validation, and a completed license review.
 |---|---:|---|---|
 | CPython Tk/ttk | 3.14 / Tk 9 | Native desktop widgets, progress, and file dialogs | PSF / Tcl-Tk BSD-style |
 | NumPy | 2.5.2 | Deterministic array computation and Float32 elevation grids | BSD-3-Clause |
-| SciPy | 1.18.1 | Exact unit-sphere shoreline sample queries through KDTree | BSD-3-Clause; retain bundled native notices |
+| SciPy | 1.18.1 | Exact unit-sphere shoreline queries; bounded research surface feasibility/quadratic fitting | BSD-3-Clause; retain bundled native notices |
 | Pillow | 12.3.0 | In-app raster preview and PNG export | MIT-CMU |
 | Shapely | 2.1.2 | Polygon validity, land mask, and distance-to-coast queries | BSD-3-Clause |
 | svgelements | 1.9.6 | SVG shape/path parsing, transforms, and curve evaluation | MIT |

@@ -42,7 +42,7 @@ not a physical river-water validation or a private-map result.
 |---|---|---|
 | **A — quality controls** | Quality fixtures, paired maps/profiles, process-scale warnings; convergent-flat comparison (R02/R25/R27/R41/R43) | Fixed comparison set and a measured accept/reject result; no new benchmark framework |
 | **W — bounded foundation delivered** | WC0 plus WC1 geography, geology inputs, bathymetry and water-piece incidence (R01/R49); return to B/C physical paths and landforms | Preserve source and unresolved support; context is provisional, not solved climate |
-| **B — next major generation decision** | Physical-path experiment measured; compare one constrained network-led terrain construction (R48/R32) | No new uphill routes, but cut/fill and catchment sensitivity fail admission; preserve native constraints before LE3 |
+| **B — next major generation decision** | Constrained network-led fit measured; solve lateral valley feasibility and capture (R48/R32) | Hard heights and native bounds pass; actual routing still misses mouths and creates sinks; resolve capture before LE3 |
 | **C** | Consolidate one coherent range/pass/tributary/lowland system from the selected comparison (R08/R09/R14/R40/R44) | Better structural/visual results across fixed seeds and physical scales |
 | **W — after B/C acceptance** | Rough world, seasonal climate/runoff feedback and reviewed parent (WC2-WC4; R33/R49) | Physical terrain acceptance, bounded coupling, shared world time and budgets |
 | **D / WC5** | Accepted parent-conditioned detail, same-present historical refinement and inherited fine hydrology, then zoom jobs (R15/R34/R49) | Exact overlap, coarse-scale, time-dependent boundary/flow and visual acceptance before real small rivers |
@@ -123,11 +123,14 @@ continent-history generation remain planned.
   exact graph coverage, sampled authoring/budget rejection and frozen receiver/outlet
   sensitivity are now measured. See the [report](docs/research/2026-09-25-physical-channel-paths.md).
   This is an experimental comparator; native generation is not changed.
-- [ ] **Next concrete batch — B/C constrained network-led terrain.** Follow the
-  [main strategy](docs/strategy/README.md): one authored range/valley/lowland fixture,
-  hard divide/height/cut controls and a terrain surface built around its network.
-  The physical-path prototype reduces D8 alignment but fails cut/fill admission;
-  catchment stability and believable landforms still precede WC2 rough terrain.
+- [x] **B/C constrained network-led comparison:** one public range/valley/lowland
+  fixture, hard divide/off-grid heights, native cut/no-fill limits, whole-cell
+  descent constraints and repeat/rotation controls. Independent routing at common
+  125 m spacing rejects capture; see the [report](docs/research/2026-09-25-constrained-network-surface.md).
+- [ ] **Next concrete batch — B/C lateral valley feasibility and capture.** Follow
+  the [main strategy](docs/strategy/README.md): retain the fixture and bounds,
+  constrain bank/confluence support, diagnose impossible routes and require actual
+  head-to-mouth capture with no new unintended sinks before LE3/WC2.
 - [ ] **WC1 transport follow-up:** consume finite-face incidence only after support
   admission, conservative area/depth integration, explicit sill/capacity geometry
   and paired flux/storage budgets. Add a stable local-coordinate or exact-predicate
@@ -202,12 +205,18 @@ records execution and its remaining gates; the simulation is still research-only
   to 56.99%. All 22 cases fail the sampled no-fill policy, 17 exceed the diagnostic
   30 m cut budget, and spacing changes move many sampled outlets. Native regional
   constraints and rerouted catchment geography are not yet preserved.
-- [ ] **Next — One constrained catchment/network-led surface** (R48/R32/R02).
-  Freeze a public range/valley/lowland fixture with coast, confluences, protected
-  divide and off-grid targets. Compare connected valley/ground construction with
-  actual regional cut/no-fill inequalities; reject or reroute infeasible paths.
-  Establish physical valley/feature support and rerouted catchment stability
-  before finer history or LE3/WC2 integration. Keep existing comparators and gates.
+- [x] **Constrained catchment/network-led surface experiment** (R48/R32/R02).
+  The [public comparison](docs/research/2026-09-25-constrained-network-surface.md)
+  delivers a unique quadratic fit with native bounds, protected heights/divide,
+  descending physical guides and explicit infeasible-route rejection. Complete
+  profiles pass; independently rerouted catchments fail. This closes the bounded
+  experiment, not the production drainage gate.
+- [ ] **Next — Lateral valley capture under the same hard limits** (R48/R32/R02).
+  Constrain physical bank/confluence support and longitudinal/transverse shape;
+  diagnose cut feasibility at lowland/protected transitions. Reroute or relocate
+  automatic guidance when needed; report incompatible fixed instructions. Preserve
+  the common 125 m check, process-spacing/rotation controls and no-new-sink gate.
+  Do not replace this failure with more erosion, hidden fill or larger cut limits.
 - [ ] **LE2 follow-up — Complete structural acceptance** (R40/R41/R43). Add the
   missing peak/pass and matched physical-route scorecard, resolve long D8 grooves
   and quantify capture sensitivity. The finest-grid budget failure is a stopping
@@ -1406,15 +1415,16 @@ Priorities remain conditional on the current strategy's prerequisites.
   automatic heads before excessive cuts. Authored contradictions stay visible.
   Use fixed physical station spacing, matched source-to-terminal routes and
   complete-network coverage when segmentation changes. Batch B's acceptance
-  targets and fallback to network-led surface construction are in the strategy.
+  targets and measured network-led construction are in the strategy.
   Process spacing remains independent of output pixels. LE2's executable
   co-evolution reference shows chronology response; the frozen triangle comparison
   now removes sampled rises on unchanged nodally descending paths. It retains
   D8 bias and fails general authoring constraints, so use it as a numerical
   control for physical paths and capture/grid analysis. LE3 must meet the same
-  final surface/path contract. A failed evolution candidate returns to the bounded
-  terrain-guided prototype. Do not count changed automatic D8 edges as matched
-  route improvements. Remove superseded runtime paths after acceptance; preserve
+  final surface/path contract. The network-led fit now preserves hard heights,
+  native bounds and downhill guides, but rerouted valley capture still fails.
+  Test lateral support/feasibility next. Do not count changed automatic D8 edges
+  as matched route improvements. Remove superseded runtime paths after acceptance; preserve
   current inputs/contracts without legacy support.
 
 #### Shared world context — 2026-09-24
@@ -1570,6 +1580,9 @@ geometry movement and project-saving behavior.
   reviews primary geographic, tectonic and climate models, existing tools and
   deployment limits. The [WC0-WC6 plan](docs/strategy/world-context.md) advances
   world inputs/context and specifies shared-time regional history refinement.
+- [Constrained network-led terrain — 2026-09-25](docs/research/2026-09-25-constrained-network-surface.md)
+  records successful hard constraints but failed actual drainage capture and the
+  next lateral-valley feasibility batch.
 - [Coupled physical channel paths — 2026-09-25](docs/research/2026-09-25-physical-channel-paths.md)
 - [Frozen terrain/channel reconstruction — 2026-09-24](docs/research/2026-09-24-frozen-channel-reconstruction.md)
   records complete-route profile gains, remaining nodal failures, authoring limits,

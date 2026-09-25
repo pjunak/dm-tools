@@ -216,6 +216,39 @@ budgets because timestep and local-error controls can change together.
 
 The [measured report](../../docs/research/2026-09-25-physical-channel-paths.md)
 rejects promotion: long straight reaches, sampled fill/cut violations, nodal
-climbs, fixed-divide conflicts and process-grid sensitivity remain. The next
-comparison constructs terrain from its constrained network; it does not patch
+climbs, fixed-divide conflicts and process-grid sensitivity remain. The constrained
+network-led comparison below constructs terrain from inputs; it does not patch
 a completed DEM. Use a new output folder and keep artifacts untracked.
+
+
+## Constrained network-led terrain
+
+Run the fixed public range/valley/lowland construction in the base environment:
+
+```powershell
+.\.venv\Scripts\python.exe -m benchmarks.evolution.network_comparison --output artifacts/my-network-surface
+.\.venv\Scripts\python.exe -m pytest tests/test_network_surface.py
+```
+
+No isolated history engine or private map is required. Existing SciPy provides
+linear feasibility and a strictly convex surface fit. A shared physical network,
+native regional cut/no-fill limits, protected divide, off-grid heights and
+whole-cell downstream derivatives constrain the actual Float32 ground. Bounds
+and numeric solver failures reject delivery rather than softening instructions.
+This is pre-generation research, not a completed-DEM repair operation.
+
+The fixed 32 by 24 km fixture runs at 1,000/500/250 m spacing plus a 90-degree
+rotation, preserving a 2,400 m valley support radius. Full route profiles use
+100/25 m stations. Independent routing uses both process nodes and a common
+125 m evaluation grid, without filling or imposing river receivers. Fixed 1 km
+mouth tolerance and explicit head sampling keep the capture check interpretable.
+The [measured report](../../docs/research/2026-09-25-constrained-network-surface.md)
+records the conservative-bound proof, numeric tolerances and remaining limitations.
+
+Output includes source/target/fitted arrays, complete route metrics, actual-ground
+panels, independent head-route figures, source/runtime/artifact hashes, timings,
+repeat checks, native-bound diagnostics and an explicit quality decision. A
+completed experiment may be **rejected** for terrain use. Failed executions write
+`incomplete.json` and never publish `comparison.json`. Use a fresh output folder.
+The measured candidate passes hard constraints but fails capture and adds sinks;
+no normal-generation or editor path uses it.

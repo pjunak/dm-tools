@@ -7,7 +7,7 @@ from typing import Any
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
-from benchmarks.evolution.paths import ChannelPaths, Sampler, profile
+from benchmarks.evolution.paths import ChannelPaths, PathNetwork, Sampler, profile
 from benchmarks.evolution.surface import FlowAlignedSurface
 from dmtools.terrain.adapters.render import render_ground_map
 from dmtools.terrain.domain.coordinates import EndpointGrid
@@ -15,7 +15,7 @@ from dmtools.terrain.domain.coordinates import EndpointGrid
 
 def render_panel(
     sampler: Sampler,
-    paths: ChannelPaths,
+    paths: PathNetwork,
     bounds: tuple[float, float, float, float],
     maximum_m: float,
 ) -> Image.Image:

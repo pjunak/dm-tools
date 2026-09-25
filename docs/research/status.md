@@ -1,7 +1,7 @@
 # Current terrain research status
 
-Reconciled on 2026-09-25 after WC1 foundations and the coupled physical-path /
-frozen-grid sensitivity comparison. Earlier generation measurements and scientific
+Reconciled on 2026-09-25 after WC1 foundations, physical-path diagnostics and
+the constrained network-led terrain comparison. Earlier generation measurements and scientific
 tool audits retain their own revision/date; new evidence is linked below.
 This is a status map; [TODO](../../TODO.md) owns the research register and the
 [strategy](../strategy/README.md) owns execution order. Dated reports retain
@@ -109,9 +109,12 @@ The [physical-path follow-up](2026-09-25-physical-channel-paths.md) now measures
 shared path/ground deformation and frozen receiver/outlet sensitivity. No new
 uphill routes appear and D8-aligned length falls to 56.99%, but all cases fail the
 sampled no-fill policy; 17 exceed the diagnostic cut limit. Grid spacing still
-moves many outlets. Next compare one constrained catchment/network-led surface
-with native regional limits and fixed geographic divides before LE3/WC2.
-Peak/pass structure and real basins/coasts remain open. Sediment, epoch editor controls and evolved local enrichment remain
+moves many outlets. The [constrained network-led follow-up](2026-09-25-constrained-network-surface.md)
+now constructs downhill guides within native regional limits while preserving
+hard heights and a protected divide. Rotation/repeat checks pass, but independent
+common-grid routing misses mouths and exposes interior sinks. It is rejected for
+production. Lateral valley feasibility/capture is next before a larger cohort,
+LE3 or WC2. Peak/pass structure and real basins/coasts remain open. Sediment, epoch editor controls and evolved local enrichment remain
 later dependent work. No post-generation modification is introduced.
 
 ## Implemented baseline
