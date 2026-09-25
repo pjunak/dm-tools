@@ -1,6 +1,6 @@
 # World-context and staged terrain implementation plan
 
-Updated 2026-09-25. **WC0 implemented; WC1 geographic slice delivered; remaining WC1-WC6 work planned.** The
+Updated 2026-09-25. **WC0 implemented; WC1 geography/reopening/edge slice delivered; remaining WC1-WC6 work planned.** The
 [World workspace](../terrain-worlds.md) imports retained SVG sources, validates
 explicit spherical placement and ownership, and saves portable world projects.
 Existing terrain generation is still local; no climate or continent-history
@@ -312,7 +312,7 @@ ship before preserving world coordinates.
 | Milestone | Bounded deliverable and dependencies | Exit evidence |
 |---|---|---|
 | WC0: retained world import — implemented | Explicit full-sphere frame/radius, retained SVG, stable continents/islands, mapping preview and portable saves; R01/R49 | Public touching-continent, owned-island, hole, offset-frame, seam/pole, malformed-input and UI/save controls; see implementation report |
-| WC1: provisional context — geographic slice delivered | Spherical fractional coverage, vector-derived periodic water and support flags, preview and export delivered; exposure/gateway/province inputs remain | Coverage/topology controls pass; verified consumption, finite gateway support, fetch and province controls remain |
+| WC1: provisional context — geographic slice delivered | Spherical fractional coverage, vector-derived periodic water and support flags, preview/export/reopening and shared-edge widths delivered; exposure/transport/province inputs remain | Coverage/topology, verified loading and finite-edge controls pass; transport, fetch and province controls remain |
 | WC2: rough physical world | Shared macro terrain/bathymetry and process-domain prototype, physical scale/support; WC1, B/C, R02/R48, LE2/LE3 acceptance for evolved output | Matched quality gallery, cross-label catchments, constraints, projections/flux and resolution gates |
 | WC3: climate/runoff feedback | Seasonal fields, moisture/storage budgets, declared epoch forcing and bounded coarse-history loop; WC2, R33 and selected LE engine | Energy/water closure, rain-shadow/continentality controls, convergence or explicit incomplete result, measured resources |
 | WC4: reviewed parent and workflow | Immutable world parent, explicit continent/province history controls, dependency invalidation and staged editor; WC0-WC3 and LE3, co-delivered with LE5 world bindings | Reopen/verify/reproduce, stale-child behavior, cancel/complete publication and one public end-to-end world |
@@ -335,13 +335,23 @@ water topology, support flags, cancellation, preview and reproducible exports.
 Semantic continents remain separate from physical components. Narrow source
 straits are preserved in vector connectivity and flagged as unresolved by cells.
 
-**Next concrete batch: context consumption and exposure.** Add a verified context
-reader/reopen flow that checks source/runtime/algorithm and array hashes/shapes.
-Represent finite gateway support before using dominant water IDs as flow links.
-Then add geodesic interior distance and directional water exposure with polar,
-seam and reversed-direction controls; define these as geographic diagnostics,
-not precipitation. Follow with inspectable province/default inputs and explicit
-bathymetry assumptions. Keep context inputs separate from the source file.
+**WC1 consumption/edge checkpoint:** [ADR-0074](../adr/0074-verify-context-and-measure-water-openings.md)
+adds current-format verified reopening and longest continuous shared-edge water
+openings in kilometres, with editor inspection and canonical manifest identity.
+The source snapshot cannot become the automatic Save target. Producer runtime is
+retained for viewing; new exports require the producing runtime. Edge measurements
+also fix false seam closure at fractional source origins. They do not yet provide
+a component-aware transport graph, minimum strait width or bathymetric capacity.
+
+**Next concrete batch: geographic exposure.** Add geodesic interior distance and
+directional water exposure with polar, seam, source-scale and reversed-direction
+controls; define these as geographic diagnostics, not precipitation. Compare an
+island and a continental interior at equal latitude, retain sampling/support limits,
+and bound work at each overview resolution. Follow with inspectable authored
+province/default inputs and explicit bathymetry assumptions. Keep context inputs
+separate from the source file. Before a flow solver uses the gateway arrays, retain
+individual water pieces and face incidence through split cells; positive faces
+and dominant water IDs must not create false links.
 
 WC0 follow-ups to consider alongside that work: cancel/checkpoint long imports,
 measure curved-source complexity, and decide whether partial mapping drafts need

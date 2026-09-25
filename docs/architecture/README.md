@@ -110,8 +110,11 @@ dependency or numerical terrain stage is introduced. See
 The [geographic context stage](../world-context.md) is now implemented separately:
 `domain/world_context.py` owns spherical grid/settings, `pipeline/world_context.py`
 owns area-conserving coverage and vector-derived periodic water topology, and
-`application/world_context.py` owns snapshot/runtime checks and generation/export.
-The adapters write numeric/previews and a last-published context manifest. Context
+`pipeline/world_gateways.py` measures finite shared-edge water openings in km.
+`application/world_context.py` owns generation/export and verified reopening.
+The adapters write numeric/previews and a last-published context manifest;
+`world_context_load.py` checks captured products before immutable consumption.
+`numeric.py` shares bounded NPY decoding with the terrain-parent adapter. Context
 arrays are cell averages/support, not terrain endpoint elevations. No climate,
 depth or physical transport is inferred from connected-water IDs.
 
@@ -179,9 +182,9 @@ layer or path boundaries.
 
 ## Planned contracts and remaining decisions
 
-- Verified WC1 context consumption, finite gateways, geodesic exposure and
-  province inputs after delivered spherical coverage/water topology; later WC2-WC5 coupled products and historical
-  parent context
+- WC1 geodesic exposure, component-aware transport and province inputs after
+  delivered coverage/water topology, edge measurements and verified reopening;
+  later WC2-WC5 coupled products and historical parent context
 - Direct per-vertex profiles, explicit passes and asymmetric structural sides
   (point-anchored longitudinal ridge/valley profiles are implemented)
 - Inter-lake transfer, constrained repair and nested depression policy

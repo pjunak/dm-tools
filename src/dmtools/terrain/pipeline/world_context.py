@@ -7,7 +7,7 @@ from dataclasses import dataclass
 import numpy as np
 import shapely
 from numpy.typing import NDArray
-from shapely.affinity import translate
+from shapely.affinity import affine_transform
 from shapely.geometry import LineString, Polygon, box
 from shapely.geometry.base import BaseGeometry
 from shapely.ops import unary_union
@@ -25,6 +25,7 @@ from dmtools.terrain.domain.world_context import (
 )
 from dmtools.terrain.pipeline.control import CancellationToken, ProgressCallback, check_cancelled
 from dmtools.terrain.pipeline.world import WorldMap, component_area_km2, components_from_geometry
+from dmtools.terrain.pipeline.world_gateways import measure_water_openings
 
 
 @dataclass(frozen=True, slots=True)
@@ -35,6 +36,8 @@ class WorldContext:
     water_body: NDArray[np.int32]
     support_flags: NDArray[np.uint8]
     cell_area_km2: NDArray[np.float64]
+    east_opening_km: NDArray[np.float64]
+    south_opening_km: NDArray[np.float64]
     water_bodies: tuple[ConnectedWater, ...]
     land_area_km2: float
     area_error_km2: float
@@ -80,7 +83,7 @@ def _water_topology(
     right = LineString(((x1, y0), (x1, y1)))
     left_edges = [(i, p.intersection(left)) for i, p in enumerate(polygons) if p.bounds[0] == x0]
     right_edges = [
-        (i, translate(p.intersection(right), xoff=-frame.width))
+        (i, affine_transform(p.intersection(right), (0, 0, 0, 1, x0, 0)))
         for i, p in enumerate(polygons)
         if p.bounds[2] == x1
     ]
@@ -118,7 +121,7 @@ def generate_world_context(
     """Partition the prepared source into cells without changing its coastline.
 
     Water IDs come from continuous prepared vectors, not thresholded pixels.
-    A cell may contain disconnected water pieces: its largest piece supplies the
+    A cell may contain disconnected water pieces: its largest aggregated body supplies the
     display ID, while support flags prevent treating that ID as a solver gateway.
     """
 
@@ -148,7 +151,7 @@ def generate_world_context(
     # Work one row at a time; coastline intersection scratch does not scale with
     # all cells times all vector vertices. Grid admission is bounded in settings.
     for row in range(rows):
-        report(0.05 + 0.9 * row / rows, f"Measuring geographic cells: row {row + 1}/{rows}")
+        report(0.05 + 0.65 * row / rows, f"Measuring geographic cells: row {row + 1}/{rows}")
         strip = box(xs[0], ys[row], xs[-1], ys[row + 1])
         row_land = land.intersection(strip)
         shapely.prepare(row_land)
@@ -206,7 +209,15 @@ def generate_world_context(
         ConnectedWater(b.id, b.area_km2, b.crosses_seam, int(np.count_nonzero(water_id == b.id)))
         for b in bodies
     )
-    for array in (fraction, water_id, flags, row_area):
+    east, south = measure_water_openings(
+        land,
+        grid,
+        lambda f, message: report(0.7 + 0.29 * f, message),
+        cancellation=cancellation,
+    )
+    for array in (fraction, water_id, flags, row_area, east, south):
         array.flags.writeable = False
     report(1, "Geographic context ready; mixed cells retain unresolved local detail")
-    return WorldContext(world, grid, fraction, water_id, flags, row_area, bodies, measured, error)
+    return WorldContext(
+        world, grid, fraction, water_id, flags, row_area, east, south, bodies, measured, error
+    )

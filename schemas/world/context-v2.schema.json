@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://dmtools.local/schemas/world/context-v1.schema.json",
-  "title": "DM Tools spherical geographic context v1",
+  "$id": "https://dmtools.local/schemas/world/context-v2.schema.json",
+  "title": "DM Tools spherical geographic context v2",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -17,17 +17,19 @@
     "areas_km2",
     "support",
     "water_bodies",
-    "outputs"
+    "outputs",
+    "context_sha256",
+    "gateways"
   ],
   "properties": {
     "schema": {
       "const": "dmtools.world-context"
     },
     "version": {
-      "const": 1
+      "const": 2
     },
     "algorithm": {
-      "const": "spherical-geography-v1"
+      "const": "spherical-geography-v2"
     },
     "importer": {
       "const": "retained-svg-v2"
@@ -41,16 +43,100 @@
     },
     "runtime": {
       "type": "object",
+      "additionalProperties": false,
       "required": [
+        "dmtools_version",
         "package_source_sha256",
         "python",
-        "dependencies",
-        "geos"
+        "implementation",
+        "platform",
+        "machine",
+        "byteorder",
+        "geos",
+        "gdal",
+        "proj",
+        "dependencies"
       ],
       "properties": {
+        "dmtools_version": {
+          "type": "string",
+          "minLength": 1
+        },
         "package_source_sha256": {
           "type": "string",
           "pattern": "^[0-9a-f]{64}$"
+        },
+        "python": {
+          "type": "string",
+          "minLength": 1
+        },
+        "implementation": {
+          "type": "string",
+          "minLength": 1
+        },
+        "platform": {
+          "type": "string",
+          "minLength": 1
+        },
+        "machine": {
+          "type": "string",
+          "minLength": 1
+        },
+        "byteorder": {
+          "enum": [
+            "little",
+            "big"
+          ]
+        },
+        "geos": {
+          "type": "string",
+          "minLength": 1
+        },
+        "gdal": {
+          "type": "string",
+          "minLength": 1
+        },
+        "proj": {
+          "type": "string",
+          "minLength": 1
+        },
+        "dependencies": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "numpy",
+            "Pillow",
+            "shapely",
+            "svgelements",
+            "rasterio",
+            "affine"
+          ],
+          "properties": {
+            "numpy": {
+              "type": "string",
+              "minLength": 1
+            },
+            "Pillow": {
+              "type": "string",
+              "minLength": 1
+            },
+            "shapely": {
+              "type": "string",
+              "minLength": 1
+            },
+            "svgelements": {
+              "type": "string",
+              "minLength": 1
+            },
+            "rasterio": {
+              "type": "string",
+              "minLength": 1
+            },
+            "affine": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
         }
       }
     },
@@ -236,7 +322,8 @@
         "geography.npz",
         "land.png",
         "water.png",
-        "support.png"
+        "support.png",
+        "gateways.png"
       ],
       "properties": {
         "world.dmworld.json": {
@@ -328,6 +415,64 @@
               "minimum": 1
             }
           }
+        },
+        "gateways.png": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "sha256",
+            "bytes"
+          ],
+          "properties": {
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "bytes": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        }
+      }
+    },
+    "context_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "gateways": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "measurement",
+        "units",
+        "east_seam",
+        "south_pole",
+        "positive_east_faces",
+        "positive_south_faces"
+      ],
+      "properties": {
+        "measurement": {
+          "const": "longest-continuous-shared-edge-water-interval"
+        },
+        "units": {
+          "const": "km"
+        },
+        "east_seam": {
+          "const": "last-column-to-first; both-sides-open"
+        },
+        "south_pole": {
+          "const": "zero-width; no-polar-links"
+        },
+        "positive_east_faces": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 259200
+        },
+        "positive_south_faces": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 258480
         }
       }
     }

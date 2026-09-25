@@ -5,7 +5,7 @@ from math import cos, pi, sin
 
 from dmtools.terrain.domain.world import WorldFrame
 
-WORLD_CONTEXT_ALGORITHM = "spherical-geography-v1"
+WORLD_CONTEXT_ALGORITHM = "spherical-geography-v2"
 MAX_CONTEXT_ROWS = 360
 MIXED_COAST = 1
 SPLIT_WATER = 2
@@ -52,6 +52,13 @@ class SphericalContextGrid:
         return (
             self.frame.central_meridian_deg + (column + 0.5) * self.angular_step_deg
         ) % 360 - 180
+
+    def south_edge_length_km(self, row: int) -> float:
+        """Length along the shared latitude circle; the pole has no finite edge."""
+        if row == self.settings.latitude_cells - 1:
+            return 0.0
+        latitude = pi / 2 - (row + 1) * pi / self.settings.latitude_cells
+        return self.north_south_spacing_km * cos(latitude)
 
     def cell_area_km2(self, row: int) -> float:
         # The sine difference is written as a product to retain polar precision.

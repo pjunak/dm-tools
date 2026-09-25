@@ -69,9 +69,9 @@ def world_project_document(project: WorldProject) -> dict[str, object]:
         },
         "frame": {
             "projection": "plate-carree",
-            "bounds": list(project.frame.bounds),
-            "radius_km": project.frame.radius_km,
-            "central_meridian_deg": project.frame.central_meridian_deg,
+            "bounds": [float(value) for value in project.frame.bounds],
+            "radius_km": float(project.frame.radius_km),
+            "central_meridian_deg": float(project.frame.central_meridian_deg),
         },
         "continents": [asdict(c) for c in sorted(project.continents, key=lambda c: c.id)],
         "assignments": [asdict(a) for a in sorted(project.assignments, key=lambda a: a.feature_id)],
@@ -81,6 +81,11 @@ def world_project_document(project: WorldProject) -> dict[str, object]:
 def read_world_project(path: Path) -> WorldProject:
     with path.open("rb") as stream:
         raw = stream.read(MAX_WORLD_PROJECT_BYTES + 1)
+    return world_project_from_bytes(raw)
+
+
+def world_project_from_bytes(raw: bytes) -> WorldProject:
+    """Decode an already captured (and optionally hash-verified) source snapshot."""
     if len(raw) > MAX_WORLD_PROJECT_BYTES:
         raise ValueError("World project exceeds 32 MiB.")
     try:

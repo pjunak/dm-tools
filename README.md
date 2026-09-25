@@ -52,7 +52,8 @@ inspectable snapshots and numerical checks. It uses a separate scientific
 environment; history generation is not yet part of the desktop or saved-project CLI.
 
 The [world-context workflow](docs/strategy/world-context.md) begins with the
-implemented WC0 source workspace and the geographic subset of WC1. Next come
+implemented WC0 source workspace and the geographic subset of WC1: coverage,
+connected water, shared-edge water openings, verified reopening and inspection. Next come
 geodesic exposure and province hypotheses, rough terrain and selected regional
 refinement with shared climate and geological history. Climate, world-linked terrain and regional history replay are not
 implemented; the saved world is a source project, not a generated parent.

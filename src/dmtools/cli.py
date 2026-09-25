@@ -102,7 +102,29 @@ def create_parser() -> argparse.ArgumentParser:
     context.add_argument("--latitude-cells", type=int, default=180,
                          help="Latitude rows, 4-360; twice as many longitude columns; default 180.")
     context.set_defaults(_handler=_run_world_context)
+    verify_context = world_commands.add_parser(
+        "inspect-context", help="Verify and inspect a completed geographic context.")
+    verify_context.add_argument("context", type=Path, help="Context directory or context.json.")
+    verify_context.set_defaults(_handler=_run_world_context_inspect)
     return parser
+
+
+def _run_world_context_inspect(arguments: argparse.Namespace) -> int:
+    from dmtools.terrain.adapters.build import runtime_identity
+    from dmtools.terrain.application.world_context import open_context
+    try:
+        run = open_context(arguments.context)
+    except (OSError, ValueError, RuntimeError) as error:
+        print(f"Context inspection failed: {error}", file=sys.stderr)
+        return 1
+    result = run.context
+    rows, columns = result.grid.shape
+    print(f"Verified context: {result.world.project.name}; {columns} x {rows} cells")
+    print(f"{len(result.water_bodies)} water regions; land {result.land_area_km2:,.0f} km²")
+    print("Shared-edge water openings in km; no depth or transport capacity inferred.")
+    print("Producer matches current runtime." if run.runtime == runtime_identity()
+          else "Saved producer differs; viewing is supported, regenerate before exporting.")
+    return 0
 
 
 def _run_world_context(arguments: argparse.Namespace) -> int:

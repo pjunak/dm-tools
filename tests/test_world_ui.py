@@ -344,3 +344,74 @@ def test_issue_highlighting_returns_to_source_after_context(app: ui.TerrainApp) 
     view._select_issues((selected,))
     assert view.display_layer.get() == "Source"
     assert view.tree.selection() == (selected,)
+
+
+def test_context_reopen_restores_inputs_without_making_snapshot_a_save_target(
+    app: ui.TerrainApp,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from dmtools.terrain.adapters.build import file_sha256
+    from dmtools.terrain.application.world_context import export_context, generate_context
+    from dmtools.terrain.domain.world_context import WorldContextSettings
+
+    source = open_world(EXAMPLES / "four-shores.dmworld.json")
+    run = generate_context(source.project, WorldContextSettings(12))
+    bundle = export_context(run, tmp_path / "saved-context")
+    snapshot = bundle.parent / "world.dmworld.json"
+    before = file_sha256(snapshot)
+    view = app.world_workspace
+    view.load_context(bundle)
+    wait_world(app)
+    assert view.context_run is not None and view.path is None and not view.dirty
+    assert view.context_rows.get() == "12"
+    assert view.context_run.context.world.project == source.project
+    view.display_layer.set("Water openings")
+    view._layer_changed()
+    view._draw()
+    assert view._photo is not None
+    edited = tmp_path / "edited.dmworld.json"
+
+    def choose_save(**_kwargs: object) -> str:
+        return str(edited)
+
+    monkeypatch.setattr(world_ui.filedialog, "asksaveasfilename", choose_save)
+    view.values["name"].set("Separate authored project")
+    assert view.context_run is None and view.dirty
+    view.save()
+    wait_world(app)
+    assert view.path == edited and edited.exists()
+    assert file_sha256(snapshot) == before
+
+
+def test_failed_cancelled_or_obsolete_context_open_preserves_current_work(
+    app: ui.TerrainApp,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from dmtools.terrain.application.world_context import export_context, generate_context
+    from dmtools.terrain.domain.world_context import WorldContextSettings
+
+    source = open_world(EXAMPLES / "four-shores.dmworld.json")
+    run = generate_context(source.project, WorldContextSettings(12))
+    bundle = export_context(run, tmp_path / "context")
+    view = app.world_workspace
+    view.accept_world(source, EXAMPLES / "four-shores.dmworld.json")
+    errors: list[str] = []
+
+    def show_error(*args: object, **_kwargs: object) -> None:
+        errors.append(str(args))
+
+    monkeypatch.setattr(world_ui.messagebox, "showerror", show_error)
+    view.load_context(tmp_path / "missing" / "context.json")
+    wait_world(app)
+    assert errors and view.source == source.project.source
+    view.load_context(bundle)
+    view.cancel_context()
+    wait_world(app)
+    assert view.context_run is None and "cancelled" in view.status.get()
+    view.load_context(bundle)
+    view.values["name"].set("Keep these edits")
+    wait_world(app)
+    assert view.values["name"].get() == "Keep these edits" and view.dirty
+    assert view.context_run is None and "inputs changed" in view.status.get()

@@ -153,7 +153,14 @@ def test_generation_is_order_independent_and_arrays_are_read_only() -> None:
     )
     first = generate_world_context(prepare_world_map(p), WorldContextSettings(12))
     second = generate_world_context(prepare_world_map(reordered), WorldContextSettings(12))
-    for name in ("land_fraction", "water_body", "support_flags", "cell_area_km2"):
+    for name in (
+        "land_fraction",
+        "water_body",
+        "support_flags",
+        "cell_area_km2",
+        "east_opening_km",
+        "south_opening_km",
+    ):
         np.testing.assert_array_equal(getattr(first, name), getattr(second, name))
     assert first.water_bodies == second.water_bodies
     with pytest.raises(ValueError, match="read-only"):
@@ -183,7 +190,7 @@ def test_export_schema_hashes_snapshot_numeric_fields_and_no_overwrite(tmp_path:
     target = tmp_path / "context"
     path = application.export_context(run, target)
     manifest = json.loads(path.read_text(encoding="utf-8"))
-    schema = json.loads((ROOT / "schemas/world/context-v1.schema.json").read_text(encoding="utf-8"))
+    schema = json.loads((ROOT / "schemas/world/context-v2.schema.json").read_text(encoding="utf-8"))
     Draft202012Validator(schema).validate(manifest)  # pyright: ignore[reportUnknownMemberType]
     assert manifest["input_sha256"] == context_input_sha256(run.context)
     assert open_world(target / "world.dmworld.json").project == world.project
@@ -304,3 +311,98 @@ def test_tiny_hole_stays_a_positive_area_water_region() -> None:
     assert len(result.water_bodies) == 2
     assert all(b.area_km2 > 0 for b in result.water_bodies)
     assert min(b.area_km2 for b in result.water_bodies) < 1e-6
+
+
+@pytest.mark.parametrize("gap", [0, 0.01, 4.0])
+def test_water_edge_measures_continuous_strait_in_km(gap: float) -> None:
+    result = context(
+        '<path id="north" d="M170 0 H190 V80 H170 Z"/>'
+        f'<path id="south" d="M170 {80 + gap} H190 V180 H170 Z"/>'
+    )
+    # 15 degree cells; column 11 ends at x=180, row 5 spans y=75..90.
+    assert result.east_opening_km[5, 11] == pytest.approx(1000 * pi / 180 * gap)
+    assert np.all(result.south_opening_km[-1] == 0)
+    assert not result.east_opening_km.flags.writeable
+
+
+def test_separate_gaps_are_not_added_into_one_gateway() -> None:
+    result = context(
+        '<path id="north" d="M165 0 H190 V79 H165 Z"/>'
+        '<path id="middle" d="M165 81 H190 V85 H165 Z"/>'
+        '<path id="south" d="M165 88 H190 V180 H165 Z"/>'
+    )
+    assert result.east_opening_km[5, 11] == pytest.approx(1000 * pi / 180 * 3)
+    # Widths do not erase the existing split-water warning inside the cell.
+    assert result.support_flags[5, 11] & SPLIT_WATER
+
+
+def test_seam_requires_the_same_open_interval_on_both_sides() -> None:
+    result = context(
+        '<path id="west" d="M0 75 H2 V82 H0 Z"/><path id="east" d="M358 83 H360 V90 H358 Z"/>'
+    )
+    assert result.east_opening_km[5, -1] == pytest.approx(1000 * pi / 180)
+    disjoint = context(
+        '<path id="west" d="M0 75 H2 V83 H0 Z"/><path id="east" d="M358 82 H360 V90 H358 Z"/>'
+    )
+    assert disjoint.east_opening_km[5, -1] == 0
+
+
+def test_shared_latitude_faces_scale_with_cosine_and_poles_are_closed() -> None:
+    result = context('<path id="tiny" d="M20 20 H21 V21 H20 Z"/>')
+    for row in range(11):
+        expected = 1000 * pi / 12 * cos((90 - 15 * (row + 1)) * pi / 180)
+        assert result.south_opening_km[row, 15] == pytest.approx(expected)
+    assert np.all(result.south_opening_km[-1] == 0)
+    full = context('<path id="all" d="M0 0 H360 V180 H0 Z"/>')
+    assert not np.any(full.east_opening_km) and not np.any(full.south_opening_km)
+
+
+@pytest.mark.parametrize("scale,offset,radius", [(0.01, -20, 1000), (100, 20000, 3000)])
+def test_gateway_physical_scale_is_independent_of_source_units(
+    scale: float,
+    offset: float,
+    radius: float,
+) -> None:
+    body = (
+        '<path id="north" d="M170 0 H190 V80 H170 Z"/>'
+        '<path id="south" d="M170 81 H190 V180 H170 Z"/>'
+    )
+    baseline = context(body)
+    p = project(body, scale=scale, offset=offset)
+    p = replace(p, frame=replace(p.frame, radius_km=radius, central_meridian_deg=67))
+    result = generate_world_context(prepare_world_map(p), WorldContextSettings(12))
+    np.testing.assert_allclose(
+        result.east_opening_km, baseline.east_opening_km * radius / 1000, atol=1e-9
+    )
+    np.testing.assert_allclose(
+        result.south_opening_km, baseline.south_opening_km * radius / 1000, atol=1e-9
+    )
+
+
+def test_gateway_reflection_reverses_edges_without_changing_widths() -> None:
+    body = '<path id="shape" d="M20 10 L130 75 L80 140 L20 110 Z"/>'
+    a = context(body)
+    b = context(f'<g transform="translate(360,0) scale(-1,1)">{body}</g>')
+    np.testing.assert_allclose(
+        a.east_opening_km, np.roll(b.east_opening_km[:, ::-1], -1, axis=1), atol=1e-9
+    )
+    np.testing.assert_allclose(a.south_opening_km, b.south_opening_km[:, ::-1], atol=1e-9)
+
+
+@pytest.mark.parametrize("scale", [0.001, 0.01, 1.0])
+def test_fractional_source_origin_does_not_close_the_periodic_seam(scale: float) -> None:
+    p = project('<path id="wall" d="M170 0 H190 V180 H170 Z"/>', scale=scale, offset=0.1)
+    result = generate_world_context(prepare_world_map(p), WorldContextSettings(12))
+    assert len(result.water_bodies) == 1 and result.water_bodies[0].crosses_seam
+    np.testing.assert_allclose(result.east_opening_km[:, -1], result.grid.north_south_spacing_km)
+
+
+def test_integer_frame_coordinates_have_the_same_saved_context_identity(tmp_path: Path) -> None:
+    p = project('<path id="land" d="M20 20 H120 V120 H20 Z"/>')
+    p = replace(p, frame=WorldFrame((0, 0, 360, 180), 1000, 0))
+    run = application.generate_context(p, WorldContextSettings(12))
+    path = application.export_context(run, tmp_path / "integer-frame")
+    loaded = application.open_context(path)
+    assert context_input_sha256(run.context) == context_input_sha256(loaded.context)
+    np.testing.assert_array_equal(run.context.land_fraction, loaded.context.land_fraction)
+    assert loaded.context.world.project == p

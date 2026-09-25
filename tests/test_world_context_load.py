@@ -1,0 +1,217 @@
+"""Completed context consumption, corruption checks and allocation admission."""
+
+import io
+import json
+from collections.abc import Callable
+from hashlib import sha256
+from pathlib import Path
+from typing import Any
+from zipfile import ZIP_DEFLATED, ZipFile
+
+import numpy as np
+import pytest
+from numpy.typing import NDArray
+
+from dmtools.cli import main
+from dmtools.terrain.adapters import world_context_load as loader
+from dmtools.terrain.adapters.build import canonical_json, file_sha256
+from dmtools.terrain.application import world_context as application
+from dmtools.terrain.application.world import open_world
+from dmtools.terrain.domain.world_context import WorldContextSettings
+from dmtools.terrain.pipeline.control import CancellationToken, GenerationCancelled
+
+EXAMPLE = Path(__file__).parents[1] / "examples/world/four-shores.dmworld.json"
+
+
+@pytest.fixture
+def bundle(tmp_path: Path) -> Path:
+    run = application.generate_context(open_world(EXAMPLE).project, WorldContextSettings(12))
+    return application.export_context(run, tmp_path / "context")
+
+
+def edit_manifest(path: Path, edit: Callable[[dict[str, Any]], None]) -> None:
+    doc = json.loads(path.read_text(encoding="utf-8"))
+    edit(doc)
+    doc.pop("context_sha256")
+    doc["context_sha256"] = sha256(canonical_json(doc)).hexdigest()
+    path.write_bytes(canonical_json(doc))
+
+
+def rehash_product(path: Path, name: str) -> None:
+    def edit(doc: dict[str, Any]) -> None:
+        doc["outputs"][name] = {
+            "bytes": (path.parent / name).stat().st_size,
+            "sha256": file_sha256(path.parent / name),
+        }
+
+    edit_manifest(path, edit)
+
+
+def test_saved_context_reopens_without_regeneration_and_is_immutable(
+    bundle: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    def no_generation(*_args: object, **_kwargs: object) -> None:
+        pytest.fail("Saved context must load its numeric products without rerunning generation.")
+
+    monkeypatch.setattr(application, "generate_world_context", no_generation)
+    run = application.open_context(bundle.parent)
+    assert run.context.grid.shape == (12, 24)
+    assert run.context.world.project == open_world(EXAMPLE).project
+    for array in (
+        run.context.land_fraction,
+        run.context.water_body,
+        run.context.support_flags,
+        run.context.east_opening_km,
+        run.context.south_opening_km,
+    ):
+        assert not array.flags.writeable
+    assert main(["world", "inspect-context", str(bundle)]) == 0
+    assert "Verified context" in capsys.readouterr().out
+    assert main(["world", "inspect-context", str(bundle.parent / "missing.json")]) == 1
+
+
+def test_other_runtime_is_inspectable_but_cannot_be_relabelled_as_current(
+    bundle: Path,
+    tmp_path: Path,
+) -> None:
+    edit_manifest(bundle, lambda doc: doc["runtime"].update(package_source_sha256="f" * 64))
+    run = application.open_context(bundle)
+    assert run.runtime["package_source_sha256"] == "f" * 64
+    with pytest.raises(ValueError, match="Software changed"):
+        application.export_context(run, tmp_path / "relabelled")
+    assert not (tmp_path / "relabelled").exists()
+
+
+def test_manifest_and_product_hash_changes_are_rejected(bundle: Path) -> None:
+    data = bundle.read_bytes()
+    bundle.write_bytes(data.replace(b'"columns": 24', b'"columns": 25'))
+    with pytest.raises(ValueError, match="fingerprint"):
+        application.open_context(bundle)
+    bundle.write_bytes(data)
+    (bundle.parent / "geography.npz").write_bytes(b"changed")
+    with pytest.raises(ValueError, match="hash verification"):
+        application.open_context(bundle)
+
+
+METADATA_EDITS: list[Callable[[dict[str, Any]], None]] = [
+    lambda d: d.update(version=1),
+    lambda d: d.update(version=True),
+    lambda d: d.update(extra="unknown"),
+    lambda d: d["grid"].update(columns=25),
+    lambda d: d["settings"].update(latitude_cells=361),
+    lambda d: d["settings"].update(latitude_cells=True),
+    lambda d: d.update(input_sha256="f" * 64),
+    lambda d: d["support"].update(mixed_cells=0),
+    lambda d: d["gateways"].update(positive_east_faces=0),
+    lambda d: d["areas_km2"].update(land=0),
+    lambda d: d["water_bodies"][0].update(displayed_cells=-1),
+    lambda d: d["water_bodies"][0].update(area_km2=-1),
+    lambda d: d["outputs"].update({"../outside": {"bytes": 1, "sha256": "f" * 64}}),
+]
+
+
+@pytest.mark.parametrize("edit", METADATA_EDITS)
+def test_rehashed_inconsistent_metadata_is_rejected(
+    bundle: Path,
+    edit: Callable[[dict[str, Any]], None],
+) -> None:
+    edit_manifest(bundle, edit)
+    with pytest.raises(ValueError):
+        application.open_context(bundle)
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("land_fraction", float("nan")),
+        ("land_fraction", 2.0),
+        ("water_body", -1),
+        ("support_flags", 255),
+        ("latitude_deg", 100),
+        ("cell_area_km2", -1),
+        ("east_opening_km", -1),
+        ("south_opening_km", 1e12),
+    ],
+)
+def test_rehashed_invalid_numeric_payload_is_rejected(
+    bundle: Path, field: str, value: float
+) -> None:
+    path = bundle.parent / "geography.npz"
+    with np.load(path, allow_pickle=False) as data:
+        arrays: dict[str, NDArray[Any]] = {key: data[key] for key in data.files}
+    arrays[field].flat[0] = value
+    np.savez_compressed(path, allow_pickle=False, **arrays)
+    rehash_product(bundle, path.name)
+    with pytest.raises(ValueError):
+        application.open_context(bundle)
+
+
+@pytest.mark.parametrize(
+    "problem", ["huge-header", "expanded-entry", "object", "duplicate", "extra"]
+)
+def test_archive_rejected_before_unsafe_numpy_allocation(
+    bundle: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    problem: str,
+) -> None:
+    path = bundle.parent / "geography.npz"
+    with ZipFile(path) as archive:
+        entries = {name: archive.read(name) for name in archive.namelist()}
+    key = "land_fraction.npy"
+    if problem in ("huge-header", "object"):
+        stream = io.BytesIO()
+        np.lib.format.write_array_header_1_0(
+            stream,
+            {
+                "descr": "|O" if problem == "object" else "<f8",
+                "fortran_order": False,
+                "shape": (12, 24) if problem == "object" else (10**9, 10**9),
+            },
+        )
+        entries[key] = stream.getvalue()
+    elif problem == "expanded-entry":
+        entries[key] = b"0" * 30_000
+    elif problem == "extra":
+        entries["surprise.npy"] = entries[key]
+    with ZipFile(path, "w", compression=ZIP_DEFLATED) as archive:
+        for name, data in entries.items():
+            archive.writestr(name, data)
+        if problem == "duplicate":
+            with pytest.warns(UserWarning, match="Duplicate"):
+                archive.writestr(key, entries[key])
+    rehash_product(bundle, path.name)
+
+    def no_load(*_args: object, **_kwargs: object) -> None:
+        pytest.fail("Malformed archive/header must fail before NumPy loads arrays.")
+
+    monkeypatch.setattr(np, "load", no_load)
+    with pytest.raises(ValueError):
+        application.open_context(bundle)
+
+
+def test_duplicate_json_field_is_rejected(bundle: Path) -> None:
+    bundle.write_bytes(bundle.read_bytes().replace(b"{", b'{"version": 2,', 1))
+    with pytest.raises(ValueError, match="Duplicate context field"):
+        application.open_context(bundle)
+
+
+def test_changed_bundle_during_load_and_cancellation_are_rejected(
+    bundle: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    original = loader.read_numeric_archive
+
+    def change(*args: Any, **kwargs: Any) -> dict[str, NDArray[Any]]:
+        arrays = original(*args, **kwargs)
+        (bundle.parent / "land.png").write_bytes(b"changed")
+        return arrays
+
+    monkeypatch.setattr(loader, "read_numeric_archive", change)
+    with pytest.raises(ValueError, match=r"changed|size"):
+        application.open_context(bundle)
+    token = CancellationToken()
+    token.cancel()
+    with pytest.raises(GenerationCancelled):
+        application.open_context(bundle, cancellation=token)

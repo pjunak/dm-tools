@@ -34,6 +34,7 @@ from dmtools.terrain.application.world_context import (
     WorldContextRun,
     export_context,
     generate_context,
+    open_context,
 )
 from dmtools.terrain.domain.world import (
     WorldAssignment,
@@ -70,6 +71,13 @@ class _ContextReady:
 
 
 @dataclass(frozen=True)
+class _ContextOpened:
+    run: WorldContextRun
+    path: Path
+    signature: object
+
+
+@dataclass(frozen=True)
 class _ContextExported:
     path: Path
 
@@ -85,6 +93,7 @@ type _Event = (
     | _Opened
     | _Saved
     | _ContextReady
+    | _ContextOpened
     | _ContextExported
     | _Progress
     | Exception
@@ -329,7 +338,7 @@ class WorldWorkspace(ttk.Frame):
         self.context_page = ttk.Frame(pages, style="Panel.TFrame", padding=10)
         pages.add(self.context_page, text="Context")
         self.context_page.columnconfigure(0, weight=1)
-        self.context_page.rowconfigure(6, weight=1)
+        self.context_page.rowconfigure(7, weight=1)
         ttk.Label(self.context_page, text="Geographic context", style="Value.TLabel").grid(
             row=0, column=0, sticky="w", pady=(0, 8)
         )
@@ -352,29 +361,33 @@ class WorldWorkspace(ttk.Frame):
         self._button(self.context_page, "Export context…", self.export_context).grid(
             row=4, column=0, sticky="ew", pady=5
         )
+        self._button(self.context_page, "Open context…", self.choose_context).grid(
+            row=5, column=0, sticky="ew", pady=5
+        )
         self.context_cancel = ttk.Button(
             self.context_page,
             text="Cancel context job",
             command=self.cancel_context,
             state="disabled",
         )
-        self.context_cancel.grid(row=5, column=0, sticky="ew", pady=5)
+        self.context_cancel.grid(row=6, column=0, sticky="ew", pady=5)
         ttk.Label(
             self.context_page,
             textvariable=self.context_detail,
             style="Body.TLabel",
             wraplength=335,
             justify="left",
-        ).grid(row=6, column=0, sticky="nw", pady=12)
+        ).grid(row=7, column=0, sticky="nw", pady=12)
         ttk.Label(
             self.context_page,
             text="Support colours: orange = land missed by centre sampling; "
             "cyan = water missed by centre sampling; violet = disconnected water in one cell. "
+            "Water openings: blue = full edge, orange = partial, dark = closed. "
             "Zoom inspects these cells; it does not refine them. Climate, ocean depth and "
             "rough terrain are later stages.",
             style="Muted.TLabel",
             wraplength=335,
-        ).grid(row=7, column=0, sticky="ew", pady=6)
+        ).grid(row=8, column=0, sticky="ew", pady=6)
         self._button(sidebar, "Validate world", self.validate, accent=True).grid(
             row=1, column=0, sticky="ew", pady=(10, 5)
         )
@@ -528,6 +541,24 @@ class WorldWorkspace(ttk.Frame):
                     "Geographic context ready. Review land, water and resolution support; "
                     "export to retain a reproducible result."
                 )
+            elif isinstance(event, _ContextOpened):
+                if event.signature != self._signature():
+                    self.status.set(
+                        "World inputs changed while opening context; current work retained."
+                    )
+                    continue
+                # The embedded source is an immutable product, never a Save target.
+                self.accept_world(event.run.context.world, None)
+                self.context_rows.set(str(event.run.context.grid.settings.latitude_cells))
+                self.context_run = event.run
+                self._show_context_details()
+                self.display_layer.set("Land coverage")
+                self.pages.select(self.context_page)
+                self._layer_changed()
+                self.status.set(
+                    f"Opened verified context: {event.path}. Saved producer identity retained; "
+                    "Save writes a separate world project."
+                )
             elif isinstance(event, _ContextExported):
                 self.status.set(
                     f"Context exported: {event.path}. Source snapshot and output hashes included."
@@ -624,7 +655,7 @@ class WorldWorkspace(ttk.Frame):
             f"{result.subcell_water_cells:,} contain water missed by centre sampling\n"
             f"{result.split_water_cells:,} contain disconnected water pieces\n\n"
             "Water connectivity comes from retained coastlines, including the longitude seam. "
-            "Water IDs describe connected regions; they do not name seas or assign climate."
+            "Edge openings are measured in km. They do not establish depth or transport capacity."
         )
 
     def generate_context(self) -> None:
@@ -650,6 +681,29 @@ class WorldWorkspace(ttk.Frame):
                 signature,
                 settings.latitude_cells,
             ),
+        )
+
+    def choose_context(self) -> None:
+        def choose() -> None:
+            selected = filedialog.askopenfilename(
+                parent=self,
+                title="Open a completed world context",
+                filetypes=[("World context manifest", "context.json")],
+            )
+            if selected:
+                self.load_context(Path(selected))
+
+        self.guard(choose)
+
+    def load_context(self, path: Path) -> None:
+        if self.busy:
+            return
+        cancellation = CancellationToken()
+        self._context_cancellation = cancellation
+        signature = self._signature()
+        self._work(
+            "Verifying context source, hashes and numeric products…",
+            lambda: _ContextOpened(open_context(path, cancellation=cancellation), path, signature),
         )
 
     def cancel_context(self) -> None:
@@ -741,7 +795,7 @@ class WorldWorkspace(ttk.Frame):
             )
         )
 
-    def accept_world(self, world: WorldMap, path: Path) -> None:
+    def accept_world(self, world: WorldMap, path: Path | None) -> None:
         self.accept_source(world.project.source)
         self._loading = True
         self.continents = world.project.continents
@@ -763,7 +817,7 @@ class WorldWorkspace(ttk.Frame):
         self._populate()
         self._show_summary(world)
         self.status.set(
-            f"Opened {path.name}. Source and ownership verified; "
+            f"Opened {path.name if path else world.project.name}. Source and ownership verified; "
             f"{len(world.adjustments)} import adjustments."
         )
         self.on_change()
@@ -1179,6 +1233,14 @@ class WorldWorkspace(ttk.Frame):
                         else "single surface"
                     )
                 )
+                if self.display_layer.get() == "Water openings":
+                    north = context.south_opening_km[row - 1, col] if row else 0.0
+                    detail = (
+                        f"Cell {row + 1}, {col + 1} · longest water opening (km): "
+                        f"N {north:.2f} · E {context.east_opening_km[row, col]:.2f} · "
+                        f"S {context.south_opening_km[row, col]:.2f} · "
+                        f"W {context.east_opening_km[row, (col - 1) % columns]:.2f}"
+                    )
             self.inspection.set(
                 f"{abs(latitude):.2f}° {'N' if latitude >= 0 else 'S'}   "
                 f"{abs(longitude):.2f}° {'E' if longitude >= 0 else 'W'}   ·   " + detail

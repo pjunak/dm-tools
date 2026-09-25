@@ -42,7 +42,8 @@ reject stale worker results. Serialize current arrays and an input snapshot into
 a new directory, record source/runtime and output hashes, and publish completion
 last. No compatibility loaders or new dependencies are introduced.
 
-The algorithm is `spherical-geography-v1`; [context v1](../../schemas/world/context-v1.schema.json)
+The algorithm is `spherical-geography-v1`; context v1 (superseded by
+[ADR-0074](0074-verify-context-and-measure-water-openings.md))
 defines the exported contract. Generation has no random stage. A 360-row limit
 bounds the raster to 259,200 cells. Row-local geometry, prepared predicates and
 pure-cell shortcuts reduce repeated coastline intersections. Cancellation checks

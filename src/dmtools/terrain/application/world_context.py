@@ -5,6 +5,7 @@ from pathlib import Path
 
 from dmtools.terrain.adapters.build import file_sha256, runtime_identity
 from dmtools.terrain.adapters.world_context import write_world_context
+from dmtools.terrain.adapters.world_context_load import read_world_context
 from dmtools.terrain.adapters.world_svg import parse_world_svg
 from dmtools.terrain.application.world import open_world
 from dmtools.terrain.domain.world import WorldProject
@@ -18,6 +19,15 @@ from dmtools.terrain.pipeline.world_context import WorldContext, generate_world_
 class WorldContextRun:
     context: WorldContext
     runtime: dict[str, object]
+
+
+def open_context(
+    source: Path,
+    *,
+    cancellation: CancellationToken | None = None,
+) -> WorldContextRun:
+    context, runtime = read_world_context(source, checkpoint=lambda: check_cancelled(cancellation))
+    return WorldContextRun(context, runtime)
 
 
 def generate_context(

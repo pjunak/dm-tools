@@ -6,7 +6,7 @@ export-import correction, bounded preparation and geographic context documents. 
 documentation and private campaign files are excluded. The public JSON schemas and reference dependency
 lock are listed separately as supporting contracts, not counted as prose docs.
 
-**173 Markdown files + 1 legal notice = 174 documentation files.**
+**175 Markdown files + 1 legal notice = 176 documentation files.**
 Each file appears once below, including this inventory. Document titles describe
 their subject; the group description identifies their role and authority.
 
@@ -20,11 +20,11 @@ remains the entry point for normal use. All are individually linked in the list 
 | Active plans and indexes | 10 |
 | User guides and current contracts | 16 |
 | Developer and reference guides | 8 |
-| Architecture decision records | 73 |
-| Dated research reports | 60 |
+| Architecture decision records | 74 |
+| Dated research reports | 61 |
 | Maintenance reports | 2 |
 | Legal notice | 1 |
-| **Total** | **174** |
+| **Total** | **176** |
 
 ## Project entry and guidance (4)
 
@@ -92,7 +92,7 @@ Subsystem, fixture, schema, test and benchmark guidance.
 | [src/dmtools/terrain/pipeline/README.md](../src/dmtools/terrain/pipeline/README.md) | Numeric generation and inspection responsibilities. |
 | [tests/README.md](../tests/README.md) | Test organization, commands and verification expectations. |
 
-## Architecture decision records (73)
+## Architecture decision records (74)
 
 Accepted historical decisions. Preserve their original context; consult the current status and implementation for later changes. The ADR index is listed among active indexes.
 
@@ -171,14 +171,16 @@ Accepted historical decisions. Preserve their original context; consult the curr
 | [docs/adr/0071-interpret-exported-svg-fills.md](adr/0071-interpret-exported-svg-fills.md) | Interpret exported SVG headers, labels and complex filled paths. |
 | [docs/adr/0072-bound-world-source-imperfections.md](adr/0072-bound-world-source-imperfections.md) | Bound minor export imperfections in derived coverage and report adjustments. |
 | [docs/adr/0073-generate-spherical-geographic-context.md](adr/0073-generate-spherical-geographic-context.md) | Generate spherical coverage and periodic vector-water topology with explicit support limits. |
+| [docs/adr/0074-verify-context-and-measure-water-openings.md](adr/0074-verify-context-and-measure-water-openings.md) | Verified context reopening, physical shared-face widths and immutable source-save handling. |
 
-## Dated research reports (60)
+## Dated research reports (61)
 
 Primary-source reviews, experiments and implementation evidence at their recorded date/revision. A title or citation is not evidence that a tool was adopted. Current status is listed above.
 
 | File | Purpose or document title |
 |---|---|
 | [docs/research/2026-09-24-world-context-enrichment.md](research/2026-09-24-world-context-enrichment.md) | World context before continental terrain: research and recommendation |
+| [docs/research/2026-09-25-context-reopening-and-gateways.md](research/2026-09-25-context-reopening-and-gateways.md) | Saved-context and gateway implementation, analytic/UI checks and measured cost. |
 | [docs/research/2026-09-25-geographic-world-context.md](research/2026-09-25-geographic-world-context.md) | WC1 geographic implementation, UI/contract validation and bounded grid measurements. |
 | [docs/research/2026-09-25-bounded-world-preparation.md](research/2026-09-25-bounded-world-preparation.md) | Bounded world preparation, source retention, overlap controls and UI/save evidence. |
 | [docs/research/2026-09-25-world-import-corrections.md](research/2026-09-25-world-import-corrections.md) | SVG import corrections, regression evidence and source-quality limits. |
@@ -268,7 +270,7 @@ are included for a complete route from plans to the current usable formats.
 | [schemas/terrain/parent-region-v1.schema.json](../schemas/terrain/parent-region-v1.schema.json) | Current parent sampling/experimental detail artifact contract. |
 | [schemas/terrain/project-v6.schema.json](../schemas/terrain/project-v6.schema.json) | Current authored local terrain project format; no world context fields. |
 | [schemas/terrain/regional-samples-v2.schema.json](../schemas/terrain/regional-samples-v2.schema.json) | Current bounded unchanged-field sampling artifact contract. |
-| [schemas/world/context-v1.schema.json](../schemas/world/context-v1.schema.json) | Spherical context products, source/runtime identity, coverage/topology/support and output hashes. |
+| [schemas/world/context-v2.schema.json](../schemas/world/context-v2.schema.json) | Spherical context products, source/runtime identity, coverage/topology/support, shared-edge widths and manifest/product hashes. |
 | [schemas/world/project-v1.schema.json](../schemas/world/project-v1.schema.json) | Portable retained world-source snapshot, explicit spherical frame/radius and semantic ownership. |
 | [benchmarks/evolution/requirements-windows-py314.txt](../benchmarks/evolution/requirements-windows-py314.txt) | Hashed isolated Windows/Python 3.14 scientific reference environment. |
 

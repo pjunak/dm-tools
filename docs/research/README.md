@@ -12,6 +12,10 @@ in the current status or a new dated report.
 
 ## Current reassessment
 
+- [Context reopening and water openings — 2026-09-25](2026-09-25-context-reopening-and-gateways.md)
+  implements verified context loading, finite shared-face widths, seam-roundoff
+  correction and editor inspection. Transport, exposure and province inputs remain.
+
 - [Geographic world context — 2026-09-25](2026-09-25-geographic-world-context.md)
   implements WC1 spherical coverage, vector-derived water topology, mixed/subcell
   support, Context generation/preview/cancellation and reproducible exports.

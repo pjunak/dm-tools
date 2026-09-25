@@ -15,6 +15,7 @@ from numpy.typing import NDArray
 
 from dmtools.terrain.adapters.build import BUILD_SCHEMA_VERSION, canonical_json, file_sha256
 from dmtools.terrain.adapters.geotiff import geotiff_metadata
+from dmtools.terrain.adapters.numeric import read_numeric_array as _array
 from dmtools.terrain.adapters.project import (
     INPUT_SNAPSHOT_VERSION,
     PROJECT_SCHEMA_VERSION,
@@ -87,30 +88,6 @@ def _read(path: Path, limit: int) -> bytes:
     if len(data) != size:
         raise ValueError(f"Parent file changed size while reading: {path.name}")
     return data
-
-
-def _array(data: bytes, shape: tuple[int, ...], dtype: str, label: str) -> NDArray[Any]:
-    """Validate the NPY header and exact payload length before NumPy allocates."""
-    stream = io.BytesIO(data)
-    try:
-        version = np.lib.format.read_magic(stream)
-        if version != (1, 0):
-            raise ValueError("Only current NPY v1 numeric payloads are supported.")
-        actual_shape, fortran, actual_dtype = np.lib.format.read_array_header_1_0(stream)
-        expected = np.dtype(dtype)
-        if (
-            actual_shape != shape
-            or fortran
-            or actual_dtype != expected
-            or len(data) - stream.tell() != prod(shape) * expected.itemsize
-        ):
-            raise ValueError("Array shape, dtype, order or payload length mismatch.")
-        stream.seek(0)
-        result = cast(NDArray[Any], np.load(stream, allow_pickle=False))
-        result.setflags(write=False)
-        return result
-    except (OSError, ValueError, EOFError) as error:
-        raise ValueError(f"Invalid parent array {label}: {error}") from error
 
 
 @dataclass(frozen=True, slots=True)

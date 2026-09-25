@@ -52,7 +52,9 @@ independent of local terrain projects. No new runtime dependency or scientific
 engine is installed. The local terrain importer still dissolves geometry for its
 own workflow. The [geographic WC1 batch](2026-09-25-geographic-world-context.md)
 now generates spherical coverage, connected water, resolution support, previews
-and reproducible exports. Exposure/province inputs, world climate, ocean
+and reproducible exports. The [consumption/edge batch](2026-09-25-context-reopening-and-gateways.md)
+adds verified reopening, physical shared-edge widths and the fractional-origin
+seam correction. These measurements are not transport links. Exposure/province inputs, world climate, ocean
 bathymetry, continent/province histories and same-present regional geological replay
 are not implemented. Existing local detail is not history replay. Source
 and license checks for Climlab/GPlates/ExoPlaSim are not local execution evidence.

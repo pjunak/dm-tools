@@ -195,8 +195,9 @@ and [ADR-0072](adr/0072-bound-world-source-imperfections.md) record these identi
 ## What follows
 
 The [Context page](world-context.md) now implements spherical coverage, connected
-water and local resolution support. The remaining [WC1](strategy/world-context.md)
-work adds verified consumption, finite gateway support, geographic exposure and
+water, shared-edge water openings, local resolution support and verified bundle
+reopening. The remaining [WC1](strategy/world-context.md) work adds geographic exposure,
+component-aware transport and
 inspectable geological hypotheses while preserving this source contract.
 World terrain, climate, shared history, world-linked regional generation and
 local river enrichment require their own stage gates. Existing local terrain
