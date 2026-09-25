@@ -28,6 +28,7 @@ from dmtools.terrain.domain.world import (
     WorldAssignment,
     WorldContinent,
     WorldFrame,
+    WorldGeometryError,
     WorldProject,
     WorldRole,
     WorldSource,
@@ -166,6 +167,7 @@ class WorldWorkspace(ttk.Frame):
         self._button(tools, "Undo", self.undo).pack(side="left", padx=4)
         self._button(tools, "Redo", self.redo).pack(side="left")
         self.tree = ttk.Treeview(mapping, columns=("owner",), selectmode="extended", height=10)
+        self.tree.tag_configure("issue", foreground="#a13223")
         self.tree.heading("#0", text="Source shape")
         self.tree.heading("owner", text="Assignment")
         self.tree.column("#0", width=215, minwidth=110, stretch=True)
@@ -285,8 +287,11 @@ class WorldWorkspace(ttk.Frame):
         self.validated = None
         if self.source:
             remaining = len(self.source.features) - len(self.assignments)
+            excluded = sum(a.role == "exclude" for a in self.assignments)
+            issues = sum(bool(f.issue) for f in self.source.features)
             self.summary.set(
-                f"{len(self.continents)} continents · {remaining} unassigned shapes. "
+                f"{len(self.continents)} continents · {remaining} unassigned · "
+                f"{excluded} excluded · {issues} import issues. "
                 "Review assignments and world frame, then validate."
             )
         self.on_change()
@@ -349,7 +354,9 @@ class WorldWorkspace(ttk.Frame):
             self._set_busy(False)
             if isinstance(event, Exception):
                 self._after_save = None
-                self.status.set(str(event))
+                self.status.set(str(event).partition("\n")[0])
+                if isinstance(event, WorldGeometryError):
+                    self._select_issues(event.feature_ids)
                 messagebox.showerror("World map needs attention", str(event), parent=self)
             elif isinstance(event, WorldSource):
                 self.accept_source(event)
@@ -424,9 +431,15 @@ class WorldWorkspace(ttk.Frame):
         self.viewport.fit()
         self._populate()
         self._changed()
+        issues = tuple(f.id for f in source.features if f.issue)
+        self._select_issues(issues)
         self.status.set(
             f"Imported {source.name}: {len(source.features)} shapes. "
-            "Assign continents (or suggest from groups), then confirm the World frame."
+            + (
+                f"{len(issues)} shapes need attention and are selected; review their details."
+                if issues
+                else "Assign continents (or suggest from groups), then confirm the World frame."
+            )
         )
 
     def accept_world(self, world: WorldMap, path: Path) -> None:
@@ -462,7 +475,7 @@ class WorldWorkspace(ttk.Frame):
         if self.source:
             for feature in self.source.features:
                 assignment = assignments.get(feature.id)
-                label = "Unassigned"
+                label = "Needs attention" if feature.issue else "Unassigned"
                 if assignment:
                     label = (
                         "Excluded"
@@ -470,10 +483,24 @@ class WorldWorkspace(ttk.Frame):
                         else owners[assignment.continent_id]
                         + (" · island" if assignment.role == "island" else "")
                     )
-                self.tree.insert("", "end", iid=feature.id, text=feature.label, values=(label,))
+                self.tree.insert(
+                    "",
+                    "end",
+                    iid=feature.id,
+                    text=feature.label,
+                    values=(label,),
+                    tags=("issue",) if feature.issue else (),
+                )
         self.owner_input.configure(values=sorted(owners.values(), key=str.casefold))
         self.tree.selection_set([key for key in selected if self.tree.exists(key)])
         self._schedule_draw()
+
+    def _select_issues(self, identifiers: tuple[str, ...]) -> None:
+        existing = [key for key in identifiers if self.tree.exists(key)]
+        if existing:
+            self.tree.selection_set(existing)
+            self.tree.see(existing[0])
+            self._selection()
 
     def _selection(self, _event: tk.Event[tk.Misc] | None = None) -> None:
         selection = self.tree.selection()
@@ -481,6 +508,7 @@ class WorldWorkspace(ttk.Frame):
             feature = next(f for f in self.source.features if f.id == selection[0])
             self.detail.configure(
                 text=f"{len(selection)} selected · {feature.label}"
+                + f"\nID: {feature.id}"
                 + (f"\nGroup: {' / '.join(feature.groups)}" if feature.groups else "")
                 + (f"\n{feature.issue}" if feature.issue else "")
             )
@@ -604,6 +632,8 @@ class WorldWorkspace(ttk.Frame):
             project = self.project()
         except ValueError as error:
             self.status.set(str(error))
+            if isinstance(error, WorldGeometryError):
+                self._select_issues(error.feature_ids)
             return
         self._work(
             "Checking world frame, seams, ownership and overlap…",
@@ -617,6 +647,8 @@ class WorldWorkspace(ttk.Frame):
             project = self.project()
         except ValueError as error:
             self.status.set(str(error))
+            if isinstance(error, WorldGeometryError):
+                self._select_issues(error.feature_ids)
             return
         path = self.path
         if save_as or path is None:

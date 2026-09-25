@@ -44,11 +44,14 @@ def propose_group_assignments(
             continue
         if feature.issue or not feature.groups:
             continue
-        names = [
-            name
-            for name in feature.groups
-            if normalized(name) not in {"landshapes", "islands", "mainland"}
-        ]
+        # The continent owns the Land Shapes layer. Named/anonymous wrappers
+        # inside that layer organize geometry; they cannot create new owners.
+        ancestors = (
+            feature.groups[: groups.index("landshapes")]
+            if "landshapes" in groups
+            else feature.groups
+        )
+        names = [name for name in ancestors if normalized(name) not in {"islands", "mainland"}]
         if not names:
             continue
         name = names[-1]

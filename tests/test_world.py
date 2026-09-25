@@ -333,3 +333,181 @@ def test_failed_atomic_world_replace_preserves_original(
         save_world(replace(project, name="Changed"), path)
     assert path.read_bytes() == original
     assert list(tmp_path.iterdir()) == [path]
+
+
+@pytest.mark.parametrize(
+    "declaration",
+    [
+        "<!DOCTYPE svg>",
+        '<!DOCTYPE svg SYSTEM "https://example.invalid/never-fetch.dtd">',
+        '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" '
+        '"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">',
+    ],
+)
+def test_export_doctype_is_accepted_and_retained(declaration: str, tmp_path: Path) -> None:
+    from hashlib import sha256
+
+    svg = (
+        '<?xml version="1.0" encoding="UTF-8" standalone="no"?>'
+        + declaration
+        + source('<g id="North"><path id="land" d="M10 10 H30 V30 H10 Z"/></g>')
+    )
+    parsed = parse_world_svg(svg, "export.svg")
+    assert parsed.svg == svg and parsed.sha256 == sha256(svg.encode("utf-8")).hexdigest()
+    continents, assignments = propose_group_assignments(parsed)
+    project = WorldProject(
+        "Map", parsed, WorldFrame((0, 0, 360, 180), 1000), continents, assignments
+    )
+    target = tmp_path / "doctype.dmworld.json"
+    save_world(project, target)
+    assert open_world(target).project.source == parsed
+
+
+@pytest.mark.parametrize(
+    "declaration",
+    [
+        '<!DOCTYPE svg [<!ENTITY name "expanded">]>',
+        '<!DOCTYPE svg [<!ENTITY name SYSTEM "file:///not-a-source.txt">]>',
+        '<!DOCTYPE svg [<!ENTITY % external SYSTEM "https://example.invalid/never-fetch.dtd">'
+        "%external;]>",
+        '<!DOCTYPE svg [<!ATTLIST svg viewBox CDATA "0 0 1 1">]>',
+    ],
+)
+def test_custom_dtd_content_is_rejected_before_expansion(declaration: str) -> None:
+    with pytest.raises(ValueError, match="internal DTD"):
+        parse_world_svg(declaration + source('<path d="M0 0 H10 V10 H0 Z"/>'), "unsafe.svg")
+
+
+def test_doctype_never_supplies_external_entities(tmp_path: Path) -> None:
+    dtd = tmp_path / "external.dtd"
+    dtd.write_text('<!ENTITY custom "unexpected">', encoding="utf-8")
+    with pytest.raises(ValueError, match=r"entities|undefined entity"):
+        parse_world_svg(
+            f'<!DOCTYPE svg SYSTEM "{dtd.as_uri()}">'
+            + source('<g id="&custom;"><path d="M0 0 H10 V10 H0 Z"/></g>'),
+            "external.svg",
+        )
+
+
+def test_xml_comments_are_not_mistaken_for_declarations() -> None:
+    parsed = parse_world_svg(
+        source(
+            "<!-- A note about <!DOCTYPE and <!ENTITY is plain text. -->"
+            '<path id="island&amp;reef" d="M0 0 H10 V10 H0 Z"/>'
+        ),
+        "comment.svg",
+    )
+    assert parsed.features[0].id == "island&reef"
+
+
+@pytest.mark.parametrize("namespace", ["https://www.affinity.studio/", "http://www.serif.com/"])
+def test_affinity_labels_survive_unique_ids_and_geometry_wrappers(namespace: str) -> None:
+    svg = f'<svg xmlns="http://www.w3.org/2000/svg" xmlns:a="{namespace}" viewBox="0 0 360 180">'
+    for index, name in enumerate(("North Reach", "South Reach")):
+        svg += (
+            f'<g id="{name.replace(" ", "-")}" a:id="{name}">'
+            f'<g id="Land-Shapes{index}" a:id="Land Shapes">'
+            f'<g id="mainland{index}" a:id="mainland">'
+            f'<path d="M{index * 60 + 10} 10 h20 v20 h-20 Z"/></g>'
+            f'<g id="islands{index}" a:id="islands"><g transform="translate(0,50)">'
+            f'<g id="cluster{index}">'
+            f'<path id="island{index}" d="M{index * 60 + 10} 10 h5 v5 h-5 Z"/>'
+            "</g></g></g></g>"
+            f'<g id="Labels{index}" a:id="Labels">'
+            f'<path id="decoration{index}" d="M100 100 h5 v5 h-5 Z"/>'
+            "</g></g>"
+        )
+    parsed = parse_world_svg(svg + "</svg>", "affinity.svg")
+    continents, assignments = propose_group_assignments(parsed)
+    assert {c.name for c in continents} == {"North Reach", "South Reach"}
+    assert len(assignments) == 6
+    owners = {c.id: c.name for c in continents}
+    for index, name in enumerate(("North Reach", "South Reach")):
+        island = next(a for a in assignments if a.feature_id == f"island{index}")
+        assert island.role == "island" and owners[island.continent_id or ""] == name
+        assert (
+            next(a for a in assignments if a.feature_id == f"decoration{index}").role == "exclude"
+        )
+    assert parsed.features[0].label == "mainland"
+    assert parsed.features[0].groups == ("North Reach", "Land Shapes", "mainland")
+    assert "Group" not in parsed.features[1].groups
+
+
+@pytest.mark.parametrize("fill_rule", ["nonzero", "evenodd"])
+def test_self_crossing_coastline_retains_both_filled_lobes(fill_rule: str) -> None:
+    parsed = parse_world_svg(
+        source(f'<path fill-rule="{fill_rule}" d="M0 0 L20 20 L0 20 L20 0 Z"/>'), "crossing.svg"
+    )
+    feature = parsed.features[0]
+    assert not feature.issue and len(feature.components) == 2
+    polygons = [Polygon(c.exterior, c.holes) for c in feature.components]
+    assert sum(p.area for p in polygons) == pytest.approx(200)
+    assert all(any(p.covers(Point(x, y)) for p in polygons) for x, y in ((10, 5), (10, 15)))
+    assert not any(p.covers(Point(1, 10)) for p in polygons)
+
+
+@pytest.mark.parametrize("fill_rule,filled", [("nonzero", True), ("evenodd", False)])
+def test_retraced_loop_uses_original_winding_not_polygonized_face_count(
+    fill_rule: str,
+    filled: bool,
+) -> None:
+    parsed = parse_world_svg(
+        source(f'<path fill-rule="{fill_rule}" d="M0 0 H20 V20 H0 V0 H20 V20 H0 Z"/>'),
+        "retraced.svg",
+    )
+    feature = parsed.features[0]
+    assert bool(feature.components) == filled
+    if filled:
+        assert not feature.issue
+        assert Polygon(feature.components[0].exterior).area == pytest.approx(400)
+    else:
+        assert feature.issue
+
+
+@pytest.mark.parametrize("fill_rule", ["nonzero", "evenodd"])
+def test_retraced_bridge_to_inner_coastline_retains_hole(fill_rule: str) -> None:
+    parsed = parse_world_svg(
+        source(
+            f'<path fill-rule="{fill_rule}" d="M0 0 H40 V40 H0 V0 L10 10 V30 H30 V10 H10 L0 0 Z"/>'
+        ),
+        "bridge.svg",
+    )
+    feature = parsed.features[0]
+    assert not feature.issue and len(feature.components) == 1
+    polygon = Polygon(feature.components[0].exterior, feature.components[0].holes)
+    assert polygon.area == pytest.approx(1200)
+    assert polygon.covers(Point(5, 5)) and not polygon.covers(Point(20, 20))
+
+
+@pytest.mark.parametrize("outside", [False, True])
+def test_geometry_errors_identify_exact_source_shapes(outside: bool) -> None:
+    from dmtools.terrain.domain.world import WorldGeometryError
+
+    project = world(
+        '<g id="North"><path id="coast" d="M10 10 H30 V30 H10 Z"/>'
+        + (
+            '<path id="outside" d="M100 170 H120 V180.002 H100 Z"/>'
+            if outside
+            else '<path id="overlap" d="M20 20 H40 V40 H20 Z"/>'
+        )
+        + "</g>"
+    )
+    original = project.source
+    with pytest.raises(WorldGeometryError) as error:
+        prepare_world_map(project)
+    if outside:
+        assert error.value.feature_ids == ("outside",)
+        assert "180.002" in str(error.value) and "North / outside" in str(error.value)
+    else:
+        assert set(error.value.feature_ids) == {"coast", "overlap"}
+        assert "100 square source units" in str(error.value)
+    assert project.source is original
+
+
+def test_doctype_removal_uses_utf8_parser_offsets_and_preserves_source() -> None:
+    svg = '<?xml version="1.0"?><!-- Příliš žluťoučký -->\n' + (
+        '<!DOCTYPE svg SYSTEM "https://example.invalid/unneeded.dtd">'
+        + source('<path id="island" d="M10 10 H30 V30 H10 Z"/>')
+    )
+    parsed = parse_world_svg(svg, "unicode.svg")
+    assert parsed.svg == svg and not parsed.features[0].issue

@@ -12,6 +12,10 @@ in the current status or a new dated report.
 
 ## Current reassessment
 
+- [World SVG import corrections — 2026-09-25](2026-09-25-world-import-corrections.md)
+  fixes exported headers, semantic layer labels and self-crossing fill semantics;
+  makes exclusions and source geometry conflicts visible for review.
+
 - [World-source workspace — 2026-09-25](2026-09-25-world-source-workspace.md)
   implements and validates WC0 source import, spherical placement, semantic
   mapping, portable saves and World/Terrain navigation. Records public-fixture

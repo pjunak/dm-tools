@@ -22,7 +22,7 @@
       "const": 1
     },
     "importer": {
-      "const": "retained-svg-v1"
+      "const": "retained-svg-v2"
     },
     "name": {
       "type": "string",

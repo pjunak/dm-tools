@@ -166,3 +166,58 @@ def test_world_busy_guard_and_cleanup(app: ui.TerrainApp) -> None:
     assert calls
     app._close()
     assert view._closed and view._poll_id is None and view._draw_id is None
+
+
+def test_import_issues_are_visible_and_selected(app: ui.TerrainApp) -> None:
+    from dmtools.terrain.adapters.world_svg import parse_world_svg
+
+    view = app.world_workspace
+    view.accept_source(
+        parse_world_svg(
+            '<svg viewBox="0 0 360 180"><g id="North">'
+            '<path id="land" d="M10 10 H30 V30 H10 Z"/>'
+            '<path id="broken" d="M50 50 L60 60"/></g></svg>',
+            "issues.svg",
+        )
+    )
+    app.root.update()
+    assert view.tree.selection() == ("broken",)
+    assert "Needs attention" in view.tree.item("broken", "values")
+    assert "1 import issues" in view.summary.get()
+    assert "Open path" in str(view.detail.cget("text"))
+    view.suggest_groups()
+    assert "1 unassigned" in view.summary.get() and "0 excluded" in view.summary.get()
+    view.role.set("Exclude")
+    view.assign_selected()
+    assert "1 excluded" in view.summary.get()
+
+
+def test_validation_selects_overlapping_shapes(
+    app: ui.TerrainApp,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from dmtools.terrain.adapters.world_svg import parse_world_svg
+
+    view = app.world_workspace
+    view.accept_source(
+        parse_world_svg(
+            '<svg viewBox="0 0 360 180"><g id="North">'
+            '<path id="first" d="M10 10 H30 V30 H10 Z"/>'
+            '<path id="second" d="M20 20 H40 V40 H20 Z"/>'
+            '<path id="separate" d="M100 100 H120 V120 H100 Z"/></g></svg>',
+            "overlap.svg",
+        )
+    )
+    view.suggest_groups()
+    view.values["radius"].set("6000")
+    errors: list[str] = []
+
+    def collect_error(*args: object, **_kwargs: object) -> None:
+        errors.append(str(args))
+
+    monkeypatch.setattr(world_ui.messagebox, "showerror", collect_error)
+    view.validate()
+    wait_world(app)
+    assert errors and "100 square source units" in errors[0]
+    assert set(view.tree.selection()) == {"first", "second"}
+    assert view.validated is None

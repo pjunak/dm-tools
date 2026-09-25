@@ -70,6 +70,16 @@ continent-history generation remain planned.
   Plate Carrée frame/radius, continent/island mapping, source preview, portable
   SVG snapshot and guarded saves. See the [guide](docs/terrain-worlds.md) and
   [validation report](docs/research/2026-09-25-world-source-workspace.md).
+- [x] **WC0 import corrections:** accept ordinary external SVG DOCTYPE metadata
+  without resolving it, retain modern Affinity labels and classify self-crossing
+  paths with SVG winding rules. Show import/exclusion counts and select shapes
+  responsible for validation failures. See the
+  [follow-up report](docs/research/2026-09-25-world-import-corrections.md).
+- [ ] **WC0 source-quality follow-up:** add a reviewable import report covering
+  export precision, polar bounds and overlapping/contained shapes together, with
+  zoom-to-conflict navigation. Compare native/high-precision exports before
+  proposing any bounded derived tolerance; keep authored source and frame intact.
+  Draft mapping saves and bounded import cancellation remain separate follow-ups.
 - [ ] **WC1 — Generate provisional context** (R07/R10/R11/R49): ocean topology and
   exposure, bathymetric hypotheses, geological provinces and inspectable defaults.
   First slice: spherical cell areas, fractional coverage, periodic water

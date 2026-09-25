@@ -8,7 +8,9 @@ Current coverage includes:
 
 - retained whole-world SVG identity, spherical frames/areas, seam/pole controls,
   explicit continent/island ownership, portable world schema/hash/atomic saves,
-  and real Tk World/Terrain lifecycle and shortcut isolation;
+  safe export headers, Affinity metadata, SVG winding/self-crossings and exact
+  conflict identities, plus real Tk issue selection, World/Terrain lifecycle and
+  shortcut isolation;
 
 - strict current project/schema validation, SVG hashes, atomic saves, per-tool
   settings and display-free Tcl control behavior;

@@ -68,11 +68,15 @@ physical process resolution and display zoom are separate settings.
   land may cross continent labels; an island's owner cannot be guessed from its
   nearest mainland. Catchments and geology can cross these labels.
 - Exclude legends, scale bars, labels and decorative fills by explicit import
-  selection/mapping. Ambiguous groups, duplicate IDs, invalid rings, overlaps and
+  selection/mapping. Ambiguous groups, duplicate IDs, unusable fills, overlaps and
   unassigned land require visible resolution; do not silently discard or dissolve
   them. Geometry repair, if needed, is a proposed input revision with a preview.
 - The first input is SVG plus explicit world metadata and retained element/group
-  mappings. Read group transforms, holes and selected paths. Raster segmentation,
+  mappings. Read group transforms, holes and selected paths. SVG self-crossings
+  are interpreted through their fill rule, not rejected as invalid simple rings.
+  Before WC1 uses imported geography, source-quality follow-up should consolidate
+  precision/overlap/bounds diagnostics without silently repairing coastlines.
+  Raster segmentation,
   vector geospatial imports and native Affinity import are separate later options;
   do not imply that the current SVG importer reads `.af` documents.
 - Do not normalize each continent to its own bounding box. Source-to-sphere and

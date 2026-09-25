@@ -9,9 +9,16 @@ from math import pi, sin
 from shapely.affinity import translate
 from shapely.geometry import GeometryCollection, MultiPolygon, Polygon, box
 from shapely.ops import unary_union
+from shapely.strtree import STRtree
 
 from dmtools.terrain.domain.models import LandComponent, Point2D
-from dmtools.terrain.domain.world import WorldFrame, WorldProject, WorldRole
+from dmtools.terrain.domain.world import (
+    WorldFeature,
+    WorldFrame,
+    WorldGeometryError,
+    WorldProject,
+    WorldRole,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -82,6 +89,7 @@ def prepare_world_map(project: WorldProject) -> WorldMap:
     features = {f.id: f for f in project.source.features}
     land: list[WorldLandView] = []
     all_polygons: list[Polygon] = []
+    polygon_features: list[WorldFeature] = []
     for assignment in sorted(project.assignments, key=lambda a: a.feature_id):
         if assignment.continent_id is None:
             continue
@@ -97,7 +105,13 @@ def prepare_world_map(project: WorldProject) -> WorldMap:
                 or x0 < frame.bounds[0] - frame.width
                 or x1 > frame.bounds[2] + frame.width
             ):
-                raise ValueError(f"{feature.label}: land is outside the full-world frame.")
+                raise WorldGeometryError(
+                    f"{feature.description}: land is outside the full-world frame. "
+                    f"Shape bounds: ({x0:.9g}, {y0:.9g}) to ({x1:.9g}, {y1:.9g}); "
+                    f"frame: {frame.bounds}. Check export precision and the declared frame; "
+                    "the importer does not move source geometry.",
+                    (feature.id,),
+                )
             for offset in (-frame.width, 0.0, frame.width):
                 clipped = translate(polygon, xoff=offset).intersection(frame_polygon)
                 if isinstance(clipped, (Polygon, MultiPolygon, GeometryCollection)):
@@ -105,6 +119,7 @@ def prepare_world_map(project: WorldProject) -> WorldMap:
         if not parts:
             raise ValueError(f"{feature.label}: no land lies inside the world frame.")
         all_polygons.extend(parts)
+        polygon_features.extend([feature] * len(parts))
         components = tuple(
             LandComponent(
                 tuple((float(x), float(y)) for x, y in polygon.exterior.coords),
@@ -118,9 +133,29 @@ def prepare_world_map(project: WorldProject) -> WorldMap:
         land.append(WorldLandView(feature.id, assignment.continent_id, assignment.role, components))
     merged = unary_union(all_polygons)
     if sum(p.area for p in all_polygons) - merged.area > frame.width * frame.height * 1e-12:
-        raise ValueError(
-            "Assigned land shapes overlap in area, including across the world seam. "
-            "Exclude duplicate layers or resolve their outlines in the source."
+        # Only inspect pairs after the aggregate check fails. The spatial index
+        # keeps diagnostics bounded to nearby shapes instead of every possible pair.
+        tree = STRtree(all_polygons)
+        conflicts: list[str] = []
+        affected: set[str] = set()
+        for index, polygon in enumerate(all_polygons):
+            for other in sorted(int(i) for i in tree.query(polygon) if int(i) > index):
+                area = polygon.intersection(all_polygons[other]).area
+                if area <= 0:
+                    continue
+                first, second = polygon_features[index], polygon_features[other]
+                affected.update((first.id, second.id))
+                if len(conflicts) < 6:
+                    conflicts.append(
+                        f"{first.description} overlaps {second.description} "
+                        f"by {area:.6g} square source units."
+                    )
+        raise WorldGeometryError(
+            "Assigned land shapes overlap in area, including across the world seam.\n"
+            + "\n".join(conflicts)
+            + "\nCheck export precision, duplicate layers and source outlines. "
+            "Review these shapes; source geometry is unchanged.",
+            tuple(sorted(affected)),
         )
     summaries = tuple(
         ContinentSummary(

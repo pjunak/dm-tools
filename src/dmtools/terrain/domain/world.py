@@ -81,6 +81,14 @@ class WorldFrame:
         return 2 * self.radius_km * asin(sqrt(min(1.0, max(0.0, value))))
 
 
+class WorldGeometryError(ValueError):
+    """A source validation failure whose affected shapes can be selected for review."""
+
+    def __init__(self, message: str, feature_ids: tuple[str, ...]) -> None:
+        super().__init__(message)
+        self.feature_ids = feature_ids
+
+
 @dataclass(frozen=True, slots=True)
 class WorldFeature:
     """One retained SVG shape. Invalid candidates can be explicitly excluded."""
@@ -90,6 +98,15 @@ class WorldFeature:
     groups: tuple[str, ...]
     components: tuple[LandComponent, ...]
     issue: str = ""
+
+    @property
+    def description(self) -> str:
+        parts = (
+            self.groups
+            if self.groups and self.groups[-1] == self.label
+            else (*self.groups, self.label)
+        )
+        return f"{' / '.join(parts)} [{self.id}]"
 
 
 @dataclass(frozen=True, slots=True)
@@ -160,7 +177,10 @@ class WorldProject:
                 raise ValueError("A shape refers to an unknown continent.")
             feature = features[assignment.feature_id]
             if feature.issue or not feature.components:
-                raise ValueError(f"{feature.label}: {feature.issue or 'No valid land geometry.'}")
+                raise WorldGeometryError(
+                    f"{feature.description}: {feature.issue or 'No valid land geometry.'}",
+                    (feature.id,),
+                )
             used.add(assignment.continent_id)
         if used != set(ids):
             raise ValueError("Every continent needs at least one assigned land shape.")

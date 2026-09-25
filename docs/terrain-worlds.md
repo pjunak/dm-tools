@@ -39,8 +39,11 @@ remain available in the same window, with separate documents and dirty states.
    does not move geometry or infer planet size from display pixels.
 3. Review the shape list. **Suggest from groups** proposes continent names and
    ownership; it is an explicit, undoable action. It recognises `Land Shapes`,
-   `islands` and `Map Furniture`. When land layers exist, other thematic layers
-   are proposed as excluded. Inspect all proposals before accepting them.
+   `islands` and `Map Furniture`. Affinity's original layer labels take precedence
+   over generated IDs such as `Land-Shapes1`; anonymous transform wrappers do not
+   become continent names. The group above `Land Shapes` owns its shapes. When
+   land layers exist, other thematic layers are proposed as excluded. The summary
+   reports exclusions explicitly. Inspect all proposals before accepting them.
 4. Select shapes in the list or click the map. Use Ctrl-click or the list's
    extended selection for several shapes. Choose or enter a **Continent name**,
    select **Mainland**, **Island** or **Exclude**, then **Assign selected shapes**.
@@ -78,8 +81,11 @@ continent's last shape elsewhere removes that now-unused owner; Undo can restore
 - Colours distinguish continent owners; selected outlines are gold, unassigned
   shapes grey and excluded shapes muted. Colours are reproducible for a given
   owner set, but may change when that set changes. IDs carry identity.
-- Selecting a shape shows its source group path and any import issue. **Show
-  excluded shapes** affects only the preview, never assignments or validation.
+- Selecting a shape shows its source group path, exact ID and any import issue.
+  Import problems are marked **Needs attention**, counted in the summary and
+  selected after import. Validation selects out-of-frame or overlapping shapes
+  and reports their group paths, IDs and bounds/overlap areas. **Show excluded
+  shapes** affects only the preview, never assignments or validation.
 - **Ctrl+O**, **Ctrl+S**, **Ctrl+Shift+S**, **Ctrl+Z**, **Ctrl+Y**, **F** and
   **Ctrl+Enter** act on the active workspace. In World, Ctrl+Enter validates.
   Native editing shortcuts still apply inside text fields.
@@ -111,7 +117,10 @@ Original SVG text is authoritative and retained byte-for-byte through UTF-8
 encoding, with a SHA-256 identity. Inspection geometry is separately flattened
 at `max(viewBox width, height) / 32768` source units. Curved boundaries and derived
 areas therefore have sampling error. Compound even-odd and nonzero fill rules,
-holes and transforms are respected. Tiny gaps and holes are not repaired away.
+holes, self-intersections, retraced edges and transforms are respected. The
+importer nodes sampled linework and classifies its faces using the original
+segments' winding numbers. This interprets SVG fill semantics; it does not heal
+coastlines. Tiny gaps and holes are not repaired away.
 The existing local terrain importer has a different dissolve/repair contract.
 
 For preview/area checks, derived geometry is wrapped and clipped at the declared
@@ -124,15 +133,29 @@ The source importer accepts at most 8 MiB, 30,000 XML elements, 4,096 shapes and
 ceiling. SVG `use`, embedded/external images, nested SVG, scripts and foreign
 objects must be exported to explicit paths first. Clipped/masked or open shapes
 are visible import issues and must be fixed in the source or explicitly excluded.
-Text is retained in the original SVG but is not treated as land. DTDs and entity
-declarations, duplicate element IDs and indistinguishable anonymous shapes fail
-import. Give important shapes stable unique SVG IDs.
+Text is retained in the original SVG but is not treated as land. Ordinary SVG
+`DOCTYPE` headers import automatically, including public/system declarations;
+no DTD is downloaded or loaded from disk. The original header remains embedded
+in the source snapshot. Internal DTD subsets and custom entity references are
+rejected. Duplicate element IDs and indistinguishable anonymous shapes also
+fail import. Give important shapes stable unique SVG IDs.
+
+Both current Affinity (`https://www.affinity.studio/`) and Serif
+(`http://www.serif.com/`) layer labels are recognised, along with Inkscape labels.
+For precision-sensitive coastlines, export with more decimal places and flattened
+transforms when available; rounded transform coefficients can displace a polar
+edge or turn a shared border into a tiny overlap. Higher export precision cannot
+remove genuine duplicate/overlapping shapes. Inspect the reported IDs and fix the
+source or explicitly exclude redundant objects. Do not enlarge the established
+world frame or rescale a continent to make a validation error disappear.
 
 The [world project schema](../schemas/world/project-v1.schema.json) owns current
-serialized fields. Its `retained-svg-v1` importer identity records how inspection
+serialized fields. Its `retained-svg-v2` importer identity records how inspection
 geometry is reconstructed. Saved world files are bounded to 32 MiB. Unsupported
 versions, projections and unknown fields fail rather than fall back to a guessed
-format. This project has no legacy-save compatibility policy.
+format. World files from the previous importer must be reimported from their
+original SVG; they are not migrated. This project has no legacy-save compatibility
+policy. [ADR-0071](adr/0071-interpret-exported-svg-fills.md) records the change.
 
 ## What follows
 

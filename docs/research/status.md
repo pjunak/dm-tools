@@ -1,6 +1,6 @@
 # Current terrain research status
 
-Reconciled on 2026-09-25 for the WC0 implementation and validation. The
+Reconciled on 2026-09-25 for WC0 implementation and export-import corrections. The
 2026-09-24 generation measurements and scientific-tool audit below retain their
 own revision/date; this world-source batch does not rerun terrain-quality probes.
 This is a status map; [TODO](../../TODO.md) owns the research register and the
@@ -56,6 +56,15 @@ are not implemented. Existing local detail is not history replay. Source
 and license checks for Climlab/GPlates/ExoPlaSim are not local execution evidence.
 B/LE2's physical paths, authoring and resolution gates remain prerequisites to
 production WC2; the new world plan does not promote the current history candidate.
+
+The [import follow-up](2026-09-25-world-import-corrections.md) fixes ordinary
+DOCTYPE handling, modern Affinity layer labels, anonymous wrapper ownership and
+self-crossing SVG fill interpretation. Import/exclusion counts and selected
+validation conflicts make remaining source defects visible. The importer identity
+is now `retained-svg-v2`; previous world snapshots require reimport. Strict
+projection bounds and cross-shape overlap checks remain in place. A consolidated
+source-quality review and precision comparison remain follow-ups, not an automatic
+coastline repair feature.
 
 ## Implemented experimental history model
 

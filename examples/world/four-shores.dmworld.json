@@ -1,7 +1,7 @@
 {
   "schema": "dmtools.world-project",
   "version": 1,
-  "importer": "retained-svg-v1",
+  "importer": "retained-svg-v2",
   "name": "Four Shores",
   "source": {
     "name": "coastlines.svg",
