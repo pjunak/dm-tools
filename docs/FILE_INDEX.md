@@ -6,7 +6,7 @@ export-import correction, bounded preparation and geographic context documents. 
 documentation and private campaign files are excluded. The public JSON schemas and reference dependency
 lock are listed separately as supporting contracts, not counted as prose docs.
 
-**191 Markdown files + 1 legal notice = 192 documentation files.**
+**192 Markdown files + 1 legal notice = 193 documentation files.**
 Each file appears once below, including this inventory. Document titles describe
 their subject; the group description identifies their role and authority.
 
@@ -21,10 +21,10 @@ remains the entry point for normal use. All are individually linked in the list 
 | User guides and current contracts | 18 |
 | Developer and reference guides | 8 |
 | Architecture decision records | 78 |
-| Dated research reports | 70 |
+| Dated research reports | 71 |
 | Maintenance reports | 2 |
 | Legal notice | 1 |
-| **Total** | **192** |
+| **Total** | **193** |
 
 ## Project entry and guidance (4)
 
@@ -180,12 +180,13 @@ Accepted historical decisions. Preserve their original context; consult the curr
 | [docs/adr/0077-generate-authored-ocean-depths.md](adr/0077-generate-authored-ocean-depths.md) | Separate authored bathymetry, conservative depth bounds, actual water-centre membership and immutable verified products. |
 | [docs/adr/0078-retain-water-piece-connectivity.md](adr/0078-retain-water-piece-connectivity.md) | Separate water pieces, finite shared intervals, source verification and explicit unresolved transport support. |
 
-## Dated research reports (70)
+## Dated research reports (71)
 
 Primary-source reviews, experiments and implementation evidence at their recorded date/revision. A title or citation is not evidence that a tool was adopted. Current status is listed above.
 
 | File | Purpose or document title |
 |---|---|
+| [docs/research/2026-09-26-hard-target-valley-layout.md](research/2026-09-26-hard-target-valley-layout.md) | Automatic guide relocation, preserved hard targets, restored 250 m capture, remaining bank/coarse failures and rejected alternatives. |
 | [docs/research/2026-09-26-connected-valley-patches.md](research/2026-09-26-connected-valley-patches.md) | Connected local valleys, fixed/fresh controls, coastal ablation, rejected raster delivery and hard-target follow-up. |
 | [docs/research/2026-09-25-groundwater-and-terrain-architecture.md](research/2026-09-25-groundwater-and-terrain-architecture.md) | Primary-source groundwater/canyon review, local API availability, revised construction architecture and staged experiments. |
 | [docs/research/2026-09-25-valley-bank-feasibility.md](research/2026-09-25-valley-bank-feasibility.md) | Physical bank support, local/joint conflict diagnostics, failed inward profiles/capture and the next river-aligned patch gate. |

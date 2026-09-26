@@ -40,16 +40,17 @@ finds strong workbench/build foundations but unaccepted drainage and landform
 quality. A fresh eight-case probe finds internal rises of 32–132 m on some
 endpoint-descending planned channels. This is sampled diagnostic evidence,
 not a physical river-water validation or a private-map result.
-The [connected-patch follow-up](docs/research/2026-09-26-connected-valley-patches.md)
-now captures all four fresh-construction heads locally, but only three after
-250 m raster delivery; guide/bank checks and fixed-control quality remain open.
-The next batch resolves hard-target-aware layout and delivery before co-evolution.
+The [automatic-layout follow-up](docs/research/2026-09-26-hard-target-valley-layout.md)
+now preserves hard targets while routing all four heads to the coast in the 250 m
+raster, with no interior sinks or uphill guide routes. Bank shape, coarse delivery
+and fixed/native quality remain open. Next finish bank construction and isolate
+its delivery limits before co-evolution.
 
 | Order | Outcome and existing backlog owners | Gate |
 |---|---|---|
 | **A — quality controls** | Quality fixtures, paired maps/profiles, process-scale warnings; convergent-flat comparison (R02/R25/R27/R41/R43) | Fixed comparison set and a measured accept/reject result; no new benchmark framework |
 | **W — bounded foundation delivered** | WC0 plus WC1 geography, geology inputs, bathymetry and water-piece incidence (R01/R49); return to B/C physical paths and landforms | Preserve source and unresolved support; context is provisional, not solved climate |
-| **B — next major generation decision** | Connected-patch comparison: fresh local capture 4/4, 250 m raster 3/4; next resolve hard-target-aware layout and delivery (R48/R32) | Preserve fixed control and genuine hard targets; pass guide/bank/capture checks within declared envelopes before LE3 |
+| **B — next major generation decision** | Automatic guide relocation restores 4/4 capture and descending routes at 250 m; next complete bank shape and delivery (R48/R32) | Preserve controls and hard targets; bank/capture acceptance across physical scales within declared envelopes before LE3 |
 | **C** | Consolidate one coherent range/pass/tributary/lowland system from the selected comparison (R08/R09/R14/R40/R44) | Better structural/visual results across fixed seeds and physical scales |
 | **W — after B/C acceptance** | Rough world, seasonal climate/runoff feedback and reviewed parent (WC2-WC4; R33/R49) | Physical terrain acceptance, bounded coupling, shared world time and budgets |
 | **D / WC5** | Accepted parent-conditioned detail, same-present historical refinement and inherited fine hydrology, then zoom jobs (R15/R34/R49) | Exact overlap, coarse-scale, time-dependent boundary/flow and visual acceptance before real small rivers |
@@ -143,10 +144,14 @@ continent-history generation remain planned.
   projection are measured. Fresh local capture is 4/4; 250 m raster capture is
   3/4, and some guide/bank checks still fail. See the
   [report](docs/research/2026-09-26-connected-valley-patches.md).
-- [ ] **Next concrete batch — B1/B2 hard-target-aware layout and delivery.**
-  Preserve the fixed control and hard inputs; compare bounded automatic guide
-  relocation and pin support, then one local representation if needed. Require
-  complete guide/bank/capture acceptance before coupling history or LE3/WC2.
+- [x] **B1 hard-target-aware automatic layout:** bounded guide relocation now
+  preserves every original vertex/reach and hard input, restoring 4/4 capture,
+  zero sinks and descending guide profiles in the 250 m raster. See the
+  [report](docs/research/2026-09-26-hard-target-valley-layout.md).
+- [ ] **Next concrete batch — B1/B2 bank shape and delivery.** Retain the layout
+  gain and rejected controls. Resolve full banks at heads, junctions and cap
+  transitions, then compare one bounded reconstruction if local shape passes
+  and raster delivery fails. Complete these gates before history or LE3/WC2.
 - [ ] **WC1 transport follow-up:** consume finite-face incidence only after support
   admission, conservative area/depth integration, explicit sill/capacity geometry
   and paired flux/storage budgets. Add a stable local-coordinate or exact-predicate
@@ -234,7 +239,7 @@ records execution and its remaining gates; the simulation is still research-only
   525 endpoint constraints pass in feasible cases, but no required head is captured
   and the 250 m candidate adds sinks. No fixed constraint was softened.
 - [x] **Reassess failed methods and alternative processes** (R24/R32/R48).
-  The [method register](docs/research/terrain-method-decisions.md) records nine
+  The [method register](docs/research/terrain-method-decisions.md) records ten
   groups of failed/restricted approaches and their replacement gates. The
   [groundwater/canyon review](docs/research/2026-09-25-groundwater-and-terrain-architecture.md)
   checks primary models and existing component APIs; no new simulation was run.
@@ -245,15 +250,25 @@ records execution and its remaining gates; the simulation is still research-only
   routing captures 4/4 heads with no sinks; 250 m raster captures 3/4 with one sink.
   Removing the mouth transition gives 0/4 and four sinks. Both modes retain hard
   targets; fixed/native quality and some fresh guide/bank checks remain rejected.
-  The guides are unchanged; automatic relocation and time evolution are untested.
-- [ ] **Next — B1/B2 hard-target-aware construction and delivery** (R48/R32/R02).
-  Keep the fixed control, hard heights/divide/coast and the declared fresh envelope.
-  Move only automatic guidance within bounded corridors; compare valley layout,
-  pin support and reconstruction at the observed blockage. Require guide/bank
-  support, all four captured heads, zero new sinks, limits and repeat/rotation/
-  spacing checks on local and delivered ground. Do not soften authored targets.
-  If delivery remains the blocker, compare one bounded constraint-aligned local
-  representation, not more endpoint penalties or whole-grid refinement.
+  That comparison held guides fixed; automatic relocation is covered below.
+  No time evolution was simulated.
+- [x] **B1 hard-target-aware guide placement** (R48/R32/R02).
+  [Measured](docs/research/2026-09-26-hard-target-valley-layout.md): an explicit
+  automatic-edge mask, bounded clearance/corridors/length, unchanged original
+  nodes and reach ownership, no new crossings and repeat/rotation checks. The
+  250 m raster captures 4/4 with no sinks or uphill guide routes; all interior
+  checking samples reach the coast. Hard targets and fresh/native controls are
+  preserved. Local/raster banks and 500/1,000 m delivery still fail. Rejected
+  sine-squared detours and sampled-envelope bed lifting are documented.
+- [ ] **Next — B1/B2 complete bank construction and delivery** (R48/R32/R02).
+  Keep the admitted automatic layout, fixed control, hard targets/divide/coast
+  and declared envelope. Resolve banks at heads, junctions and cap transitions
+  using explicit local geometry; check whole inward profiles, not just endpoints.
+  Preserve old probes and report physical reach/length coverage when the network
+  is subdivided. Once local banks pass, isolate raster loss with one bounded
+  channel-conforming reconstruction. Require the complete bank/guide/capture
+  gates and spacing/rotation checks before integration; no higher undeclared
+  cut budget, softened target or uniform whole-world refinement.
 - [ ] **B2 — Terrain/network co-evolution after construction acceptance** (R48/R14).
   Connect an accepted construction/delivery pair to the two-epoch reference.
   Measure held-out seeds, oblique orientation, complete catchment coverage,
@@ -1483,12 +1498,13 @@ Priorities remain conditional on the current strategy's prerequisites.
   final surface/path contract. The network-led fit now preserves hard heights,
   native bounds and downhill guides. Bank/confluence feasibility is now measured:
   endpoint support passes in feasible cases, but intervening rises and capture fail.
-  B1 now measures connected local patches under that fixed hard control and a
-  separate 600 m / 120 km3 fresh-construction envelope. Fresh local capture is
-  4/4, but 250 m raster delivery captures 3/4; guide/bank checks still fail.
-  Automatic guide relocation and co-evolution are not implemented. Next compare
-  hard-target-aware layout and delivery before B2 history coupling. Preserve
-  genuine authored requirements and distinguish composition from erosion. See the
+  B1 now measures connected patches and bounded automatic guide relocation under
+  that fixed control and a separate 600 m / 120 km3 fresh-construction envelope.
+  Fresh 250 m raster capture is 4/4 with no sinks or uphill guide routes; hard
+  inputs and all original vertices remain fixed. Bank shape and coarse delivery
+  still fail. Finish local banks, then isolate reconstruction loss before B2
+  history coupling. Preserve genuine authored requirements and distinguish
+  composition from erosion. See the
   [failure register](docs/research/terrain-method-decisions.md) for revisit gates.
   Do not count changed automatic D8 edges as matched route improvements. Remove
   superseded runtime paths after acceptance; preserve current inputs/contracts

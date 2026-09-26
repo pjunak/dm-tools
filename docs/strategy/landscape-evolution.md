@@ -2,8 +2,8 @@
 
 Updated 2026-09-26. **LE1 implemented; LE2 history, frozen reconstruction,
 physical-path, receiver/outlet, constrained-network, bank-feasibility and
-connected-patch construction comparisons measured. Production-quality acceptance and application integration
-remain open.** The
+connected-patch construction and hard-target layout comparisons measured.
+Production-quality acceptance and application integration remain open.** The
 [method register](../research/terrain-method-decisions.md) preserves the failed
 approaches and revisit gates. The [groundwater/canyon reassessment](../research/2026-09-25-groundwater-and-terrain-architecture.md)
 motivates the construction comparison and adds untested process alternatives.
@@ -97,16 +97,28 @@ Input roles separate native fixed-source cuts from fresh composition under a
 600 m / 120 km3 envelope; final hard heights, divide and coast remain fixed. Local
 fresh routing captures all four heads with no interior sinks, but 250 m Float32
 raster delivery captures three with one sink. Some guide/bank conditions still
-fail locally; fixed/native capture remains rejected. Automatic guide relocation
-and terrain/network co-evolution have not been implemented by this comparator.
+fail locally; fixed/native capture remains rejected. That comparator held guides
+fixed; the layout follow-up is below. Terrain/network co-evolution remains unimplemented.
 
 The coastal ablation supports the explicit mouth transition. Conservative
 incident-cell caps fix an initial between-node cut violation without increasing
-budgets. Next compare hard-target-aware layout, bounded automatic guide movement
-and pin support, then one local reconstruction if necessary. Require local and
-delivered guide/bank/capture acceptance before history coupling, a larger cohort
-or LE3/WC2. The main strategy owns B1/B2 gates. More endpoint inequalities,
-softened hard targets and unexplained groundwater outlets do not close them.
+budgets. The automatic-layout follow-up below now isolates the hard-target blockage.
+
+## Hard-target layout checkpoint
+
+The [automatic guide comparison](../research/2026-09-26-hard-target-valley-layout.md)
+preserves all original vertices, heads, junctions, mouths, hard heights and the
+same fresh envelope. An 800 m detour within a declared corridor restores all four
+captured heads, zero sinks and descending guide profiles in the 250 m raster.
+All interior checking samples reach the coast; repeat/quarter-turn checks pass.
+Local and delivered banks still fail, as does coarse delivery. The native fixed
+control remains rejected. No time evolution or application integration is added.
+
+Retain this component and finish bank shape at heads, junctions and cap transitions,
+with original-probe and physical coverage accounting. Then isolate local versus
+raster behavior and compare one bounded reconstruction if delivery alone fails.
+Require complete construction/delivery acceptance before history coupling or
+LE3/WC2. The main strategy owns these gates and the failed-alternative record.
 
 ## Outcome and decision
 

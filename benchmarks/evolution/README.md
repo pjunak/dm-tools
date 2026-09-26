@@ -319,7 +319,7 @@ records fresh local capture of 4/4 heads and no sinks, versus 3/4 and one sink f
 control remains rejected, and no candidate is production-eligible. The 250 m
 coastal ablation isolates the mouth transition; node-only cut bounds that failed
 between nodes were replaced by conservative incident-cell bounds without raising
-the envelope. Next compare hard-target-aware layout and delivery.
+the envelope. The automatic-layout follow-up below now tests that delivery blockage.
 
 A fresh output folder receives `index.html`, completion-last `comparison.json`,
 per-case `result.json`, numeric/source/artifact hashes and `fields.npz` with local,
@@ -327,3 +327,34 @@ control and delivered ground plus prepared geometry. Figures show actual ground,
 rerouted paths and the coastal ablation. Hard-input/envelope violations fail the
 execution with `incomplete.json`; drainage failures complete with a rejected
 quality decision. Keep local artifacts ignored and retain failed runs as evidence.
+
+
+## Hard-target-aware automatic guide layout
+
+Run the bounded detour comparison while retaining all fixed-guide controls:
+
+```powershell
+.\.venv\Scripts\python.exe -m benchmarks.evolution.layout_comparison --output artifacts/my-valley-layout
+.\.venv\Scripts\python.exe -m pytest tests/test_valley_layout.py tests/test_valley_patches.py
+```
+
+Only an explicit automatic-edge mask permits movement. The experiment preserves
+every original vertex, junction, head and mouth, carries original reach ownership
+through new nodes, and checks whole polyline segments against hard-target clearance,
+the domain, protected divide and other river edges. Default bounds are 1,000 m
+clearance, a 1,500 m corridor, 100 m amplitude steps and 25% maximum length growth.
+The 600 m / 120 km3 fresh envelope and no-fill/height constraints are unchanged.
+Finite search exhaustion is not proof that the authored requirements conflict.
+
+The nested `fixed-guides/` run keeps all eight previous controls. Four new cases
+add actual geometry, input roles, matched source/outlet routes, local and delivered
+metrics, hashes and truthful before/after overlays. The parent completion manifest
+hashes its control manifest; failure cannot publish a completed parent. Use a new
+output directory and keep generated artifacts ignored.
+
+The [measured report](../../docs/research/2026-09-26-hard-target-valley-layout.md)
+records 250 m raster capture improving from 3/4 to 4/4, with no interior sinks or
+uphill guide routes and every interior checking sample reaching the coast. Bank
+shape and coarse delivery remain rejected. Probe counts differ after segmentation
+and are explicitly recorded; do not claim matched bank improvements from raw
+counts. Normal generation and history integration remain gated on full acceptance.

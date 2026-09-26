@@ -7,6 +7,7 @@ from numpy.typing import NDArray
 from PIL import Image, ImageDraw, ImageFont
 
 from benchmarks.evolution.constrained import FittedSurface
+from benchmarks.evolution.network import RiverNetwork
 from benchmarks.evolution.network_fixture import NetworkFixture
 from benchmarks.evolution.paths import Sampler
 from benchmarks.evolution.surface_report import render_panel
@@ -42,15 +43,21 @@ def render_routes(
     f: NetworkFixture,
     fields: dict[str, tuple[FittedSurface, NDArray[np.int64]]],
     label: str,
+    *,
+    networks: dict[str, RiverNetwork] | None = None,
 ) -> None:
     panels: list[tuple[str, Image.Image]] = []
     bounds = (0.0, 0.0, f.source.grid.width_m, f.source.grid.height_m)
     for name, (field, receivers) in fields.items():
-        panel = render_panel(field.sample, f.network, bounds, 1000.0)
+        network = f.network if networks is None else networks[name]
+        panel = render_panel(field.sample, network, bounds, 1000.0)
         draw = ImageDraw.Draw(panel)
         scale = (panel.width - 1) / field.grid.width_m
-        for head in f.network.heads():
-            col, row = np.rint(f.network.coordinates_m[head] / field.grid.spacing_m).astype(int)
+        if networks is not None:
+            for px, py in f.hard.points_m * scale:
+                draw.ellipse((px - 5, py - 5, px + 5, py + 5), outline="#f000e8", width=2)
+        for head in network.heads():
+            col, row = np.rint(network.coordinates_m[head] / field.grid.spacing_m).astype(int)
             node = int(row * field.grid.shape[1] + col)
             path = [node]
             while receivers.flat[node] >= 0:
@@ -79,7 +86,9 @@ def render_routes(
     )
     draw.text(
         (20, 40),
-        "Blue: fixed guides. Yellow: raw ground routes from four heads. Red: stops.",
+        "Blue: fixed guides. Yellow: raw ground routes from four heads. Red: stops."
+        if networks is None
+        else "Blue: each case's guides. Yellow: flow routes. Red: stops. Magenta: fixed heights.",
         fill="#161b22",
         font=ImageFont.load_default(size=16),
     )

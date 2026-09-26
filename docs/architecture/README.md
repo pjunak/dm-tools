@@ -34,10 +34,13 @@ Initial procedural relief and automatic networks may co-evolve; authored final
 heights, coasts and persistent protections keep their declared roles. The
 [local-valley comparator](../research/2026-09-26-connected-valley-patches.md) is now
 implemented under `benchmarks/evolution`, with separate local-field and raster
-checks; its production quality is rejected. Hard-target-aware layout and delivery
-come next, with a local graph/mesh alternative conditional on evidence. This does
-not introduce an application process-state layer or replace the authoritative
-Float32 DEM.
+checks; its production quality is rejected. The
+[automatic-layout comparator](../research/2026-09-26-hard-target-valley-layout.md)
+now preserves hard targets while moving only explicitly automatic guides within
+bounded corridors. It restores 250 m capture but leaves bank/coarse failures.
+Complete local banks and isolate delivery before a local graph/mesh decision.
+This does not introduce an application process-state layer or replace the
+authoritative Float32 DEM.
 
 Groundwater, if accepted, needs aquifer head/storage and separate subsurface links;
 surface receivers alone cannot own that state. Cave roof/floor geometry requires a

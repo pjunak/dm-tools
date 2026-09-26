@@ -1,7 +1,7 @@
 # Terrain method decisions and failed experiments
 
-Updated 2026-09-26 against baseline `788913d` and the connected-patch implementation
-accompanying T09. This is the living record of
+Updated 2026-09-26 against baseline `b5dbe27` and the hard-target layout implementation
+accompanying T10. This is the living record of
 material generation approaches that were rejected, constrained or retained only
 as references. A failed method does not remove its desired feature from the plan.
 The [strategy](../strategy/README.md) owns execution order; dated reports own the
@@ -12,7 +12,7 @@ Supporting sampling/convergence and performance rejections remain indexed in
 concentrates on methods that change the generation-quality decision.
 The [groundwater and architecture reassessment](2026-09-25-groundwater-and-terrain-architecture.md)
 explains the replacement proposals. Groundwater, karst and lateral erosion remain
-untested here; T09 now measures connected-valley construction.
+untested here; T09/T10 measure connected-valley construction and automatic guide placement.
 
 ## How to maintain this record
 
@@ -209,6 +209,40 @@ envelopes. Require guide/bank/capture acceptance on actual delivery before coupl
 history, expanding the cohort or adopting LE3/WC2. Groundwater cannot hide this
 open-drainage failure.
 
+## T10 - Move automatic guides around hard height targets
+
+**Tried:** explicitly automatic-edge relocation within a 1,500 m corridor, with
+1,000 m pin clearance and at most 25% reach-length growth. The
+[report](2026-09-26-hard-target-valley-layout.md) preserves every original vertex,
+head, junction, mouth and reach ownership, the same broad source, all hard targets
+and the previous fresh envelope. Fixed/native controls are rerun unchanged.
+
+**Measured:** an 800 m detour changes 250 m raster capture from 3/4 to 4/4, interior
+sinks from one to zero, unresolved guide routes from one to zero and interior
+samples missing the coast from 1,115 to zero. Repeat and quarter-turn checks pass.
+All hard-input gates remain intact. Local banks still have 21/575 inward failures;
+the raster has 222/575, and coarser delivery still fails. The control's 525 bank
+probes and candidate's 575 are different denominators, not matched-pair counts.
+
+**Why / boundary:** a generated guide need not intersect the neighbourhood used
+to represent a genuine height target. The correction remains large (126.313 m at
+250 m), but the relocated channel avoids it. No target was lowered, and no river
+outlet was dropped. Four-head capture and coast coverage do not establish bank
+shape, prescribed basin areas or realism on unseen landscapes.
+
+**Rejected alternatives:** a sine-squared candidate family could not clear the
+pin within the same corridor; this was search exhaustion, not global infeasibility.
+A sampled-envelope bed lift worsened local inward failures from 21 to 25 despite
+fewer endpoint errors. It is not retained. The dated report preserves these
+exploratory observations separately from the controlled final cohort.
+
+**Retained / replacement:** retain bounded automatic placement and original-route
+matching. Finish bank construction at heads/junctions/cap transitions; compare a
+bounded channel-conforming reconstruction only after separating local shape from
+delivery loss. Keep coarse failures and native-control rejection visible. Require
+complete bank/guide/capture and held-out evidence before application/history
+integration; this result does not justify a whole backend rewrite.
+
 ## What the failures change
 
 Preserve the feature goals: believable rivers, geological aging, useful zoom detail
@@ -218,6 +252,6 @@ procedural guesses before fitting; test coupled relief and network evolution bef
 freezing a final DEM. Keep the application and Python implementation boundaries.
 
 Groundwater, karst and lateral erosion are **new, untested hypotheses here**, not
-explanations established by T01-T09. They need independent controls and budgets.
+explanations established by T01-T10. They need independent controls and budgets.
 The [reassessment's staged experiments](2026-09-25-groundwater-and-terrain-architecture.md#implementation-sequence-and-stop-rules)
 define the next comparisons and when a larger structural change is justified.

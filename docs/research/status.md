@@ -2,7 +2,7 @@
 
 Reconciled on 2026-09-26 after WC1 foundations, physical-path diagnostics,
 constrained-network/bank comparisons, the groundwater/architecture reassessment
-and the [connected-patch comparison](2026-09-26-connected-valley-patches.md).
+and the [hard-target layout comparison](2026-09-26-hard-target-valley-layout.md).
 The [method register](terrain-method-decisions.md) tracks failed approaches and
 replacement gates. The [new source review](2026-09-25-groundwater-and-terrain-architecture.md)
 adds groundwater capture, canyon and karst hypotheses; none was simulated here.
@@ -127,9 +127,13 @@ construction. Rounded local valleys and a coastal transition capture 4/4 fresh
 heads with no sinks, but 250 m raster delivery captures 3/4 with one sink near a
 hard-height correction. Some guide/bank checks still fail locally. Incident-cell
 caps fix an initial interpolated-cut violation without raising budgets. The guides
-are unchanged; automatic relocation and time evolution are not implemented. Next
-resolve hard-target-aware layout and delivery before B2 coupling, a larger cohort,
-LE3 or WC2. Neither local capture nor a changed envelope accepts the fixed control.
+were unchanged in that comparison. The [automatic-layout follow-up](2026-09-26-hard-target-valley-layout.md)
+now inserts a bounded detour while preserving all original nodes/reaches and hard
+inputs. At 250 m the raster captures 4/4 with no sinks or uphill guide routes, and
+all interior checking samples reach the coast. Bank shape and coarse delivery
+remain rejected. Finish local banks and isolate reconstruction loss before B2
+coupling, a larger cohort, LE3 or WC2. No time evolution was added, and the separate
+fresh envelope cannot accept the rejected native fixed control.
 Peak/pass structure and real basins/coasts remain open. Sediment, epoch editor
 controls and evolved local enrichment remain later dependent work. No
 post-generation modification is introduced.

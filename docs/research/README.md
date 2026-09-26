@@ -14,6 +14,12 @@ in the current status or a new dated report.
 
 ## Current reassessment
 
+- [Hard-target-aware valley layout — 2026-09-26](2026-09-26-hard-target-valley-layout.md)
+  implements bounded relocation of explicitly automatic guides while preserving
+  all original vertices, hard heights, topology and envelopes. At 250 m capture
+  improves from 3/4 to 4/4 with no sinks or uphill guide routes. Bank and coarse-grid
+  failures remain; records rejected detour/bed-lifting attempts and the next gate.
+
 - [Connected valley patches and raster delivery — 2026-09-26](2026-09-26-connected-valley-patches.md)
   implements fixed/fresh construction, analytic valley unions, coastal transitions
   and bounded Float32 delivery. Fresh local capture is 4/4, while 250 m delivery
