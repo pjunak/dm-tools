@@ -137,12 +137,24 @@ or cell-interior protection. Dense failures remain 238/575, endpoints two, while
 capture remains 4/4. Independent corner/thin-area controls pass; coarse grids
 still fail. No method is adopted into normal generation.
 
-Next compare least-change bilinear reconstruction with explicit within-cell bank
-and downstream derivative constraints, using the admitted capacity bounds and
-hard heights. Keep solver bounds, localized failure witnesses and actual Float32
-checks. Any change of interpolation must re-establish interior protection. Full
-delivery, held-out and broader orientation acceptance still precede history
-coupling or LE3/WC2. No time evolution or product reconstruction path was added.
+## Feature-preserving delivery checkpoint
+
+The [short representation probes](../research/2026-09-27-feature-preserving-terrain-delivery.md)
+now distinguish topology from elevation error: river-aligned analytic samples
+avoid the world-grid bank defects. Generic quadratic/cubic interpolation fails
+network capture and bounds. Saving/reopening the prepared local field preserves
+all 575 profiles and common Float32 samples; reducing it to a bilinear raster
+reintroduces the existing defects at every tested spacing.
+
+Next formalize the prepared-feature artifact and deterministic query boundary in
+the existing benchmark, including guarded reopening, complete network identity,
+query-order and adjacent-tile/halo checks. Keep bilinear feasibility as a small
+diagnostic before a larger solve. Test held-out/general-angle quality and
+parent/downsample behavior before proposing an ADR to change generated-surface
+authority and its consumers. The product Float32 DEM contract remains unchanged.
+Any changed interpolator needs its own interior protection. Complete accepted
+delivery still precedes history coupling or LE3/WC2. Consult before longer tests
+as specified in the main strategy. No time evolution or product path was added.
 
 ## Outcome and decision
 

@@ -137,10 +137,16 @@ The [cell-safe bound follow-up](2026-09-27-cell-safe-terrain-delivery.md) reduce
 the worst 250 m raster bank rise from 54.062 to 0.316 m. Its interior-bound proof
 and independent rectangle controls retain protected terrain. Ordinary/dense
 failures fall from 217/241 to 214/238, endpoints from five to two; 4/4 capture
-persists, while coarse delivery remains rejected. Next compare bounded bilinear
-reconstruction with within-cell bank derivatives before B2 coupling, a larger
-cohort, LE3 or WC2. No time evolution was added, and the separate
-fresh envelope cannot accept the rejected native fixed control.
+persists, while coarse delivery remains rejected. The
+[short representation probes](2026-09-27-feature-preserving-terrain-delivery.md)
+now retain all 575 local profiles through a trusted-field save/reopen experiment.
+The same failures return after bilinear raster delivery. River-aligned analytic
+controls pass, while generic network splines lose outlets and violate bounds.
+Next formalize feature-preserving storage/query, guarded reopening and tile/LOD
+checks before B2, LE3 or WC2. This is a representation proposal, not a supported
+reader or a change to product DEM authority. Held-out/general-angle acceptance
+remains open. No time evolution was added, and the separate fresh envelope cannot
+accept the rejected native fixed control.
 Peak/pass structure and real basins/coasts remain open. Sediment, epoch editor
 controls and evolved local enrichment remain later dependent work. No
 post-generation modification is introduced.

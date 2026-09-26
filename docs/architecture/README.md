@@ -42,11 +42,20 @@ The [head/mouth comparator](../research/2026-09-26-valley-heads-and-mouths.md) n
 passes all 575 matched local bank pairs, including dense checks. The
 [cell-safe delivery comparator](../research/2026-09-27-cell-safe-terrain-delivery.md)
 now bounds interpolation excess using curvature, retaining whole-cell protection
-with much smaller 250 m bank artifacts. Raster banks still fail. Next test
-within-cell bank derivative constraints in the existing bilinear fit before a
-local graph/mesh decision. A changed interpolator would need a new interior-bound
-argument. These research components introduce no application process-state layer
-and do not replace the authoritative Float32 DEM.
+with much smaller 250 m bank artifacts. Raster banks still fail. The
+[feature-preservation probes](../research/2026-09-27-feature-preserving-terrain-delivery.md)
+retain the prepared local field through trusted-data saving/reopening, with exact
+profile and common-ground equality. Generic spline reconstruction instead loses
+outlets and bounds. Next formalize numeric feature storage and deterministic
+queries, independent reopening and tile/halo checks in the benchmark.
+
+A potential structural change is to publish an immutable numeric feature surface
+and derive declared-resolution rasters from it. That is a proposal: it requires
+an ADR, explicit build/schema identities, bounds, parent/LOD checks and changes
+to every numeric consumer before adoption. Keep a single authoritative surface;
+a rendered river line cannot substitute for ground. A changed interpolator needs
+its own interior-bound argument. Current product Float32 DEM authority and the
+application pipeline below remain unchanged.
 
 Groundwater, if accepted, needs aquifer head/storage and separate subsurface links;
 surface receivers alone cannot own that state. Cave roof/floor geometry requires a

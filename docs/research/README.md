@@ -14,6 +14,12 @@ in the current status or a new dated report.
 
 ## Current reassessment
 
+- [Feature-preserving terrain delivery — 2026-09-27](2026-09-27-feature-preserving-terrain-delivery.md)
+  tests river-aligned analytic sampling, rejects generic network splines and
+  preserves all 575 local bank profiles through trusted-field saving/reopening.
+  Records short timings, limited bilinear feasibility, existing methods and the
+  next guarded feature/query experiment. Product DEM authority is unchanged.
+
 - [Cell-safe terrain delivery — 2026-09-27](2026-09-27-cell-safe-terrain-delivery.md)
   implements curvature-bounded bilinear cut capacities, an explicit interior bound
   and independent corner/thin-area controls. The worst 250 m inward rise falls

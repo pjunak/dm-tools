@@ -226,23 +226,41 @@ dense bank rise from 54.062 to 0.316 m. Dense failures change from 241 to 238 of
 guides, but bank and coarse quality remain rejected. The four paired previous
 controls match exactly. See [T12](../research/terrain-method-decisions.md#t12---protect-cell-interiors-with-tighter-delivery-capacities).
 
-**Next bounded batch (B1/B2):** compare one least-change bilinear reconstruction
-using the existing constrained-surface machinery and tighter nodal capacities.
-Constrain inward bank derivatives at both ends of each within-cell segment,
-alongside downstream derivatives and hard heights. This tests whole bank segments
-rather than another endpoint penalty. Verify the actual Float32 output against
-the existing dense bank, guide, capture, no-sink and envelope gates. Bound solver
-work and retain localized conflict evidence before choosing a channel-aligned
-representation. A different interpolator must re-establish interior safety.
-Do not loosen tolerances, raise cut budgets or uniformly refine the whole world.
-The [role contract](landscape-evolution.md#authored-intent-and-geographic-boundaries)
+**Short representation probes completed:** the
+[new evidence](../research/2026-09-27-feature-preserving-terrain-delivery.md) separates
+height error from bank shape. A river-aligned analytic strip avoids all 114
+failures seen in 238 world-bilinear profiles, with similar maximum height error.
+Generic quadratic/cubic network interpolation loses outlets and breaks bounds.
+A trusted prepared-field roundtrip preserves all 575 local sections and common
+ground exactly at three background spacings plus a quarter turn; reducing it to
+bilinear nodes restores the old failures. This is a storage experiment, not a
+supported artifact or independent held-out landscape acceptance. See
+[T13](../research/terrain-method-decisions.md#t13---preserve-features-instead-of-reconstructing-them-from-nodes).
+
+**Next bounded batch (B1):** formalize a small prepared-feature artifact and
+height-query boundary in the existing benchmark. Retain numeric source, valley
+geometry, hard-input roles, coordinate frame, parent/model identity and integrity
+hashes. Add bounded shape/type/finite-value validation and independent network
+reopening. Test query order, batching, shared coordinates, adjacent tiles and
+halos against the same dense bank, guide, capture, no-sink and envelope gates.
+A local channel-aligned strip or constrained mesh is a fallback for measured
+patch limitations. Defer the full least-change bilinear bank solve behind local
+representability checks; the one-cell witness does not prove every fit impossible.
+A changed interpolator must establish its own interior safety. Do not loosen
+tolerances, raise cut budgets or uniformly refine the world. The
+[role contract](landscape-evolution.md#authored-intent-and-geographic-boundaries)
 keeps authored targets distinct from generated hypotheses.
 
-Add held-out and general-angle cases before adoption; the new small oblique-mouth
-regression is not a full rotated-landscape cohort. Preserve distinctions between
-unsupported input, finite search exhaustion, verified conflict and numerical
-failure. Composition differences are not geological erosion. Normal generation
-and the authoritative Float32 DEM contract remain unchanged.
+**Authority decision remains separate:** add held-out bends/junctions, arbitrary
+orientations, real coastline geometry, tile/LOD and parent/downsample checks.
+If a richer surface passes, record an ADR and update build/schema identities and
+all numeric consumers together, defining raster exports/caches explicitly. The
+current Float32 DEM stays authoritative until that change. Preserve distinctions
+between unsupported input, finite search exhaustion, verified conflict and
+numerical failure. Composition differences are not geological erosion.
+Consult the user before tests expected to exceed roughly two minutes or with
+uncertain longer cost, including the full suite; give an estimate and stop rule.
+No long test was needed for this documentation-only research batch.
 
 **Following decision (B2):** connect an accepted construction and delivery pair to
 the existing two-epoch reference so relief and the automatic network can evolve

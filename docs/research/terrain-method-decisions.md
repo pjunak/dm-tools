@@ -1,7 +1,7 @@
 # Terrain method decisions and failed experiments
 
-Updated 2026-09-27 against baseline `7d5d0de` and the cell-safe delivery
-implementation accompanying T12. This is the living record of
+Updated 2026-09-27 against baseline `8f1bb0a` and the short representation probes
+recorded in T13. This is the living record of
 material generation approaches that were rejected, constrained or retained only
 as references. A failed method does not remove its desired feature from the plan.
 The [strategy](../strategy/README.md) owns execution order; dated reports own the
@@ -12,7 +12,8 @@ Supporting sampling/convergence and performance rejections remain indexed in
 concentrates on methods that change the generation-quality decision.
 The [groundwater and architecture reassessment](2026-09-25-groundwater-and-terrain-architecture.md)
 explains the replacement proposals. Groundwater, karst and lateral erosion remain
-untested here; T09-T12 measure valley construction, automatic placement and bounded delivery.
+untested here; T09-T13 measure valley construction, automatic placement, bounded
+raster delivery and exploratory feature preservation.
 
 ## How to maintain this record
 
@@ -273,8 +274,8 @@ not restore any of these recipes as hidden fallbacks or loosen the dense check.
 
 **Retained / replacement:** retain the local head/mouth component, matched bank
 profiles, dense guard and original capture controls. T12 now isolates and reduces
-cap-projection loss while preserving whole-cell protection; constrained raster
-bank reconstruction is the next comparison.
+cap-projection loss while preserving whole-cell protection. T13 subsequently
+isolates representation loss and prioritizes a feature-preserving query boundary.
 Keep production rejection until complete delivered bank/guide/capture, held-out
 and broader orientation gates pass. No history, groundwater or product engine
 was added by this experiment.
@@ -307,12 +308,47 @@ zero; valid nodes do not prove valid cells. The regression retains that explicit
 counterexample. Omitting cap or hard-height projection is not a delivery option.
 
 **Retained / replacement:** retain the tighter capacities and matched evidence.
-Next constrain inward bank derivatives throughout each crossed bilinear cell,
-alongside downstream derivatives, hard heights and the admitted capacities in
-one bounded least-change solve. Keep actual Float32 checks and localized conflict
-witnesses. Change representation only on evidence, and establish a new interior
-bound for any new interpolator. Complete delivered and held-out acceptance still
-precedes normal generation, history coupling or LE3/WC2.
+T13 supplies representation evidence before the proposed large bilinear bank
+solve: analytic alignment changes bank quality at similar height error, and
+preserved features retain the local field through reopening. Keep local
+feasibility checks and defer larger solves until their cell layout can represent
+the requirements. Establish a new interior bound for any changed interpolator.
+Complete delivered and held-out acceptance still precedes normal generation,
+history coupling or LE3/WC2.
+
+## T13 - Preserve features instead of reconstructing them from nodes
+
+**Tried:** seven analytic valley orientations, bounded single-cell bank feasibility,
+quadratic/cubic interpolation of the current network, and trusted numeric storage
+of prepared valley fields. The [report](2026-09-27-feature-preserving-terrain-delivery.md)
+records exact settings, sources, hashes and short timings. These are exploratory
+ignored scripts; no supported benchmark API or product reader was added.
+
+**Measured:** world-bilinear analytic sampling fails 114/238 profiles, while a
+river-aligned strip fails none at similar maximum height error. On the network,
+quadratic interpolation reduces dense failures from 238 to 25 but raises the
+worst excursion from 0.316 to 5.195 m and loses all four outlets. Cubic and
+bounded hard-pin variants also fail. Prepared-field saving/reopening exactly
+preserves all 575 profiles, common Float32 heights and sampled quality gates at
+three background spacings plus a quarter turn. Bilinear delivery after reopening
+restores 267 / 251 / 238 / 238 failures.
+
+**Why / boundary:** scalar height accuracy does not determine whether the intended
+bed remains a transverse minimum. Higher-order interpolation can overshoot and
+move extrema; restoring sampled caps and pins does not restore capture. The
+one-cell witness supports the existing limited bilinear restriction, not global
+infeasibility. Roundtrip equality preserves an already passing local fixture;
+it is not unseen-landscape, safe-reader, tile/LOD or continuous-field acceptance.
+
+**Disposition / replacement:** reject the tested generic spline substitutions.
+Retain geometry and background parameters in a formal benchmark artifact, with
+complete network reopening, deterministic identity and bounded validation; test
+query order, seams and physical limits before adoption. Prefer local analytic
+patches, with channel-aligned strips or constrained triangles as measured
+fallbacks. Defer the full bilinear solve behind representability checks. Current
+Float32 DEM authority remains in force; any richer source requires an ADR and
+coherent schema/consumer changes. Keep history and world integration gated.
+Consult the user before longer tests; the completed probes took 0.855 / 20.625 s.
 
 ## What the failures change
 
@@ -323,6 +359,6 @@ procedural guesses before fitting; test coupled relief and network evolution bef
 freezing a final DEM. Keep the application and Python implementation boundaries.
 
 Groundwater, karst and lateral erosion are **new, untested hypotheses here**, not
-explanations established by T01-T12. They need independent controls and budgets.
+explanations established by T01-T13. They need independent controls and budgets.
 The [reassessment's staged experiments](2026-09-25-groundwater-and-terrain-architecture.md#implementation-sequence-and-stop-rules)
 define the next comparisons and when a larger structural change is justified.

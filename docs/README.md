@@ -107,7 +107,11 @@ cross-sections and capture. Subsequent
 capture and pass the matched local bank checks. The
 [cell-safe bound comparison](research/2026-09-27-cell-safe-terrain-delivery.md)
 removes large raster head artifacts while protecting cell interiors. Actual bank
-delivery remains rejected; explicit within-cell bank constraints are next.
+delivery remains rejected. The
+[feature-preservation probes](research/2026-09-27-feature-preserving-terrain-delivery.md)
+now retain the local field through trusted saving/reopening, while generic
+splines fail capture and bounds. A guarded feature artifact and query/tiling
+comparison are next; current product DEM authority remains unchanged.
 The [reference guide](../benchmarks/evolution/README.md) owns setup and runnable commands.
 The [2026-09-13 audit](maintenance/2026-09-13-documentation-and-research-status.md)
 and [2026-09-10 checkpoint](maintenance/2026-09-10-sanity-and-performance.md)

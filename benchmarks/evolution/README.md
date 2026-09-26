@@ -410,6 +410,13 @@ failure cannot publish completion; quality rejection is a completed result.
 
 At 250 m the worst dense inward rise falls from 54.062 to 0.316 m, while 238/575
 sections still fail and two endpoint failures remain. Capture stays 4/4; coarse
-capture remains rejected. Next compare explicit within-cell bank derivatives in
-bounded bilinear reconstruction. The cap proof applies to this bilinear field
-and rectangular smooth envelope, not another interpolator or native-region cuts.
+capture remains rejected. The cap proof applies to this bilinear field and
+rectangular smooth envelope, not another interpolator or native-region cuts.
+
+The later [representation probes](../../docs/research/2026-09-27-feature-preserving-terrain-delivery.md)
+compare river-aligned analytic sampling, generic splines and trusted prepared-field
+storage/reopening. They prioritize preserving geometry through delivery before a
+larger bilinear bank solve. These are ignored one-off scripts, not an additional
+supported CLI or artifact reader. The next batch will formalize that experiment
+and its query/tiling checks here. Consult the user before longer tests (roughly
+two minutes or uncertain cost); the short probes took at most 20.625 seconds.

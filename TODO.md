@@ -48,14 +48,20 @@ now passes all 575 matched local bank sections, including denser checks, under
 the same bounds. The [cell-safe delivery follow-up](docs/research/2026-09-27-cell-safe-terrain-delivery.md)
 now reduces the worst 250 m raster bank rise from 54.062 to 0.316 m while retaining
 cell-interior protection. Dense failures fall only from 241 to 238 of 575, so
-raster bank shape, coarse delivery and fixed/native quality remain open. Next
-compare explicit bank constraints in the raster reconstruction before co-evolution.
+raster bank shape, coarse delivery and fixed/native quality remain open. The
+[short representation probes](docs/research/2026-09-27-feature-preserving-terrain-delivery.md)
+now preserve all 575 local bank profiles through trusted-data storage/reopening;
+world-grid bilinear delivery loses them again. Generic higher-order splines fail
+capture and bounds. Next formalize feature-preserving delivery/query experiments
+before a larger raster solve or co-evolution. Product DEM authority is unchanged.
+Consult the user before tests expected to take more than roughly two minutes, or
+whose duration/cost is uncertain; report purpose, estimate and stop condition.
 
 | Order | Outcome and existing backlog owners | Gate |
 |---|---|---|
 | **A — quality controls** | Quality fixtures, paired maps/profiles, process-scale warnings; convergent-flat comparison (R02/R25/R27/R41/R43) | Fixed comparison set and a measured accept/reject result; no new benchmark framework |
 | **W — bounded foundation delivered** | WC0 plus WC1 geography, geology inputs, bathymetry and water-piece incidence (R01/R49); return to B/C physical paths and landforms | Preserve source and unresolved support; context is provisional, not solved climate |
-| **B — next major generation decision** | Local banks pass; tighter bounds remove severe 250 m artifacts; next constrain raster bank reconstruction (R48/R32) | Preserve controls and hard targets; bank/capture acceptance across physical scales within declared envelopes before LE3 |
+| **B — next major generation decision** | Local banks survive feature roundtrip; next formalize retained geometry and query checks (R48/R32) | Preserve controls and hard targets; bank/capture acceptance across physical scales within declared envelopes before LE3 |
 | **C** | Consolidate one coherent range/pass/tributary/lowland system from the selected comparison (R08/R09/R14/R40/R44) | Better structural/visual results across fixed seeds and physical scales |
 | **W — after B/C acceptance** | Rough world, seasonal climate/runoff feedback and reviewed parent (WC2-WC4; R33/R49) | Physical terrain acceptance, bounded coupling, shared world time and budgets |
 | **D / WC5** | Accepted parent-conditioned detail, same-present historical refinement and inherited fine hydrology, then zoom jobs (R15/R34/R49) | Exact overlap, coarse-scale, time-dependent boundary/flow and visual acceptance before real small rivers |
@@ -162,11 +168,15 @@ continent-history generation remain planned.
   54.062 to 0.316 m; five independent rectangle controls retain interior safety.
   Raster quality remains rejected. See the
   [report](docs/research/2026-09-27-cell-safe-terrain-delivery.md).
-- [ ] **Next concrete batch — B1/B2 constrained raster banks.** Retain the local
-  field and tighter capacity bounds. Compare least-change bilinear reconstruction
-  with within-cell inward-bank derivative constraints, downstream constraints and
-  hard heights. Keep dense/capture gates and bounded failure witnesses; complete
-  delivered and held-out acceptance before history or LE3/WC2.
+- [x] **B1 short representation probes:** river-aligned analytic control and
+  trusted-field roundtrip preserve banks; generic splines lose outlets and bounds.
+  See the [report](docs/research/2026-09-27-feature-preserving-terrain-delivery.md).
+- [ ] **Next concrete batch — B1 feature-preserving delivery.** Formalize the
+  prepared-field artifact and height-query boundary in the existing benchmark.
+  Guard reopening, verify complete network/field identity, and test query order,
+  tile seams, hard inputs and dense/capture gates. Keep bilinear delivery as a
+  rejected control; require a separate ADR/contract decision before changing
+  product authority. Held-out acceptance still precedes history or LE3/WC2.
 - [ ] **WC1 transport follow-up:** consume finite-face incidence only after support
   admission, conservative area/depth integration, explicit sill/capacity geometry
   and paired flux/storage budgets. Add a stable local-coordinate or exact-predicate
@@ -289,16 +299,29 @@ records execution and its remaining gates; the simulation is still research-only
   Whole-cell protection has an explicit bound and independent corner/thin-area
   controls. Node-only and clipped-negative shortcuts remain rejected. Coarse
   routing and delivered bank quality still fail.
-- [ ] **Next — B1/B2 constrained raster bank reconstruction** (R48/R32/R02).
-  Use the existing constrained-surface machinery for one least-change bilinear
-  fit, keeping the local field, all 575 bank pairs and the new capacity bounds.
-  Add inward derivative inequalities at both ends of each within-cell bank
-  segment alongside downstream conditions and hard heights. Recheck actual
-  Float32 delivery, dense profiles, capture, envelope, repeat and rotation.
-  Keep solver work bounded; localize a verified conflict before changing the
-  representation. A new interpolator needs its own interior-bound proof. Preserve
-  held-out/general-angle acceptance before integration. Do not raise cut budgets,
-  soften targets or uniformly refine the whole world.
+- [x] **B1 representation and trusted-field roundtrip probes** (R48/R32/R02).
+  [Measured](docs/research/2026-09-27-feature-preserving-terrain-delivery.md): seven
+  analytic orientations give 114/238 world-bilinear bank failures and none for a
+  river-aligned strip at similar maximum height error. Generic splines reduce
+  failure counts but increase rises and lose capture. Stored prepared fields
+  preserve all 575 profiles and common-grid heights exactly at three background
+  spacings plus a quarter turn. These are ignored exploratory scripts, not a
+  supported reader or accepted product representation.
+- [ ] **Next — B1 feature-preserving artifact and query boundary** (R48/R32/R02).
+  Formalize numeric geometry/source/settings/identity storage in the existing
+  benchmark, with bounded non-pickle loading, complete network reopening and
+  corruption/shape/type/finite-value checks. Verify arbitrary query order, batch
+  size, shared coordinates, adjacent tiles and halos. Retain all 575 bank pairs,
+  actual-ground capture and cap/hard-input gates; add held-out and general-angle
+  landscapes before adoption. Compare channel-aligned strips or constrained
+  triangles only where measured patch limitations justify them. The full
+  bilinear bank solve is deferred behind local representability checks.
+- [ ] **B1 representation adoption decision:** if the richer surface passes,
+  record an ADR and change authoritative numeric source, build/schema identities,
+  export/cache roles and consumers together. Current Float32 DEM authority stays
+  in force until then. Keep parent/downsample/zoom contracts explicit; no visual
+  overlay may replace failed ground. No legacy loaders or runtime rewrite.
+  Do not raise cut budgets, soften targets or uniformly refine the world.
 - [ ] **B2 — Terrain/network co-evolution after construction acceptance** (R48/R14).
   Connect an accepted construction/delivery pair to the two-epoch reference.
   Measure held-out seeds, oblique orientation, complete catchment coverage,
@@ -1532,9 +1555,11 @@ Priorities remain conditional on the current strategy's prerequisites.
   that fixed control and a separate 600 m / 120 km3 fresh-construction envelope.
   Fresh 250 m raster capture is 4/4 with no sinks or uphill guide routes; hard
   inputs and all original vertices remain fixed. Bank shape and coarse delivery
-  still fail. Finish local banks, then isolate reconstruction loss before B2
-  history coupling. Preserve genuine authored requirements and distinguish
-  composition from erosion. See the
+  still fail. Local banks now pass; T13 preserves them through trusted-field
+  reopening and isolates loss when reduced to raster samples. Formalize retained
+  features and query/tiling contracts before B2 history coupling; changing product
+  authority needs an ADR and complete consumer changes. Preserve genuine authored
+  requirements and distinguish composition from erosion. See the
   [failure register](docs/research/terrain-method-decisions.md) for revisit gates.
   Do not count changed automatic D8 edges as matched route improvements. Remove
   superseded runtime paths after acceptance; preserve current inputs/contracts
