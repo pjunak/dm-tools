@@ -1,7 +1,7 @@
 # Terrain method decisions and failed experiments
 
-Updated 2026-09-26 against baseline `c34aede` and the head/mouth implementation
-accompanying T11. This is the living record of
+Updated 2026-09-27 against baseline `7d5d0de` and the cell-safe delivery
+implementation accompanying T12. This is the living record of
 material generation approaches that were rejected, constrained or retained only
 as references. A failed method does not remove its desired feature from the plan.
 The [strategy](../strategy/README.md) owns execution order; dated reports own the
@@ -12,7 +12,7 @@ Supporting sampling/convergence and performance rejections remain indexed in
 concentrates on methods that change the generation-quality decision.
 The [groundwater and architecture reassessment](2026-09-25-groundwater-and-terrain-architecture.md)
 explains the replacement proposals. Groundwater, karst and lateral erosion remain
-untested here; T09-T11 measure connected valleys, automatic placement and head/mouth sections.
+untested here; T09-T12 measure valley construction, automatic placement and bounded delivery.
 
 ## How to maintain this record
 
@@ -272,12 +272,47 @@ outlet-plane edge defect; preserving relief in the inland wedge removes it. Do
 not restore any of these recipes as hidden fallbacks or loosen the dense check.
 
 **Retained / replacement:** retain the local head/mouth component, matched bank
-profiles, dense guard and original capture controls. Next isolate cap projection
-from interpolation; compare tighter bounds that still protect whole cell
-interiors, then one bounded channel-conforming reconstruction if necessary.
+profiles, dense guard and original capture controls. T12 now isolates and reduces
+cap-projection loss while preserving whole-cell protection; constrained raster
+bank reconstruction is the next comparison.
 Keep production rejection until complete delivered bank/guide/capture, held-out
 and broader orientation gates pass. No history, groundwater or product engine
 was added by this experiment.
+
+## T12 - Protect cell interiors with tighter delivery capacities
+
+**Tried:** one-sided curvature allowances for the smooth rectangular-divide cap,
+with constant whole-cell protection where subtracting the allowance would create
+negative capacities. The [report](2026-09-27-cell-safe-terrain-delivery.md) derives
+the bilinear interior bound and retains the same graph, local field, 575 bank
+pairs, hard targets and fresh budgets. Five separate rectangle controls exercise
+unaligned corners, a thin footprint and domain boundaries.
+
+**Measured:** worst 250 m dense bank rise falls from 54.062 to 0.316 m; ordinary /
+dense failures from 217/241 to 214/238, endpoints from five to two. Capture remains
+4/4, with zero sinks and descending guides. Hard-input and cap checks pass;
+repeat and quarter-turn delivery match exactly. The maximum envelope correction
+falls from 93.045 to 18.175 m, but the hard-height correction remains 118.714 m.
+Coarse routing and complete delivered bank quality remain rejected.
+
+**Why / boundary:** the incident-cell minimum safely overprotected large areas.
+A second-order interpolation allowance removes the large artificial head rise.
+Bilinear sampling still displaces many bank minima, so smaller error amplitude
+is insufficient. The proof covers this cap and bilinear field, not arbitrary
+geometry, another interpolator, a native-limit policy or a new landscape.
+
+**Rejected alternatives:** nodal caps alone violate the interior limit. Clipping
+negative curvature-adjusted capacities also breaks the bound beside a quadratic
+zero; valid nodes do not prove valid cells. The regression retains that explicit
+counterexample. Omitting cap or hard-height projection is not a delivery option.
+
+**Retained / replacement:** retain the tighter capacities and matched evidence.
+Next constrain inward bank derivatives throughout each crossed bilinear cell,
+alongside downstream derivatives, hard heights and the admitted capacities in
+one bounded least-change solve. Keep actual Float32 checks and localized conflict
+witnesses. Change representation only on evidence, and establish a new interior
+bound for any new interpolator. Complete delivered and held-out acceptance still
+precedes normal generation, history coupling or LE3/WC2.
 
 ## What the failures change
 
@@ -288,6 +323,6 @@ procedural guesses before fitting; test coupled relief and network evolution bef
 freezing a final DEM. Keep the application and Python implementation boundaries.
 
 Groundwater, karst and lateral erosion are **new, untested hypotheses here**, not
-explanations established by T01-T11. They need independent controls and budgets.
+explanations established by T01-T12. They need independent controls and budgets.
 The [reassessment's staged experiments](2026-09-25-groundwater-and-terrain-architecture.md#implementation-sequence-and-stop-rules)
 define the next comparisons and when a larger structural change is justified.

@@ -104,8 +104,10 @@ cross-sections and capture. Subsequent
 [connected patches](research/2026-09-26-connected-valley-patches.md),
 [automatic layout](research/2026-09-26-hard-target-valley-layout.md) and
 [head/mouth construction](research/2026-09-26-valley-heads-and-mouths.md) now restore
-capture and pass the matched local bank checks. Actual raster bank delivery remains
-rejected; conservative cap projection and reconstruction are the next comparison.
+capture and pass the matched local bank checks. The
+[cell-safe bound comparison](research/2026-09-27-cell-safe-terrain-delivery.md)
+removes large raster head artifacts while protecting cell interiors. Actual bank
+delivery remains rejected; explicit within-cell bank constraints are next.
 The [reference guide](../benchmarks/evolution/README.md) owns setup and runnable commands.
 The [2026-09-13 audit](maintenance/2026-09-13-documentation-and-research-status.md)
 and [2026-09-10 checkpoint](maintenance/2026-09-10-sanity-and-performance.md)

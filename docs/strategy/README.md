@@ -1,7 +1,7 @@
 # Current development strategy
 
-Re-evaluated 2026-09-26 after the
-[head/mouth construction comparison](../research/2026-09-26-valley-heads-and-mouths.md),
+Re-evaluated 2026-09-27 after the
+[cell-safe delivery comparison](../research/2026-09-27-cell-safe-terrain-delivery.md),
 following the [groundwater/canyon and architecture review](../research/2026-09-25-groundwater-and-terrain-architecture.md).
 DM Tools is a usable terrain research workbench with strong numeric/build
 foundations; believable drainage and connected landforms remain the next milestone.
@@ -9,8 +9,9 @@ The [method decision register](../research/terrain-method-decisions.md) now reco
 failed approaches, causes, retained work and replacement gates. Bounded automatic
 guide relocation now gives 4/4 capture and descending guide profiles in the 250 m
 raster while retaining hard targets. Local head/mouth banks now pass both ordinary
-and dense checks. Raster bank shape and coarse delivery still fail; isolate bounds
-projection and reconstruction before terrain/network co-evolution. Groundwater is a bounded
+and dense checks. Tighter bounds remove the large 250 m delivery artifact while
+protecting cell interiors. Raster bank shape and coarse delivery still fail;
+compare explicit raster bank constraints before terrain/network co-evolution. Groundwater is a bounded
 mechanism experiment, not a remedy for unexplained surface sinks. No external
 erosion or groundwater engine has been adopted into application generation.
 
@@ -208,23 +209,33 @@ passes at the original 1 cm tolerance. All four heads and all interior checking
 samples reach the coast. Local construction passes this fixture's gates; this is
 sampled evidence, not a continuous or unseen-landscape guarantee.
 
-The 250 m raster still has 217 ordinary and 241 dense inward failures, with five
-endpoint failures, despite 4/4 capture and zero sinks. Coarser grids still fail.
+At that checkpoint the 250 m raster had 217 ordinary and 241 dense inward failures,
+with five endpoint failures, despite 4/4 capture and zero sinks. Coarser grids failed.
 Hard targets and the fresh 600 m / 120 km3 policy are unchanged; all numeric
 arrays of the twelve prior control cases still match. See [T11](../research/terrain-method-decisions.md#t11---construct-head-and-mouth-sections-before-raster-delivery)
 for the rejected smooth/local head lifts and the coastal-wedge correction.
 
-**Next bounded batch (B1/B2):** preserve this local field and matched evidence.
-Separate conservative delivery-cap projection from interpolation distortion; the
-250 m cap projection still adds up to 93.045 m. A staged ablation raises maximum
-bank rise from 0.316 m before projection to 54.062 m after it, while removing 196
-cap violations; omitting the projection cannot pass. Compare a tighter envelope with
-explicit cell-interior protection before assuming a new representation is needed.
-Then compare one bounded channel-conforming reconstruction if raster bank shape
-still fails. Keep full guide/bank/capture, dense cross-sections, no unintended
-sinks, hard heights/divide/coast, cut/no-fill/volume and repeat/rotation gates.
-Do not use node-only bounds, endpoint-only success, looser tolerances or uniform
-whole-world refinement. The [role contract](landscape-evolution.md#authored-intent-and-geographic-boundaries)
+**Cell-safe delivery follow-up implemented:** the
+[paired comparison](../research/2026-09-27-cell-safe-terrain-delivery.md) uses a
+one-sided curvature allowance, with whole-cell constant protection when subtracting
+that allowance would make capacities negative. A documented interior bound and
+five independent rectangle controls cover corners, off-grid and thin footprints.
+The maximum 250 m envelope correction falls from 93.045 to 18.175 m, and the worst
+dense bank rise from 54.062 to 0.316 m. Dense failures change from 241 to 238 of
+575; endpoints from five to two. Capture remains 4/4, with no sinks or uphill
+guides, but bank and coarse quality remain rejected. The four paired previous
+controls match exactly. See [T12](../research/terrain-method-decisions.md#t12---protect-cell-interiors-with-tighter-delivery-capacities).
+
+**Next bounded batch (B1/B2):** compare one least-change bilinear reconstruction
+using the existing constrained-surface machinery and tighter nodal capacities.
+Constrain inward bank derivatives at both ends of each within-cell segment,
+alongside downstream derivatives and hard heights. This tests whole bank segments
+rather than another endpoint penalty. Verify the actual Float32 output against
+the existing dense bank, guide, capture, no-sink and envelope gates. Bound solver
+work and retain localized conflict evidence before choosing a channel-aligned
+representation. A different interpolator must re-establish interior safety.
+Do not loosen tolerances, raise cut budgets or uniformly refine the whole world.
+The [role contract](landscape-evolution.md#authored-intent-and-geographic-boundaries)
 keeps authored targets distinct from generated hypotheses.
 
 Add held-out and general-angle cases before adoption; the new small oblique-mouth

@@ -33,7 +33,7 @@ records attempted methods, measured failures, causes, retained work and revisit
 gates. Update it alongside dated evidence and this backlog after each substantial
 experiment; do not mark a desired feature complete merely because its trial ended.
 
-## Current execution focus — 2026-09-26
+## Current execution focus — 2026-09-27
 
 The [progress reassessment](docs/research/2026-09-24-progress-and-generation-strategy.md)
 finds strong workbench/build foundations but unaccepted drainage and landform
@@ -45,15 +45,17 @@ now preserves hard targets while routing all four heads to the coast in the 250 
 raster, with no interior sinks or uphill guide routes. The
 [head/mouth construction follow-up](docs/research/2026-09-26-valley-heads-and-mouths.md)
 now passes all 575 matched local bank sections, including denser checks, under
-the same bounds. Raster bank shape, coarse delivery and fixed/native quality
-remain open. Next isolate bounds-projection and reconstruction losses before
-co-evolution.
+the same bounds. The [cell-safe delivery follow-up](docs/research/2026-09-27-cell-safe-terrain-delivery.md)
+now reduces the worst 250 m raster bank rise from 54.062 to 0.316 m while retaining
+cell-interior protection. Dense failures fall only from 241 to 238 of 575, so
+raster bank shape, coarse delivery and fixed/native quality remain open. Next
+compare explicit bank constraints in the raster reconstruction before co-evolution.
 
 | Order | Outcome and existing backlog owners | Gate |
 |---|---|---|
 | **A — quality controls** | Quality fixtures, paired maps/profiles, process-scale warnings; convergent-flat comparison (R02/R25/R27/R41/R43) | Fixed comparison set and a measured accept/reject result; no new benchmark framework |
 | **W — bounded foundation delivered** | WC0 plus WC1 geography, geology inputs, bathymetry and water-piece incidence (R01/R49); return to B/C physical paths and landforms | Preserve source and unresolved support; context is provisional, not solved climate |
-| **B — next major generation decision** | Local head/mouth banks now pass; 250 m capture remains 4/4; next resolve raster bounds-projection and bank reconstruction (R48/R32) | Preserve controls and hard targets; bank/capture acceptance across physical scales within declared envelopes before LE3 |
+| **B — next major generation decision** | Local banks pass; tighter bounds remove severe 250 m artifacts; next constrain raster bank reconstruction (R48/R32) | Preserve controls and hard targets; bank/capture acceptance across physical scales within declared envelopes before LE3 |
 | **C** | Consolidate one coherent range/pass/tributary/lowland system from the selected comparison (R08/R09/R14/R40/R44) | Better structural/visual results across fixed seeds and physical scales |
 | **W — after B/C acceptance** | Rough world, seasonal climate/runoff feedback and reviewed parent (WC2-WC4; R33/R49) | Physical terrain acceptance, bounded coupling, shared world time and budgets |
 | **D / WC5** | Accepted parent-conditioned detail, same-present historical refinement and inherited fine hydrology, then zoom jobs (R15/R34/R49) | Exact overlap, coarse-scale, time-dependent boundary/flow and visual acceptance before real small rivers |
@@ -155,11 +157,16 @@ continent-history generation remain planned.
   perpendicular mouth sections pass all 575 local bank pairs at 25 m and <=2.5 m
   stations. Same guides, targets and envelopes; 250 m raster banks still fail.
   See the [report](docs/research/2026-09-26-valley-heads-and-mouths.md).
-- [ ] **Next concrete batch — B1/B2 bounded raster delivery.** Retain the local
-  field and all controls. Separate conservative cap projection from interpolation
-  error, test tighter bounds that still protect cell interiors, then compare one
-  bounded channel-conforming reconstruction if required. Keep the dense bank gate;
-  complete delivery acceptance before history or LE3/WC2.
+- [x] **B1 cell-safe delivery bounds:** one-sided curvature allowances plus
+  constant handling beside protected areas reduce the worst 250 m bank rise from
+  54.062 to 0.316 m; five independent rectangle controls retain interior safety.
+  Raster quality remains rejected. See the
+  [report](docs/research/2026-09-27-cell-safe-terrain-delivery.md).
+- [ ] **Next concrete batch — B1/B2 constrained raster banks.** Retain the local
+  field and tighter capacity bounds. Compare least-change bilinear reconstruction
+  with within-cell inward-bank derivative constraints, downstream constraints and
+  hard heights. Keep dense/capture gates and bounded failure witnesses; complete
+  delivered and held-out acceptance before history or LE3/WC2.
 - [ ] **WC1 transport follow-up:** consume finite-face incidence only after support
   admission, conservative area/depth integration, explicit sill/capacity geometry
   and paired flux/storage budgets. Add a stable local-coordinate or exact-predicate
@@ -275,16 +282,23 @@ records execution and its remaining gates; the simulation is still research-only
   250 m raster delivery keeps 4/4 capture but has 217/575 ordinary and 241/575 dense
   inward failures, plus five endpoint failures. Coarser delivery remains rejected.
   Rejected head tapers, envelope lifting and the initial mouth wedge are recorded.
-- [ ] **Next — B1/B2 bounded delivery comparison** (R48/R32/R02).
-  Keep the admitted layout/local field, fixed/native controls, all 575 bank pairs,
-  hard targets/divide/coast and declared envelope. Isolate the conservative
-  incident-cell cap projection (up to 93.045 m at 250 m) from interpolation's
-  displaced bank minima. Compare a tighter cell-interior-safe envelope first,
-  then one bounded channel-conforming reconstruction if necessary. This is a
-  candidate generation/delivery experiment, not a completed-map repair. Require
-  complete bank/guide/capture, dense profile, envelope and repeat/rotation gates;
-  retain held-out/general-angle acceptance before integration. Do not raise cut
-  budgets, soften targets or refine the whole world uniformly.
+- [x] **B1 curvature-bounded raster capacities** (R48/R32/R02).
+  [Measured](docs/research/2026-09-27-cell-safe-terrain-delivery.md): the maximum
+  250 m inward rise drops from 54.062 to 0.316 m; ordinary/dense failures change
+  from 217/241 to 214/238 and endpoints from five to two. Capture stays 4/4.
+  Whole-cell protection has an explicit bound and independent corner/thin-area
+  controls. Node-only and clipped-negative shortcuts remain rejected. Coarse
+  routing and delivered bank quality still fail.
+- [ ] **Next — B1/B2 constrained raster bank reconstruction** (R48/R32/R02).
+  Use the existing constrained-surface machinery for one least-change bilinear
+  fit, keeping the local field, all 575 bank pairs and the new capacity bounds.
+  Add inward derivative inequalities at both ends of each within-cell bank
+  segment alongside downstream conditions and hard heights. Recheck actual
+  Float32 delivery, dense profiles, capture, envelope, repeat and rotation.
+  Keep solver work bounded; localize a verified conflict before changing the
+  representation. A new interpolator needs its own interior-bound proof. Preserve
+  held-out/general-angle acceptance before integration. Do not raise cut budgets,
+  soften targets or uniformly refine the whole world.
 - [ ] **B2 — Terrain/network co-evolution after construction acceptance** (R48/R14).
   Connect an accepted construction/delivery pair to the two-epoch reference.
   Measure held-out seeds, oblique orientation, complete catchment coverage,

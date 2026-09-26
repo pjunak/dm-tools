@@ -39,11 +39,14 @@ checks; its production quality is rejected. The
 now preserves hard targets while moving only explicitly automatic guides within
 bounded corridors. It restores 250 m capture but leaves bank/coarse failures.
 The [head/mouth comparator](../research/2026-09-26-valley-heads-and-mouths.md) now
-passes all 575 matched local bank pairs, including dense checks. Raster banks
-still fail: isolate conservative cap projection and interpolation before a local
-graph/mesh decision. These research components introduce no application
-process-state layer and do not replace the
-authoritative Float32 DEM.
+passes all 575 matched local bank pairs, including dense checks. The
+[cell-safe delivery comparator](../research/2026-09-27-cell-safe-terrain-delivery.md)
+now bounds interpolation excess using curvature, retaining whole-cell protection
+with much smaller 250 m bank artifacts. Raster banks still fail. Next test
+within-cell bank derivative constraints in the existing bilinear fit before a
+local graph/mesh decision. A changed interpolator would need a new interior-bound
+argument. These research components introduce no application process-state layer
+and do not replace the authoritative Float32 DEM.
 
 Groundwater, if accepted, needs aquifer head/storage and separate subsurface links;
 surface receivers alone cannot own that state. Cave roof/floor geometry requires a

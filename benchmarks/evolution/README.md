@@ -385,5 +385,31 @@ Coarser delivery remains rejected; no generator/workbench option is added.
 A new output directory contains nested `controls/`, per-case arrays and dense
 profiles, shared-coordinate witness plots, actual routing and hashed manifests.
 The complete result retains rejected quality; hard-input/execution failure writes
-`incomplete.json` without a completed parent. Next separate conservative cap
-projection from interpolation distortion before a bounded reconstruction choice.
+`incomplete.json` without a completed parent. The paired envelope comparison
+below now isolates that conservative cap-projection loss.
+
+
+## Cell-safe raster delivery
+
+Compare incident-cell bounds with curvature-bounded capacities on the same
+head/mouth field and all 575 bank pairs:
+
+```powershell
+.\.venv\Scripts\python.exe -m benchmarks.evolution.envelope_comparison --output artifacts/my-valley-envelopes
+.\.venv\Scripts\python.exe -m pytest tests/test_valley_envelope.py
+```
+
+The [report](../../docs/research/2026-09-27-cell-safe-terrain-delivery.md) derives the
+whole-cell bound and records five independent rectangle controls. It rejects
+node-only bounds and clipping negative capacities. Four matched cases retain the
+local field, hard heights, graph and fresh budgets; no historical cohort needs
+to be nested inside this command. Saved arrays include both delivered grids,
+capacities, per-cell allowances, matched profiles and provenance. Figures show
+both the large correction removed and the remaining small bank defects. Execution
+failure cannot publish completion; quality rejection is a completed result.
+
+At 250 m the worst dense inward rise falls from 54.062 to 0.316 m, while 238/575
+sections still fail and two endpoint failures remain. Capture stays 4/4; coarse
+capture remains rejected. Next compare explicit within-cell bank derivatives in
+bounded bilinear reconstruction. The cap proof applies to this bilinear field
+and rectangular smooth envelope, not another interpolator or native-region cuts.

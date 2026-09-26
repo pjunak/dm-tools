@@ -14,13 +14,13 @@ def render_sections(
     support: ValleySupport,
     indices: list[int],
     profiles: dict[str, NDArray[np.float32]],
+    *,
+    title: str = "Matched bank sections: control-worst head and mouth witnesses",
 ) -> None:
     image = Image.new("RGB", (1100, 90 + 280 * len(indices)), "#fafafa")
     draw = ImageDraw.Draw(image)
     font, small = ImageFont.load_default(size=18), ImageFont.load_default(size=15)
-    draw.text(
-        (20, 12), "Matched bank sections: control-worst head and mouth witnesses", "#161b22", font
-    )
+    draw.text((20, 12), title, "#161b22", font)
     palette = ("#b34515", "#0669a3", "#626a72")
     for j, name in enumerate(profiles):
         draw.text((20 + 350 * j, 46), name, palette[j], small)

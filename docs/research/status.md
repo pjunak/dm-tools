@@ -1,8 +1,8 @@
 # Current terrain research status
 
-Reconciled on 2026-09-26 after WC1 foundations, physical-path diagnostics,
+Reconciled on 2026-09-27 after WC1 foundations, physical-path diagnostics,
 constrained-network/bank comparisons, the groundwater/architecture reassessment
-and the [head/mouth construction comparison](2026-09-26-valley-heads-and-mouths.md).
+and the [cell-safe delivery comparison](2026-09-27-cell-safe-terrain-delivery.md).
 The [method register](terrain-method-decisions.md) tracks failed approaches and
 replacement gates. The [new source review](2026-09-25-groundwater-and-terrain-architecture.md)
 adds groundwater capture, canyon and karst hypotheses; none was simulated here.
@@ -133,10 +133,13 @@ inputs. At 250 m the raster captures 4/4 with no sinks or uphill guide routes, a
 all interior checking samples reach the coast. The
 [head/mouth follow-up](2026-09-26-valley-heads-and-mouths.md) now passes all 575 matched
 local bank pairs at ordinary and <=2.5 m stations, preserving the 1 cm tolerance.
-The 250 m raster still fails 217 ordinary / 241 dense inward profiles and five
-endpoints; coarse delivery remains rejected. Separate conservative cap projection
-from interpolation loss, then compare bounded delivery before B2 coupling,
-a larger cohort, LE3 or WC2. No time evolution was added, and the separate
+The [cell-safe bound follow-up](2026-09-27-cell-safe-terrain-delivery.md) reduces
+the worst 250 m raster bank rise from 54.062 to 0.316 m. Its interior-bound proof
+and independent rectangle controls retain protected terrain. Ordinary/dense
+failures fall from 217/241 to 214/238, endpoints from five to two; 4/4 capture
+persists, while coarse delivery remains rejected. Next compare bounded bilinear
+reconstruction with within-cell bank derivatives before B2 coupling, a larger
+cohort, LE3 or WC2. No time evolution was added, and the separate
 fresh envelope cannot accept the rejected native fixed control.
 Peak/pass structure and real basins/coasts remain open. Sediment, epoch editor
 controls and evolved local enrichment remain later dependent work. No

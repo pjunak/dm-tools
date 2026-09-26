@@ -14,6 +14,12 @@ in the current status or a new dated report.
 
 ## Current reassessment
 
+- [Cell-safe terrain delivery — 2026-09-27](2026-09-27-cell-safe-terrain-delivery.md)
+  implements curvature-bounded bilinear cut capacities, an explicit interior bound
+  and independent corner/thin-area controls. The worst 250 m inward rise falls
+  from 54.062 to 0.316 m; 238/575 dense bank sections still fail. Records rejected
+  node-only/clipped-negative bounds and the next constrained reconstruction.
+
 - [Valley heads and mouths — 2026-09-26](2026-09-26-valley-heads-and-mouths.md)
   implements head profiles that respect the cut envelope and perpendicular mouth
   sections. All 575 matched local banks pass ordinary and dense checks; raster

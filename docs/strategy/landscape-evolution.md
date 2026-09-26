@@ -1,8 +1,8 @@
 # Landscape-evolution implementation plan
 
-Updated 2026-09-26. **LE1 implemented; LE2 history, frozen reconstruction,
+Updated 2026-09-27. **LE1 implemented; LE2 history, frozen reconstruction,
 physical-path, receiver/outlet, constrained-network, bank-feasibility and
-connected-patch construction, hard-target layout and head/mouth comparisons measured.
+connected-patch construction, layout, head/mouth and cell-safe delivery comparisons measured.
 Production-quality acceptance and application integration remain open.** The
 [method register](../research/terrain-method-decisions.md) preserves the failed
 approaches and revisit gates. The [groundwater/canyon reassessment](../research/2026-09-25-groundwater-and-terrain-architecture.md)
@@ -127,11 +127,22 @@ sections retain the same graph, source, targets and envelopes. Local capture is
 remain rejected. Repeat/quarter-turn checks pass. Rejected tapers and between-
 station defects remain in the method register.
 
-Next separate conservative cap-projection error from interpolation distortion;
-compare tighter cell-interior-safe bounds, followed by one bounded reconstruction
-if needed. Keep dense and matched-probe evidence. Full delivery, held-out and
-broader orientation acceptance still precede history coupling or LE3/WC2. This
-experiment introduces neither time evolution nor a product reconstruction path.
+## Cell-safe delivery checkpoint
+
+The [paired bound comparison](../research/2026-09-27-cell-safe-terrain-delivery.md)
+now limits bilinear interpolation excess using one-sided curvature bounds and
+constant capacity in cells needing protection from negative estimates. The worst
+250 m raster inward rise falls from 54.062 to 0.316 m without losing hard-input
+or cell-interior protection. Dense failures remain 238/575, endpoints two, while
+capture remains 4/4. Independent corner/thin-area controls pass; coarse grids
+still fail. No method is adopted into normal generation.
+
+Next compare least-change bilinear reconstruction with explicit within-cell bank
+and downstream derivative constraints, using the admitted capacity bounds and
+hard heights. Keep solver bounds, localized failure witnesses and actual Float32
+checks. Any change of interpolation must re-establish interior protection. Full
+delivery, held-out and broader orientation acceptance still precede history
+coupling or LE3/WC2. No time evolution or product reconstruction path was added.
 
 ## Outcome and decision
 

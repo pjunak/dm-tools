@@ -21,6 +21,7 @@ from benchmarks.evolution.valley_boundaries import (
     HeadTransition,
     head_transitions,
 )
+from benchmarks.evolution.valley_envelope import cell_safe_capacities
 
 PATCH_MODEL_ID = "connected-valley-patches@1"
 type ConstructionMode = Literal["fixed", "fresh"]
@@ -225,14 +226,30 @@ class ValleyPatches:
     def sample(self, x: FloatArray, y: FloatArray) -> NDArray[np.float32]:
         return self.evaluate(x, y, pins=True)
 
-    def deliver(self) -> FittedSurface:
+    def deliver(
+        self, *, envelope: Literal["incident-cells", "curvature"] = "incident-cells",
+    ) -> FittedSurface:
         grid = self.source.grid
         if grid.shape[0] * grid.shape[1] > 16384:
             raise ValueError("Patch delivery is limited to 16,384 process nodes.")
         y, x = np.indices(grid.shape, dtype=np.float64) * grid.spacing_m
         before = self.sample(x, y)
+        if envelope not in ("incident-cells", "curvature"):
+            raise ValueError("Unknown delivery envelope.")
+        if envelope == "curvature" and self.mode != "fresh":
+            raise ValueError("Curvature bounds require the fresh rectangular-divide cap.")
+        envelope_diagnostics: dict[str, object] = {"model_id": "incident-cell-minimum@1"}
+        if envelope == "curvature":
+            bounded = cell_safe_capacities(
+                grid, self.protected_bounds_m, limit_m=self.settings.fresh_cut_limit_m,
+                transition_m=self.settings.support_m,
+            )
+            capacity = bounded.capacities_m
+            envelope_diagnostics = bounded.diagnostics()
+        else:
+            capacity = self.caps(x, y, incident_cells=True)
         lower, upper = float32_bounds(
-            np.maximum(self.source.ground_m - self.caps(x, y, incident_cells=True), 0.0).ravel(),
+            np.maximum(self.source.ground_m - capacity, 0.0).ravel(),
             self.source.ground_m.astype(np.float64).ravel(),
         )
         admitted = (
@@ -249,6 +266,7 @@ class ValleyPatches:
             {
                 "model_id": self.model_id,
                 "mode": self.mode,
+                "delivery_envelope": envelope_diagnostics,
                 "maximum_delivery_pin_correction_m": float(np.max(np.abs(pin_delta))),
                 "maximum_delivery_envelope_correction_m": float(
                     np.max(np.abs(admitted.astype(np.float64) - before))
