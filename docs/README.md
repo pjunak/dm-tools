@@ -100,8 +100,13 @@ visible. The [constrained-network follow-up](research/2026-09-25-constrained-net
 preserves native limits and hard heights, but independent rerouting rejects its
 valley capture. The [bank-support follow-up](research/2026-09-25-valley-bank-feasibility.md)
 adds physical banks and conflict diagnostics, but endpoint success still fails
-cross-sections and capture; river-aligned local patches are next. The
-[reference guide](../benchmarks/evolution/README.md) owns setup and runnable commands.
+cross-sections and capture. Subsequent
+[connected patches](research/2026-09-26-connected-valley-patches.md),
+[automatic layout](research/2026-09-26-hard-target-valley-layout.md) and
+[head/mouth construction](research/2026-09-26-valley-heads-and-mouths.md) now restore
+capture and pass the matched local bank checks. Actual raster bank delivery remains
+rejected; conservative cap projection and reconstruction are the next comparison.
+The [reference guide](../benchmarks/evolution/README.md) owns setup and runnable commands.
 The [2026-09-13 audit](maintenance/2026-09-13-documentation-and-research-status.md)
 and [2026-09-10 checkpoint](maintenance/2026-09-10-sanity-and-performance.md)
 retain earlier documentation, structure and performance evidence.

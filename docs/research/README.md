@@ -14,6 +14,12 @@ in the current status or a new dated report.
 
 ## Current reassessment
 
+- [Valley heads and mouths — 2026-09-26](2026-09-26-valley-heads-and-mouths.md)
+  implements head profiles that respect the cut envelope and perpendicular mouth
+  sections. All 575 matched local banks pass ordinary and dense checks; raster
+  bank delivery remains rejected. Records rejected tapers, the outlet wedge,
+  preserved controls and the next bounds-projection/reconstruction comparison.
+
 - [Hard-target-aware valley layout — 2026-09-26](2026-09-26-hard-target-valley-layout.md)
   implements bounded relocation of explicitly automatic guides while preserving
   all original vertices, hard heights, topology and envelopes. At 250 m capture

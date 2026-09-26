@@ -2,7 +2,7 @@
 
 Updated 2026-09-26. **LE1 implemented; LE2 history, frozen reconstruction,
 physical-path, receiver/outlet, constrained-network, bank-feasibility and
-connected-patch construction and hard-target layout comparisons measured.
+connected-patch construction, hard-target layout and head/mouth comparisons measured.
 Production-quality acceptance and application integration remain open.** The
 [method register](../research/terrain-method-decisions.md) preserves the failed
 approaches and revisit gates. The [groundwater/canyon reassessment](../research/2026-09-25-groundwater-and-terrain-architecture.md)
@@ -114,11 +114,24 @@ All interior checking samples reach the coast; repeat/quarter-turn checks pass.
 Local and delivered banks still fail, as does coarse delivery. The native fixed
 control remains rejected. No time evolution or application integration is added.
 
-Retain this component and finish bank shape at heads, junctions and cap transitions,
-with original-probe and physical coverage accounting. Then isolate local versus
-raster behavior and compare one bounded reconstruction if delivery alone fails.
-Require complete construction/delivery acceptance before history coupling or
-LE3/WC2. The main strategy owns these gates and the failed-alternative record.
+The next head/mouth comparison is now measured below; this layout remains its
+unchanged control.
+
+## Head and mouth construction checkpoint
+
+The [matched-bank comparison](../research/2026-09-26-valley-heads-and-mouths.md) now
+passes all 575 local inward/endpoint sections at 25 m and <=2.5 m sampling, with
+unchanged 1 cm inward tolerance. Cap-aware head profiles and perpendicular coastal
+sections retain the same graph, source, targets and envelopes. Local capture is
+4/4 with no sinks; 250 m raster capture stays 4/4, but banks and coarser delivery
+remain rejected. Repeat/quarter-turn checks pass. Rejected tapers and between-
+station defects remain in the method register.
+
+Next separate conservative cap-projection error from interpolation distortion;
+compare tighter cell-interior-safe bounds, followed by one bounded reconstruction
+if needed. Keep dense and matched-probe evidence. Full delivery, held-out and
+broader orientation acceptance still precede history coupling or LE3/WC2. This
+experiment introduces neither time evolution nor a product reconstruction path.
 
 ## Outcome and decision
 

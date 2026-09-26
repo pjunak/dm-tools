@@ -1,15 +1,16 @@
 # Current development strategy
 
 Re-evaluated 2026-09-26 after the
-[hard-target layout comparison](../research/2026-09-26-hard-target-valley-layout.md),
+[head/mouth construction comparison](../research/2026-09-26-valley-heads-and-mouths.md),
 following the [groundwater/canyon and architecture review](../research/2026-09-25-groundwater-and-terrain-architecture.md).
 DM Tools is a usable terrain research workbench with strong numeric/build
 foundations; believable drainage and connected landforms remain the next milestone.
 The [method decision register](../research/terrain-method-decisions.md) now records
 failed approaches, causes, retained work and replacement gates. Bounded automatic
 guide relocation now gives 4/4 capture and descending guide profiles in the 250 m
-raster while retaining hard targets. Bank shape and coarse delivery still fail;
-finish these before terrain/network co-evolution. Groundwater is a bounded
+raster while retaining hard targets. Local head/mouth banks now pass both ordinary
+and dense checks. Raster bank shape and coarse delivery still fail; isolate bounds
+projection and reconstruction before terrain/network co-evolution. Groundwater is a bounded
 mechanism experiment, not a remedy for unexplained surface sinks. No external
 erosion or groundwater engine has been adopted into application generation.
 
@@ -192,27 +193,45 @@ All 48,705 interior checking samples reach the coast. Repeat and quarter-turn
 checks pass. The 600 m / 120 km3 fresh envelope and native controls are unchanged.
 The pin correction remains large; layout avoids it instead of lowering the target.
 
-This is a useful component, not full construction acceptance. Local banks have
-21/575 inward failures and 250 m raster banks 222/575. The original 525 probes
+That layout comparison retains 21/575 local inward failures and 222/575 in the
+250 m raster; capture alone did not establish construction acceptance. The original 525 probes
 are a different denominator. Coarser delivery still fails. The bounded sine-squared
 family and a sampled-envelope bed-lifting attempt were rejected; see
 [T10](../research/terrain-method-decisions.md#t10---move-automatic-guides-around-hard-height-targets).
 
-**Next bounded batch (B1/B2):** retain the admitted layout and all rejected controls.
-Construct full banks at heads, junctions and cap transitions; maintain original
-probe evidence and physical reach/length accounting when segmentation changes.
-Test whether local cross-section geometry can satisfy the unchanged bounds without
-clipping away the valley shape. The [role contract](landscape-evolution.md#authored-intent-and-geographic-boundaries)
-keeps genuine authored targets distinct from generated hypotheses. Do not replace
-this with more isolated endpoint inequalities or soften the hard heights.
+**Head/mouth follow-up implemented:** the
+[matched-bank comparison](../research/2026-09-26-valley-heads-and-mouths.md) keeps the
+same layout, 575 bank pairs and bounds. A constant-grade head adjustment ends at
+the first confluence; perpendicular mouth sections keep the actual zero coast.
+Local inward/endpoint failures fall from 21/5 to 0/0. An added <=2.5 m check also
+passes at the original 1 cm tolerance. All four heads and all interior checking
+samples reach the coast. Local construction passes this fixture's gates; this is
+sampled evidence, not a continuous or unseen-landscape guarantee.
 
-Once local bank shape passes, compare its actual raster delivery at the existing
-physical spacings. If delivery alone fails, use one bounded channel-conforming
-reconstruction comparator. Require full guide/bank/capture checks, no unintended
-sinks, hard heights/divide/coast, cut/no-fill/volume budgets and repeat/rotation
-controls. Add held-out and oblique cases before adoption. Preserve distinctions
-between unsupported input, finite search exhaustion, verified constraint conflict
-and numerical failure. Composition differences are not geological erosion.
+The 250 m raster still has 217 ordinary and 241 dense inward failures, with five
+endpoint failures, despite 4/4 capture and zero sinks. Coarser grids still fail.
+Hard targets and the fresh 600 m / 120 km3 policy are unchanged; all numeric
+arrays of the twelve prior control cases still match. See [T11](../research/terrain-method-decisions.md#t11---construct-head-and-mouth-sections-before-raster-delivery)
+for the rejected smooth/local head lifts and the coastal-wedge correction.
+
+**Next bounded batch (B1/B2):** preserve this local field and matched evidence.
+Separate conservative delivery-cap projection from interpolation distortion; the
+250 m cap projection still adds up to 93.045 m. A staged ablation raises maximum
+bank rise from 0.316 m before projection to 54.062 m after it, while removing 196
+cap violations; omitting the projection cannot pass. Compare a tighter envelope with
+explicit cell-interior protection before assuming a new representation is needed.
+Then compare one bounded channel-conforming reconstruction if raster bank shape
+still fails. Keep full guide/bank/capture, dense cross-sections, no unintended
+sinks, hard heights/divide/coast, cut/no-fill/volume and repeat/rotation gates.
+Do not use node-only bounds, endpoint-only success, looser tolerances or uniform
+whole-world refinement. The [role contract](landscape-evolution.md#authored-intent-and-geographic-boundaries)
+keeps authored targets distinct from generated hypotheses.
+
+Add held-out and general-angle cases before adoption; the new small oblique-mouth
+regression is not a full rotated-landscape cohort. Preserve distinctions between
+unsupported input, finite search exhaustion, verified conflict and numerical
+failure. Composition differences are not geological erosion. Normal generation
+and the authoritative Float32 DEM contract remain unchanged.
 
 **Following decision (B2):** connect an accepted construction and delivery pair to
 the existing two-epoch reference so relief and the automatic network can evolve

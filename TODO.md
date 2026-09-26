@@ -42,15 +42,18 @@ endpoint-descending planned channels. This is sampled diagnostic evidence,
 not a physical river-water validation or a private-map result.
 The [automatic-layout follow-up](docs/research/2026-09-26-hard-target-valley-layout.md)
 now preserves hard targets while routing all four heads to the coast in the 250 m
-raster, with no interior sinks or uphill guide routes. Bank shape, coarse delivery
-and fixed/native quality remain open. Next finish bank construction and isolate
-its delivery limits before co-evolution.
+raster, with no interior sinks or uphill guide routes. The
+[head/mouth construction follow-up](docs/research/2026-09-26-valley-heads-and-mouths.md)
+now passes all 575 matched local bank sections, including denser checks, under
+the same bounds. Raster bank shape, coarse delivery and fixed/native quality
+remain open. Next isolate bounds-projection and reconstruction losses before
+co-evolution.
 
 | Order | Outcome and existing backlog owners | Gate |
 |---|---|---|
 | **A — quality controls** | Quality fixtures, paired maps/profiles, process-scale warnings; convergent-flat comparison (R02/R25/R27/R41/R43) | Fixed comparison set and a measured accept/reject result; no new benchmark framework |
 | **W — bounded foundation delivered** | WC0 plus WC1 geography, geology inputs, bathymetry and water-piece incidence (R01/R49); return to B/C physical paths and landforms | Preserve source and unresolved support; context is provisional, not solved climate |
-| **B — next major generation decision** | Automatic guide relocation restores 4/4 capture and descending routes at 250 m; next complete bank shape and delivery (R48/R32) | Preserve controls and hard targets; bank/capture acceptance across physical scales within declared envelopes before LE3 |
+| **B — next major generation decision** | Local head/mouth banks now pass; 250 m capture remains 4/4; next resolve raster bounds-projection and bank reconstruction (R48/R32) | Preserve controls and hard targets; bank/capture acceptance across physical scales within declared envelopes before LE3 |
 | **C** | Consolidate one coherent range/pass/tributary/lowland system from the selected comparison (R08/R09/R14/R40/R44) | Better structural/visual results across fixed seeds and physical scales |
 | **W — after B/C acceptance** | Rough world, seasonal climate/runoff feedback and reviewed parent (WC2-WC4; R33/R49) | Physical terrain acceptance, bounded coupling, shared world time and budgets |
 | **D / WC5** | Accepted parent-conditioned detail, same-present historical refinement and inherited fine hydrology, then zoom jobs (R15/R34/R49) | Exact overlap, coarse-scale, time-dependent boundary/flow and visual acceptance before real small rivers |
@@ -148,10 +151,15 @@ continent-history generation remain planned.
   preserves every original vertex/reach and hard input, restoring 4/4 capture,
   zero sinks and descending guide profiles in the 250 m raster. See the
   [report](docs/research/2026-09-26-hard-target-valley-layout.md).
-- [ ] **Next concrete batch — B1/B2 bank shape and delivery.** Retain the layout
-  gain and rejected controls. Resolve full banks at heads, junctions and cap
-  transitions, then compare one bounded reconstruction if local shape passes
-  and raster delivery fails. Complete these gates before history or LE3/WC2.
+- [x] **B1 head/mouth bank construction:** cap-aware head transitions and
+  perpendicular mouth sections pass all 575 local bank pairs at 25 m and <=2.5 m
+  stations. Same guides, targets and envelopes; 250 m raster banks still fail.
+  See the [report](docs/research/2026-09-26-valley-heads-and-mouths.md).
+- [ ] **Next concrete batch — B1/B2 bounded raster delivery.** Retain the local
+  field and all controls. Separate conservative cap projection from interpolation
+  error, test tighter bounds that still protect cell interiors, then compare one
+  bounded channel-conforming reconstruction if required. Keep the dense bank gate;
+  complete delivery acceptance before history or LE3/WC2.
 - [ ] **WC1 transport follow-up:** consume finite-face incidence only after support
   admission, conservative area/depth integration, explicit sill/capacity geometry
   and paired flux/storage budgets. Add a stable local-coordinate or exact-predicate
@@ -239,7 +247,7 @@ records execution and its remaining gates; the simulation is still research-only
   525 endpoint constraints pass in feasible cases, but no required head is captured
   and the 250 m candidate adds sinks. No fixed constraint was softened.
 - [x] **Reassess failed methods and alternative processes** (R24/R32/R48).
-  The [method register](docs/research/terrain-method-decisions.md) records ten
+  The [method register](docs/research/terrain-method-decisions.md) records eleven
   groups of failed/restricted approaches and their replacement gates. The
   [groundwater/canyon review](docs/research/2026-09-25-groundwater-and-terrain-architecture.md)
   checks primary models and existing component APIs; no new simulation was run.
@@ -260,15 +268,23 @@ records execution and its remaining gates; the simulation is still research-only
   checking samples reach the coast. Hard targets and fresh/native controls are
   preserved. Local/raster banks and 500/1,000 m delivery still fail. Rejected
   sine-squared detours and sampled-envelope bed lifting are documented.
-- [ ] **Next — B1/B2 complete bank construction and delivery** (R48/R32/R02).
-  Keep the admitted automatic layout, fixed control, hard targets/divide/coast
-  and declared envelope. Resolve banks at heads, junctions and cap transitions
-  using explicit local geometry; check whole inward profiles, not just endpoints.
-  Preserve old probes and report physical reach/length coverage when the network
-  is subdivided. Once local banks pass, isolate raster loss with one bounded
-  channel-conforming reconstruction. Require the complete bank/guide/capture
-  gates and spacing/rotation checks before integration; no higher undeclared
-  cut budget, softened target or uniform whole-world refinement.
+- [x] **B1 head and mouth transitions** (R48/R32/R02).
+  [Measured](docs/research/2026-09-26-valley-heads-and-mouths.md): the same 575 bank
+  pairs change from 21 local inward failures and five endpoint failures to zero.
+  All local gates also pass with <=2.5 m stations and the unchanged 1 cm tolerance.
+  250 m raster delivery keeps 4/4 capture but has 217/575 ordinary and 241/575 dense
+  inward failures, plus five endpoint failures. Coarser delivery remains rejected.
+  Rejected head tapers, envelope lifting and the initial mouth wedge are recorded.
+- [ ] **Next — B1/B2 bounded delivery comparison** (R48/R32/R02).
+  Keep the admitted layout/local field, fixed/native controls, all 575 bank pairs,
+  hard targets/divide/coast and declared envelope. Isolate the conservative
+  incident-cell cap projection (up to 93.045 m at 250 m) from interpolation's
+  displaced bank minima. Compare a tighter cell-interior-safe envelope first,
+  then one bounded channel-conforming reconstruction if necessary. This is a
+  candidate generation/delivery experiment, not a completed-map repair. Require
+  complete bank/guide/capture, dense profile, envelope and repeat/rotation gates;
+  retain held-out/general-angle acceptance before integration. Do not raise cut
+  budgets, soften targets or refine the whole world uniformly.
 - [ ] **B2 — Terrain/network co-evolution after construction acceptance** (R48/R14).
   Connect an accepted construction/delivery pair to the two-epoch reference.
   Measure held-out seeds, oblique orientation, complete catchment coverage,
@@ -1629,6 +1645,18 @@ geometry movement and project-saving behavior.
   derived inspection choices that never change the authoritative DEM.
 
 ### Project safety and everyday workflow
+
+- [x] **Collect closed Tk test cycles on their owning thread.** The full
+  [head/mouth batch](docs/research/2026-09-26-valley-heads-and-mouths.md) reproduced
+  a save-on-close timeout twice, with off-main-thread variable finalization.
+  The test protocol now collects released UI cycles after pytest drops fixture
+  references; ordinary fixture teardown is too early. Existing deadlines and
+  save assertions are unchanged; no application garbage-collection policy is added.
+- [ ] **P1 — Audit closed editor ownership and callback retention.** A separate
+  shutdown probe retains a closed workbench through Tcl variable traces until
+  those traces are removed. Establish deterministic release of callbacks and
+  resources at editor/application shutdown, including jobs finishing after close.
+  The test-isolation correction does not establish a runtime lifecycle fix.
 
 - [x] **P0 — Track unsaved changes.** A title marker compares authored inputs
   against the saved snapshot, including unfinished instructions. Open/import/close

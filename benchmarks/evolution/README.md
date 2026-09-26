@@ -358,3 +358,32 @@ uphill guide routes and every interior checking sample reaching the coast. Bank
 shape and coarse delivery remain rejected. Probe counts differ after segmentation
 and are explicitly recorded; do not claim matched bank improvements from raw
 counts. Normal generation and history integration remain gated on full acceptance.
+
+
+## Head and mouth construction
+
+Compare the new local sections with the admitted layout and all prior controls:
+
+```powershell
+.\.venv\Scripts\python.exe -m benchmarks.evolution.boundary_comparison --output artifacts/my-valley-boundaries
+.\.venv\Scripts\python.exe -m pytest tests/test_valley_boundaries.py
+```
+
+This base-environment experiment preserves the same geometry and all 575 bank
+pairs. A clipped generated head receives a linear height adjustment ending at
+its first confluence. Perpendicular mouth sections include the inland outlet
+wedge while preserving the actual zero coast. All hard heights and the fresh
+600 m / 120 km3 construction envelope remain unchanged. The original model is
+retained as a numerical control, not a product compatibility mode.
+
+The [measured report](../../docs/research/2026-09-26-valley-heads-and-mouths.md)
+records zero local bank failures at ordinary 25 m and dense <=2.5 m stations,
+using the same 1 cm inward tolerance. The 250 m raster still has 217 ordinary and
+241 dense inward failures, plus five endpoints, despite 4/4 capture and no sinks.
+Coarser delivery remains rejected; no generator/workbench option is added.
+
+A new output directory contains nested `controls/`, per-case arrays and dense
+profiles, shared-coordinate witness plots, actual routing and hashed manifests.
+The complete result retains rejected quality; hard-input/execution failure writes
+`incomplete.json` without a completed parent. Next separate conservative cap
+projection from interpolation distortion before a bounded reconstruction choice.

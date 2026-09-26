@@ -2,7 +2,7 @@
 
 Reconciled on 2026-09-26 after WC1 foundations, physical-path diagnostics,
 constrained-network/bank comparisons, the groundwater/architecture reassessment
-and the [hard-target layout comparison](2026-09-26-hard-target-valley-layout.md).
+and the [head/mouth construction comparison](2026-09-26-valley-heads-and-mouths.md).
 The [method register](terrain-method-decisions.md) tracks failed approaches and
 replacement gates. The [new source review](2026-09-25-groundwater-and-terrain-architecture.md)
 adds groundwater capture, canyon and karst hypotheses; none was simulated here.
@@ -130,9 +130,13 @@ caps fix an initial interpolated-cut violation without raising budgets. The guid
 were unchanged in that comparison. The [automatic-layout follow-up](2026-09-26-hard-target-valley-layout.md)
 now inserts a bounded detour while preserving all original nodes/reaches and hard
 inputs. At 250 m the raster captures 4/4 with no sinks or uphill guide routes, and
-all interior checking samples reach the coast. Bank shape and coarse delivery
-remain rejected. Finish local banks and isolate reconstruction loss before B2
-coupling, a larger cohort, LE3 or WC2. No time evolution was added, and the separate
+all interior checking samples reach the coast. The
+[head/mouth follow-up](2026-09-26-valley-heads-and-mouths.md) now passes all 575 matched
+local bank pairs at ordinary and <=2.5 m stations, preserving the 1 cm tolerance.
+The 250 m raster still fails 217 ordinary / 241 dense inward profiles and five
+endpoints; coarse delivery remains rejected. Separate conservative cap projection
+from interpolation loss, then compare bounded delivery before B2 coupling,
+a larger cohort, LE3 or WC2. No time evolution was added, and the separate
 fresh envelope cannot accept the rejected native fixed control.
 Peak/pass structure and real basins/coasts remain open. Sediment, epoch editor
 controls and evolved local enrichment remain later dependent work. No

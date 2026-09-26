@@ -1,6 +1,6 @@
 """Bounded connected valley patches; an experiment, not a product terrain stage."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from math import isfinite
 from typing import Literal
 
@@ -16,6 +16,11 @@ from benchmarks.evolution.constrained import (
 )
 from benchmarks.evolution.network_fixture import NetworkFixture
 from benchmarks.evolution.paths import FloatArray
+from benchmarks.evolution.valley_boundaries import (
+    BOUNDARY_MODEL_ID,
+    HeadTransition,
+    head_transitions,
+)
 
 PATCH_MODEL_ID = "connected-valley-patches@1"
 type ConstructionMode = Literal["fixed", "fresh"]
@@ -33,6 +38,7 @@ class PatchSettings:
     fresh_cut_volume_m3: float = 120.0e9
     anchor_radius_m: float = 500.0
     cross_section: Literal["rounded", "sharp"] = "rounded"
+    boundary_model: Literal["coastal-plane", "head-mouth"] = "coastal-plane"
 
     def __post_init__(self) -> None:
         for value in (
@@ -53,6 +59,8 @@ class PatchSettings:
             or self.mouth_taper_m < 0
             or self.floor_radius_m >= self.support_m
             or self.cross_section not in ("rounded", "sharp")
+            or self.boundary_model not in ("coastal-plane", "head-mouth")
+            or (self.boundary_model == "head-mouth" and self.cross_section != "rounded")
         ):
             raise ValueError("Patch floor, support, mouth taper or cross-section is invalid.")
 
@@ -118,6 +126,11 @@ class ValleyPatches:
     mouth_segments_m: FloatArray
     mouth_heights_m: FloatArray
     mouth_inward: FloatArray
+    head_transitions: tuple[HeadTransition, ...] = ()
+
+    @property
+    def model_id(self) -> str:
+        return BOUNDARY_MODEL_ID if self.settings.boundary_model == "head-mouth" else PATCH_MODEL_ID
 
     def caps(self, x: FloatArray, y: FloatArray, *, incident_cells: bool = False) -> FloatArray:
         if self.mode == "fixed":
@@ -165,14 +178,19 @@ class ValleyPatches:
             p: FloatArray = segment[0]
             q: FloatArray = segment[1]
             length = float((p - q) @ inward)
-            fraction = ((xy - q) @ inward) / length
+            coastal_fraction = ((xy - q) @ inward) / length
+            if self.settings.boundary_model == "head-mouth":
+                direction = p - q
+                fraction = ((xy - q) @ direction) / float(direction @ direction)
+            else:
+                fraction = coastal_fraction
             centre = q + fraction[:, None] * (p - q)
             offset: FloatArray = xy - centre
             distance = np.linalg.norm(offset, axis=1)
-            inside = (fraction >= 0) & (fraction <= 1) & (distance < radius)
+            inside = (coastal_fraction >= 0) & (fraction <= 1) & (distance < radius)
             if not np.any(inside):
                 continue
-            t = fraction[inside]
+            t = np.maximum(fraction[inside], 0.0)
             v = np.clip(
                 (distance[inside] - self.settings.floor_radius_m)
                 / (radius - self.settings.floor_radius_m),
@@ -182,14 +200,19 @@ class ValleyPatches:
             u = np.minimum(2.0 * (1.0 - t), 1.0)
             blend = u * u * (3.0 - 2.0 * u) * (1.0 - v * v * (3.0 - 2.0 * v))
             exponent = 2 if self.settings.cross_section == "rounded" else 1
-            # The terminal section follows the declared straight coastal plane.
-            # Both bed and transverse relief vanish there; a zero-width point
-            # cap would flatten a whole disc or leave sampled pits offshore of it.
-            mouth = (
-                height
-                + self.settings.bank_rise_m
+            relief = (
+                self.settings.bank_rise_m
                 * (distance[inside] / self.settings.floor_radius_m) ** exponent
-            ) * t**1.3
+            )
+            if self.settings.boundary_model == "head-mouth":
+                # Bed and banks use perpendicular river sections. Keep positive
+                # transverse relief in the inland wedge beyond the mouth section;
+                # clamping all of that wedge to t=0 would create a flat zero strip.
+                # The unchanged source/no-fill bound owns the actual zero coast.
+                mouth = height * t**3 + relief * np.maximum(t, coastal_fraction[inside]) ** 1.3
+            else:
+                # Retained coastal-plane control: both bed and banks vanish at sea.
+                mouth = (height + relief) * t**1.3
             values[inside] = (1.0 - blend) * values[inside] + blend * mouth
         lower = np.maximum(source - self.caps(x, y), 0.0)
         values = np.clip(values, lower.ravel(), source.ravel())
@@ -224,7 +247,7 @@ class ValleyPatches:
             grid,
             delivered,
             {
-                "model_id": PATCH_MODEL_ID,
+                "model_id": self.model_id,
                 "mode": self.mode,
                 "maximum_delivery_pin_correction_m": float(np.max(np.abs(pin_delta))),
                 "maximum_delivery_envelope_correction_m": float(
@@ -295,8 +318,11 @@ def prepare_patches(
     settings = settings or PatchSettings()
     if mode not in ("fixed", "fresh") or control.grid != f.source.grid:
         raise ValueError("Patch preparation needs a known mode and matching control grid.")
+    if settings.boundary_model == "head-mouth" and mode != "fresh":
+        raise ValueError("Head/mouth construction requires a generated fresh relief hypothesis.")
     if len(f.hard.heights_m) > 16:
         raise ValueError("Patch comparison supports at most 16 independent height pins.")
+    segment_edges: list[int] = []
     segments: list[FloatArray] = []
     heights: list[FloatArray] = []
     remaining: list[FloatArray] = []
@@ -331,6 +357,7 @@ def prepare_patches(
         xy = path[0] + t[:, None] * (path[1] - path[0])
         z = control.sample(*xy.T).astype(np.float64)
         for i in range(count):
+            segment_edges.append(int(edge))
             segments.append(xy[i : i + 2])
             heights.append(z[i : i + 2])
             remaining.append(np.maximum(0.0, lengths.sum() - t[i : i + 2] * lengths[0]))
@@ -371,6 +398,26 @@ def prepare_patches(
         mouth_heights,
         inward,
     )
+    if settings.boundary_model == "head-mouth":
+        heads = network.coordinates_m[network.heads()]
+        lower = np.maximum(
+            f.source.sample(*heads.T).astype(np.float64) - provisional.caps(*heads.T), 0.0
+        )
+        bed, transitions = head_transitions(
+            network,
+            np.asarray(segment_edges, dtype=np.int64),
+            geometry,
+            bed,
+            lower,
+            settings.bank_rise_m,
+        )
+        mouth_heights = bed[np.array(mouth_starts), 0].copy()
+        provisional = replace(
+            provisional,
+            bed_heights_m=bed,
+            mouth_heights_m=mouth_heights,
+            head_transitions=transitions,
+        )
     coefficients = np.empty(0, dtype=np.float64)
     if len(f.hard.heights_m):
         basis = _anchor_basis(f.hard.points_m, f.hard, settings.anchor_radius_m)
@@ -381,20 +428,7 @@ def prepare_patches(
         )
     for array in (geometry, bed, coefficients, mouths, mouth_heights, inward):
         array.flags.writeable = False
-    result = ValleyPatches(
-        f.source,
-        provisional.cap_field,
-        bounds,
-        f.hard,
-        geometry,
-        bed,
-        mode,
-        settings,
-        coefficients,
-        mouths,
-        mouth_heights,
-        inward,
-    )
+    result = replace(provisional, anchor_corrections_m=coefficients)
     if np.any(np.abs(result.sample(*f.hard.points_m.T) - f.hard.heights_m) > 0.0001):
         raise InfeasibleSurface("Local patch height conflicts with the construction envelope.")
     return result

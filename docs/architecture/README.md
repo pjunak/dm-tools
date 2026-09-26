@@ -38,8 +38,11 @@ checks; its production quality is rejected. The
 [automatic-layout comparator](../research/2026-09-26-hard-target-valley-layout.md)
 now preserves hard targets while moving only explicitly automatic guides within
 bounded corridors. It restores 250 m capture but leaves bank/coarse failures.
-Complete local banks and isolate delivery before a local graph/mesh decision.
-This does not introduce an application process-state layer or replace the
+The [head/mouth comparator](../research/2026-09-26-valley-heads-and-mouths.md) now
+passes all 575 matched local bank pairs, including dense checks. Raster banks
+still fail: isolate conservative cap projection and interpolation before a local
+graph/mesh decision. These research components introduce no application
+process-state layer and do not replace the
 authoritative Float32 DEM.
 
 Groundwater, if accepted, needs aquifer head/storage and separate subsurface links;

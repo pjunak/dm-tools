@@ -1,7 +1,7 @@
 # Terrain method decisions and failed experiments
 
-Updated 2026-09-26 against baseline `b5dbe27` and the hard-target layout implementation
-accompanying T10. This is the living record of
+Updated 2026-09-26 against baseline `c34aede` and the head/mouth implementation
+accompanying T11. This is the living record of
 material generation approaches that were rejected, constrained or retained only
 as references. A failed method does not remove its desired feature from the plan.
 The [strategy](../strategy/README.md) owns execution order; dated reports own the
@@ -12,7 +12,7 @@ Supporting sampling/convergence and performance rejections remain indexed in
 concentrates on methods that change the generation-quality decision.
 The [groundwater and architecture reassessment](2026-09-25-groundwater-and-terrain-architecture.md)
 explains the replacement proposals. Groundwater, karst and lateral erosion remain
-untested here; T09/T10 measure connected-valley construction and automatic guide placement.
+untested here; T09-T11 measure connected valleys, automatic placement and head/mouth sections.
 
 ## How to maintain this record
 
@@ -243,6 +243,42 @@ delivery loss. Keep coarse failures and native-control rejection visible. Requir
 complete bank/guide/capture and held-out evidence before application/history
 integration; this result does not justify a whole backend rewrite.
 
+## T11 - Construct head and mouth sections before raster delivery
+
+**Tried:** a cap-aware generated head adjustment ending at its first confluence,
+perpendicular mouth sections and an explicit inland outlet wedge. The
+[report](2026-09-26-valley-heads-and-mouths.md) keeps the same 575 bank pairs,
+60.732 km graph, source, hard heights and 600 m / 120 km3 fresh envelope.
+
+**Measured:** ordinary local inward/endpoint failures change from 21/5 to 0/0.
+An added <=2.5 m bank check also passes the existing 1 cm tolerance; maximum local
+rise is 0.006195 m. Local capture and the 250 m raster capture remain 4/4, with zero
+sinks. All hard-input gates pass. Raster banks still fail: at 250 m, 217/575
+ordinary and 241/575 dense inward sections, plus five endpoints. Coarser raster
+capture remains zero. Twelve control cases retain their previous numeric hashes.
+
+**Why / boundary:** the source-minus-cut floor tilted one clipped head bank
+uphill; the coastal-plane taper tilted oblique sections away from the channel.
+Changing the generated profile/section geometry fixes those local cases without
+moving a hard target. Raster delivery still combines conservative cap projection
+and interpolation loss. Sampled success is not a continuous or world-scale proof.
+
+**Rejected alternatives:** local radial-envelope lifts remove the main head
+failure but create new bend defects. A whole-tributary cubic taper passes 25 m
+stations but fails three sections when sampled more densely. Quintic and
+straight-tail-only tapers also leave defects. A linear taper adds constant grade
+without the cubic's steeper middle. The first perpendicular-mouth trial left an
+outlet-plane edge defect; preserving relief in the inland wedge removes it. Do
+not restore any of these recipes as hidden fallbacks or loosen the dense check.
+
+**Retained / replacement:** retain the local head/mouth component, matched bank
+profiles, dense guard and original capture controls. Next isolate cap projection
+from interpolation; compare tighter bounds that still protect whole cell
+interiors, then one bounded channel-conforming reconstruction if necessary.
+Keep production rejection until complete delivered bank/guide/capture, held-out
+and broader orientation gates pass. No history, groundwater or product engine
+was added by this experiment.
+
 ## What the failures change
 
 Preserve the feature goals: believable rivers, geological aging, useful zoom detail
@@ -252,6 +288,6 @@ procedural guesses before fitting; test coupled relief and network evolution bef
 freezing a final DEM. Keep the application and Python implementation boundaries.
 
 Groundwater, karst and lateral erosion are **new, untested hypotheses here**, not
-explanations established by T01-T10. They need independent controls and budgets.
+explanations established by T01-T11. They need independent controls and budgets.
 The [reassessment's staged experiments](2026-09-25-groundwater-and-terrain-architecture.md#implementation-sequence-and-stop-rules)
 define the next comparisons and when a larger structural change is justified.
