@@ -36,8 +36,10 @@ shore distance, directional exposure and separate water-piece links with explici
 unresolved support. [Authored geology](world-geology.md) now
 adds a separate province/default recipe and editor. [Bathymetry](world-bathymetry.md)
 now generates an explicit ocean-depth hypothesis with its own inputs, previews and
-verified result. Physical geology forcing, climate and world-linked land terrain
-remain planned. Existing terrain generation still uses local geometry.
+verified result. [World → Terrain](terrain-worlds.md#create-terrain-from-the-world)
+now creates a usable local project from connected world land, with retained
+projection and physical scale. Physical geology forcing, climate and coupled
+world land terrain remain planned.
 
 The [complete documentation file inventory](FILE_INDEX.md) lists every tracked
 Markdown document and legal notice individually, with purpose and current versus
@@ -113,8 +115,10 @@ now retain the local field through trusted saving/reopening, while generic
 splines fail capture and bounds. The
 [guarded snapshot comparison](research/2026-09-27-prepared-feature-snapshots.md)
 now provides bounded reopening and exact same-field query/tiling checks. Held-out
-geometry and real parent/detail consistency are next; product DEM authority is
-unchanged.
+geometry and real parent/detail consistency remain research gates; product DEM
+authority is unchanged. The [world-to-terrain batch](research/2026-09-27-world-to-terrain-workflow.md)
+records the user-selected feature priority, the working handoff, and four short
+held-out layouts that still fail small inward-bank checks.
 The [reference guide](../benchmarks/evolution/README.md) owns setup and runnable commands.
 The [2026-09-13 audit](maintenance/2026-09-13-documentation-and-research-status.md)
 and [2026-09-10 checkpoint](maintenance/2026-09-10-sanity-and-performance.md)

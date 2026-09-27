@@ -5,7 +5,7 @@
 
 from dataclasses import dataclass
 from hashlib import file_digest
-from math import hypot
+from math import hypot, isclose
 from pathlib import Path as FilePath
 from typing import Any
 
@@ -16,6 +16,7 @@ from shapely.validation import explain_validity
 from svgelements import SVG, Close, Group, Line, Move, Path, Shape
 
 from dmtools.terrain.domain import Coastline, LandComponent
+from dmtools.terrain.domain.world_terrain import WorldTerrainSource
 
 
 class CoastlineInputError(ValueError):
@@ -29,6 +30,7 @@ class CoastlineSource:
     path: FilePath
     sha256: str
     coastline: Coastline
+    world_terrain: WorldTerrainSource | None = None
 
     def __post_init__(self) -> None:
         if not self.path.is_absolute():
@@ -38,6 +40,14 @@ class CoastlineSource:
         )
         if len(self.sha256) != 64 or invalid_character:
             raise ValueError("Coastline source SHA-256 is invalid.")
+        if self.world_terrain is not None and self.world_terrain.coastline != self.coastline:
+            raise ValueError("World-derived coastline and its source record disagree.")
+
+    def validate_scale(self, object_scale_km: float) -> None:
+        if self.world_terrain is not None and not isclose(
+            object_scale_km, self.world_terrain.object_scale_km, rel_tol=1e-12, abs_tol=1e-9,
+        ):
+            raise ValueError("World-derived terrain scale is fixed by the world projection.")
 
 
 def coastline_sha256(source: FilePath) -> str:
@@ -250,7 +260,14 @@ def load_svg_coastline(source: FilePath, *, sample_count: int = 4_096) -> Coastl
     if sample_count < 32:
         raise ValueError("sample_count must be at least 32.")
 
+    # Prepared sources carry exact numeric polygons, including holes and narrow
+    # gaps. Their canonical visible paths are verified by the owning adapter.
+    from dmtools.terrain.adapters.world_terrain_source import read_world_terrain_svg
+
     try:
+        prepared = read_world_terrain_svg(source)
+        if prepared is not None:
+            return prepared.coastline
         document = SVG.parse(str(source), reify=True, on_error="raise")
     except (OSError, ValueError, TypeError) as error:
         raise CoastlineInputError(f"Could not read SVG: {error}") from error
@@ -371,8 +388,15 @@ def load_svg_coastline_source(source: FilePath) -> CoastlineSource:
     except OSError as error:
         raise CoastlineInputError(f"Could not read SVG: {error}") from error
     before = coastline_sha256(resolved)
-    coastline = load_svg_coastline(resolved)
+    from dmtools.terrain.adapters.world_terrain_source import read_world_terrain_svg
+
+    try:
+        prepared = read_world_terrain_svg(resolved)
+    except (OSError, ValueError) as error:
+        raise CoastlineInputError(str(error)) from error
+    coastline = prepared.coastline if prepared else load_svg_coastline(resolved)
     after = coastline_sha256(resolved)
     if before != after:
         raise CoastlineInputError("The SVG changed while it was being imported; import it again.")
-    return CoastlineSource(path=resolved, sha256=after, coastline=coastline)
+    return CoastlineSource(path=resolved, sha256=after, coastline=coastline,
+                           world_terrain=prepared)

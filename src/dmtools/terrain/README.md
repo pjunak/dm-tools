@@ -23,8 +23,11 @@ recipe saves and source/context backgrounds. These hypotheses do not yet affect
 terrain. **Bathymetry…** opens a separate
 [ocean-floor workflow](../../../docs/world-bathymetry.md) from matching context,
 with explicit ocean selection, shelf/slope/basin inputs, numerical error/support
-views and independent saves/results. Climate and world land terrain remain planned.
-Select Terrain for the workflow below;
+views and independent saves/results. **Terrain…** now selects a continent and
+creates a local terrain project with connected neighbours, retained world identity
+and fixed projected scale. It opens in Terrain ready for the workflow below.
+Coupled climate, geological forcing and world-parent generation remain planned;
+
 `--project` opens a local terrain file directly in that tab.
 
 The Terrain workspace imports closed SVG land shapes, dissolves adjacent
@@ -54,7 +57,7 @@ Saved-parent regional commands and sessions now support explicit
 [memory admission budgets](../../../docs/terrain-regional-memory.md).
 See the [numeric build guide](../../../docs/terrain-builds.md). The coordinate
 model for generated terrain remains the local SVG plane. Builds include a
-[local-metric GeoTIFF](../../../docs/terrain-geotiff.md); world placement of generated terrain is still planned.
+[local-metric GeoTIFF](../../../docs/terrain-geotiff.md); world-derived sources retain their projection, while raster world georeferencing remains planned.
 
 [`examples/terrain/example.dmterrain.json`](../../../examples/terrain/example.dmterrain.json)
 is a small public project for trying the complete workflow; its referenced

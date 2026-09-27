@@ -107,3 +107,4 @@ supersedes their legacy compatibility commitments during early development.
 - [ADR-0077: Generate authored ocean-depth hypotheses](0077-generate-authored-ocean-depths.md)
 
 - [ADR-0078: Retain water-piece connectivity](0078-retain-water-piece-connectivity.md)
+- [ADR-0079: Project connected world land into terrain projects](0079-project-world-land-into-terrain.md)

@@ -4,8 +4,9 @@ The **World** workspace implements WC0: retain an authored world, confirm its
 geographic frame, assign continents and islands, inspect it and save a portable
 source project. [Geographic context](world-context.md) now generates spherical
 coverage, connected water and resolution support. Climate, rough world terrain
-and regional history generation remain planned. The **Terrain** workspace continues to generate local terrain;
-it does not yet consume a saved world or extract georeferenced continents.
+and regional history generation remain planned. **Terrain…** now transfers a
+selected continent and connected land into a local metric terrain project,
+ready to use in the **Terrain** workspace.
 
 ## Try the public example
 
@@ -29,6 +30,62 @@ longitude seam. Its 6,500 km sphere is a demonstration, not a default planet.
 
 `--world` and `--project` are mutually exclusive startup choices. Both workspaces
 remain available in the same window, with separate documents and dirty states.
+
+## Create terrain from the world
+
+1. Open or import your world and confirm its frame, radius and assignments.
+2. Click **Terrain…** in the World header, then choose a continent.
+3. Click **Create terrain project…** and choose a **new folder name**. The current
+   world inputs are validated and retained; saving the world separately first is
+   optional. The source drawing and any existing terrain work remain protected.
+4. The new project opens in **Terrain**, initially at 257 pixels. Add mountain,
+   valley, height or landform instructions, adjust generator settings, and click
+   **Generate terrain**. The object scale is fixed by the world projection.
+5. Save instructions normally. Use **Open prepared project** in World to reopen
+   the latest saved version; declining an unsaved-work prompt leaves the created
+   folder available for later use.
+
+The equivalent command is:
+
+```powershell
+.\.venv\Scripts\dmtools.exe world terrain examples/world/four-shores.dmworld.json --continent Southmere --output artifacts/southmere-terrain
+.\.venv\Scripts\dmtools.exe terrain gui --project artifacts/southmere-terrain/terrain.dmterrain.json
+.\.venv\Scripts\dmtools.exe terrain build artifacts/southmere-terrain/terrain.dmterrain.json --output artifacts/southmere-build
+```
+
+`--seed` and `--resolution` set the new project's initial generation settings.
+A continent ID may replace its name. Keep **coastline.svg** beside
+**terrain.dmterrain.json** when moving the folder. The SVG contains visible
+projected paths plus the original world snapshot, membership and projection;
+the original world file is not needed to reopen the terrain project.
+
+All islands assigned to the selected continent are included. Touching foreign
+land is included transitively, across the longitude seam and poles as needed;
+a foreign owner's disconnected islands are not automatically added. This avoids
+treating an administrative boundary as a sea-level coast. Splitting the same
+physical land among continent labels does not change its projection or terrain.
+Matching inland borders must meet in the source drawing: a tiny positive gap
+still describes water. Correct accidental offsets in the source and create a new
+handoff; the importer does not silently fill genuine straits. The prepared source
+keeps small holes and water gaps; their eventual visibility depends on terrain
+and display resolution. An inland hole currently has the existing terrain
+engine's coastline behavior, not a newly inferred lake level.
+
+Projection uses an azimuthal equidistant plane on the declared custom sphere,
+with an area-weighted centre. The panel reports the maximum sampled transverse
+stretch. A single plane becomes unsuitable for very broad selections: domains
+reaching beyond an 80-degree sampled radius or covering a hemisphere are
+rejected with a request for regional domains. Splitting such land while retaining
+neighbouring terrain boundary conditions is future work. Do not shrink the planet
+or exclude connected land to disguise that limitation. **Southmere** works in the
+public example; its much wider Westreach/Eastreach union needs that future support.
+
+This is a standalone generation handoff. Geographic context, bathymetry, geology
+ages and climate are retained elsewhere but do not yet drive this terrain.
+Recreating a project starts from the current world inputs; existing terrain
+instructions are not automatically rebased onto changed geography. The produced
+GeoTIFF remains in the existing local coordinate system; its world projection is
+retained in the source SVG, not encoded as a global raster CRS.
 
 ## Import your own source
 

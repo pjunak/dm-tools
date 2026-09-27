@@ -47,6 +47,14 @@ dictionaries or global settings.
   not establish the complete contract. See ADR-0048.
 - Keep numerical sampling and shared-coordinate checks separate from user editing.
 
+## Current delivery priorities
+
+Prioritize usable features and major terrain-quality blockers over repeated
+small numerical refinements or performance work. Keep new geometry, projection,
+serialization, application orchestration and UI responsibilities in cohesive
+separate modules. Consult the user before tests expected to exceed roughly two
+minutes or with uncertain long duration; state purpose, estimate and stop limit.
+
 ## Stage rules
 
 - Give every stochastic stage a stable identifier and a separately derived

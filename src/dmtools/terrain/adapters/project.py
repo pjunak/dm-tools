@@ -365,6 +365,7 @@ def save_terrain_project(
 
     if project.coastline != coastline_source.coastline:
         raise TerrainProjectInputError("The project coastline does not match its source record.")
+    coastline_source.validate_scale(project.settings.object_scale_km)
     current_sha256 = coastline_sha256(coastline_source.path)
     if current_sha256 != coastline_source.sha256:
         raise TerrainProjectInputError(
@@ -455,6 +456,10 @@ def load_terrain_project(source: Path) -> LoadedTerrainProject:
             "The coastline SVG does not match the SHA-256 recorded by this project."
         )
 
+    try:
+        coastline_source.validate_scale(settings.object_scale_km)
+    except ValueError as error:
+        raise TerrainProjectInputError(str(error)) from error
     project = TerrainProject(
         coastline=coastline_source.coastline,
         settings=settings,

@@ -15,8 +15,9 @@ local_y = (source_y - source_min_y) * scale
 
 The inverse retains the original source origin. Neither direction clips points
 to the coastline or bounds. This makes coordinate conversion usable for future
-buffered regions without changing authored geography. It does not establish
-longitude/latitude or a planetary scale.
+buffered regions without changing authored geography. Ordinary imported SVGs
+have no geographic binding. World-derived sources additionally retain the
+sphere-to-projection relationship described below.
 
 ## Endpoint samples
 
@@ -81,12 +82,35 @@ Tests cover offset frames, changed meridians, great-circle distances, seam
 ownership, polar caps and whole-sphere area. Curve flattening has the explicit
 source-space tolerance documented in the world guide.
 
-**Generated terrain projects and builds still have no source-to-world binding or
-regional working CRS.** Their scale and endpoint-node model above remain local.
-A saved world does not silently rescale a terrain project or georeference its
-GeoTIFF. World-to-region metric projections, distortion gates and transfers to
-proposed cell-centred climate grids remain future work. Node samples are not
-cell means. [WC1-WC5](strategy/world-context.md) owns those staged contracts.
+## World-derived terrain sources
+
+[World → Terrain](terrain-worlds.md#create-terrain-from-the-world) now projects
+selected physical land into a spherical azimuthal equidistant plane using the
+world's radius. The prepared SVG stores east and **negative north**, in metres,
+plus the retained world and projection centre. Curved projected boundaries use
+source steps no larger than 0.25 degrees and adaptive quarter/midpoint chord
+checks at 25 m; this is additional projection sampling, not a promise to recover
+detail lost in original SVG flattening. Very broad domains are rejected.
+
+Its `object_scale_km` equals the longest projected extent divided by 1000 and is
+fixed during terrain editing/loading/saving. Consequently `km_per_source_unit`
+is 0.001. For these sources, the inverse relationship is:
+
+```text
+projected_east_m  = source_min_x + 1000 * local_x_km
+projected_north_m = -(source_min_y + 1000 * local_y_km)
+```
+
+The source's retained AEQD centre and custom radius permit inverse projection.
+A terrain build still publishes local endpoint samples and a local GeoTIFF:
+its manifest's `world_crs` and `planetary_radius_m` remain null because raster
+georeferencing is not implemented. Keep the prepared SVG/project with builds
+when world correspondence is needed; portable build input snapshots retain
+effective coastlines but do not embed the complete world metadata.
+
+There is no global climate-grid transfer or cross-domain parent agreement yet.
+Node samples are not cell means. [WC1-WC5](strategy/world-context.md) owns those
+staged contracts; this handoff does not bypass them.
 
 The [ADR](adr/0025-centralize-local-frames-and-endpoint-grids.md) records the
 implementation boundary and alternatives. See the [build guide](terrain-builds.md)

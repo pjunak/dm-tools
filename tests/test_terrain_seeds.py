@@ -97,6 +97,7 @@ def test_workbench_settings_round_trip(
     # Tcl variables exercise settings persistence without needing a display.
     interpreter = tk.Tcl()
     app = TerrainApp.__new__(TerrainApp)
+    app._coastline_source = None
     app._variables = {spec.key: tk.DoubleVar(interpreter, value=spec.default) for spec in _CONTROLS}
     def refresh_value(key: str) -> None:
         pass

@@ -235,7 +235,7 @@ def publish_build_manifest(
                         LANDFORM_STAGE_ID: stage_seed(settings.seed, LANDFORM_STAGE_ID)},
     }
     warnings = [
-        "Local SVG plane only; world georeferencing and planetary scale are unspecified.",
+        "Products use a local metric plane; these rasters do not encode a world CRS.",
         "Canonical drainage diagnostics use a separate grid, not the exported DEM grid.",
     ]
     document: dict[str, object] = {

@@ -6,7 +6,7 @@ export-import correction, bounded preparation and geographic context documents. 
 documentation and private campaign files are excluded. The public JSON schemas and reference dependency
 lock are listed separately as supporting contracts, not counted as prose docs.
 
-**196 Markdown files + 1 legal notice = 197 documentation files.**
+**198 Markdown files + 1 legal notice = 199 documentation files.**
 Each file appears once below, including this inventory. Document titles describe
 their subject; the group description identifies their role and authority.
 
@@ -20,11 +20,11 @@ remains the entry point for normal use. All are individually linked in the list 
 | Active plans and indexes | 11 |
 | User guides and current contracts | 18 |
 | Developer and reference guides | 8 |
-| Architecture decision records | 78 |
-| Dated research reports | 75 |
+| Architecture decision records | 79 |
+| Dated research reports | 76 |
 | Maintenance reports | 2 |
 | Legal notice | 1 |
-| **Total** | **197** |
+| **Total** | **199** |
 
 ## Project entry and guidance (4)
 
@@ -95,7 +95,7 @@ Subsystem, fixture, schema, test and benchmark guidance.
 | [src/dmtools/terrain/pipeline/README.md](../src/dmtools/terrain/pipeline/README.md) | Numeric generation and inspection responsibilities. |
 | [tests/README.md](../tests/README.md) | Test organization, commands and verification expectations. |
 
-## Architecture decision records (78)
+## Architecture decision records (79)
 
 Accepted historical decisions. Preserve their original context; consult the current status and implementation for later changes. The ADR index is listed among active indexes.
 
@@ -179,13 +179,15 @@ Accepted historical decisions. Preserve their original context; consult the curr
 | [docs/adr/0076-author-world-geology-inputs.md](adr/0076-author-world-geology-inputs.md) | Separate retained-world geology recipes, priority coverage and independent time semantics. |
 | [docs/adr/0077-generate-authored-ocean-depths.md](adr/0077-generate-authored-ocean-depths.md) | Separate authored bathymetry, conservative depth bounds, actual water-centre membership and immutable verified products. |
 | [docs/adr/0078-retain-water-piece-connectivity.md](adr/0078-retain-water-piece-connectivity.md) | Separate water pieces, finite shared intervals, source verification and explicit unresolved transport support. |
+| [docs/adr/0079-project-world-land-into-terrain.md](adr/0079-project-world-land-into-terrain.md) | Connected world land, metric projection, portable source and guarded terrain handoff. |
 
-## Dated research reports (75)
+## Dated research reports (76)
 
 Primary-source reviews, experiments and implementation evidence at their recorded date/revision. A title or citation is not evidence that a tool was adopted. Current status is listed above.
 
 | File | Purpose or document title |
 |---|---|
+| [docs/research/2026-09-27-world-to-terrain-workflow.md](research/2026-09-27-world-to-terrain-workflow.md) | Working world-to-terrain handoff, real-map roundoff failure/fix, feature priorities and exploratory bank failures. |
 | [docs/research/2026-09-27-prepared-feature-snapshots.md](research/2026-09-27-prepared-feature-snapshots.md) | Bounded feature snapshots, exact reopening/query/halo checks, failed raster control and remaining adoption gates. |
 | [docs/research/2026-09-27-feature-preserving-terrain-delivery.md](research/2026-09-27-feature-preserving-terrain-delivery.md) | Short orientation/feasibility probes, rejected splines, exact trusted-field roundtrip and proposed feature-preserving delivery. |
 | [docs/research/2026-09-27-cell-safe-terrain-delivery.md](research/2026-09-27-cell-safe-terrain-delivery.md) | Curvature-bounded capacities, cell-interior protection, matched raster gains, rejected shortcuts and remaining interpolation defects. |
@@ -279,7 +281,7 @@ Attribution/license documentation for a vendored asset.
 |---|---|
 | [docs/licenses/SCIENTIFIC_COLOUR_MAPS_LICENSE.txt](licenses/SCIENTIFIC_COLOUR_MAPS_LICENSE.txt) | Scientific Colour Maps attribution and redistribution license text. |
 
-## Supporting machine-readable contracts (11)
+## Supporting machine-readable contracts (12)
 
 These are operational specifications rather than prose documentation. They
 are included for a complete route from plans to the current usable formats.
@@ -295,6 +297,7 @@ are included for a complete route from plans to the current usable formats.
 | [schemas/world/bathymetry-v1.schema.json](../schemas/world/bathymetry-v1.schema.json) | Completed depth/error arrays, verified geography dependency and source/runtime/product identity. |
 | [schemas/world/context-v4.schema.json](../schemas/world/context-v4.schema.json) | Spherical context products, source/runtime identity, coverage/topology/support, shared-edge widths, water-piece incidence/unresolved support, shore distance, exposure and hashes. |
 | [schemas/world/geology-v1.schema.json](../schemas/world/geology-v1.schema.json) | Authored continent profiles and priority polygons with retained world identity and a common present. |
+| [schemas/world/terrain-source-v1.schema.json](../schemas/world/terrain-source-v1.schema.json) | Canonical prepared SVG metadata with retained world, projection, membership and exact metric polygons. |
 | [schemas/world/project-v1.schema.json](../schemas/world/project-v1.schema.json) | Portable retained world-source snapshot, explicit spherical frame/radius and semantic ownership. |
 | [benchmarks/evolution/requirements-windows-py314.txt](../benchmarks/evolution/requirements-windows-py314.txt) | Hashed isolated Windows/Python 3.14 scientific reference environment. |
 

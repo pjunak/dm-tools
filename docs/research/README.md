@@ -14,6 +14,13 @@ in the current status or a new dated report.
 
 ## Current reassessment
 
+- [World-to-terrain workflow — 2026-09-27](2026-09-27-world-to-terrain-workflow.md)
+  delivers continent-to-project creation through the editor and CLI, with connected
+  land, fixed world scale and exact retained source geometry. Records the real-map
+  area-roundoff failure and fix, focused validation, feature-first priorities and
+  remaining bank failures in four short geometry probes.
+
+
 - [Prepared terrain snapshots — 2026-09-27](2026-09-27-prepared-feature-snapshots.md)
   implements bounded numeric storage/reopening, full graph/segment consistency
   and owned queries. All 575 banks and original metrics survive reopening;

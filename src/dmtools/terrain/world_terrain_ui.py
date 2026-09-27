@@ -1,0 +1,100 @@
+"""World-to-terrain controls, separate from source editing and projection."""
+
+import tkinter as tk
+from collections.abc import Callable
+from pathlib import Path
+from tkinter import filedialog, ttk
+
+from dmtools.terrain.application.world_terrain import WorldTerrainCreated
+from dmtools.terrain.domain.world import WorldContinent
+
+
+class WorldTerrainPanel(ttk.Frame):
+    def __init__(
+        self, parent: tk.Misc, create: Callable[[str, Path], None],
+        open_project: Callable[[WorldTerrainCreated], None], cancel: Callable[[], None],
+    ) -> None:
+        super().__init__(parent, style="Panel.TFrame", padding=12)
+        self._create = create
+        self._open = open_project
+        self._continents: tuple[WorldContinent, ...] = ()
+        self.created: WorldTerrainCreated | None = None
+        self.continent = tk.StringVar(self)
+        self.detail = tk.StringVar(self, value="Choose a continent from the imported world.")
+        ttk.Label(self, text="Generate terrain from your world", style="Value.TLabel",
+                  wraplength=340).pack(anchor="w", pady=(0, 12))
+        ttk.Label(self, text="Continent", style="Body.TLabel").pack(anchor="w")
+        self.selection = ttk.Combobox(self, textvariable=self.continent, state="readonly")
+        self.selection.pack(fill="x", pady=(4, 12))
+        ttk.Label(
+            self, text="Creates a terrain project at the world's physical scale. "
+            "The continent's islands and any connected neighbouring land are included "
+            "to keep land borders from becoming coastlines.",
+            style="Body.TLabel", wraplength=340,
+        ).pack(anchor="w", pady=(0, 12))
+        ttk.Label(
+            self, text="Start at 257 pixels, then adjust terrain settings and generate in "
+            "the Terrain workspace. This uses the current terrain generator; world "
+            "climate, geology and aging are not applied yet.",
+            style="Muted.TLabel", wraplength=340,
+        ).pack(anchor="w", pady=(0, 16))
+        self.create_button = ttk.Button(self, text="Create terrain project…",
+                                       style="Accent.TButton", command=self.choose_folder)
+        self.create_button.pack(fill="x")
+        self.cancel_button = ttk.Button(self, text="Cancel preparation", command=cancel,
+                                       state="disabled", style="Quiet.TButton")
+        self.cancel_button.pack(fill="x", pady=6)
+        ttk.Separator(self).pack(fill="x", pady=12)
+        ttk.Label(self, textvariable=self.detail, wraplength=340,
+                  style="Muted.TLabel").pack(anchor="w")
+        self.open_button = ttk.Button(self, text="Open prepared project",
+                                      command=self.open_created, state="disabled",
+                                      style="Quiet.TButton")
+        self.open_button.pack(fill="x", pady=12)
+        self.set_busy(False)
+
+    def set_continents(self, continents: tuple[WorldContinent, ...]) -> None:
+        self._continents = tuple(sorted(continents, key=lambda c: c.name.casefold()))
+        names = tuple(c.name for c in self._continents)
+        self.selection.configure(values=names)
+        if self.continent.get() not in names:
+            self.continent.set(names[0] if names else "")
+        self.set_busy(False)
+
+    def set_busy(self, busy: bool, cancellable: bool = False) -> None:
+        self.selection.configure(state="disabled" if busy else "readonly")
+        self.create_button.configure(state="normal" if self._continents and not busy
+                                     else "disabled")
+        self.cancel_button.configure(state="normal" if busy and cancellable else "disabled")
+        self.open_button.configure(state="normal" if self.created and not busy else "disabled")
+
+    def choose_folder(self) -> None:
+        selected = next((c for c in self._continents if c.name == self.continent.get()), None)
+        if selected is None:
+            return
+        slug = "".join(c if c.isalnum() or c in "-_" else "-" for c in selected.name)
+        folder = filedialog.asksaveasfilename(
+            parent=self, title="Create a new terrain project folder",
+            initialfile="terrain-" + slug,
+        )
+        if folder:
+            self._create(selected.id, Path(folder))
+
+    def show_created(self, created: WorldTerrainCreated) -> None:
+        self.created = created
+        source = created.source
+        names = ", ".join(c.name for c in source.world.continents
+                          if c.id in source.included_continent_ids)
+        stretch = source.projection.maximum_transverse_scale - 1
+        self.detail.set(
+            f"Prepared land: {names}\n"
+            f"Longest projected extent: {source.object_scale_km:,.1f} km\n"
+            f"Maximum sampled projection stretch: {stretch:.1%}\n\n"
+            f"Saved in: {created.loaded.path.parent}\n"
+            "Keep coastline.svg with terrain.dmterrain.json when moving the project."
+        )
+        self.set_busy(False)
+
+    def open_created(self) -> None:
+        if self.created is not None:
+            self._open(self.created)

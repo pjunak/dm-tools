@@ -61,9 +61,12 @@ defaults and drawable provinces with separate ages and overlap priorities.
 [Bathymetric hypotheses](docs/world-bathymetry.md) now provide explicit ocean
 selection, a shelf/slope/basin depth model, error/support views and verified exports.
 Separate water-piece connections and explicit unresolved support are now retained.
-Next come accepted physical river paths/landforms, rough world terrain and selected
-regional refinement with shared climate and geological history. Climate, world-linked terrain and regional history replay are not
-implemented; the saved world is a source project, not a generated parent.
+**World → Terrain…** now creates a usable terrain project for a selected continent
+and its connected neighbours at the world's physical scale. It opens in Terrain
+for input authoring and generation; `dmtools world terrain` provides the same
+handoff from the CLI. See the [world guide](docs/terrain-worlds.md).
+Coupled rough-world relief, climate and regional history replay remain planned;
+this standalone handoff does not make a reviewed world parent.
 See the [research review](docs/research/2026-09-24-world-context-enrichment.md).
 
 ## Requirements

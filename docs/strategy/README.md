@@ -11,7 +11,8 @@ guide relocation now gives 4/4 capture and descending guide profiles in the 250 
 raster while retaining hard targets. Local head/mouth banks now pass both ordinary
 and dense checks. Tighter bounds remove the large 250 m delivery artifact while
 protecting cell interiors. Raster bank shape and coarse delivery still fail;
-compare explicit raster bank constraints before terrain/network co-evolution. Groundwater is a bounded
+retain these failures before adopting terrain/network co-evolution.
+Product feature delivery now leads as described below. Groundwater is a bounded
 mechanism experiment, not a remedy for unexplained surface sinks. No external
 erosion or groundwater engine has been adopted into application generation.
 
@@ -26,7 +27,8 @@ directional water exposure with verified inspection/export/reopening. Authored
 recipe and editor. [Bathymetry](../world-bathymetry.md) now supplies an explicit
 shelf/slope/basin hypothesis with its own generation, error/support views and
 verified products. Water-piece face incidence, source verification and explicit
-precision support are now implemented. Return to B/C physical paths and landforms.
+precision support are now implemented. A standalone world-to-terrain handoff
+now connects those sources to the existing local generation workflow.
 Physical path/landform acceptance remains a prerequisite for world-informed
 production terrain; ecological classifications remain downstream.
 
@@ -37,6 +39,22 @@ feature, not a second concurrent critical path. The
 and untested work. Code, schemas, tests and accepted ADRs own current contracts;
 contradictions require investigation, not automatic acceptance of a defect.
 Dated reports and accepted ADRs remain historical evidence.
+
+## Feature delivery priority
+
+The user selected **world-to-terrain workflow** over further small numerical or
+efficiency refinements. The [first handoff is implemented](../research/2026-09-27-world-to-terrain-workflow.md):
+choose a continent, retain connected land and world scale, create a portable
+terrain project and open it for authoring/generation. This uses the current
+generator and does not claim the experimental history model is accepted.
+
+Next prioritize visible broad landform effects from authored geological inputs,
+followed by shared rough-world relief and useful regional generation. Keep
+selection, projection, source formats, orchestration and UI in separate modules.
+The unresolved river-bank and representation findings remain adoption gates;
+they do not make every usable editor/world feature wait for research completion.
+Consult before tests expected to exceed roughly two minutes or of uncertain long
+duration, with purpose, estimate and a stop condition.
 
 ## Product boundary
 
@@ -59,7 +77,7 @@ Dated reports and accepted ADRs remain historical evidence.
 
 ## Development checkpoints
 
-| Milestone | Position on 2026-09-26 | Next exit condition |
+| Milestone | Position on 2026-09-27 | Next exit condition |
 |---|---|---|
 | Usable authoring and reproducible build | Implemented | Maintain it while changing generation |
 | Measured quality baseline | Partial: eight-case profile probe plus paired evolution/control gallery completed | One comparable gallery and structural scorecard, including known failures |
@@ -67,12 +85,19 @@ Dated reports and accepted ADRs remain historical evidence.
 | Coherent landform families | Partial recipes; two-epoch reference implemented and measured, quality gate open | Related range/pass/tributary/lowland structure that survives multiple seeds and scales |
 | Useful zoom enrichment | Experimental | Accepted regional shape, transition and inherited-flow behavior; then viewport scheduling |
 | World import and shared context | WC0 plus WC1 geographic coverage, water topology, edge widths, shore distance, directional exposure, verified products, authored geology recipes, bathymetric hypotheses and water-piece incidence implemented | B/C terrain acceptance; later physical forcing and conservative transport |
+| World-to-terrain handoff | Implemented: connected land, retained source/projection, fixed scale, CLI and editor | Geological landform inputs, result correspondence and wide regional domains |
 | World-informed rough terrain and history | Planned, dependent on physical terrain acceptance | WC2/WC3 coarse relief, seasonal runoff and bounded feedback; WC4 reviewed parent |
 | Hydrological water and ecology | Later dependent work | Flux/storage/river-size evidence and WC6 ecological layers; shared world context comes earlier |
 
 Do not turn this into one percentage or count passed tests as realism progress.
 
 ## Next implementation order
+
+**Active product sequence:** the standalone world handoff is delivered. Next add
+substantial geological/landform input effects, then shared rough relief and
+regional workflows. The A–F sections below retain dependencies and scientific
+acceptance criteria; their historical lettering does not put small dashboard or
+bank refinements ahead of that selected product sequence.
 
 ### A. Make quality differences easy to see and measure
 
@@ -120,7 +145,10 @@ The [world-context plan](world-context.md) is the detailed R49 feature contract.
 **WC0 delivered:** source-preserving SVG import, explicit spherical frame/radius,
 continent/island assignment, portable saves and a source preview. The
 [implementation report](../research/2026-09-25-world-source-workspace.md) records
-validation and limits. The local terrain importer remains a separate operation.
+validation and limits. The new World → Terrain action additionally creates a
+prepared projected SVG and ordinary terrain project without generic SVG repair.
+Connected neighbours prevent false internal coasts. The source retains the full
+world and fixed metric scale; climate/geology forcing is not applied yet.
 **WC1 geography delivered:** spherical coverage and vector-derived periodic water,
 with narrow-strait/island controls, support previews, hashed exports, verified
 reopening, shared-edge measurements, shoreline distance with an error bound and
@@ -130,8 +158,10 @@ explicit overlap/priority and independent ages/duration at one common present.
 **WC1 bathymetry also delivered:** explicit ocean selection, shelf/slope/basin
 inputs, conservative depth/error fields and independent editor/result contracts.
 **WC1 water-piece incidence also delivered:** separate pieces and finite shared
-intervals, source-verified context v4 and unresolved-connectivity support. Return
-now to B/C physical-path and landform acceptance for rough terrain. Later transport
+intervals, source-verified context v4 and unresolved-connectivity support.
+The standalone handoff is delivered; next make authored geological hypotheses
+produce visible broad landform differences. B/C physical-path acceptance still
+gates adoption of the new coupled rough-terrain model. Later transport
 must admit that support and establish conservative capacity/flux contracts.
 Do not infer ocean depth from width or introduce climate fields without budgets. These bounded
 contracts precede the remaining B/C quality work and require no erosion engine
@@ -147,7 +177,8 @@ This splits the former F phase: geographic placement and shared forcing move
 earlier; ecological interpretation stays later. Product sequence is import →
 provisional context → rough terrain → climate/history feedback → selected world
 parent → detailed continents/regions. Build order is not seven parallel workstreams:
-finish WC1 after delivered WC0, resolve B/C acceptance, then WC2-WC4 and D/WC5.
+use the delivered WC0/WC1 and handoff for product testing, add broad landform
+guidance, resolve B/C acceptance for model adoption, then WC2-WC4 and D/WC5.
 
 **Exit:** preserved authored vectors and semantic membership, validated spherical
 coordinates/topology, explicit hypotheses and one bounded world candidate with

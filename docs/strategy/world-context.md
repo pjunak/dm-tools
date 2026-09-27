@@ -1,10 +1,11 @@
 # World-context and staged terrain implementation plan
 
-Updated 2026-09-25. **WC0 implemented; WC1 geography/reopening/edge/exposure, authored geology and bathymetry slices delivered; remaining WC1-WC6 work planned.** The
+Updated 2026-09-27. **WC0 implemented; WC1 geography/reopening/edge/exposure, authored geology and bathymetry slices delivered; remaining WC1-WC6 work planned.** The
 [World workspace](../terrain-worlds.md) imports retained SVG sources, validates
 explicit spherical placement and ownership, and saves portable world projects.
-Existing terrain generation is still local; no climate or continent-history
-format is implemented.
+World → Terrain now transfers a selected continent and connected land into a
+usable local generation project with retained world/projection identity. This
+standalone handoff is implemented; climate and continent-history coupling are not.
 The [research review](../research/2026-09-24-world-context-enrichment.md) records
 primary sources, existing solutions, licenses and the limits of the recommendation.
 The [main strategy](README.md) owns execution order; [TODO R49](../../TODO.md)
@@ -63,6 +64,20 @@ The intended user sequence is:
 High-resolution historical refinement is an intended capability, not a claim
 about the present residual-detail command. Exported low-resolution previews,
 physical process resolution and display zoom are separate settings.
+
+## Delivered standalone terrain handoff
+
+[ADR-0079](../adr/0079-project-world-land-into-terrain.md) and the
+[workflow report](../research/2026-09-27-world-to-terrain-workflow.md) document the
+first usable source-to-terrain path. It preserves islands, holes, physical
+neighbours and planetary scale; uses a bounded metric projection; and opens an
+ordinary terrain project through the existing editor's document guards.
+
+This is an explicit early product slice, not completion of WC2 or WC4. Context,
+bathymetry, geology and aging do not yet drive the generated ground. Wide
+connected land needs regional domains with shared boundary conditions. Result
+georeferencing/overlay and geological landform guidance are feature follow-ups;
+none requires pretending the current river/history research passed its gates.
 
 ## What is authoritative
 
@@ -389,12 +404,14 @@ and source-verified context v4. The viewer and CLI expose precision-limited
 fragmented source regions; no inferred connection repairs them. This is a
 connectivity foundation, not a circulation model.
 
-**Next concrete batch: B/C physical paths and landform acceptance.** Resume the
-shared physical-path/finished-ground comparison, rotation/grid sensitivity and
-hard-constraint controls before WC2 rough land terrain. Keep physical geometry
-and budgets explicit before assigning sill depth or exchange capacity. Do not
-indefinitely expand optional input panels or assume more metadata alone improves
-terrain quality.
+**Current product priority: world-to-terrain delivery.** Its first standalone
+handoff is implemented and verified on public fixtures plus a private continent.
+Next consume authored geological guidance to produce visible broad landform
+differences, then extend shared rough relief and regional workflows. Preserve the
+B/C shared path/ground, rotation/grid and hard-constraint gates before adopting
+the coupled WC2 model. Keep geometry and budgets explicit before assigning sill
+depth or exchange capacity. Additional metadata panels alone are not progress
+towards generation quality.
 
 A transport solver must use the implemented piece/interval graph, reject
 fragmented source-region support and establish conservative transfer budgets;

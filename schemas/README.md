@@ -6,6 +6,11 @@ Only the current formats are supported:
   snapshot, full-sphere frame/radius and explicit continent/island assignments.
   This is a validated source, not a climate/terrain build or generated parent.
 
+- [World terrain source v1](world/terrain-source-v1.schema.json): metadata embedded
+  in a canonical prepared SVG, retaining the world, selected/connected ownership,
+  metric polygons and custom-sphere projection. Project v6 references this SVG
+  normally; runtime loading also checks its canonical visible paths and fixed scale.
+
 - [World context v4](world/context-v4.schema.json): generated spherical coverage, separate water-piece connectivity/support,
   vector-derived water regions, shared-edge widths, shore distance, eight-direction
   water exposure, resolution support and hashes of the numeric
@@ -37,7 +42,9 @@ references project settings; regional samples reuse current project settings
 and the build's runtime, seed and file-identity definitions. None depends on
 obsolete formats.
 Terrain numeric arrays use an endpoint-node SVG-local plane. GeoTIFF records the
-same samples in local metres with an upward y axis; neither has a world CRS.
+same samples in local metres with an upward y axis; neither raster format has
+a world CRS. A prepared world-derived SVG additionally retains source projection
+and planetary scale; this is not yet encoded in build/GeoTIFF georeferencing.
 See the [build guide](../docs/terrain-builds.md) and
 [seed contract](../docs/terrain-seeds.md).
 

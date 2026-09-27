@@ -22,8 +22,10 @@ Rows and elevation values keep their original order. The negative y scale in
 the TIFF transform makes the first row the top of the map without flipping
 arrays. There is no EPSG world CRS, ellipsoid, latitude/longitude or planetary
 radius. Do not assign an Earth CRS or infer campaign-world placement from the
-local kilometre scale. Declared source-to-world correspondence and a suitable
-working projection are separate implementation work.
+local kilometre scale alone. World-derived terrain sources now retain a custom
+sphere, working projection and source origin in their prepared SVG; see the
+[coordinate contract](terrain-coordinates.md#world-derived-terrain-sources).
+That correspondence has not yet been transferred into raster georeferencing.
 
 ## Sample registration
 

@@ -40,6 +40,10 @@ from dmtools.terrain.application.world_context import (
     open_context,
 )
 from dmtools.terrain.application.world_geology import GeologyFile
+from dmtools.terrain.application.world_terrain import (
+    WorldTerrainCreated,
+    create_world_terrain_project,
+)
 from dmtools.terrain.domain.world import (
     WorldAssignment,
     WorldContinent,
@@ -60,6 +64,7 @@ from dmtools.terrain.pipeline.world import WorldMap, prepare_world_map
 from dmtools.terrain.viewport import MapViewport
 from dmtools.terrain.world_bathymetry_ui import BathymetryEditor
 from dmtools.terrain.world_geology_ui import GeologyEditor
+from dmtools.terrain.world_terrain_ui import WorldTerrainPanel
 
 
 @dataclass(frozen=True)
@@ -99,6 +104,12 @@ class _ContextExported:
 
 
 @dataclass(frozen=True)
+class _TerrainReady:
+    created: WorldTerrainCreated
+    signature: object
+
+
+@dataclass(frozen=True)
 class _Progress:
     message: str
 
@@ -112,6 +123,7 @@ type _Event = (
     | _ContextReady
     | _ContextOpened
     | _ContextExported
+    | _TerrainReady
     | _Progress
     | Exception
 )
@@ -119,9 +131,13 @@ type _Ownership = tuple[tuple[WorldContinent, ...], tuple[WorldAssignment, ...]]
 
 
 class WorldWorkspace(ttk.Frame):
-    def __init__(self, parent: tk.Misc, on_change: Callable[[], None]) -> None:
+    def __init__(
+        self, parent: tk.Misc, on_change: Callable[[], None],
+        on_terrain_ready: Callable[[WorldTerrainCreated], None] | None = None,
+    ) -> None:
         super().__init__(parent, style="Paper.TFrame", padding=(18, 12))
         self.on_change = on_change
+        self.on_terrain_ready = on_terrain_ready
         self._scheduler = self.winfo_toplevel()
         self.source: WorldSource | None = None
         self.path: Path | None = None
@@ -223,6 +239,7 @@ class WorldWorkspace(ttk.Frame):
             ("Save As…", lambda: self.save(save_as=True)),
             ("Geology…", self.edit_geology),
             ("Bathymetry…", self.edit_bathymetry),
+            ("Terrain…", self.show_terrain),
         ):
             self._button(header, label, action).pack(side="left", padx=(10, 0))
         ttk.Label(
@@ -237,6 +254,9 @@ class WorldWorkspace(ttk.Frame):
         sidebar.rowconfigure(0, weight=1)
         pages = ttk.Notebook(sidebar, width=390)
         self.pages = pages
+        self.terrain_panel = WorldTerrainPanel(
+            pages, self.create_terrain, self._open_prepared_terrain, self.cancel_context,
+        )
         pages.grid(row=0, column=0, sticky="nsew")
         mapping = ttk.Frame(pages, style="Panel.TFrame", padding=8)
         frame_page = ttk.Frame(pages, style="Panel.TFrame", padding=12)
@@ -323,6 +343,7 @@ class WorldWorkspace(ttk.Frame):
             style="Muted.TLabel",
             wraplength=335,
         ).grid(row=17, column=0, sticky="ew", pady=12)
+        pages.add(self.terrain_panel, text="Terrain")
         self.adjustments_page = ttk.Frame(pages, style="Panel.TFrame", padding=8)
         pages.add(self.adjustments_page, text="Adjustments")
         self.adjustments_page.columnconfigure(0, weight=1)
@@ -537,6 +558,7 @@ class WorldWorkspace(ttk.Frame):
         self.context_cancel.configure(
             state="normal" if busy and self._context_cancellation is not None else "disabled"
         )
+        self.terrain_panel.set_busy(busy, self._context_cancellation is not None)
         if busy:
             self.progress.start(12)
         else:
@@ -568,7 +590,18 @@ class WorldWorkspace(ttk.Frame):
             self._context_cancellation = None
             self._set_busy(False)
             if isinstance(event, GenerationCancelled):
-                self.status.set("Context job cancelled. No new completed result was published.")
+                self.status.set("World job cancelled. No new completed result was published.")
+            elif isinstance(event, _TerrainReady):
+                self.terrain_panel.show_created(event.created)
+                self.pages.select(self.terrain_panel)
+                self.status.set(f"Terrain project saved: {event.created.loaded.path}")
+                if event.signature == self._signature():
+                    self._open_prepared_terrain(event.created)
+                else:
+                    self.status.set(
+                        f"World inputs changed. Prepared project retained separately: "
+                        f"{event.created.loaded.path}"
+                    )
             elif isinstance(event, _GeologyReady):
                 self.validated = event.world
                 self._show_summary(event.world)
@@ -758,6 +791,38 @@ class WorldWorkspace(ttk.Frame):
             "grid resolutions before drawing conclusions."
         )
 
+    def show_terrain(self) -> None:
+        self.pages.select(self.terrain_panel)
+
+    def _open_prepared_terrain(self, created: WorldTerrainCreated) -> None:
+        if self.on_terrain_ready is not None:
+            self.on_terrain_ready(created)
+
+    def create_terrain(self, continent_id: str, output: Path) -> None:
+        if self.busy:
+            return
+        try:
+            project = self.project()
+        except ValueError as error:
+            messagebox.showerror("Terrain needs a valid world", str(error), parent=self)
+            return
+        signature = self._signature()
+        cancellation = CancellationToken()
+        self._context_cancellation = cancellation
+
+        def progress(_fraction: float, message: str) -> None:
+            self._events.put(_Progress(message))
+
+        self._work(
+            "Preparing world land for terrain generation…",
+            lambda: _TerrainReady(
+                create_world_terrain_project(
+                    project, continent_id, output, progress=progress, cancellation=cancellation,
+                ),
+                signature,
+            ),
+        )
+
     def generate_context(self) -> None:
         if self.busy:
             return
@@ -809,8 +874,9 @@ class WorldWorkspace(ttk.Frame):
     def cancel_context(self) -> None:
         if self._context_cancellation is not None:
             self._context_cancellation.cancel()
-            self.status.set("Stopping the context job at the next checkpoint…")
+            self.status.set("Stopping the world job at the next checkpoint…")
             self.context_cancel.configure(state="disabled")
+            self.terrain_panel.cancel_button.configure(state="disabled")
 
     def export_context(self) -> None:
         if self.busy:
@@ -948,6 +1014,7 @@ class WorldWorkspace(ttk.Frame):
                     tags=("issue",) if feature.issue else (),
                 )
         self.owner_input.configure(values=sorted(owners.values(), key=str.casefold))
+        self.terrain_panel.set_continents(self.continents)
         self.tree.selection_set([key for key in selected if self.tree.exists(key)])
         self._schedule_draw()
 
@@ -1247,7 +1314,7 @@ class WorldWorkspace(ttk.Frame):
             f"radius {world.project.frame.radius_km:,.0f} km\n{names}\n"
             f"{len(world.adjustments)} import adjustments; see the Adjustments tab. "
             "Areas use prepared coverage on the declared sphere. "
-            "World source is ready; climate and terrain are not generated yet."
+            "World source is ready. Use Terrain to create a local generation project."
         )
 
     def _review_adjustment(self, _event: tk.Event[tk.Misc] | None = None) -> None:

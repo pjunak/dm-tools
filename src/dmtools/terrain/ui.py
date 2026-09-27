@@ -43,6 +43,7 @@ from dmtools.terrain.adapters.render import (
 )
 from dmtools.terrain.adapters.viewport import render_viewport
 from dmtools.terrain.adapters.water_display import WaterDisplay
+from dmtools.terrain.application.world_terrain import WorldTerrainCreated
 from dmtools.terrain.domain import (
     BrushToolSettings,
     Coastline,
@@ -212,6 +213,7 @@ class TerrainApp:
         self._drag_candidate: TerrainConstraint | None = None
         self._drag_error: str | None = None
         self._settings_widgets: list[ttk.Widget] = []
+        self._world_scale_widgets: list[ttk.Widget] = []
         self._draft_points: list[tuple[float, float]] = []
         self._events: queue.Queue[_UiEvent] = queue.Queue()
         self._variables: dict[str, tk.DoubleVar] = {}
@@ -324,7 +326,9 @@ class TerrainApp:
         self.workspaces.grid(row=0, column=0, sticky="nsew")
         self.root.rowconfigure(0, weight=1)
         self.root.columnconfigure(0, weight=1)
-        self.world_workspace = WorldWorkspace(self.workspaces, self._refresh_document_state)
+        self.world_workspace = WorldWorkspace(
+            self.workspaces, self._refresh_document_state, self._accept_world_terrain,
+        )
         self.workspaces.add(self.world_workspace, text="  World  ")
         page = self.terrain_page = ttk.Frame(
             self.workspaces, style="Paper.TFrame", padding=(18, 12, 18, 16))
@@ -451,6 +455,8 @@ class TerrainApp:
         )
         spinbox.grid(row=1, column=1, sticky="e")
         self._settings_widgets.extend((scale, spinbox))
+        if spec.key == "object_scale_km":
+            self._world_scale_widgets.extend((scale, spinbox))
         if spec.key == "resolution_px":
             presets = ttk.Frame(container, style="Panel.TFrame")
             presets.grid(row=2, column=0, columnspan=2, sticky="w", pady=(3, 0))
@@ -1915,9 +1921,15 @@ class TerrainApp:
             )
         for widget in self._settings_widgets:
             widget["state"] = state
+        if self._coastline_source is not None and self._coastline_source.world_terrain is not None:
+            for widget in self._world_scale_widgets:
+                widget["state"] = "disabled"
         self.render_style_input.configure(state="disabled" if busy else "readonly")
         self._set_authoring_enabled(not busy and self._coastline is not None)
         self._refresh_reference_state()
+
+    def _accept_world_terrain(self, created: WorldTerrainCreated) -> None:
+        self._guard_unsaved(lambda: self._load_project(created.loaded.path))
 
     def _guard_unsaved(self, action: Callable[[], None]) -> None:
         if self._busy:
@@ -2227,6 +2239,8 @@ class TerrainApp:
         self.workspaces.select(self.terrain_page)
         self._coastline = coastline
         self._coastline_source = source
+        if source is not None and source.world_terrain is not None:
+            self._variables["object_scale_km"].set(source.world_terrain.object_scale_km)
         self._project_path = None
         self._saved_inputs = None
         self._viewport.fit()
@@ -2272,6 +2286,8 @@ class TerrainApp:
 
     def _read_settings(self) -> TerrainSettings:
         values = {key: variable.get() for key, variable in self._variables.items()}
+        if self._coastline_source is not None:
+            self._coastline_source.validate_scale(values["object_scale_km"])
         return TerrainSettings(
             seed=round(values["seed"]),
             object_scale_km=values["object_scale_km"],
@@ -2352,6 +2368,11 @@ class TerrainApp:
         self.status_label.configure(
             text=f"Opened {loaded.path.name} with {count} authored feature{suffix}."
         )
+        if loaded.coastline_source.world_terrain is not None:
+            self.status_label.configure(
+                text="World terrain project ready. Scale is fixed by the world projection. "
+                "Add instructions or click Generate terrain."
+            )
         self.preview_meta.configure(text=f"{count} authored feature{suffix}")
         self._refresh_reference_state()
         self._draw_preview()

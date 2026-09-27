@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dmtools.local/schemas/world/terrain-source-v1.schema.json",
+  "title": "Retained world terrain SVG metadata v1",
+  "description": "Canonical metadata in a prepared SVG. Runtime also verifies visible paths, retained world identity, geometry, ownership, and physical scale.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "dmtools.world-terrain-source"
+    },
+    "version": {
+      "const": 1
+    },
+    "model": {
+      "const": "world-landmass-aeqd@1"
+    },
+    "world": {
+      "$ref": "https://dmtools.local/schemas/world/project-v1.schema.json"
+    },
+    "world_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "requested_continent_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "included_continent_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "feature_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "axes": {
+      "const": "projected-east-south-metres"
+    },
+    "projection": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "radius_km": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "longitude_deg": {
+          "type": "number",
+          "minimum": -180,
+          "exclusiveMaximum": 180
+        },
+        "latitude_deg": {
+          "type": "number",
+          "minimum": -90,
+          "maximum": 90
+        },
+        "maximum_angle_deg": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 80
+        },
+        "maximum_transverse_scale": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 1.5
+        },
+        "curve_tolerance_m": {
+          "const": 25
+        },
+        "source_step_deg": {
+          "const": 0.25
+        }
+      },
+      "required": [
+        "radius_km",
+        "longitude_deg",
+        "latitude_deg",
+        "maximum_angle_deg",
+        "maximum_transverse_scale",
+        "curve_tolerance_m",
+        "source_step_deg"
+      ]
+    },
+    "coastline": {
+      "$ref": "urn:dmtools:schema:terrain-input-snapshot:2#/properties/coastline"
+    }
+  },
+  "required": [
+    "schema",
+    "version",
+    "model",
+    "world",
+    "world_sha256",
+    "requested_continent_id",
+    "included_continent_ids",
+    "feature_ids",
+    "axes",
+    "projection",
+    "coastline"
+  ]
+}

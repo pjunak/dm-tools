@@ -286,7 +286,8 @@ def test_world_cli_inspects_saved_project(capsys: pytest.CaptureFixture[str]) ->
     assert main(["world", "inspect", str(EXAMPLE)]) == 0
     output = capsys.readouterr().out
     assert "Four Shores" in output and "Continents: 4" in output and "6500 km" in output
-    assert "not implemented" in output
+    assert "world terrain for a local project" in output
+    assert "coupled world terrain is planned" in output
 
 
 def test_startup_world_and_terrain_are_mutually_exclusive() -> None:

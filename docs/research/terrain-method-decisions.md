@@ -1,7 +1,7 @@
 # Terrain method decisions and failed experiments
 
-Updated 2026-09-27 against baseline `72fc369` and the guarded snapshot
-implementation following T13. This is the living record of
+Updated 2026-09-27 through the world-to-terrain batch against baseline
+`0c3edc8`, following the guarded snapshot implementation. This is the living record of
 material generation approaches that were rejected, constrained or retained only
 as references. A failed method does not remove its desired feature from the plan.
 The [strategy](../strategy/README.md) owns execution order; dated reports own the
@@ -354,6 +354,43 @@ fallbacks. Defer the full bilinear solve behind representability checks. Current
 Float32 DEM authority remains in force; any richer source requires an ADR and
 coherent schema/consumer changes. Keep history and world integration gated.
 Consult the user before longer tests; the completed probes took 0.855 / 20.625 s.
+
+### T13 follow-up: wider geometry and product priority
+
+The [world-to-terrain report](2026-09-27-world-to-terrain-workflow.md) records a
+12.07 s exploratory probe of four modified layouts. Capture, hard controls and
+bounds passed; 1–4 inward sections failed per case, with 0.106–0.606 m excursions
+and no endpoint failures. The cause of each small excursion remains unisolated.
+This is evidence against general acceptance of the current patch family, not
+proof that the underlying feature is impossible. Retain analytic patches with
+aligned strips or constrained triangles as fallback candidates.
+
+The user chose a usable world-to-terrain workflow next. Further small bank tuning
+is deferred behind major features; it remains required when adopting the new
+construction model. The handoff uses the existing terrain engine and preserves
+the Float32 authority contract.
+
+## T14 - Treat semantic continent pieces as separate physical terrain
+
+The [world handoff report](2026-09-27-world-to-terrain-workflow.md) records a
+projection-centre change caused solely by splitting identical physical land
+into unequal ownership pieces. Separate selection would additionally make an
+internal border a coastline. Dissolve connected physical land before both
+projection-centre selection and terrain generation. Exact mask and Float32
+equality now guard equivalent ownership partitions.
+
+Source offsets are a distinct cause: matching native border curves displaced
+by 0.0015-0.0101 map units retained false coastal grooves even after connected
+components were selected. Confirmed source repairs remove those slivers.
+Globally buffering or closing every narrow water gap was rejected because it
+would alter genuine straits. The native export API was unavailable; a precise
+SVG segment correction preserved all other imported features. Private source
+repair is not an automatic importer heuristic or a new erosion model.
+
+The same batch replaced a false continental-area subtraction check with direct
+MultiPolygon topology validation; its 0.05078125 m² roundoff was not overlap.
+Retain these workflow fixes while keeping regional projection support and
+physical generation acceptance as separate next gates.
 
 ## What the failures change
 

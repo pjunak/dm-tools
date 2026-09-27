@@ -47,9 +47,12 @@ The NPY files contain numeric arrays only and need no pickle loading. The
 GeoTIFF carries the same elevations with local metric coordinates and an
 embedded mask; see the [export contract](terrain-geotiff.md). The current plane maps the longest SVG
 dimension to the authored object size, with x increasing right and y increasing
-down. Samples include both extent endpoints. World CRS and planetary radius
-are explicitly unspecified. Do not import these arrays as longitude/latitude
-or assume they already follow a campaign world's projection.
+down. Samples include both extent endpoints. For a world-derived project, that
+object size is fixed by its retained metric projection. The build manifest and
+GeoTIFF still do not encode world CRS or radius: keep the prepared source SVG
+with the project for that correspondence. Do not import these arrays directly
+as longitude/latitude. Numeric input snapshots preserve effective geometry,
+not the world metadata embedded in the source SVG.
 The [coordinate contract](terrain-coordinates.md) explains the shared frame,
 endpoint registration and distinct output versus shared routing/diagnostic spacings.
 

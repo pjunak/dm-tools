@@ -95,6 +95,16 @@ def create_parser() -> argparse.ArgumentParser:
     inspect = world_commands.add_parser("inspect", help="Validate and summarize a saved world map.")
     inspect.add_argument("project", type=Path, help="Portable .dmworld.json project.")
     inspect.set_defaults(_handler=_run_world_inspect)
+    world_terrain = world_commands.add_parser(
+        "terrain", help="Create a local terrain project from a world continent and connected land.",
+    )
+    world_terrain.add_argument("project", type=Path, help="Portable .dmworld.json project.")
+    world_terrain.add_argument("--continent", required=True, help="Continent name or ID.")
+    world_terrain.add_argument("--output", type=Path, required=True, help="New project folder.")
+    world_terrain.add_argument("--seed", type=int, default=20260902)
+    world_terrain.add_argument("--resolution", type=int, default=257,
+                               help="Initial pixels; 64-4096.")
+    world_terrain.set_defaults(_handler=_run_world_terrain)
     context = world_commands.add_parser("context", help="Generate spherical geographic context.")
     context.add_argument("project", type=Path, help="Portable .dmworld.json project.")
     context.add_argument("--output", type=Path, required=True,
@@ -121,6 +131,35 @@ def create_parser() -> argparse.ArgumentParser:
         "result", type=Path, help="Result directory or bathymetry.json.")
     inspect_bathymetry.set_defaults(_handler=_run_world_bathymetry_inspect)
     return parser
+
+
+def _run_world_terrain(arguments: argparse.Namespace) -> int:
+    from dmtools.terrain.adapters.world_project import read_world_project
+    from dmtools.terrain.application.world_terrain import create_world_terrain_project
+    from dmtools.terrain.domain import TerrainSettings
+
+    try:
+        world = read_world_project(arguments.project)
+        matching = [c for c in world.continents
+                    if c.id == arguments.continent
+                    or c.name.casefold() == arguments.continent.casefold()]
+        if len(matching) != 1:
+            raise ValueError("Choose one continent by name or ID from: "
+                             + ", ".join(c.name for c in world.continents))
+        created = create_world_terrain_project(
+            world, matching[0].id, arguments.output,
+            settings=TerrainSettings(seed=arguments.seed, resolution_px=arguments.resolution),
+        )
+    except (OSError, ValueError, RuntimeError) as error:
+        print(f"World terrain preparation failed: {error}", file=sys.stderr)
+        return 1
+    names = ", ".join(c.name for c in world.continents
+                      if c.id in created.source.included_continent_ids)
+    print(f"Terrain project ready: {created.loaded.path}")
+    print(f"Included land: {names}; projected extent {created.source.object_scale_km:,.1f} km.")
+    print("Open in the Terrain workspace or use dmtools terrain build.")
+    print("Uses current terrain generation; world climate, geology and aging are not applied yet.")
+    return 0
 
 
 def _run_world_bathymetry(arguments: argparse.Namespace) -> int:
@@ -228,7 +267,8 @@ def _run_world_inspect(arguments: argparse.Namespace) -> int:
     print(f"Import adjustments: {len(result.adjustments)}; original SVG retained.")
     for adjustment in result.adjustments:
         print(f"  {adjustment.message} ({adjustment.area_source_units2:.6g} square source units)")
-    print("Source map only: world climate and terrain generation are not implemented yet.")
+    print("Source map ready. Use world terrain for a local project; "
+          "coupled world terrain is planned.")
     return 0
 
 

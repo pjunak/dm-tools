@@ -73,8 +73,9 @@ these proposals and the [strategy](../strategy/README.md) for adoption gates.
 
 The current implemented path is:
 
-1. Load and validate an SVG or versioned terrain project, then dissolve its
-   closed land geometry.
+1. Load and validate an SVG or versioned terrain project. Ordinary SVG import
+   dissolves closed land geometry; a prepared world-derived SVG restores its
+   already projected polygons exactly, including small holes and gaps.
 2. Convert normalized authored constraints into the source-bounds local metric
    frame shared by mainland and islands. This is scaling, not a world projection.
 3. Compose regional full/macro fields, prepare stable valley profiles and apply
@@ -150,6 +151,20 @@ open/save. `world_ui.py` supplies background jobs, mapping and document guards.
 The CLI exposes `terrain gui --world` and `world inspect`. No new runtime
 dependency or numerical terrain stage is introduced. See
 [ADR-0070](../adr/0070-retain-world-source-and-workspaces.md).
+
+The [world-to-terrain handoff](../terrain-worlds.md#create-terrain-from-the-world)
+is a separate application operation, not a new terrain solver.
+`domain/world_terrain.py` owns projection/source values;
+`pipeline/world_landmass.py` collects physically connected prepared land;
+`adapters/world_projection.py` uses Rasterio/PROJ to produce a metric coast.
+`adapters/world_terrain_source.py` owns canonical visible SVG plus lossless,
+schema-versioned world/projection metadata. Ordinary terrain projects reference
+this source through the existing SVG path/hash contract. `application/world_terrain.py`
+reserves a new folder and publishes the project last, after source verification.
+`world_terrain_ui.py` owns the selection/actions panel; existing workspaces own
+background execution, fresh project loading and unsaved-work guards.
+No climate/geology forcing or accepted world parent is implied.
+See [ADR-0079](../adr/0079-project-world-land-into-terrain.md).
 
 The [geographic context stage](../world-context.md) is now implemented separately:
 `domain/world_context.py` owns spherical grid/settings, `pipeline/world_context.py`

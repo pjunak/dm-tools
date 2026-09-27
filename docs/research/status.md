@@ -69,7 +69,9 @@ The [bathymetry batch](2026-09-25-authored-world-bathymetry.md) adds explicit oc
 selection, shelf/slope/basin depths, numerical bounds and independent editor/results.
 The [water-piece batch](2026-09-25-water-piece-connectivity.md) adds individual
 pieces, shared intervals, source-verified graphs, bounded work and visible support
-for precision-limited source regions. Return to B/C physical paths and landforms.
+for precision-limited source regions. A usable world-to-terrain handoff now
+connects imported geography to current local generation; broad landform features
+lead the next product batch.
 World climate, physical province histories and same-present regional geological
 replay are not implemented. Existing local detail is not history replay. Source
 and license checks for Climlab/GPlates/ExoPlaSim are not local execution evidence.
@@ -88,6 +90,24 @@ resolved within linear and cumulative area limits. The original SVG, frame and
 assignments remain unchanged. The editor lists selectable adjustments; larger
 conflicts still fail. Previous snapshots require reimport. Zoom-to-conflict,
 broader export comparisons, draft saves and import cancellation remain follow-ups.
+
+## Implemented world-to-terrain handoff
+
+The [2026-09-27 workflow batch](2026-09-27-world-to-terrain-workflow.md) adds
+connected-land selection, custom-radius metric projection, portable exact source
+geometry, fixed terrain scale and World/CLI entry points. The existing local
+generator can now consume actual world continents. Public end-to-end/Tk checks
+and a private four-continent Tharkeniss handoff verify this workflow. Equivalent
+physical land with different ownership splits produces identical masks/heights;
+confirmed native border offsets were corrected separately in the source.
+Geological forcing, climate, aging and a reviewed global terrain parent are not
+implemented by it. Product feature work now leads; existing research gates remain
+required before changing the generation authority or promoting a new solver.
+
+A short four-layout river probe retained capture and bounds but failed 1–4 dense
+bank sections per layout (worst 0.106–0.606 m). The mechanism behind those remaining
+small excursions was not isolated. This narrows the research gap without accepting
+general terrain quality, and is not the next product-blocking refinement.
 
 ## Implemented experimental history model
 

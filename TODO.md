@@ -35,6 +35,33 @@ experiment; do not mark a desired feature complete merely because its trial ende
 
 ## Current execution focus — 2026-09-27
 
+**User-selected priority: usable world-to-terrain features and major generation
+gains.** The first handoff is implemented: select a continent, preserve connected
+land and physical scale, create a portable source/project, then generate in the
+existing Terrain workspace. See the [workflow report](docs/research/2026-09-27-world-to-terrain-workflow.md).
+Keep substantial responsibilities in separate files. Small bank refinements and
+performance tuning must not displace this product path unless they block it.
+
+- [x] **World-to-terrain handoff:** World panel and CLI; connected neighbours,
+  islands/holes/seams, bounded custom-sphere projection, retained source identity,
+  fixed physical scale, portable folder, cancellation and guarded editor opening.
+- [x] **Shared-land independence:** dissolve ownership before projection and verify
+  exact mask/Float32 equality for the same land with different continent splits;
+  retain actual narrow straits. Correct confirmed private drawing offsets at source.
+- [ ] **Next major feature:** consume explicit geological provinces/defaults as
+  broad landform guidance with visible range/plateau/lowland differences in this
+  working workflow. Keep authored hypotheses separate from physical aging.
+- [ ] **Shared world terrain:** generate coherent rough relief across connected
+  land, then transfer accepted context and upstream conditions into regional jobs.
+- [ ] **Wide-domain support:** explicit regional selection with shared boundaries;
+  no artificial coast at an administrative border or automatic world rescaling.
+- [ ] **World result correspondence:** map generated results back into the world
+  view and publish raster georeferencing from retained projection metadata.
+- [ ] **Generation adoption:** preserve B/LE2 physical-quality gates before
+  promoting the experimental river/history model into ordinary generation.
+
+### Generation-quality evidence retained
+
 The [progress reassessment](docs/research/2026-09-24-progress-and-generation-strategy.md)
 finds strong workbench/build foundations but unaccepted drainage and landform
 quality. A fresh eight-case probe finds internal rises of 32–132 m on some
@@ -54,22 +81,22 @@ now preserve all 575 local bank profiles through trusted-data storage/reopening;
 world-grid bilinear delivery loses them again. Generic higher-order splines fail
 capture and bounds. The [guarded snapshot implementation](docs/research/2026-09-27-prepared-feature-snapshots.md)
 now reopens the field and complete network with exact profiles, query-order and
-same-surface tile/halo agreement. Next test held-out geometry and real parent/detail
-consistency before a product authority decision or co-evolution. Product DEM
-authority is unchanged; the current comparison passes this fixture only.
+same-surface tile/halo agreement. Four short held-out-layout probes retain
+capture and bounds but still fail 1–4 inward-bank sections, with 0.106–0.606 m
+excursions. Their failure is recorded in the workflow report. Broader geometry
+and real parent/detail acceptance remain required before an authority decision;
+they do not block the standalone handoff using the current generator.
 Consult the user before tests expected to take more than roughly two minutes, or
 whose duration/cost is uncertain; report purpose, estimate and stop condition.
 
 | Order | Outcome and existing backlog owners | Gate |
 |---|---|---|
-| **A — quality controls** | Quality fixtures, paired maps/profiles, process-scale warnings; convergent-flat comparison (R02/R25/R27/R41/R43) | Fixed comparison set and a measured accept/reject result; no new benchmark framework |
-| **W — bounded foundation delivered** | WC0 plus WC1 geography, geology inputs, bathymetry and water-piece incidence (R01/R49); return to B/C physical paths and landforms | Preserve source and unresolved support; context is provisional, not solved climate |
-| **B — next major generation decision** | Guarded feature reopening and queries pass; next held-out geometry and detail consistency (R48/R32) | Preserve controls and hard targets; bank/capture acceptance across physical scales within declared envelopes before LE3 |
-| **C** | Consolidate one coherent range/pass/tributary/lowland system from the selected comparison (R08/R09/R14/R40/R44) | Better structural/visual results across fixed seeds and physical scales |
-| **W — after B/C acceptance** | Rough world, seasonal climate/runoff feedback and reviewed parent (WC2-WC4; R33/R49) | Physical terrain acceptance, bounded coupling, shared world time and budgets |
-| **D / WC5** | Accepted parent-conditioned detail, same-present historical refinement and inherited fine hydrology, then zoom jobs (R15/R34/R49) | Exact overlap, coarse-scale, time-dependent boundary/flow and visual acceptance before real small rivers |
-| **E** | Runoff, river size, lake hierarchy and sediment (R16/R18/R33) | Explicit flux, storage and material accounting |
-| **F / WC6** | Derived ecological layers and selected richer world-process comparisons | Accepted continuous climate/hydrology first; world placement is now W/WC0 |
+| **Delivered — world handoff** | Imported continent to a usable terrain project (R01/R49) | Retained geography/identity, metric scale, connected borders and save/open/build checks |
+| **Next — visible landform gains** | Consume geological inputs as broad range/plateau/lowland guidance (R08/R09/R14/R40/R44/R49) | Clear authored-input effects, shared physical scale and hard-control preservation |
+| **B — generation adoption** | Shared river/ground construction, held-out geometry and parent/detail consistency (R48/R32) | Capture, bank shape, bounds and physical-scale acceptance; unresolved research remains explicit |
+| **WC2-WC4** | Shared rough relief, seasonal climate/runoff and bounded history feedback | Accepted physical model, common world present and reproducible budgets before freezing a parent |
+| **D / WC5** | Parent-conditioned local enrichment and inherited fine hydrology, then zoom jobs | Overlap, coarse-scale, time/boundary and visual acceptance before real small rivers |
+| **E / WC6** | River size, storage, sediment and ecological layers | Explicit flux/material accounting and accepted continuous climate/hydrology |
 
 The [strategy](docs/strategy/README.md#next-implementation-order) owns detailed
 acceptance criteria and stopping rules. P0 items below remain prerequisites in
