@@ -1,6 +1,6 @@
 # Landscape-evolution implementation plan
 
-Updated 2026-09-27. **LE1 implemented; LE2 history, frozen reconstruction,
+Updated 2026-09-28. **LE1 implemented; LE2 history, frozen reconstruction,
 physical-path, receiver/outlet, constrained-network, bank-feasibility and
 connected-patch construction, layout, head/mouth and cell-safe delivery comparisons measured.
 Production-quality acceptance and application integration remain open.** The
@@ -26,15 +26,17 @@ chronology, process ablations, resistance, seeds 42/7/20260902, orientation,
 extent and process-spacing probes. The held-out seed uses the frozen coefficients.
 This is an implemented research path, not a replacement for normal builds.
 
-**Decision:** retain the history model as a useful candidate, but do not promote
-this D8/bilinear surface into the application. Good node-level drainage does not
+**Decision:** retain the history model as a useful experimental candidate, but
+do not adopt this D8/bilinear surface as default output. Good node-level drainage does not
 prevent internal rises on reconstructed diagonal channels. Grid direction and
 whole-landscape resolution sensitivity also remain acceptance questions.
 Follow the report's measured limits rather than counting analytic tests as realism.
 The bounded B/R48 reconstruction comparison is now measured, as recorded below.
 Physical path geometry, grid/capture sensitivity and hard authoring constraints
-still precede full LE3 integration, sediment, history UI or zoom scheduling.
-Keep one eventual production path.
+still gate full/default LE3 adoption in M5 and an accepted parent for later detail.
+M3-M4 may expose basic experimental history controls under the hard input/numeric
+contracts below; they do not wait for full quality acceptance. Sediment and zoom
+scheduling follow the main plan. Keep one eventual production path.
 
 ## Frozen reconstruction checkpoint
 
@@ -154,9 +156,10 @@ generated detail or filtered parent means. Keep bilinear feasibility as a small
 diagnostic before a larger solve. Next test held-out/general-angle quality and
 parent/downsample behavior before proposing an ADR to change generated-surface
 authority and its consumers. The product Float32 DEM contract remains unchanged.
-Any changed interpolator needs its own interior protection. Complete accepted
-delivery still precedes history coupling or LE3/WC2. Consult before longer tests
-as specified in the main strategy. No time evolution or product path was added.
+Any changed interpolator needs its own interior protection. Accepted delivery
+is required for a new product surface authority or default adoption, not all
+M3-M4 history integration. Consult before longer tests as specified in the main
+plan. This snapshot work itself added no time evolution or application path.
 
 ## Outcome and decision
 
@@ -171,19 +174,14 @@ Use two epochs and two rock-resistance regions. Compare against the current
 recipe/incision output before deciding whether to integrate an existing component
 or implement a narrow project kernel. Keep Python and existing application layers.
 
-**Sequence:** the paired history and bounded B/R48 frozen reconstruction reports
-are in place. Physical terrain/path agreement, direction, capture/grid sensitivity
-and authoring constraints now govern acceptance before full LE3 integration.
-Keep current and evolved fixtures as controls, not permanent competing product
-backends. LE4/LE5 depend on that acceptance.
-
-LE numbers identify work packages, not a competing execution order. LE1 and the
-first paired evidence are complete. The remaining path is A's outstanding
-controls → LE2 quality plus B/R48 acceptance → LE3 → basic LE5 delivery,
-consolidating the range-to-lowland result in C. Strategy D then owns LE6 local enrichment; E owns
-LE4 sediment and the corresponding LE5 controls. An export-only erosion result
-can reach the workbench before sediment support. Change that order only with
-recorded evidence from the preceding comparison.
+**Sequence:** M1-M2 bind world/rough relief and effective runoff; M3-M4 bring the
+existing reference into a bounded application experiment with the necessary LE3
+input roles and basic LE5 controls. M5 completes LE2/LE3 physical/authoring quality
+before default adoption or a WC4 parent. LE6 follows in M6; selected LE4 materials
+follow in M7. LE IDs are work packages, not a second execution order.
+Keep the baseline and research reference as comparisons while selecting the new
+path; remove superseded generation once replacement is accepted. A quality
+failure remains evidence, not a ban on every application integration experiment.
 
 The first release need not simulate plate motion, changing coastlines, glaciers,
 weather events, meanders, sediment grain classes or planetary climate. Keep these
@@ -208,6 +206,43 @@ identified checkpoint. It cannot age the previous final surface again. WC5/LE6
 will refine regional history to the same present, with parent boundary/forcing
 through time. These requirements extend existing evolution work, not create a
 second history engine. Shared climate/runoff moves earlier than ecological layers.
+
+## Experimental application integration
+
+**Planned for M3-M4; not implemented.** Adapt the existing reference rather than
+starting another erosion model. The first supported path consumes M1's initial
+metric relief and M2's effective runoff, plus explicit epoch forcing. Climate
+seconds, geological years and displayed Ma cross one tested unit boundary.
+Crust age and time since rejuvenation do not supply a complete forcing schedule.
+
+- `domain` owns typed history, input roles and units; `pipeline` owns preparation,
+  process arrays and stage composition; an adapter owns the isolated scientific
+  runtime and serialization; `application` owns cancellation, source verification,
+  budgets and publication. Extract reusable reference logic without importing a
+  benchmark runner into the core or adding a generic solver abstraction.
+- Preserve existing absolute/final authored constraints. Add explicit initial,
+  persistent or final roles where needed; reject unsupported experimental inputs
+  before running. Do not silently reinterpret current ridge/point semantics.
+- Start from rough initial relief without the old automatic valley incision stage.
+  Evolve the automatic network with ground; derive final diagnostics from the same
+  delivered surface. Authored valley guidance retains its declared role. Do not
+  carve a second independent network after evolution to make the preview look better.
+- Compare no-aging, zero-forcing, changed runoff/uplift/resistance and ordered versus
+  reversed epochs on one public connected-land domain. Preserve original controls
+  and record actual-ground/channel failures, solver residuals and correction budgets.
+- Save provisional state with source/context/history/runtime identities, support
+  limits and quality findings; a numerically failed or cancelled solve cannot look
+  complete. The existing Float32 result contract remains authoritative unless an
+  explicitly reviewed representation decision replaces it.
+- Basic LE5 stage controls, preview and reopening arrive with the experiment.
+  Experimental status survives saving/reopening. M5 still requires the packaged
+  dependency/license review and scientific/authoring acceptance before default use
+  or publication as an accepted WC4 parent.
+
+M4 adds the [bounded feedback rules](world-context.md#rough-relief-and-feedback).
+No replay starts from a previous final state unless it is a specifically identified
+continuation checkpoint. Production acceptance below is retained; only the former
+requirement to finish it before trying application integration is superseded.
 
 ## Mathematical model and units
 
@@ -481,12 +516,14 @@ map, has persistent grid grooves, or cannot approach the intended desktop budget
 reject it and return to batch B's terrain-guided shared paths. If chronology is
 the dominant cost, one analytical-method comparison may replace further tuning.
 
-LE2 success justifies LE3; it is not permission to make the prototype the default.
+LE2 evidence guides M3-M4 integration; completing its quality controls is part
+of M5 acceptance and is not permission by itself to make the prototype the default.
 No promise of realistic depositional plains, meanders or physical lakes is made.
 
 ### LE3 — Constraints, shared paths and final-surface acceptance
 
-Depends on LE2 evidence. This is the highest integration risk.
+Uses LE2 evidence. Minimum input/constraint interfaces enter in M3-M4; the full
+acceptance gate below governs M5. This is the highest integration risk.
 
 - Prepare typed history inputs and an immutable result; carry process masks,
   boundary policy, forcing, stage identities and warnings explicitly.
@@ -504,7 +541,7 @@ Depends on LE2 evidence. This is the highest integration risk.
   Float32, input, routing and final-profile tests pass. Test repeated runs and
   changed output sizes against the same prepared state.
 
-**Gate:** satisfy strategy B's constraint, coverage, direction and sampled-profile
+**M5 adoption gate:** satisfy [quality B](terrain-quality.md#b-make-a-river-path-and-its-terrain-agree)'s constraint, coverage, direction and sampled-profile
 gates. Use fixed authored source/outlet routes and spatial catchment coverage
 when a new network has different automatic branches; do not compare counts per
 D8 edge or erase hard routes to improve the score. Report natural automatic
@@ -514,8 +551,9 @@ No new >10 m rise on a previously feasible matched route; controlled gravity-bed
 fixtures must be descending within declared Float32 tolerance. Lakes/backwater
 are separate model cases. Finite sampling remains finite evidence.
 
-Select an ADR and production dependency/implementation only now. If a reference
-library is selected, audit the complete shipped stack and test the real packaged
+Select the default-generation ADR and production dependency/implementation at M5.
+A bounded research adapter can connect the existing reference in M3-M4 earlier.
+If a reference library is selected, audit the complete shipped stack and test the real packaged
 Windows application. If a narrow local implementation is selected, compare it
 against the pinned reference and analytic fixtures; do not copy an entire solver
 framework into the project. Remove superseded automatic shaping after acceptance.
@@ -544,11 +582,12 @@ retain the explicitly export-only incision model and keep deposition experimenta
 
 ### LE5 — Application, persistence and pre-generation editor
 
-Depends on LE3 acceptance; LE4 is required only for sediment controls/products.
-World-linked history controls are delivered together with WC4's parent and
-shared-time contract; the core local-history integration does not depend on a
-complete world workflow. Continent defaults and province overrides bind to one
-context/history revision, with crust age separate from uplift timing and erosion
+Basic experimental delivery is part of M3-M4 and requires supported LE3 input
+interfaces; default use and an accepted WC4 parent require full LE3 acceptance
+in M5. LE4 is required only for sediment controls/products. All world-linked
+history controls share the same time/dependency contract from their first use;
+they do not need an already accepted whole-world parent to test a bounded domain.
+Continent defaults and province overrides bind to one context/history revision, with crust age separate from uplift timing and erosion
 duration.
 
 - Add current-format history settings, epoch ordering and validation; update
@@ -674,12 +713,13 @@ Prose-only follow-ups need link/claim/diff checks; reuse unchanged runtime evide
   with boundary trajectories and one shared present.
 - R17/R31/R45–R47: stochastic transport, GPU/native kernels and eventual Rust;
   measured model/workload benefit must precede adoption.
-- R01/R33/R49 and strategy W: early world placement and shared climate/runoff
-  feedback; distinguish authored wetness from inferred climate. Ecological layers
-  remain strategy F/WC6 work.
+- R01/R33/R49: broader world/climate coupling beyond the supported M1-M4
+  domains and first climate/runoff model; distinguish authored wetness from
+  inferred climate. Stronger planetary models and ecology remain M8/F/WC6 work.
 
-The first LE1/LE2 history comparison and frozen reconstruction follow-up are
-delivered. Between-node humps are now isolated and removable on fixed descending
-paths. The next decision is whether physical valley/channel geometry can retain
-that property, preserve authoring and reduce grid/capture sensitivity. Production
-adoption stays gated; a large rewrite is not the next step.
+The history, reconstruction and later physical-path comparisons are recorded
+above. When M5 resumes physical-quality work, choose the valley/channel approach
+from failures observed in the integrated M3-M4 candidate, using the existing
+comparisons to test authoring, path/ground agreement and grid/capture sensitivity.
+The next implementation remains M1; isolated quality work leads only when it
+blocks a hard integration contract. Default adoption still requires acceptance.

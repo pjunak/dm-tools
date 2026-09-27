@@ -1,0 +1,106 @@
+# Research and technology decision catalog
+
+Updated 2026-09-28 from the repository's recorded evidence. Start here to answer
+**Have we researched this, what did we conclude, and what would change that decision?**
+The [implementation plan](../strategy/README.md) owns M1-M8 order. This catalog is
+an index of conclusions, not new experiments or a fresh upstream availability audit.
+Package/platform/license observations retain the dates of their evidence reports.
+Follow those reports for papers, DOI links, source inspections, controls and measurements.
+
+## How to read and maintain this catalog
+
+- **Used**: adopted in the application, only for the purpose stated. **Reference**:
+  existing comparison or source review; execution is stated separately.
+- **Experimental**: implemented/tried with acceptance still open. **Candidate**:
+  researched but not executed/adopted here. **Deferred**: intentionally later,
+  with a reason and trigger. **Rejected trial**: the named tested use failed;
+  this does not reject every use of the package or mathematics.
+- Stable D IDs below identify decision families; T IDs in the
+  [method register](terrain-method-decisions.md) identify specific failed attempts.
+  R/WC/LE backlog IDs remain in [TODO](../../TODO.md). Before investigating, search
+  this page, the T register and [dated evidence index](README.md). Absence here alone
+  is not proof that no earlier report exists.
+- In the same implementation/experiment commit, update the affected row's status,
+  reason, evidence and revisit trigger, then follow the main plan's update checklist.
+  Add a row for a newly considered family. Keep old failed controls and distinguish
+  diagnosed cause from an unresolved hypothesis. Do not duplicate package versions
+  and license terms owned by [DEPENDENCIES](../DEPENDENCIES.md).
+
+**D00 — Integration order (selected plan, 2026-09-28).** Repeated local refinements
+left generated context and aging disconnected. M1-M4 now establish an experimental
+application workflow; M5 applies the full quality/adoption bar to that integrated
+result. This replaces the old blanket sequencing gate, not failed measurements or
+hard correctness requirements. [Order and rationale](../strategy/README.md).
+
+## Geography, terrain specification and surface construction
+
+| ID / tools or mathematics | Disposition and conclusion | Evidence / reason to revisit |
+|---|---|---|
+| **D01 — spherical coverage, water-piece topology, SciPy unit-sphere queries, GDAL/PROJ** | **Used:** retained geography, context, shore distance and bounded custom-radius world-to-metric handoff. Scale/ownership are separate from physical land. Context measurements still do not drive terrain. | [Context](2026-09-25-geographic-world-context.md), [exposure](2026-09-25-geographic-exposure.md), [handoff](2026-09-27-world-to-terrain-workflow.md), [T14](terrain-method-decisions.md#t14---treat-semantic-continent-pieces-as-separate-physical-terrain). **M1:** connect existing data, preserving support/error and shared land. |
+| **D02 — spherical climate grid, projected process domains, cubed sphere/JIGSAW** | **Candidate domain choices:** use metric-aware process operators; a global longitude/latitude array cannot use the current flat local stencil. More complex meshes are deferred until pole/rotation/distortion or boundary evidence requires them. | [Domain review](2026-09-24-world-context-enrichment.md), [world contract](../strategy/world-context.md#rough-relief-and-feedback). **M1:** supported local domain; **M5:** wider world with explicit cross-domain exchange. |
+| **D03 — coordinate-addressed noise and geological landform blending** | **Used:** deterministic initial fields and explicit plain/hill/plateau/mountain controls. Shared coverage replaced inward background seams; noise and province age are not geological history. | [Stable bands](2026-09-22-stable-detail-band-amplitudes.md), [guidance](2026-09-27-geological-landform-guidance.md), [T15 and rejected kernel](terrain-method-decisions.md#t15---use-inward-region-fades-as-a-complete-geological-partition). **M1:** initial relief; improve morphology after integrated evidence. |
+| **D04 — line-owned profiles, shape-preserving interpolation, distance-based crest shares** | **Used:** explicit peak/pass/floor control and compatible absolute-ridge contacts. Independent rounding and ordinary target averaging failed. Conflicting contacts/ambiguous loops are rejected inputs, not a solved automatic ridge graph. | [Profiles](2026-09-27-line-owned-terrain-profiles.md), [T16/T17](terrain-method-decisions.md#t16---use-proximity-alone-to-own-connected-ridge-profiles), [crest evidence](2026-09-27-shared-ridge-crests.md). Preserve current intent in **M3**; new handles/spurs/tangents wait for **M5** needs. |
+| **D05 — local RBF, screened Poisson/biharmonic, ANUDEM-style conditioning** | **Candidate replacements**, not adopted by SciPy's presence. Could connect curves/slopes and roughness, but boundary conditions, inequalities, convergence and halos need comparison. T07's executed constrained-network fit is a different, limited experiment. | [Surface alternatives](2026-09-03-terrain-algorithm-options.md#low-frequency-surface-solvers), [T07](terrain-method-decisions.md#t07---fit-a-downhill-network-into-a-fixed-raster-under-native-caps). Revisit for a measured integrated constraint/composition failure in **M5**, or a specific M1-M4 blocker. |
+
+## Hydrology, river geometry and terrain delivery
+
+| ID / tools or mathematics | Disposition and conclusion | Evidence / reason to revisit |
+|---|---|---|
+| **D06 — Priority-Flood, convergent flat routing, selective breaching** | **Used** flood/basin routing and bounded authored-outlet repair; **candidate** broader flat/breach comparisons. Filled routing levels are not automatically the physical DEM or a lake. Retain true closed basins. | [Algorithms](2026-09-03-terrain-algorithm-options.md#drainage-and-valley-generation), [flat routing](2026-09-11-basin-flat-routing.md), [depressions](2026-09-10-depressions-and-channel-conflicts.md). **M3/M5:** choose from classified failures with fixed basin semantics. |
+| **D07 — MFD, D8, D-infinity, Strahler order and channel density** | **Used** MFD contributing area plus D8 topology. **Rejected trials:** full MFD terrain substitution, flow-only shoulders and order/density as the main realism fix. D-infinity is a directional comparator, not a physical channel shape. | [T01/T02](terrain-method-decisions.md#t01---replace-d8-valley-shoulders-with-flow-signals), [connected review](2026-09-24-connected-drainage-review.md). **M3/M5:** compare final-ground flow and spatial catchment coverage; do not improve a score by hiding channels. |
+| **D08 — shared path/ground meshes, constrained networks, analytic valleys and bounds** | **Experimental / failed controls retained:** T06-T12 improved capture, heads/mouths and local banks, but raster delivery and wider/fixed controls remain unaccepted. A passing isolated patch is not an accepted world solver. | [T06-T12](terrain-method-decisions.md#t06---deform-paths-and-ground-together-on-a-bounded-mesh), [held-out limitations](2026-09-27-world-to-terrain-workflow.md). **M5**, unless the integrated experiment isolates this as its blocker; retain hard targets and budgets. |
+| **D09 — bilinear delivery, drainage-aligned triangles, generic quadratic/cubic splines, prepared feature snapshots** | **Used** Float32 DEM authority. **Rejected trials:** diagonal bilinear channel humps and generic spline replacements with capture/bound failures. Triangle controls and analytic prepared snapshots are **experimental**, not new product authority or independently generated detail. | [T04/T05](terrain-method-decisions.md#t04---evolve-a-landscape-then-deliver-its-d8-nodes-bilinearly), [T13](terrain-method-decisions.md#t13---preserve-features-instead-of-reconstructing-them-from-nodes), [snapshot evidence](2026-09-27-prepared-feature-snapshots.md). **M5:** isolate delivery failure; new authority needs an ADR and all consumers. |
+| **D10 — GRASS and Whitebox hydrology comparisons** | **External reference candidates**, not application engines. Pin the exact component/version; GIS installation and license/distribution boundaries differ. A useful algorithm does not justify adopting an entire product family. | [Tool review](2026-09-03-terrain-algorithm-options.md#tool-and-license-findings), [systems review](2026-09-04-technology-and-world-systems.md#hydrology-and-landscape-processes), [reference dependencies](../DEPENDENCIES.md#isolated-landscape-evolution-reference). Revisit for one independent **M5** fixture or an identified algorithm gap. |
+
+## Geological aging and material processes
+
+| ID / tools or mathematics | Disposition and conclusion | Evidence / reason to revisit |
+|---|---|---|
+| **D11 — Landlab reference, implicit stream power, conservative hillslope transport** | **Executed isolated reference.** Chronology/uplift/resistance controls work; final channel profiles and grid sensitivity prevent production acceptance. Chosen starting reference for integration, not automatically a shipped runtime dependency. | [Executed comparison](2026-09-24-landscape-evolution-reference.md), [equations/units](../strategy/landscape-evolution.md#mathematical-model-and-units), [dependency boundary](../DEPENDENCIES.md#isolated-landscape-evolution-reference). **M3-M4:** adapt existing work; **M5:** accept or replace based on integrated evidence. |
+| **D12 — Fastscape Python, Fastscapelib C++/Python and Fortran variants** | **Deferred alternatives.** Front end, compiled dependency and Fortran implementation are distinct. Recorded Windows/Python wheel and license boundaries favored the already executed reference; no family-wide algorithm rejection. | [2026-09-24 comparison/probe](2026-09-24-landscape-evolution-models.md#alternatives-and-why-they-are-not-the-first-integration). Recheck current platform/license facts only if the integrated reference has a concrete capability or cost gap. |
+| **D13 — analytical erosion, particle/grid erosion, HighMap and MultiScaleErosion** | **Researched alternatives; not adopted.** Analytical approaches may supply fast maturity effects; particles/grid transport and multiscale methods have different mass, continuity and detail contracts. Do not replace chronological evidence with a visual smoothing pass. | [Evolution papers/options](2026-09-24-landscape-evolution-models.md), [prototype contracts](2026-09-04-terrain-prototype-contracts.md), [landform diversity](2026-09-04-terrain-realism-and-landform-diversity.md). Revisit a specific **M3 cost**, **M6 detail** or **M7 transport** failure. |
+| **D14 — SPACE bedrock/mobile-cover erosion and deposition** | **Reference import checked, experiment pending.** Incision-only evolution exports removed material; it does not establish floodplains or deposition. SPACE needs compatible single-receiver discharge, cover, porosity and flooded-node controls. | [Import/research evidence](2026-09-25-groundwater-and-terrain-architecture.md), [LE4 ledger/model](../strategy/landscape-evolution.md#le4--bedrock-cover-and-deposition-comparison). **M7:** one material-balance comparison after the basic integrated path. |
+| **D15 — Dupuit groundwater, GroundwaterDupuitPercolator, GOEMod, MODFLOW** | **Component import checked / external candidates untested.** Groundwater can change capture and spring supply, but does not excuse unexplained surface sinks. Needs recharge, aquifer head/storage and exchange, not an arbitrary underground receiver link. | [Groundwater review](2026-09-25-groundwater-and-terrain-architecture.md), [G1 contract](../strategy/landscape-evolution.md#groundwater-and-canyon-extensions---proposed). **M7:** analytic shallow-aquifer and water-ledger control, then a measured drainage-density gap. |
+| **D16 — LateralEroder, Lithology, resistant layers and canyons** | **Imports checked; simulations untested.** Layer resistance/base-level change and lateral erosion are candidate canyon mechanisms; full karst is not a prerequisite. Vertical carving alone does not verify width/rims or material accounting. | [Canyon/layer review](2026-09-25-groundwater-and-terrain-architecture.md). **M7:** matched vertical-only/lateral and layered/uniform controls after integrated ground is usable. |
+| **D17 — karst/conduit graphs, MODFLOW-CFP, caves and collapse** | **Deferred candidates.** Require explicit substrate, losing streams, springs, storage and separate subsurface geometry. A single-valued terrain DEM cannot express a cave roof/floor system. | [Karst discussion](2026-09-25-groundwater-and-terrain-architecture.md), [architecture boundary](../architecture/README.md#proposed-generation-responsibility-split). Revisit only after a simpler conservative surface/aquifer model and a concrete cave requirement. |
+| **D18 — stochastic geomorphological transport, geotransport, CUDA backends** | **Source-reviewed candidates, not locally validated.** Paper/model, library, GPU backend and license are separate decisions. Conservation, reproducibility, Windows support and scaling remain open. | [Recent transport review](2026-09-24-landscape-evolution-models.md), [earlier GPU/prototype review](2026-09-04-terrain-prototype-contracts.md). **M7** or a measured compute blocker; require CPU/reference controls and a dependency audit first. |
+
+## Climate, oceans, tectonics and ecology
+
+| ID / tools or mathematics | Disposition and conclusion | Evidence / reason to revisit |
+|---|---|---|
+| **D19 — seasonal energy balance, moisture advection and land-water/runoff budget** | **Selected candidate baseline, not implemented.** Transparent typed arrays and declared winds precede a full circulation model. Continuous fields and explicit budgets are needed before aridity or biome labels. | [World review](2026-09-24-world-context-enrichment.md), [equations/units](../strategy/world-context.md#small-inspectable-first-climate-model). **M2/M4:** coastal/interior, windward/leeward and heat/water tests with declared uncertainty. |
+| **D20 — Smith-Barstad orographic precipitation, Climlab, xclim** | **Source references / untested adapters.** Orographic linear theory is a regional comparator; Climlab supplies energy-balance controls; xclim derives indicators, not a planet's climate. None is selected as an entire runtime engine. | [World-source comparison](2026-09-24-world-context-enrichment.md), [climate tools](2026-09-04-technology-and-world-systems.md#climate-software). Revisit for a bounded **M2/M5** validation need; verify current packaging when selected. |
+| **D21 — authored shelf/slope/basin bathymetry and mixed-layer ocean hypotheses** | **Used** separate bounded depth product; **candidate** physical coupling. Geography cannot uniquely recover ocean history/depth. Depth/error support is not water volume, seasonal mixed-layer heat capacity or a circulation solution. | [Bathymetry evidence](2026-09-25-authored-world-bathymetry.md), [world contract](../strategy/world-context.md#first-integrated-application-slice). **M2/M4:** consume only in a declared approximation, or mark it unconsumed. |
+| **D22 — ExoPlaSim, Isca, ROCKE-3D, Generic-PCM reduced ocean and GEOCLIM7** | **Deferred external references.** Larger climate/ocean/carbon models add build, cost and calibration work; they are not needed to prove the first connected workflow. No local execution is implied by the source audit. | [2026-09-24 comparison](2026-09-24-world-context-enrichment.md), [earlier systems review](2026-09-04-technology-and-world-systems.md). **M8:** choose one only for a measured circulation/history gap on frozen world fixtures. |
+| **D23 — GPlates, pyGPlates/GPlately, WorldEngine/platec and free tectonics** | **Source references / deferred.** A finished coast does not determine a unique plate history. Free tectonics may change protected geography; reconstruction tools require authored plate/rotation assumptions. | [World-context review](2026-09-24-world-context-enrichment.md). **M8:** revisit if explicit reconstruction inputs or a geography-changing scenario are requested; not a prerequisite to province-based M3 epochs. |
+| **D24 — Koppen/bioclimatic or Holdridge-style classification, wetlands and land use** | **Deferred derived layers.** Temperature/moisture/seasonality support classifications; biome, landform, wetland and human land use can overlap. An old or weakly eroded continent does not automatically become desert. | [Environmental categories](2026-09-04-technology-and-world-systems.md#zones-biomes-and-environmental-categories), [world sequence](../strategy/world-context.md). **M8:** accepted climate/water/substrate fields and explicit classification thresholds. |
+
+## Regional detail, storage, display and implementation technology
+
+| ID / tools or mathematics | Disposition and conclusion | Evidence / reason to revisit |
+|---|---|---|
+| **D25 — verified parent replay, residual detail, bilinear bubbles and history-conditioned refinement** | **Used** parent identity/replay infrastructure; residual detail remains **experimental**. **Rejected trial T03:** preserving bilinear means damaged authored structure and channels. Same-field overlap is not independent enrichment or history replay. | [T03](terrain-method-decisions.md#t03---preserve-parent-means-with-bilinear-bubble-detail), [parent reference](2026-09-23-verified-parent-detail.md), [shared-edge detail](2026-09-23-shared-edge-detail.md), [LE6](../strategy/landscape-evolution.md#le6--parent-conditioned-local-evolutiondetail). **M6:** accepted parent plus boundary/time/downsample/fine-flow controls. |
+| **D26 — NPY/NPZ, Float32 GeoTIFF, Rasterio/Affine; GeoPackage, xarray/Zarr** | **Used** numeric build archives and GeoTIFF exchange. Additional vector containers or chunked/seasonal stores remain **deferred** until a consumer and measured size/read pattern justify them. Storage format changes do not fix a terrain representation. | [Build contract](../terrain-builds.md), [dependencies](../DEPENDENCIES.md), [storage review](2026-09-04-technology-and-world-systems.md#multidimensional-and-chunked-data). Revisit in **M4-M6** only for actual publication or partial-read needs. |
+| **D27 — Python/NumPy/native libraries, Numba, Rust/PyO3, CPU/GPU kernels** | **Used** Python for iteration with native numerical libraries. Other acceleration and Rust migration are **deferred**, not ruled out. Clear typed array/graph/stage boundaries limit future rewrite cost; no scheduled rewrite without evidence. | [Language and measurements](2026-09-05-language-and-performance.md), [current dependencies](../DEPENDENCIES.md), R45-R47 in TODO. Revisit a measured end-to-end bottleneck with Windows packaging, deterministic output and complete workflow comparison. |
+| **D28 — scientific colour maps, shaded relief and scale-aware water display** | **Used** derived previews and large-water visibility rules; real small-river generation remains **planned**. Display smoothing or hidden channels cannot establish better ground. Scientific plots and illustrated presentation have separate purposes. | [Colour ramp](2026-09-03-elevation-colour-ramp.md), [relief research](2026-09-03-cartographic-relief-style.md), [water display](2026-09-17-water-display-scale.md). Minimal comparison in **M4**; fine river visibility only after **M6** hydrology is resolved. |
+
+## Known chronology traps
+
+- The 2026-09-04 systems review predates SciPy and Rasterio adoption. Their current
+  runtime uses do not imply that the older RBF/Poisson or climate proposals shipped.
+- The source-only 2026-09-24 evolution review predates the executed reference report
+  from that date. Landlab has been exercised in an isolated environment; its output
+  still has unaccepted quality and it is not part of normal application generation.
+- World-to-metric extraction, geological landform transfer and shared crest handling
+  were added after WC0/WC1's original reports. Read current status before interpreting
+  an old report's remaining-work list.
+- An old report's "next experiment" records its historical recommendation. The
+  current M1-M8 plan supersedes execution order without rewriting those results.
+- A component import, compatible wheel or upstream example is not a completed local
+  simulation, licensing approval for a bundled stack, or acceptance of a product.
+
+Use [all dated reports](README.md) for full evidence, [T01-T17](terrain-method-decisions.md)
+for failures and replacements, [status](status.md) for current capabilities,
+[ADRs](../adr/README.md) for accepted contracts and [the file inventory](../FILE_INDEX.md)
+when locating a document by filename. No new scientific experiment ran for this catalog.

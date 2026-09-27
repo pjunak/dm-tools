@@ -1,11 +1,14 @@
 # Terrain method decisions and failed experiments
 
-Updated 2026-09-27 through shared landform blending against baseline `d37a22e`,
-following geological guidance and world-to-terrain integration. This is the living record of
+Updated 2026-09-28 through T17 shared ridge crests (`78c9db5`).
+This is the living record of
 material generation approaches that were rejected, constrained or retained only
 as references. A failed method does not remove its desired feature from the plan.
 The [strategy](../strategy/README.md) owns execution order; dated reports own the
 original measurements, source identities, commands and validation boundaries.
+The [decision catalog](decision-catalog.md) indexes used, deferred and untested
+method families. M1-M4 integration now precedes further isolated refinement;
+T entries preserve failure evidence and the requirements for adopting a replacement.
 Supporting sampling/convergence and performance rejections remain indexed in
 [research status](status.md), including the slower
 [coast-index candidate](2026-09-05-selective-terrain-sampling.md). This register
@@ -18,7 +21,8 @@ raster delivery and exploratory feature preservation.
 ## How to maintain this record
 
 For each substantive numerical experiment, update this register, its dated report,
-[status](status.md) and the affected [TODO](../../TODO.md) checkpoint together.
+the affected [catalog decision](decision-catalog.md), [status](status.md) and
+[TODO](../../TODO.md) checkpoint together using the main plan's update checklist.
 Record the hypothesis, unchanged control, input roles, measured outcome, diagnosed
 cause versus unresolved explanation, reusable work, disposition and revisit gate.
 Keep stable IDs below. Add later evidence to the disposition; never rewrite a
@@ -241,8 +245,9 @@ exploratory observations separately from the controlled final cohort.
 matching. Finish bank construction at heads/junctions/cap transitions; compare a
 bounded channel-conforming reconstruction only after separating local shape from
 delivery loss. Keep coarse failures and native-control rejection visible. Require
-complete bank/guide/capture and held-out evidence before application/history
-integration; this result does not justify a whole backend rewrite.
+complete bank/guide/capture and held-out evidence before adopting this replacement
+for default generation. M3-M4 can integrate the existing history reference
+experimentally; this result does not justify a whole backend rewrite.
 
 ## T11 - Construct head and mouth sections before raster delivery
 
@@ -474,4 +479,5 @@ freezing a final DEM. Keep the application and Python implementation boundaries.
 Groundwater, karst and lateral erosion are **new, untested hypotheses here**, not
 explanations established by T01-T13. They need independent controls and budgets.
 The [reassessment's staged experiments](2026-09-25-groundwater-and-terrain-architecture.md#implementation-sequence-and-stop-rules)
-define the next comparisons and when a larger structural change is justified.
+retain proposed comparisons and larger-change criteria. The current M1-M8 plan
+selects when to run them; its integration priority supersedes that older ordering.

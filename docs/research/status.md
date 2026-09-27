@@ -1,17 +1,21 @@
 # Current terrain research status
 
-Reconciled on 2026-09-27 after WC1 foundations, physical-path diagnostics,
-constrained-network/bank comparisons, the groundwater/architecture reassessment
-and the [cell-safe delivery comparison](2026-09-27-cell-safe-terrain-delivery.md).
-The [method register](terrain-method-decisions.md) tracks failed approaches and
-replacement gates. The [new source review](2026-09-25-groundwater-and-terrain-architecture.md)
-adds groundwater capture, canyon and karst hypotheses; none was simulated here.
-Earlier generation measurements and scientific tool audits retain their own
-revision/date; new evidence is linked below.
-This is a status map; [TODO](../../TODO.md) owns the research register and the
-[strategy](../strategy/README.md) owns execution order. Dated reports retain
-their source/runtime context. Source inspection or a compatible wheel is not
-an executed engine comparison.
+Reconciled on 2026-09-28 through the world handoff, geological landform transfer,
+shared blending and ridge profiles/crests (`78c9db5`). This update changes planning
+and navigation only; it does not add context consumption, climate or application aging.
+
+The [M1-M8 plan](../strategy/README.md) owns execution order. The
+[decision catalog](decision-catalog.md) owns technology/method conclusions and
+revisit triggers; [TODO](../../TODO.md) owns the grouped scope. The
+[method register](terrain-method-decisions.md) preserves failed trials, while dated
+reports retain their original measurements, source/runtime identity and limitations.
+
+**Next: M1 context-bound rough terrain, then M2 runoff and M3-M4 aging/coupling.**
+Generated geographic context and bathymetry remain separate products; only source
+geometry/scale and explicit geological landform controls currently reach local
+terrain. The evolution engine remains an isolated reference. M1-M4 will expose an
+experimental application path; M5 requires quality acceptance before default use
+or a reviewed world parent. See [stage connections](../strategy/world-context.md#first-integrated-application-slice).
 
 The [progress reassessment](2026-09-24-progress-and-generation-strategy.md)
 classifies the product as a usable research workbench with strong build
@@ -32,8 +36,8 @@ and inherited fine hydrology are still open. Smaller diagnostic channels can
 appear at zoom; real local river generation and automatic viewport jobs cannot
 be claimed from that display behavior.
 
-The fresh audit finds SciPy and Numba Python 3.14 Windows wheels, and a Landlab
-wheel whose dependency inventory includes GPL `py-richdem`. A subsequent
+The recorded 2026-09-24 audit found SciPy and Numba Python 3.14 Windows wheels,
+and a Landlab wheel whose dependency inventory includes GPL `py-richdem`. A subsequent
 [wheel-only resolution](2026-09-24-landscape-evolution-models.md#windows-and-python-dependency-probe)
 succeeds with 45 distributions, including two prereleases. The Landlab/SciPy
 stack was subsequently installed in an isolated 53-wheel reference environment,
@@ -177,9 +181,10 @@ now reopens the complete graph and prepared field, preserving all 575 profiles
 and original metrics exactly. Owned arrays, bounded decoding and same-field
 query-order/batch/tile/halo checks pass. It is an experimental reader, not an
 app build or a change to product DEM authority. Held-out/general-angle terrain,
-irregular coasts and real parent/detail consistency remain next before B2,
-LE3 or WC2. No time evolution was added, and the separate fresh envelope cannot
-accept the rejected native fixed control.
+irregular coasts and real parent/detail consistency still gate changing product
+surface authority or accepting a world parent. They do not prohibit M1-M4
+integration of the existing reference. No time evolution was added by the snapshot
+work, and the separate fresh envelope cannot accept the rejected native fixed control.
 Peak/pass structure and real basins/coasts remain open. Sediment, epoch editor
 controls and evolved local enrichment remain later dependent work. No
 post-generation modification is introduced.
@@ -338,14 +343,13 @@ measured benefit and packaging/workflow evidence; it is not the next prerequisit
 
 ## Evidence and next experiments
 
-The first history comparison and WC0 source workspace are implemented. Current
-order advances WC1 context, retains A's controls and B/C's physical-path,
-resolution and authoring acceptance, then couples WC2-WC4 rough-world climate/history
-before world-linked D/WC5 enrichment. Local comparisons do not need a whole-world
-climate engine. See [strategy A/W/B-F](../strategy/README.md#next-implementation-order),
-the [WC0-WC6 plan](../strategy/world-context.md) and
-[LE0-LE6 plan](../strategy/landscape-evolution.md). The entries below preserve
-evidence by topic, not a competing execution order.
+The first history comparison, WC0/WC1 foundations and standalone world handoff are
+implemented. [M1-M4](../strategy/README.md#next-implementation-order) now prioritize
+connecting context, relief, runoff and aging in an experimental application path. M5 uses the
+retained A/B/C and LE evidence to accept or replace the integrated candidate; M6
+then handles world-linked regional enrichment. The [WC contract](../strategy/world-context.md)
+and [LE contract](../strategy/landscape-evolution.md) provide model detail. The
+entries below preserve evidence by topic, not a competing execution order.
 
 - [Landscape-evolution research](2026-09-24-landscape-evolution-models.md) compares
   process models and tools for ordered geological epochs. LE0 research is complete;

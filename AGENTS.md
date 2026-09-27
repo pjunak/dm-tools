@@ -10,6 +10,8 @@ documentation, read [the terrain instructions](src/dmtools/terrain/AGENTS.md).
 This root routing rule covers paths outside that file's physical subtree.
 Use [the documentation index](docs/README.md) to find the current architecture,
 coordinate, seed and export contracts; [README](README.md) owns setup.
+For terrain planning or implementation, follow the single order and same-commit
+update checklist in [the living implementation plan](docs/strategy/README.md).
 
 After installing the existing development extras when missing or stale, run
 these checks using the active Python 3.14 environment from the repository root:

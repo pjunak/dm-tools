@@ -49,8 +49,13 @@ dictionaries or global settings.
 
 ## Current delivery priorities
 
-Prioritize usable features and major terrain-quality blockers over repeated
-small numerical refinements or performance work. Keep new geometry, projection,
+Follow [M1-M8 and its update checklist](../../../docs/strategy/README.md).
+Connect context, rough terrain, runoff and aging into a testable experimental
+workflow before further isolated refinements. Keep hard correctness checks;
+full quality acceptance governs default adoption, not every integration step.
+Consult the [research decision catalog](../../../docs/research/decision-catalog.md)
+before repeating an investigation, and update decisions/status/backlog with evidence.
+Keep new geometry, projection,
 serialization, application orchestration and UI responsibilities in cohesive
 separate modules. Consult the user before tests expected to exceed roughly two
 minutes or with uncertain long duration; state purpose, estimate and stop limit.

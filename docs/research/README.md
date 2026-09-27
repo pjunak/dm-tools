@@ -1,5 +1,10 @@
 # Research notes
 
+**For conclusions by topic, start with the [research decision catalog](decision-catalog.md).**
+It links tools, mathematical models, used/deferred/rejected choices and revisit
+triggers to the dated evidence below. The [M1-M8 implementation plan](../strategy/README.md)
+is the only current work order; reports retain their historical next steps.
+
 This index preserves dated evidence: implementation rundowns, measured or
 rejected prototypes, and candidate papers/tools. A research mention does not
 mean a dependency or feature was adopted. The [current status](status.md) maps

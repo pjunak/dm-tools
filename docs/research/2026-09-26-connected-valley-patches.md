@@ -210,4 +210,4 @@ reference, broadening to held-out landscapes, or integrating LE3/WC2. Groundwate
 layered canyon erosion and karst remain separately gated process experiments;
 they must not absorb unexplained sinks from this open-draining fixture. See
 [T09](terrain-method-decisions.md#t09---construct-connected-local-valleys-then-deliver-a-raster)
-and the [current strategy](../strategy/README.md#b-make-a-river-path-and-its-terrain-agree).
+and the [current strategy](../strategy/terrain-quality.md#b-make-a-river-path-and-its-terrain-agree).

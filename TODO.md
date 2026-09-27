@@ -33,14 +33,22 @@ records attempted methods, measured failures, causes, retained work and revisit
 gates. Update it alongside dated evidence and this backlog after each substantial
 experiment; do not mark a desired feature complete merely because its trial ended.
 
-## Current execution focus — 2026-09-27
+## Current execution focus — 2026-09-28
 
-**User-selected priority: usable world-to-terrain features and major generation
-gains.** The first handoff is implemented: select a continent, preserve connected
-land and physical scale, create a portable source/project, then generate in the
-existing Terrain workspace. See the [workflow report](docs/research/2026-09-27-world-to-terrain-workflow.md).
-Keep substantial responsibilities in separate files. Small bank refinements and
-performance tuning must not displace this product path unless they block it.
+**M1 is next: connect generated context to rough terrain.** Follow the single
+[M1-M8 implementation order](docs/strategy/README.md#next-implementation-order).
+M1-M4 must produce one testable context → relief → runoff → aging workflow before
+further isolated ridge/bank refinements. M5 governs quality/default adoption and
+an accepted world parent; existing hard correctness checks apply throughout.
+This is a plan change, not an implemented context/history connection.
+
+The [research decision catalog](docs/research/decision-catalog.md) is the first
+lookup for evaluated tools/math, conclusions and revisit triggers. The
+[method register](docs/research/terrain-method-decisions.md) retains failed trials;
+[status](docs/research/status.md) distinguishes available features from experiments.
+Update them with the affected milestone and evidence in every substantive batch.
+
+### Delivered foundations
 
 - [x] **World-to-terrain handoff:** World panel and CLI; connected neighbours,
   islands/holes/seams, bounded custom-sphere projection, retained source identity,
@@ -63,63 +71,34 @@ performance tuning must not displace this product path unless they block it.
 - [x] **Shared absolute ridge crests:** preserve authored contacts through smoothing,
   retain separate crest heights, report incompatible profiles and verify public
   corner/branch examples. See [evidence](docs/research/2026-09-27-shared-ridge-crests.md).
-- [ ] **Next connected-landform step:** generated subordinate spurs, junction-aware
-  editing and controlled cross-sections; map-visible profile handles support review.
-- [ ] **Next landform-quality gain:** connected ranges, passes and lowlands, with
-  physical slope/transition-support feedback for narrow or high-contrast regions.
-  Continuous recipe blending alone does not establish realistic geological history.
-- [ ] **Shared world terrain:** generate coherent rough relief across connected
-  land, then transfer accepted context and upstream conditions into regional jobs.
-- [ ] **Wide-domain support:** explicit regional selection with shared boundaries;
-  no artificial coast at an administrative border or automatic world rescaling.
-- [ ] **World result correspondence:** map generated results back into the world
-  view and publish raster georeferencing from retained projection metadata.
-- [ ] **Generation adoption:** preserve B/LE2 physical-quality gates before
-  promoting the experimental river/history model into ordinary generation.
+
+### Integration and later work
+
+- [ ] **M1 / WC1-WC2:** verified world/context binding, supported physical domain,
+  context-consuming rough relief and portable application/CLI result.
+- [ ] **M2 / WC3:** declared ocean/wind/temperature/moisture model and budgeted runoff
+  consuming the same geography and rough relief; retain diagnostic support limits.
+- [ ] **M3 / LE3/basic LE5:** explicit epoch uplift/resistance/runoff driving bounded
+  aging from M1 initial ground; one evolved ground/drainage result, no double carving.
+- [ ] **M4 / WC3-WC4 candidate:** bounded climate/history feedback, inspectable stages,
+  comparison, cancellation, stale-result handling and world result correspondence.
+- [ ] **M5 / adoption:** fix dominant integrated failures, wider connected domains
+  with shared boundaries, verified global placement and an accepted coarse parent.
+  Connected ranges/spurs/passes, junction editing, cross-sections and transition
+  support follow measured needs here rather than leading integration.
+- [ ] **M6 / WC5/LE6:** same-present regional enrichment, inherited hydrology and zoom.
+  See M7/M8 for selected materials, specialized landforms and ecological extensions.
 
 ### Generation-quality evidence retained
 
-The [progress reassessment](docs/research/2026-09-24-progress-and-generation-strategy.md)
-finds strong workbench/build foundations but unaccepted drainage and landform
-quality. A fresh eight-case probe finds internal rises of 32–132 m on some
-endpoint-descending planned channels. This is sampled diagnostic evidence,
-not a physical river-water validation or a private-map result.
-The [automatic-layout follow-up](docs/research/2026-09-26-hard-target-valley-layout.md)
-now preserves hard targets while routing all four heads to the coast in the 250 m
-raster, with no interior sinks or uphill guide routes. The
-[head/mouth construction follow-up](docs/research/2026-09-26-valley-heads-and-mouths.md)
-now passes all 575 matched local bank sections, including denser checks, under
-the same bounds. The [cell-safe delivery follow-up](docs/research/2026-09-27-cell-safe-terrain-delivery.md)
-now reduces the worst 250 m raster bank rise from 54.062 to 0.316 m while retaining
-cell-interior protection. Dense failures fall only from 241 to 238 of 575, so
-raster bank shape, coarse delivery and fixed/native quality remain open. The
-[short representation probes](docs/research/2026-09-27-feature-preserving-terrain-delivery.md)
-now preserve all 575 local bank profiles through trusted-data storage/reopening;
-world-grid bilinear delivery loses them again. Generic higher-order splines fail
-capture and bounds. The [guarded snapshot implementation](docs/research/2026-09-27-prepared-feature-snapshots.md)
-now reopens the field and complete network with exact profiles, query-order and
-same-surface tile/halo agreement. Four short held-out-layout probes retain
-capture and bounds but still fail 1–4 inward-bank sections, with 0.106–0.606 m
-excursions. Their failure is recorded in the workflow report. Broader geometry
-and real parent/detail acceptance remain required before an authority decision;
-they do not block the standalone handoff using the current generator.
-Consult the user before tests expected to take more than roughly two minutes, or
-whose duration/cost is uncertain; report purpose, estimate and stop condition.
-
-| Order | Outcome and existing backlog owners | Gate |
-|---|---|---|
-| **Delivered — world handoff** | Imported continent to a usable terrain project (R01/R49) | Retained geography/identity, metric scale, connected borders and save/open/build checks |
-| **Next — connected landform gains** | Extend delivered geological guidance and shared blending with range/pass/lowland structure (R08/R09/R14/R40/R44/R49) | Physical transition support, shared scale and hard-control preservation |
-| **B — generation adoption** | Shared river/ground construction, held-out geometry and parent/detail consistency (R48/R32) | Capture, bank shape, bounds and physical-scale acceptance; unresolved research remains explicit |
-| **WC2-WC4** | Shared rough relief, seasonal climate/runoff and bounded history feedback | Accepted physical model, common world present and reproducible budgets before freezing a parent |
-| **D / WC5** | Parent-conditioned local enrichment and inherited fine hydrology, then zoom jobs | Overlap, coarse-scale, time/boundary and visual acceptance before real small rivers |
-| **E / WC6** | River size, storage, sediment and ecological layers | Explicit flux/material accounting and accepted continuous climate/hydrology |
-
-The [strategy](docs/strategy/README.md#next-implementation-order) owns detailed
-acceptance criteria and stopping rules. P0 items below remain prerequisites in
-their own feature areas; they are not all immediate work. Preserve historical
-research and completed substeps. Full-field bound research remains separate
-from the current quality milestone; no stronger clearance claims are implied.
+The [quality reference](docs/strategy/terrain-quality.md) retains A-F comparisons
+and scientific adoption controls. T01-T17 in the method register link the actual
+failed and successful trials, including raster-bank limits and prepared-field
+checks. Those results are not accepted drainage/history. They guide M5 and any
+specific M1-M4 blocker; they no longer form a blanket ban on experimental coupling.
+Existing P0 labels below mean prerequisites within their feature, not a new queue.
+Consult before tests expected to exceed roughly two minutes or with uncertain
+long duration; report purpose, estimate and a stop condition.
 
 ### World-context checkpoint
 
@@ -224,11 +203,12 @@ continent-history generation remain planned.
   implemented. All 575 banks and original gates survive reopening in the matched
   four cases; raster controls still fail. See the
   [report](docs/research/2026-09-27-prepared-feature-snapshots.md).
-- [ ] **Next concrete batch — B1 held-out geometry and detail consistency.**
+- [ ] **M5 quality follow-up — B1 held-out geometry and detail consistency.**
   Test new bends, tributaries, junctions and oblique layouts, then irregular
   mouths and actual parent/detail filtering. Same-field tile agreement does not
   establish independently generated detail. A separate ADR/contract decision
-  remains required before product adoption, history or LE3/WC2.
+  remains required before changing product authority or accepting a WC4 parent;
+  M1-M4 can integrate the existing reference without that representation change.
 - [ ] **WC1 transport follow-up:** consume finite-face incidence only after support
   admission, conservative area/depth integration, explicit sill/capacity geometry
   and paired flux/storage budgets. Add a stable local-coordinate or exact-predicate
@@ -255,7 +235,8 @@ continent-history generation remain planned.
   bathymetry hypothesis product are delivered. Physical forcing, transport and
   downstream coupling acceptance remain.
 - [ ] **WC2 — Produce a rough physical world** (R02/R48/R49): process/domain scale,
-  related macro relief and ocean basins, after B/C and relevant LE acceptance.
+  related macro relief and ocean hypotheses in M1-M3. B/C and LE quality acceptance
+  govern default adoption and WC4 in M5, not the first integrated experiment.
 - [ ] **WC3 — Couple climate/runoff and coarse history** (R33/R49): seasonal budgets,
   explicit epoch forcing, bounded feedback and visible nonconvergence.
 - [ ] **WC4 — Select a verified world parent** (R49/LE3/LE5): staged editor workflow,
@@ -365,7 +346,7 @@ records execution and its remaining gates; the simulation is still research-only
   graph/segment consistency and query-order/batch/tile/halo checks. All 575 dense
   banks and original quality metrics match after reopening at three background
   spacings plus a quarter turn. Current application generation is unchanged.
-- [ ] **Next — B1 held-out geometry and parent/detail checks** (R48/R32/R02/R15).
+- [ ] **M5 — B1 held-out geometry and parent/detail checks** (R48/R32/R02/R15).
   Add bounded new bends, short tributaries, junctions, hard-height proximity and
   oblique layouts. Explicitly extend or reject irregular coasts; the reader still
   supports only the fixture's straight zero coast. Check filtered/coarse means,
@@ -379,10 +360,10 @@ records execution and its remaining gates; the simulation is still research-only
   in force until then. Keep parent/downsample/zoom contracts explicit; no visual
   overlay may replace failed ground. No legacy loaders or runtime rewrite.
   Do not raise cut budgets, soften targets or uniformly refine the world.
-- [ ] **B2 — Terrain/network co-evolution after construction acceptance** (R48/R14).
-  Connect an accepted construction/delivery pair to the two-epoch reference.
+- [ ] **B2 — Terrain/network replacement comparison in M5** (R48/R14).
+  Compare a construction/delivery pair against the M3-M4 integrated reference.
   Measure held-out seeds, oblique orientation, complete catchment coverage,
-  actual-ground figures and cost before broadening landforms or LE3/WC2.
+  actual-ground figures and cost before adopting the replacement.
 - [ ] **G1 — Test groundwater capture and drainage density** (R24/R33).
   After B's surface decision, compare an analytic shallow aquifer and combined
   storage/flux controls, then paired transmissivity/recharge cases in the existing
@@ -402,9 +383,10 @@ records execution and its remaining gates; the simulation is still research-only
   reconstruction, basin semantics, Float32 profiles and frozen-state sampling.
 - [ ] **LE4 — Compare conserved bedrock/mobile sediment** (R16/R18/R33). Account
   for porosity, storage, deposition, fines, boundary exchange and corrections.
-- [ ] **LE5 — Expose accepted history as pre-generation inputs** (R11/R27/R32).
-  Update current schemas/provenance/replay and the editor together; no legacy
-  modes or output sculpting. Sediment controls depend on LE4 acceptance.
+- [ ] **LE5 — Expose experimental history, then accept it** (R11/R27/R32).
+  M3-M4 connect current schemas/provenance/replay and the editor with explicit
+  experimental status; M5 requires full acceptance before default adoption.
+  No legacy modes or output sculpting. Sediment controls depend on LE4 acceptance.
 - [ ] **LE6 — Condition local enrichment and refine shared history** (R15/R34/R49).
   Validate overlap/downsample and inherited flux before zoom jobs/small rivers.
   WC5 additionally requires time-dependent parent context and replay to one present;
@@ -890,7 +872,7 @@ plan or dependency on the active input editor.
 
 ### World context, climate and environmental layers
 
-[Strategy W and WC0-WC6](docs/strategy/world-context.md) now bring source-world
+[World-context plan and WC0-WC6](docs/strategy/world-context.md) now bring source-world
 contracts and provisional context forward. Coupled climate/runoff follows rough
 terrain acceptance; ecological interpretations remain downstream. R49 owns the
 workflow, with shared numeric responsibilities in R01/R02/R07/R10/R11/R15/R33/R34.
@@ -1615,7 +1597,8 @@ Priorities remain conditional on the current strategy's prerequisites.
   still fail. Local banks now pass; T13 preserves them through trusted-field
   reopening and isolates loss when reduced to raster samples. Guarded snapshots
   and same-field query/tiling checks now pass; held-out geometry and real detail
-  consistency remain before B2 history coupling. Changing product
+  consistency remain requirements for M5 representation adoption, not a ban on
+  M3-M4 history integration. Changing product
   authority needs an ADR and complete consumer changes. Preserve genuine authored
   requirements and distinguish composition from erosion. See the
   [failure register](docs/research/terrain-method-decisions.md) for revisit gates.
@@ -1653,10 +1636,10 @@ Priorities remain conditional on the current strategy's prerequisites.
 WC0's source/mapping workspace and WC1 geographic preview/export/reopening and
 shared-edge water, water-piece connectivity, shore-distance and exposure measurements are
 delivered, together with independent geology and bathymetry input editors.
-Current priorities are paired generation comparisons, selected-channel
-profiles and process-resolution/conflict feedback
-for A/B. The complete world wizard follows accepted WC2/WC3 products; do not
-expose controls whose backend is absent. Further polish should serve these gates.
+M1-M4 include the minimum working stage controls, result comparison and failure/
+resolution feedback for the integrated experiment. Do not wait for M5 scientific
+acceptance to make that workflow testable; retain its experimental label. A control
+must have a real backend consumer. Broader editor polish remains deferred.
 [ADR-0047](docs/adr/0047-edit-generation-inputs-only.md) defines input editing;
 [ADR-0048](docs/adr/0048-keep-zoom-driven-detail-generation.md) keeps local enrichment in scope.
 [ADR-0049](docs/adr/0049-navigate-and-save-authored-inputs.md) records navigation,

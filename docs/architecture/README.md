@@ -266,13 +266,31 @@ layer or path boundaries.
 
 ## Planned contracts and remaining decisions
 
+The [M1-M8 plan](../strategy/README.md) is the sole delivery order. M1-M4 connect
+existing products into an experimental application workflow before further isolated
+refinements; M5 accepts the wider world result. This is planned work, not an
+additional implemented path in the pipeline above.
+
+| Responsibility | Planned connection / owner |
+|---|---|
+| Specification and identity | Typed world/context/geology/history inputs in `domain`; matching, freshness and publication in `application`. |
+| Physical preparation | Reuse world projection/landmass adapters; add context sampling/support and initial relief preparation in focused numeric modules. |
+| Climate and runoff | Separate `pipeline` stages with explicit units, source-water identity, masks and ledgers; no UI or file reads inside numerical code. |
+| Evolution | Narrow adapter to the existing reference runtime; shared typed process state and input-role contracts; no benchmark-runner dependency in the core. |
+| Candidate delivery | Application-owned stage orchestration, cancellation and bounded feedback; adapters own artifacts; UI/CLI expose real consuming operations. |
+| Reviewed parent and regions | Accept in M5; M6 consumes immutable state plus boundary/forcing history and shared present. Sampling never advances time. |
+
+The [world connection table](../strategy/world-context.md#first-integrated-application-slice)
+and [evolution adapter contract](../strategy/landscape-evolution.md#experimental-application-integration)
+provide data and acceptance details. Additional decisions remain:
+
 - WC1 physical geology forcing and component-aware transport after delivered
   geographic measurements, verified products, geology inputs, bathymetry and
   water-piece incidence/support;
   per-margin depth scenarios and conservative integration when a consumer needs them;
   later WC2-WC5 coupled products and historical parent context
-- Direct per-vertex profiles, explicit passes and asymmetric structural sides
-  (point-anchored longitudinal ridge/valley profiles are implemented)
+- Generated branches, graph editing, controlled tangents and asymmetric sides
+  (point-anchored/line-owned profiles and compatible shared ridge crests are implemented)
 - Inter-lake transfer, constrained repair and nested depression policy
   (lake levels, retention, outlet checks and conservative area transfer are implemented)
 - River/catchment vector products and external hydrology validation

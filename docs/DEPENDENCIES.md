@@ -6,8 +6,9 @@ minimum accepted versions when the dependency was adopted.
 
 This register lists adopted runtime packages and data, development-only
 validation tooling, and the explicitly isolated research environment below. Evaluated
-candidates remain in [dated research](research/README.md) and the
-[current strategy](strategy/README.md) until an implementation has an immediate
+candidates are indexed in the [decision catalog](research/decision-catalog.md),
+with [dated evidence](research/README.md). The [implementation plan](strategy/README.md)
+orders their evaluation; adoption still requires an immediate
 need, supported-platform validation, and a completed license review.
 
 | Dependency | Minimum | Purpose | License |

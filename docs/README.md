@@ -7,9 +7,10 @@
    [terrain tool guide](../src/dmtools/terrain/README.md).
    For stopping work safely, read [generation cancellation](terrain-generation-control.md).
 2. To contribute or choose the next implementation, read the
-   [current development strategy](strategy/README.md). For failed experiments,
-   reasons and replacement decisions, use the living
-   [terrain method register](research/terrain-method-decisions.md).
+   [ordered implementation plan](strategy/README.md). To see what has already been
+   researched and why a method was used or deferred, start with the
+   [decision catalog](research/decision-catalog.md); individual failed trials live
+   in the [terrain method register](research/terrain-method-decisions.md).
 3. To understand the present dependency direction and data flow, read the
    [architecture overview](architecture/README.md).
 4. To inspect categorized future work, use the
@@ -27,8 +28,8 @@
 8. For portable named stage seeds, read the
    [seed contract](terrain-seeds.md).
 
-For the requested full-world workflow, start with the
-[WC0-WC6 implementation plan](strategy/world-context.md) and its
+For the requested full-world workflow, follow M1-M8 in the main plan, then use the
+[WC0-WC6 connection/model reference](strategy/world-context.md) and its
 [primary-source/tool review](research/2026-09-24-world-context-enrichment.md).
 WC0 world import/mapping and the [geographic subset of WC1](world-context.md) are
 implemented, including verified reopening, shared-edge water measurements,
@@ -49,19 +50,23 @@ reference dependency lock separately. This page remains the selective reading gu
 ## Document roles and authority
 
 Implemented code, public schemas, tests, and accepted ADRs define current
-behavior. The strategy and architecture documents define the current direction.
+behavior. The main strategy owns implementation order; architecture describes
+implemented and explicitly planned responsibilities.
 The roadmap is a categorized backlog rather than an execution sequence. Dated
 research preserves evidence and may become stale as packages and measurements
 change.
 
 - [`strategy/`](strategy/README.md) gives the current dependency-aware order of
-  work and links each phase to its evidence gates.
+  work and the mandatory same-commit update checklist. Its linked
+  [quality reference](strategy/terrain-quality.md) retains A-F controls without
+  making them a competing implementation queue.
 - [`architecture/`](architecture/README.md) describes the current system and
   intended dependency direction.
 - [`adr/`](adr/README.md) preserves accepted decisions, alternatives, and
   consequences; accepted ADRs are append-only history.
 - [`research/`](research/README.md) indexes implemented, measured results and
-  candidate investigations. Its [status page](research/status.md) distinguishes
+  candidate investigations. Its [decision catalog](research/decision-catalog.md)
+  gives searchable conclusions and revisit triggers. Its [status page](research/status.md) distinguishes
   shipped work, partial experiments and work not yet run. The living
   [method register](research/terrain-method-decisions.md) links failed candidates
   to replacement/revisit gates; dated evidence stays historical.

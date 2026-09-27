@@ -1,30 +1,31 @@
 # Complete documentation file inventory
 
-Updated 2026-09-27. Scope: every version-controlled Markdown document in DM Tools,
+Updated 2026-09-28. Scope: every version-controlled Markdown document in DM Tools,
 plus the vendored license notice, including world-source implementation and
 export-import correction, bounded preparation and geographic context documents. Generated builds, caches, dependency
 documentation and private campaign files are excluded. The public JSON schemas and reference dependency
 lock are listed separately as supporting contracts, not counted as prose docs.
 
-**207 Markdown files + 1 legal notice = 208 documentation files.**
+**209 Markdown files + 1 legal notice = 210 documentation files.**
 Each file appears once below, including this inventory. Document titles describe
 their subject; the group description identifies their role and authority.
 
-For the new workflow, read the world user guide and implementation report,
-then the world-context plan, main strategy and TODO. The selective reading guide
-remains the entry point for normal use. All are individually linked in the list below.
+For implementation order, start with the main M1-M8 plan; for prior conclusions,
+start with the research decision catalog. Follow links into the WC/LE model plans,
+quality reference and original reports on demand. The selective reading guide
+remains the entry point for normal use. Every document is linked below.
 
 | Group | Files |
 |---|---:|
 | Project entry and guidance | 4 |
-| Active plans and indexes | 11 |
+| Active plans and indexes | 13 |
 | User guides and current contracts | 19 |
 | Developer and reference guides | 8 |
 | Architecture decision records | 83 |
 | Dated research reports | 80 |
 | Maintenance reports | 2 |
 | Legal notice | 1 |
-| **Total** | **208** |
+| **Total** | **210** |
 
 ## Project entry and guidance (4)
 
@@ -37,7 +38,7 @@ Contribution instructions and repository entry points; these are not terrain set
 | [TODO.md](../TODO.md) | Complete grouped feature/research backlog, including R01-R49 and WC/LE checkpoints. |
 | [src/dmtools/terrain/AGENTS.md](../src/dmtools/terrain/AGENTS.md) | Terrain-specific contracts and implementation/testing instructions. |
 
-## Active plans and indexes (11)
+## Active plans and indexes (13)
 
 Current direction and navigation. Plans mark unimplemented features explicitly; code, schemas, tests and accepted decisions own shipped behavior.
 
@@ -49,9 +50,11 @@ Current direction and navigation. Plans mark unimplemented features explicitly; 
 | [docs/adr/README.md](adr/README.md) | Architecture-decision index and the append-only decision policy. |
 | [docs/architecture/README.md](architecture/README.md) | Current runtime structure and explicitly planned world-stage ownership. |
 | [docs/research/README.md](research/README.md) | Dated research index, separating source review from executed experiments. |
+| [docs/research/decision-catalog.md](research/decision-catalog.md) | Searchable technology/math conclusions, used/deferred/rejected scope, evidence and revisit triggers. |
 | [docs/research/terrain-method-decisions.md](research/terrain-method-decisions.md) | Living failed-method record, causes, retained work, alternatives and revisit gates. |
 | [docs/research/status.md](research/status.md) | Current implemented, experimental and unimplemented research status. |
-| [docs/strategy/README.md](strategy/README.md) | Authoritative implementation order and acceptance gates. |
+| [docs/strategy/README.md](strategy/README.md) | Sole M1-M8 implementation order, stage connections, completion checks and continuous-update rule. |
+| [docs/strategy/terrain-quality.md](strategy/terrain-quality.md) | Detailed A-F quality and specialized-feature controls, subordinate to the main order. |
 | [docs/strategy/landscape-evolution.md](strategy/landscape-evolution.md) | LE0-LE6 evolution, authoring, conservation and regional-history gates. |
 | [docs/strategy/world-context.md](strategy/world-context.md) | WC0-WC6 full-world import, shared context, climate and regional-history plan. |
 

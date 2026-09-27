@@ -8,7 +8,7 @@ fail, so this is an experimental component, not an application generator.**
 
 This follows the [connected-patch comparison](2026-09-26-connected-valley-patches.md).
 Its original fixed/native and fresh fixed-guide controls are rerun and retained.
-The [strategy](../strategy/README.md#b-make-a-river-path-and-its-terrain-agree)
+The [strategy](../strategy/terrain-quality.md#b-make-a-river-path-and-its-terrain-agree)
 owns the remaining acceptance gates.
 
 ## What changed

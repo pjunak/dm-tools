@@ -1,6 +1,6 @@
 # World-context and staged terrain implementation plan
 
-Updated 2026-09-27. **WC0 implemented; WC1 geography/reopening/edge/exposure, authored geology and bathymetry slices delivered; remaining WC1-WC6 work planned.** The
+Updated 2026-09-28. **WC0 implemented; WC1 geography/reopening/edge/exposure, authored geology and bathymetry slices delivered; remaining WC1-WC6 work planned.** The
 [World workspace](../terrain-worlds.md) imports retained SVG sources, validates
 explicit spherical placement and ownership, and saves portable world projects.
 World → Terrain now transfers a selected continent and connected land into a
@@ -84,6 +84,36 @@ Connected range/pass/lowland structure and physical transition-support feedback
 remain quality work. Wide connected land still needs regional domains with shared
 boundary conditions. Result georeferencing/overlay remains a feature follow-up.
 These features do not imply that the river/history research passed its gates.
+
+## First integrated application slice
+
+**Planned, M1-M4.** Use the already delivered source/context products and one
+supported connected landmass to make an end-to-end experimental build. Retain
+whole-world surroundings when selecting a local process domain. A continent label
+must not create a coastline, no-flow wall or independent climate boundary. Wide
+landmasses need a declared supported domain or shared-boundary design; reject
+unsupported extents until then. Do not run a flat solver on longitude/latitude.
+
+| Producer → consumer | Data and meaning | First use / required check |
+|---|---|---|
+| Retained source + context → rough-domain preparation | World/frame/radius, physical land, periodic water pieces, shore distance/error and sampling support; exact source/revision match | M1: metric queries and coastal support; coast/mask and ownership-split controls. Unresolved topology is not silently repaired. |
+| Geology recipe → initial relief / history compiler | Existing explicit landform controls; later explicit uplift, resistance and epoch schedules | M1 uses landforms; M3 consumes physical forcing. Ages/categories alone never imply coefficients or a simulation duration. |
+| Oceans/context + rough relief → climate/runoff | Latitude, selected marine moisture sources, directional diagnostics, explicit winds/planet assumptions, terrain height and fractional coast treatment | M2: meaningful coastal/interior and rain-shadow controls, validity masks and water/heat ledgers. Current all-water exposure includes inland water and cannot substitute for connected-ocean fetch. |
+| Bathymetry hypothesis → optional ocean thermal/transport consumer | Depth/error/support and selected ocean identity | Load only when a selected M2/M4 approximation uses it; otherwise mark retained/unconsumed. Column depth is not mixed-layer depth, heat storage, sill capacity or circulation. |
+| Runoff + epochs + initial ground → evolution adapter | Effective runoff depth and discharge, metric areas/lengths, uplift and transport/resistance fields, one declared geological clock | M3: explicit time/unit conversion, zero-forcing and changed-history controls, correction/export ledger, reproducible evolved ground. |
+| Evolved relief → climate/runoff → history | Declared update cadence or bounded replay from the same initial state; inherited boundary conditions | M4: residuals and stop budgets, no double aging; failures remain provisional and cannot freeze a WC4 parent. |
+| Evolved ground → inspection/export / accepted parent | Final ground, drainage derived from that ground, stage identities and supported capabilities | M3-M4 allow candidate review; M5 accepts the coarse parent. M6 regional history requires time-dependent parent forcing, not merely a final DEM. |
+
+Application orchestration owns source verification and publication; pure numeric
+stages receive typed arrays/units. Keep context resampling, climate/runoff,
+history adaptation and UI responsibilities in separate modules. Reuse current
+build/cancellation/preview machinery and record which inputs actually influence
+each result. New fields and controls ship with their consumer, example and test.
+One research-reference adapter is enough; no new generic engine/plugin framework.
+
+The [main plan](README.md) owns the order and same-commit update checklist. The
+mathematics below remains the candidate model and acceptance basis; integration
+is not evidence of calibrated climate or accepted physical terrain.
 
 ## What is authoritative
 
@@ -333,18 +363,18 @@ not make generated geography canonical outside it.
 
 ## Delivery milestones and acceptance
 
-Implementation order differs from the user-facing build sequence. Advance the
-world-source foundation now, then retain the B/LE2 terrain-quality gate before
-world-informed production evolution. Do not wait for every ecological layer to
-ship before preserving world coordinates.
+Follow M1-M4 for a bounded experimental application workflow, then M5 for
+default adoption and an accepted WC4 parent. Hard geography, unit, numeric, input
+and resource contracts apply before any run. B/C and LE quality evidence still
+govern acceptance; they do not prohibit initial context/history integration.
 
 | Milestone | Bounded deliverable and dependencies | Exit evidence |
 |---|---|---|
 | WC0: retained world import — implemented | Explicit full-sphere frame/radius, retained SVG, stable continents/islands, mapping preview and portable saves; R01/R49 | Public touching-continent, owned-island, hole, offset-frame, seam/pole, malformed-input and UI/save controls; see implementation report |
 | WC1: provisional context — geography, geology inputs and bathymetry delivered | Spherical coverage, periodic water/support, verified products, shared-edge widths, shore distance/exposure, province/default recipes and an explicit ocean-depth scenario | Geographic/province controls plus conservative depth envelopes, point water membership, source identity and editor/bundle controls pass; physical transport/forcing acceptance remains |
-| WC2: rough physical world | Shared macro terrain/bathymetry and process-domain prototype, physical scale/support; WC1, B/C, R02/R48, LE2/LE3 acceptance for evolved output | Matched quality gallery, cross-label catchments, constraints, projections/flux and resolution gates |
-| WC3: climate/runoff feedback | Seasonal fields, moisture/storage budgets, declared epoch forcing and bounded coarse-history loop; WC2, R33 and selected LE engine | Energy/water closure, rain-shadow/continentality controls, convergence or explicit incomplete result, measured resources |
-| WC4: reviewed parent and workflow | Immutable world parent, explicit continent/province history controls, dependency invalidation and staged editor; WC0-WC3 and LE3, co-delivered with LE5 world bindings | Reopen/verify/reproduce, stale-child behavior, cancel/complete publication and one public end-to-end world |
+| WC2: rough physical world | M1-M3 experimental macro relief, context/forcing and evolved candidate; WC1 plus R02/R48 input/process contracts. M5 adopts an accepted result. | Hard contracts and reproducible candidates first; matched quality gallery, cross-label flow and B/C/LE3 evidence before default adoption/WC4. |
+| WC3: initial climate/runoff, then feedback | M2 consumes M1 rough relief and declared planet/ocean/wind inputs to produce initial climate/runoff (R33). M4 adds bounded feedback after M3 aging; the initial pass does not depend on evolved WC2 output. | Initial energy/water closure and rain-shadow/continentality controls; feedback convergence or explicit incomplete result, with measured resources. |
+| WC4: reviewed parent and workflow | M3-M4 expose experimental history/stage controls; M5 freezes an accepted immutable world parent after WC2/WC3/LE3 evidence. | Reopen/verify/reproduce, stale-child behavior, cancel/complete publication and one accepted public end-to-end world. |
 | WC5: regional historical refinement | Same-present child generation with time-dependent parent boundary/forcing, scale-aware water; WC4, LE6, R15/R34 | No double aging, exact overlaps/order independence, inherited flux, restriction/constraint and seam acceptance |
 | WC6: downstream ecology and stronger references | Climate/life-zone/ecosystem layers; optional advanced ocean, material transport or external GCM comparisons | Independent evidence for each chosen addition; none is a blanket dependency of WC0 |
 
@@ -354,8 +384,9 @@ record the shipped workspace and public controls. Original SVG remains
 authoritative; flattened inspection geometry and area have explicit tolerance.
 The [preparation follow-up](../research/2026-09-25-bounded-world-preparation.md)
 handles minor source imperfections with visible reports and disjoint coverage.
-Full-sphere Plate Carrée is the supported input. Partial worlds, other projections,
-world-to-metric terrain extraction, climate and terrain generation remain unimplemented.
+Full-sphere Plate Carrée remains the supported input. The later standalone
+world-to-metric handoff and explicit landform transfer are implemented. Partial
+world inputs, other source projections and coupled world climate/history remain planned.
 
 **WC1 geographic checkpoint:** [ADR-0073](../adr/0073-generate-spherical-geographic-context.md)
 and the [implementation report](../research/2026-09-25-geographic-world-context.md)
@@ -410,15 +441,13 @@ and source-verified context v4. The viewer and CLI expose precision-limited
 fragmented source regions; no inferred connection repairs them. This is a
 connectivity foundation, not a circulation model.
 
-**Current product priority: world-to-terrain delivery.** Its first standalone
-handoff is implemented and verified on public fixtures plus a private continent.
-Geological guidance now produces broad landform differences with shared transitions.
-Next extend connected landform structure, result correspondence and regional
-workflows before coupled shared rough relief. Preserve the
-B/C shared path/ground, rotation/grid and hard-constraint gates before adopting
-the coupled WC2 model. Keep geometry and budgets explicit before assigning sill
-depth or exchange capacity. Additional metadata panels alone are not progress
-towards generation quality.
+**Current priority: connect the M1-M4 workflow.** The standalone handoff and
+geological landform transfer are delivered. Connect generated context, rough
+relief, budgeted runoff and aging before more isolated structural refinement.
+Bring minimal result correspondence and controls with their actual consumers.
+Preserve B/C and LE acceptance for default adoption/WC4 in M5. Geometry and
+budgets remain prerequisites for claimed sill depth or exchange capacity;
+additional metadata panels without consumption do not complete integration.
 
 A transport solver must use the implemented piece/interval graph, reject
 fragmented source-region support and establish conservative transfer budgets;
@@ -430,7 +459,8 @@ rather than interpreting current geographic scores as calibrated climate.
 WC0 follow-ups to consider alongside that work: cancel/checkpoint long imports,
 measure curved-source complexity, and decide whether partial mapping drafts need
 a distinct input document. These do not justify a no-op climate editor. B's shared
-path/ground and LE2 resolution/authoring work remain prerequisites to WC2.
+path/ground and LE2 resolution/authoring work govern WC2 adoption and WC4,
+while M1-M4 can expose supported experimental capabilities earlier.
 Coordinate the shared implementation in the main strategy; these milestones do
 not authorize seven concurrent subsystems or a new general simulation framework.
 The current usable local generator continues to supply the baseline comparison.

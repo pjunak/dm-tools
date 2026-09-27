@@ -10,6 +10,12 @@ interface should call the same engine rather than replacing it.
 
 ## Status
 
+The [ordered implementation plan](docs/strategy/README.md) now prioritizes
+connecting world context, rough relief, runoff and aging into one testable workflow.
+The [research decision catalog](docs/research/decision-catalog.md) records what was
+evaluated, why it was used or deferred, and when to revisit it. Integration remains
+planned; the capabilities below describe what actually runs today.
+
 The desktop workbench now has **World** and **Terrain** workspaces.
 [World import](docs/terrain-worlds.md) retains the original SVG, continent/island
 ownership, an explicit spherical frame and planet radius in portable
