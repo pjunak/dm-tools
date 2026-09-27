@@ -119,13 +119,13 @@ def test_density_preparation_uses_active_local_recipe_and_minimum_two_macro_octa
     polygon = box(0, 0, 100, 100)
     ring = ((0., 0.), (1., 0.), (1., 1.), (0., 1.), (0., 0.))
     source = TerrainRegion(ring, LandformSettings("hills", 100., 100., 2., 1.))
-    region = MetricRegion(polygon, source)
+    region = MetricRegion(polygon, source.settings, polygon)
     settings = TerrainSettings(detail_levels=1, variability=0.)
     guides = _water_sampling_guides((), (region,), settings)
     densities = [g for g in guides if isinstance(g, SamplingDensity)]
     assert len(densities) == 1 and densities[0].spacing_km == .5
     assert densities[0].geometry is not None and densities[0].geometry.equals(polygon)
-    flat = replace(region, source=replace(source, settings=replace(source.settings, relief_m=0.)))
+    flat = replace(region, settings=replace(source.settings, relief_m=0.))
     flat_guides = _water_sampling_guides((), (flat,), settings)
     assert not any(isinstance(g, SamplingDensity) for g in flat_guides)
     global_guides = _water_sampling_guides(

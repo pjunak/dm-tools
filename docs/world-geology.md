@@ -124,10 +124,13 @@ Its boundary is **not** an elevation discontinuity or a physical forcing taper.
 The terrain handoff resolves this partition first, merges equal landform controls
 across ownership/age boundaries, then projects its pieces through the exact same
 bounded projection as the coast. Priority cutouts become terrain-region holes.
-Its existing inward smoothstep transition is procedural guidance, not calibrated
-geological forcing. Different adjoining recipes can still show a background ridge
-or trough along their shared boundary; the next landform-quality task is continuous
-blending across that boundary. Broad feature shapes are not yet realistic by default. Vertex dragging, multipart/holed provinces, polar winding
+Adjacent recipes now blend through their shared boundary; only the outside of
+connected assigned coverage fades toward generic background. Blank overrides
+stay background, and established enclave interiors retain their own guidance.
+This is procedural composition, not calibrated geological forcing; large height
+contrasts can still form steep polygon-shaped slopes. See the
+[blending evidence](research/2026-09-27-shared-landform-blending.md).
+Vertex dragging, multipart/holed provinces, polar winding
 conventions, per-field inheritance and rebasing to an edited world are follow-ups.
 
 ## Persistence and cancellation

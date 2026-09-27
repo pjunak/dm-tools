@@ -144,7 +144,11 @@ def test_public_floor_profiles_reduce_excursions_and_keep_canonical_ground(
         np.testing.assert_array_equal(canonical, field.sample_ground(xx, yy))
     assert revised["nonfinite_profile_count"] == baseline["nonfinite_profile_count"]
     assert revised["descending"]["edge_count"] == baseline["descending"]["edge_count"]
-    assert (revised["cardinal_descending"]["mean_excursion_m"]
-            < baseline["cardinal_descending"]["mean_excursion_m"]*.3)
+    # Regional composition changes the source terrain and selected edge set.
+    # Require a substantial relative gain AND a physical residual bound; a
+    # percentage alone can hide a worsening corrected surface as raw relief grows.
+    cardinal = revised["cardinal_descending"]["mean_excursion_m"]
+    assert cardinal < baseline["cardinal_descending"]["mean_excursion_m"] / 3.
+    assert cardinal < .25
     assert (revised["descending"]["mean_excursion_m"]
             < baseline["descending"]["mean_excursion_m"]*.75)

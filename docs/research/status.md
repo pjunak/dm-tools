@@ -72,7 +72,10 @@ pieces, shared intervals, source-verified graphs, bounded work and visible suppo
 for precision-limited source regions. A usable world-to-terrain handoff now
 connects imported geography to current local generation. Explicit landform controls
 now transfer from geology recipes, with priority holes and identical-guidance
-dissolving across ownership labels; physical histories remain separate.
+dissolving across ownership labels. The
+[shared-blending batch](2026-09-27-shared-landform-blending.md) replaces internal
+background rims and rejects a distance-only kernel that weakens enclave interiors.
+Continuous weights do not accept terrain realism or physical histories.
 World climate, physical province histories and same-present regional geological
 replay are not implemented. Existing local detail is not history replay. Source
 and license checks for Climlab/GPlates/ExoPlaSim are not local execution evidence.

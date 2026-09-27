@@ -12,7 +12,11 @@ remain in adapters. See the [world guide](../../../../docs/terrain-worlds.md).
 The implemented generator builds a coordinate-addressed relief field and a
 separate low-frequency macro surface. Regional recipes and authored constraints,
 including valley profiles prepared against a stable pre-incision reference,
-shape that macro surface before routing. MFD contributing area uses a
+shape that macro surface before routing. `landform_weights.py` owns dissolved
+regional coverage and compact recipe mixing; `landforms.py` owns relief carriers.
+Background fades occur at exposed coverage boundaries, not shared recipe edges.
+Crest and water-density probes cover neighboring support, and native incision
+limits use the same weights. MFD contributing area uses a
 Priority-Flood-conditioned copy on a fixed canonical grid, then drives bounded,
 stream-power-inspired automatic valleys. Incision is sampled in local metric
 coordinates, so changing output resolution does not reroute major valleys.

@@ -6,7 +6,7 @@ export-import correction, bounded preparation and geographic context documents. 
 documentation and private campaign files are excluded. The public JSON schemas and reference dependency
 lock are listed separately as supporting contracts, not counted as prose docs.
 
-**200 Markdown files + 1 legal notice = 201 documentation files.**
+**202 Markdown files + 1 legal notice = 203 documentation files.**
 Each file appears once below, including this inventory. Document titles describe
 their subject; the group description identifies their role and authority.
 
@@ -20,11 +20,11 @@ remains the entry point for normal use. All are individually linked in the list 
 | Active plans and indexes | 11 |
 | User guides and current contracts | 18 |
 | Developer and reference guides | 8 |
-| Architecture decision records | 80 |
-| Dated research reports | 77 |
+| Architecture decision records | 81 |
+| Dated research reports | 78 |
 | Maintenance reports | 2 |
 | Legal notice | 1 |
-| **Total** | **201** |
+| **Total** | **203** |
 
 ## Project entry and guidance (4)
 
@@ -95,7 +95,7 @@ Subsystem, fixture, schema, test and benchmark guidance.
 | [src/dmtools/terrain/pipeline/README.md](../src/dmtools/terrain/pipeline/README.md) | Numeric generation and inspection responsibilities. |
 | [tests/README.md](../tests/README.md) | Test organization, commands and verification expectations. |
 
-## Architecture decision records (80)
+## Architecture decision records (81)
 
 Accepted historical decisions. Preserve their original context; consult the current status and implementation for later changes. The ADR index is listed among active indexes.
 
@@ -181,14 +181,16 @@ Accepted historical decisions. Preserve their original context; consult the curr
 | [docs/adr/0078-retain-water-piece-connectivity.md](adr/0078-retain-water-piece-connectivity.md) | Separate water pieces, finite shared intervals, source verification and explicit unresolved transport support. |
 | [docs/adr/0079-project-world-land-into-terrain.md](adr/0079-project-world-land-into-terrain.md) | Connected world land, metric projection, portable source and guarded terrain handoff. |
 | [docs/adr/0080-transfer-geological-landform-guidance.md](adr/0080-transfer-geological-landform-guidance.md) | Explicit geological landforms, priority holes, portable provenance and current-format cutover. |
+| [docs/adr/0081-blend-adjoining-landform-regions.md](adr/0081-blend-adjoining-landform-regions.md) | Shared regional weighting, blank holes, established interiors and matching probe/cut support. |
 
-## Dated research reports (77)
+## Dated research reports (78)
 
 Primary-source reviews, experiments and implementation evidence at their recorded date/revision. A title or citation is not evidence that a tool was adopted. Current status is listed above.
 
 | File | Purpose or document title |
 |---|---|
-| [docs/research/2026-09-27-geological-landform-guidance.md](research/2026-09-27-geological-landform-guidance.md) | Explicit recipe transfer, paired terrain evidence and unresolved polygon-boundary rims. |
+| [docs/research/2026-09-27-shared-landform-blending.md](research/2026-09-27-shared-landform-blending.md) | Replacement of background seams, rejected enclave-leaking kernel, paired evidence and remaining slope limits. |
+| [docs/research/2026-09-27-geological-landform-guidance.md](research/2026-09-27-geological-landform-guidance.md) | Historical recipe-transfer evidence and polygon-boundary rims motivating ADR-0081. |
 | [docs/research/2026-09-27-world-to-terrain-workflow.md](research/2026-09-27-world-to-terrain-workflow.md) | Working world-to-terrain handoff, real-map roundoff failure/fix, feature priorities and exploratory bank failures. |
 | [docs/research/2026-09-27-prepared-feature-snapshots.md](research/2026-09-27-prepared-feature-snapshots.md) | Bounded feature snapshots, exact reopening/query/halo checks, failed raster control and remaining adoption gates. |
 | [docs/research/2026-09-27-feature-preserving-terrain-delivery.md](research/2026-09-27-feature-preserving-terrain-delivery.md) | Short orientation/feasibility probes, rejected splines, exact trusted-field roundtrip and proposed feature-preserving delivery. |

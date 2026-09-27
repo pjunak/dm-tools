@@ -124,8 +124,8 @@ def sample_mountain_barriers(
             or np.any(~np.isfinite(elevation_m[land])) or not 1 <= batch_edges <= 4096):
         raise ValueError("Crest sampling needs finite axes, a shared grid and bounded batches.")
     mountains = tuple(region for region in regions
-                      if region.source.settings.character == "mountains"
-                      and region.source.settings.relief_m > 0.)
+                      if region.settings.character == "mountains"
+                      and region.settings.relief_m > 0.)
     if not mountains or not np.any(land):
         return None
     xx, yy = np.meshgrid(x, y)
@@ -142,16 +142,17 @@ def sample_mountain_barriers(
         barriers[index][source] = endpoints
         barriers[7-index][target] = endpoints
     seed = stage_seed(master_seed, LANDFORM_STAGE_ID)
-    seen: set[tuple[bytes, float, float]] = set()
+    seen: set[tuple[bytes, bytes, float, float, float]] = set()
     # Stream regions into shared grid storage, including refined observations.
     for region in mountains:
-        controls = region.source.settings
-        identity = (region.geometry.wkb, controls.feature_size_km, controls.orientation_deg)
+        controls = region.settings
+        identity = (region.geometry.wkb, region.coverage.wkb, controls.transition_km,
+                    controls.feature_size_km, controls.orientation_deg)
         if identity in seen:
             continue
         seen.add(identity)
         u, v, broad = regional_noise_basis(xx, yy, controls, seed)
-        nearby = np.asarray(shapely.intersects_xy(region.geometry.buffer(radius), xx, yy),
+        nearby = np.asarray(shapely.intersects_xy(region.sampling_support().buffer(radius), xx, yy),
                             dtype=np.bool_)
         for index in range(4, 8):
             dy, dx = D8_NEIGHBOURS[index]

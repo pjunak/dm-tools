@@ -8,13 +8,13 @@ from shapely.geometry import Polygon, box
 from benchmarks.evolution.constrained import FittedSurface, HardHeights
 from benchmarks.evolution.network import RiverNetwork
 from benchmarks.evolution.paths import FloatArray
-from dmtools.terrain.domain import LandformSettings, TerrainRegion
+from dmtools.terrain.domain import LandformSettings
 from dmtools.terrain.domain.evolution import EvolutionGrid
 from dmtools.terrain.domain.models import LandformKind
 from dmtools.terrain.pipeline.hydrology import automatic_incision_budget
 from dmtools.terrain.pipeline.landforms import MetricRegion, regional_incision_limit
 
-FIXTURE_ID = "two-catchment-range-lowland@1"
+FIXTURE_ID = "two-catchment-range-lowland@2"
 
 
 @dataclass(frozen=True, slots=True)
@@ -44,7 +44,7 @@ def conservative_limits(
     cell_x, cell_y = cell_x * step, cell_y * step
     cells = np.full(cell_x.shape, background)
     for geometry, limit in (
-        *((r.geometry, regional_incision_limit(background, r.source.settings)) for r in regions),
+        *((r.sampling_support(), regional_incision_limit(background, r.settings)) for r in regions),
         (protected_km, 0.0),
     ):
         x0, y0, x1, y1 = geometry.bounds
@@ -140,8 +140,7 @@ def fixture(spacing_m: float = 500.0, *, rotate: bool = False) -> NetworkFixture
     )
     for y0, y1, kind, relief in recipes:
         controls = LandformSettings(character=kind, relief_m=relief, transition_km=1.0)
-        ring = ((0.0, y0 / 24), (1.0, y0 / 24), (1.0, y1 / 24), (0.0, y1 / 24), (0.0, y0 / 24))
-        regions.append(MetricRegion(box(0, y0, 32, y1), TerrainRegion(ring, controls)))
+        regions.append(MetricRegion(box(0, y0, 32, y1), controls, box(0, 0, 32, 24)))
     divide = box(15, 0, 17, 24)
     anchors = np.array([[12375.0, 4625.0], [16000.0, 8375.0]])
     heights = coarse.sample(anchors[:, 0], anchors[:, 1]).astype(np.float64)
@@ -154,7 +153,8 @@ def fixture(spacing_m: float = 500.0, *, rotate: bool = False) -> NetworkFixture
         rotated: list[MetricRegion] = []
         for r in regions:
             x0, y0, x1, y1 = r.geometry.bounds
-            rotated.append(MetricRegion(box(24 - y1, x0, 24 - y0, x1), r.source))
+            rotated.append(MetricRegion(box(24 - y1, x0, 24 - y0, x1), r.settings,
+                                        box(0, 0, 24, 32)))
         regions = rotated
         divide = box(0, 15, 24, 17)
     source = FittedSurface(grid, ground, {"role": "fixed physical broad source"})

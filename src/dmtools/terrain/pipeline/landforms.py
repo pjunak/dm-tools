@@ -1,49 +1,26 @@
 # pyright: reportUnknownMemberType=false
 """Regional macro composition before authored constraints and drainage planning."""
 
-from collections.abc import Iterator
-from dataclasses import astuple, dataclass
-from typing import Any, cast
-
 import numpy as np
-import shapely
 from numpy.typing import NDArray
-from shapely.geometry import MultiPolygon, Polygon
 
-from dmtools.terrain.domain import LandformSettings, TerrainRegion, TerrainSettings
+from dmtools.terrain.domain import LandformSettings, TerrainSettings
 from dmtools.terrain.domain.seeds import LANDFORM_STAGE_ID, stage_seed
+from dmtools.terrain.pipeline.landform_weights import (
+    MetricRegion as MetricRegion,
+)
+from dmtools.terrain.pipeline.landform_weights import (
+    prepare_regions as prepare_regions,
+)
+from dmtools.terrain.pipeline.landform_weights import (
+    regional_transition_mask as regional_transition_mask,
+)
+from dmtools.terrain.pipeline.landform_weights import (
+    regional_weights,
+)
 from dmtools.terrain.pipeline.noise import fractal_value_noise
 
-LANDFORM_ALGORITHM_ID = "regional-landforms@3"
-
-
-@dataclass(frozen=True, slots=True)
-class MetricRegion:
-    geometry: Polygon
-    source: TerrainRegion
-
-
-def prepare_regions(
-    regions: tuple[TerrainRegion, ...], width_km: float, height_km: float,
-    land: Polygon | MultiPolygon, maximum_elevation_m: float,
-) -> tuple[MetricRegion, ...]:
-    prepared: list[MetricRegion] = []
-    # Stable ordering makes overlap blending independent of authoring order.
-    for region in sorted(
-        regions, key=lambda item: (astuple(item.settings), item.points, item.holes),
-    ):
-        geometry = Polygon(
-            [(x * width_km, y * height_km) for x, y in region.points],
-            [[(x * width_km, y * height_km) for x, y in ring] for ring in region.holes],
-        )
-        if not geometry.is_valid or geometry.area <= 0:
-            raise ValueError("Terrain region must be a simple polygon with positive area.")
-        if not geometry.intersects(land) or geometry.intersection(land).area <= 0:
-            raise ValueError("Terrain region must cover some land.")
-        if region.settings.elevation_m > maximum_elevation_m:
-            raise ValueError("Regional elevation exceeds the elevation ceiling.")
-        prepared.append(MetricRegion(geometry, region))
-    return tuple(prepared)
+LANDFORM_ALGORITHM_ID = "regional-landforms@4"
 
 
 def _broad_noise(
@@ -80,8 +57,8 @@ def regional_elevation_fields(
     target_full = np.zeros_like(full)
     seed = stage_seed(settings.seed, LANDFORM_STAGE_ID)
     coastal_gate = -np.expm1(-coast_distance / settings.coastal_rise_km)
-    for region, inside, weight in _regional_weights(x, y, regions):
-        controls = region.source.settings
+    for region, inside, weight in regional_weights(x, y, regions):
+        controls = region.settings
         u, v, broad = regional_noise_basis(x[inside], y[inside], controls, seed)
         detail = fractal_value_noise(u, v, seed=seed,
             largest_feature_km=controls.feature_size_km,
@@ -113,25 +90,6 @@ def regional_elevation_fields(
     )
 
 
-def _regional_weights(
-    x: NDArray[np.float64], y: NDArray[np.float64], regions: tuple[MetricRegion, ...],
-) -> Iterator[tuple[MetricRegion, NDArray[np.bool_], NDArray[np.float64]]]:
-    """Share the inward transition between landform shape and process budgets."""
-    if not regions:
-        return
-    points: Any = shapely.points(x, y)
-    for region in regions:
-        inside = np.asarray(shapely.intersects_xy(region.geometry, x, y), dtype=np.bool_)
-        if not inside.any():
-            continue
-        distance = cast(NDArray[np.float64], np.asarray(
-            cast(Any, shapely.distance(points[inside], region.geometry.boundary)),
-            dtype=np.float64,
-        ))
-        fade = np.clip(distance / region.source.settings.transition_km, 0, 1)
-        yield region, inside, fade * fade * (3 - 2 * fade)
-
-
 def regional_incision_limit(background_budget_m: float, controls: LandformSettings) -> float:
     """Native full-influence automatic-cut limit for one landform recipe."""
     fraction = {"plain": 0.15, "hills": 0.40, "plateau": 0.25, "mountains": 0.25}
@@ -145,21 +103,11 @@ def regional_incision_budget(
     """Blend heuristic automatic-cut limits; authored valleys are separate."""
     total = np.zeros_like(x)
     target = np.zeros_like(x)
-    for region, inside, weight in _regional_weights(x, y, regions):
-        controls = region.source.settings
+    for region, inside, weight in regional_weights(x, y, regions):
+        controls = region.settings
         local_budget = regional_incision_limit(background_budget_m, controls)
         target[inside] += weight * local_budget
         total[inside] += weight
     influence = np.minimum(total, 1)
     denominator = np.maximum(total, np.finfo(np.float64).tiny)
     return background_budget_m * (1 - influence) + target / denominator * influence
-
-
-def regional_transition_mask(
-    x: NDArray[np.float64], y: NDArray[np.float64], regions: tuple[MetricRegion, ...],
-) -> NDArray[np.bool_]:
-    """Nodes inside at least one region's inward boundary transition."""
-    transition = np.zeros(x.shape, dtype=np.bool_)
-    for _region, inside, weight in _regional_weights(x, y, regions):
-        transition[inside] |= weight < 1.0
-    return transition

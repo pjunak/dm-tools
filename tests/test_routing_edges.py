@@ -11,7 +11,7 @@ from shapely.geometry import box
 
 from benchmarks.channel_profiles import measure_channels
 from benchmarks.terrain import fixture
-from dmtools.terrain.domain import LandformSettings, TerrainRegion
+from dmtools.terrain.domain import LandformSettings
 from dmtools.terrain.domain.seeds import LANDFORM_STAGE_ID, stage_seed
 from dmtools.terrain.pipeline import generate as generation
 from dmtools.terrain.pipeline import routing_edges
@@ -98,9 +98,8 @@ def test_invalid_edge_observations_are_rejected(fault: str) -> None:
 
 
 def _region() -> MetricRegion:
-    points = ((0., 0.), (1., 0.), (1., 1.), (0., 1.), (0., 0.))
-    return MetricRegion(box(0., 0., 2., 2.), TerrainRegion(
-        points, LandformSettings(character="mountains", relief_m=500.)))
+    polygon = box(0., 0., 2., 2.)
+    return MetricRegion(polygon, LandformSettings(character="mountains", relief_m=500.), polygon)
 
 
 def _linear_carrier(
@@ -211,8 +210,8 @@ def test_region_count_does_not_accumulate_live_carrier_grids(
     axis = np.linspace(0., 2., 65)
     ground, land = np.full((65, 65), 100.), np.ones((65, 65), dtype=np.bool_)
     region = _region()
-    regions = tuple(replace(region, source=replace(region.source, settings=replace(
-        region.source.settings, feature_size_km=150.+i))) for i in range(24))
+    regions = tuple(replace(region, settings=replace(
+        region.settings, feature_size_km=150.+i)) for i in range(24))
     barriers = routing_edges.sample_mountain_barriers(
         axis, axis, ground, land, regions, 42, lambda x, y: np.full_like(x, 140.))
     assert barriers is not None and len(carriers) == 24
@@ -238,8 +237,8 @@ def test_refined_sampling_observes_off_station_and_same_sign_crests(
 
     monkeypatch.setattr(routing_edges, "regional_noise_basis", carrier)
     region = _region()
-    region = replace(region, source=replace(region.source, settings=replace(
-        region.source.settings, feature_size_km=1.)))
+    region = replace(region, settings=replace(
+        region.settings, feature_size_km=1.))
     axis = np.arange(3, dtype=np.float64)
     land = np.ones((3, 3), dtype=np.bool_)
     ground = np.broadcast_to(100.+40.*(1.-np.minimum(np.abs(signal(axis)), 1.)), (3, 3)).copy()
@@ -277,8 +276,8 @@ def test_observed_paired_roots_are_both_sampled(monkeypatch: pytest.MonkeyPatch)
 
 def test_rotated_carriers_and_overlaps_are_batch_and_order_independent() -> None:
     region = _region()
-    regions = tuple(replace(region, source=replace(region.source, settings=replace(
-        region.source.settings, feature_size_km=size, orientation_deg=angle)))
+    regions = tuple(replace(region, settings=replace(
+        region.settings, feature_size_km=size, orientation_deg=angle))
         for size, angle in ((.8, 37.), (1.3, 84.)))
     x = np.array([0., .04, .27, .41, .68, 1.2, 1.7, 2.])
     y = np.linspace(0., 2., 7)
@@ -293,7 +292,7 @@ def test_rotated_carriers_and_overlaps_are_batch_and_order_independent() -> None
         result = np.full_like(qx, 100.)
         for item in regions:
             _, _, broad = routing_edges.regional_noise_basis(
-                qx, qy, item.source.settings, named_seed)
+                qx, qy, item.settings, named_seed)
             result += 40.*(1.-np.abs(broad))**3
         return result
     ground = macro(xx, yy)
@@ -328,3 +327,24 @@ def test_same_sign_screen_without_observed_extrema_avoids_macro_queries(
     assert routing_edges.sample_mountain_barriers(
         axis, axis, np.full((3, 3), 100.), np.ones((3, 3), dtype=np.bool_),
         (_region(),), 42, unused) is None
+
+
+def test_crest_probes_follow_mountain_support_into_neighboring_recipe(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(routing_edges, "regional_noise_basis", _linear_carrier)
+    axis = np.arange(4, dtype=np.float64)
+    ground, land = np.full((4, 4), 100.), np.ones((4, 4), dtype=np.bool_)
+    # The observed crest at x=.5 is outside the mountain polygon and beyond
+    # the old one-cell screening buffer, but inside its blending support.
+    domain = box(0., 0., 4., 4.)
+    mountain = MetricRegion(box(2.6, 0., 4., 4.), replace(
+        _region().settings, transition_km=3.), domain)
+    def sample(x: FloatArray, y: FloatArray) -> FloatArray:
+        return 100.+40.*np.maximum(1.-np.abs(x-.5)/.5, 0.)
+    narrow = replace(mountain, settings=replace(mountain.settings, transition_km=.1))
+    barrier = routing_edges.sample_mountain_barriers(
+        axis, axis, ground, land, (narrow, mountain), 42, sample,
+    )
+    assert barrier is not None
+    assert barrier[4, 1, 0] == barrier[3, 1, 1] == 140.

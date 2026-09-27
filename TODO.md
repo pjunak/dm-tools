@@ -53,11 +53,13 @@ performance tuning must not displace this product path unless they block it.
   labels/ages, priority holes and portable provenance. Public numeric/GUI checks
   and a paired build demonstrate visible range/plateau/lowland differences.
   See the [report](docs/research/2026-09-27-geological-landform-guidance.md).
-- [ ] **Next landform-quality gain:** replace fallback-to-background bands between
-  adjoining guidance regions with continuous shared-edge blending. The paired
-  preview exposes polygon-shaped rims; preserve priorities, blank overrides,
-  hard heights and unchanged coast/mask while testing a replacement. This is not
-  physical uplift/aging and must not be labelled as accepted realism.
+- [x] **Shared landform transitions:** replace internal background bands with
+  connected-coverage blending; retain blank holes, established enclave interiors,
+  hard heights and coast/mask. Water/crest probes and cut bounds follow the same
+  support. See [evidence and rejected kernel](docs/research/2026-09-27-shared-landform-blending.md).
+- [ ] **Next landform-quality gain:** connected ranges, passes and lowlands, with
+  physical slope/transition-support feedback for narrow or high-contrast regions.
+  Continuous recipe blending alone does not establish realistic geological history.
 - [ ] **Shared world terrain:** generate coherent rough relief across connected
   land, then transfer accepted context and upstream conditions into regional jobs.
 - [ ] **Wide-domain support:** explicit regional selection with shared boundaries;
@@ -99,7 +101,7 @@ whose duration/cost is uncertain; report purpose, estimate and stop condition.
 | Order | Outcome and existing backlog owners | Gate |
 |---|---|---|
 | **Delivered — world handoff** | Imported continent to a usable terrain project (R01/R49) | Retained geography/identity, metric scale, connected borders and save/open/build checks |
-| **Next — visible landform gains** | Consume geological inputs as broad range/plateau/lowland guidance (R08/R09/R14/R40/R44/R49) | Clear authored-input effects, shared physical scale and hard-control preservation |
+| **Next — connected landform gains** | Extend delivered geological guidance and shared blending with range/pass/lowland structure (R08/R09/R14/R40/R44/R49) | Physical transition support, shared scale and hard-control preservation |
 | **B — generation adoption** | Shared river/ground construction, held-out geometry and parent/detail consistency (R48/R32) | Capture, bank shape, bounds and physical-scale acceptance; unresolved research remains explicit |
 | **WC2-WC4** | Shared rough relief, seasonal climate/runoff and bounded history feedback | Accepted physical model, common world present and reproducible budgets before freezing a parent |
 | **D / WC5** | Parent-conditioned local enrichment and inherited fine hydrology, then zoom jobs | Overlap, coarse-scale, time/boundary and visual acceptance before real small rivers |
@@ -477,7 +479,7 @@ records execution and its remaining gates; the simulation is still research-only
   a drawn line must not imply more geological certainty than the user supplied.
 - [x] **P1 — Add first terrain-character regions.** Polygon authoring,
   plain/hills/plateau/mountain recipes, base height, local relief, feature size,
-  orientation and inward transitions now feed both terrain and routing.
+  orientation and shared recipe transitions feed both terrain and routing.
   See [the region guide](docs/terrain-regions.md) and ADR-0030.
 - [x] **P1 — Bound automatic incision by regional relief.** Plains and
   plateau interiors now receive smaller budgets with the same regional

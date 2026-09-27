@@ -48,8 +48,9 @@ choose a continent, retain connected land and world scale, create a portable
 terrain project and open it for authoring/generation. This uses the current
 generator and does not claim the experimental history model is accepted.
 
-Next prioritize visible broad landform effects from authored geological inputs,
-followed by shared rough-world relief and useful regional generation. Keep
+Explicit geological landforms and shared-boundary blending now produce visible
+input effects. Next prioritize connected range/pass/lowland structure, result
+correspondence and regional domains, followed by shared rough-world relief. Keep
 selection, projection, source formats, orchestration and UI in separate modules.
 The unresolved river-bank and representation findings remain adoption gates;
 they do not make every usable editor/world feature wait for research completion.
@@ -161,10 +162,11 @@ inputs, conservative depth/error fields and independent editor/result contracts.
 **WC1 water-piece incidence also delivered:** separate pieces and finite shared
 intervals, source-verified context v4 and unresolved-connectivity support.
 The standalone handoff and explicit geological landform guidance are delivered.
-Next improve the shared transitions exposed by the paired landform preview:
-adjacent recipes currently fade inward to the generic background and can produce
-polygon-shaped rims. Compare continuous cross-boundary guidance while preserving
-priority holes, blank overrides, hard heights and the physical coast. B/C physical-path acceptance still
+The [shared-transition replacement](../research/2026-09-27-shared-landform-blending.md)
+removes internal fallback-to-background rims while preserving blank cutouts,
+established interiors, hard heights and the physical coast. Next address narrow
+transition support and connected range/pass/lowland structure; continuous weights
+do not bound slopes from large height contrasts. B/C physical-path acceptance still
 gates adoption of the new coupled rough-terrain model. Later transport
 must admit that support and establish conservative capacity/flux contracts.
 Do not infer ocean depth from width or introduce climate fields without budgets. These bounded

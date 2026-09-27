@@ -165,5 +165,11 @@ def test_public_channel_profiles_improve_without_changing_cardinal_edges(
     assert connected["cardinal_descending"] == baseline["cardinal_descending"]
     assert connected["nonfinite_profile_count"] == baseline["nonfinite_profile_count"]
     assert connected["descending"]["edge_count"] == baseline["descending"]["edge_count"]
+    # This stage only changes diagonals. Including unchanged cardinal channels
+    # makes its relative improvement depend on the terrain's direction mixture.
+    diagonal = connected["diagonal_descending"]
+    reference = baseline["diagonal_descending"]
+    assert diagonal["edge_count"] == reference["edge_count"]
+    assert diagonal["mean_excursion_m"] < reference["mean_excursion_m"] * .4
     assert (connected["descending"]["mean_excursion_m"]
-            < baseline["descending"]["mean_excursion_m"] * .4)
+            < baseline["descending"]["mean_excursion_m"])

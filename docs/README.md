@@ -120,8 +120,10 @@ authority is unchanged. The [world-to-terrain batch](research/2026-09-27-world-t
 records the user-selected feature priority, the working handoff, and four short
 held-out layouts that still fail small inward-bank checks. The
 [geological landform batch](research/2026-09-27-geological-landform-guidance.md)
-connects explicit recipes to that workflow; visible transition rims remain the
-next landform-quality problem.
+connects explicit recipes to that workflow. The
+[shared blending replacement](research/2026-09-27-shared-landform-blending.md) removes
+internal background rims while retaining blank cutouts and established interiors;
+connected landform structure and physical slope/support feedback remain open.
 The [reference guide](../benchmarks/evolution/README.md) owns setup and runnable commands.
 The [2026-09-13 audit](maintenance/2026-09-13-documentation-and-research-status.md)
 and [2026-09-10 checkpoint](maintenance/2026-09-10-sanity-and-performance.md)

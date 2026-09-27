@@ -78,9 +78,10 @@ geological landform controls now compile to ordinary editable regions, retaining
 the recipe and priority holes; identical controls dissolve across labels and ages.
 [ADR-0080](../adr/0080-transfer-geological-landform-guidance.md) defines the handoff.
 Geographic context, bathymetry, geological ages and climate still do not drive ground.
-The paired example exposes background bands at different guidance boundaries.
-Continuous shared-edge blending is the next landform-quality task, ahead of smaller
-efficiency work. Wide connected land still needs regional domains with shared
+[Shared recipe blending](../research/2026-09-27-shared-landform-blending.md) now
+removes the paired example's internal background rims without filling blank holes.
+Connected range/pass/lowland structure and physical transition-support feedback
+remain quality work. Wide connected land still needs regional domains with shared
 boundary conditions. Result georeferencing/overlay remains a feature follow-up.
 These features do not imply that the river/history research passed its gates.
 
@@ -411,8 +412,9 @@ connectivity foundation, not a circulation model.
 
 **Current product priority: world-to-terrain delivery.** Its first standalone
 handoff is implemented and verified on public fixtures plus a private continent.
-Next consume authored geological guidance to produce visible broad landform
-differences, then extend shared rough relief and regional workflows. Preserve the
+Geological guidance now produces broad landform differences with shared transitions.
+Next extend connected landform structure, result correspondence and regional
+workflows before coupled shared rough relief. Preserve the
 B/C shared path/ground, rotation/grid and hard-constraint gates before adopting
 the coupled WC2 model. Keep geometry and budgets explicit before assigning sill
 depth or exchange capacity. Additional metadata panels alone are not progress

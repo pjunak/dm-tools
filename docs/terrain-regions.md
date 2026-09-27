@@ -54,18 +54,25 @@ A simple polygon may cross the coastline; only land is generated. Holes and
 sea keep their existing mask. The region must cover some land and its base
 height cannot exceed the global ceiling. Coastline heights remain zero.
 
-Influence is zero at the polygon edge, then increases smoothly inward. Thin
-regions may never reach full strength if their transition is wider than their
-interior. Adjacent polygon edges retain the background there; overlap regions
-when a continuous transition between recipes is desired. Overlaps use a
-normalized weighted average in stable order, not last-drawn precedence.
-There is no global histogram remapping.
+Adjacent recipes now blend across their shared boundary without a band of
+generic background terrain. The outside edge of their connected coverage still
+fades inward to background. Unassigned holes stay background, and disconnected
+regions do not influence each other. Equal settings are dissolved for generation,
+so splitting or duplicating the same recipe does not create a seam.
+
+Transition distance controls compact neighboring support and the fade toward
+unassigned terrain. A recipe's established interior excludes outside recipes;
+thin regions may never reach that strength. True overlaps use normalized weights
+in stable order, not last-drawn precedence. Large height differences can still
+produce steep slopes even with continuous weights. There is no global histogram
+remapping. [ADR-0081](adr/0081-blend-adjoining-landform-regions.md) defines the rule.
 
 Regions shape the base before brush, ridge, valley and height-point constraints.
 The regional base enters relative-valley references, automatic drainage planning
 and the final field. Exact height anchors retain their existing authority.
-A region can redirect drainage beyond its polygon even though the regional base
-itself has no influence outside it.
+A region can influence neighboring recipes within its transition distance.
+Its base influence remains inside connected assigned coverage; drainage can
+respond farther away.
 
 The new stage uses the named `terrain.landforms` seed. Shared metric coordinates
 produce identical values across display resolutions and sampling chunks. The
@@ -82,7 +89,7 @@ for plateaus and mountains. Default plains therefore allow at most 15 m and
 plateaus at most 50 m. These are procedural safeguards, not measured erosion
 rates or a simulation of rock resistance.
 
-Budgets use the same inward transition and overlap weights as landform shape.
+Budgets use the same shared-boundary and coverage weights as landform shape.
 They cannot exceed the global automatic-cut budget. Zero relief at full
 influence disables automatic cutting. The initial valley shape is scaled to
 this budget; downstream floor and steepness corrections must respect it too.
@@ -131,7 +138,8 @@ drawing still creates one outer ring; nested world provinces are the current
 authoring path for cutouts. Invalid ring intersections are rejected by the geometry checks.
 
 Equal landform controls are dissolved before transfer, including across continent
-labels and different geological ages. Different adjoining recipes retain the
-existing inward fades: the generic background can appear along their common edge.
-That is a known procedural transition limitation, not a geological escarpment.
-Project v7 serializes holes; regional-landforms@3 records their numeric support.
+labels and different geological ages. Different adjoining recipes use the shared
+blend described above. Blank cutouts remain background; explicit enclaves blend
+at their edges and keep their established interiors. Project v7 serializes holes;
+regional-landforms@4 records the new composition and support rules. See the
+[paired comparison](research/2026-09-27-shared-landform-blending.md).

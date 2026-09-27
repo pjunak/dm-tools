@@ -1244,14 +1244,15 @@ def _water_sampling_guides(
         features.append(SamplingDensity(
             settings.largest_feature_km / (2 ** settings.detail_levels)))
     for region in regions:
-        controls = region.source.settings
+        controls = region.settings
         features.append(SamplingFeature(region.geometry, controls.transition_km,
                                         controls.transition_km))
         if controls.relief_m > 0:
             # Regional recipes always include two macro octaves. Belt stretching
             # lengthens one axis; the unstretched axis keeps this conservative scale.
             features.append(SamplingDensity(
-                controls.feature_size_km / (2 ** max(2, settings.detail_levels)), region.geometry))
+                controls.feature_size_km / (2 ** max(2, settings.detail_levels)),
+                region.sampling_support()))
     for constraint in constraints:
         if (constraint.kind == "point" and constraint.attached_to_structure
                 and constraint.elevation_mode == "relative"):

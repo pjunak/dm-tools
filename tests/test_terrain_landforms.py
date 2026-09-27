@@ -154,8 +154,8 @@ def test_regional_incision_budget_blends_boundaries_and_overlaps() -> None:
     np.testing.assert_array_equal(budget[:2], [600., 600.])
     assert abs(budget[2] - 600) < 1e-8
     assert abs(budget[3] - 600) < 1e-5
-    # Both half-strength regions sum to full influence at 75 km.
-    np.testing.assert_allclose(budget[4:], [32.5, 32.5])
+    # Coverage fades once, regardless of the number of overlapping recipes.
+    np.testing.assert_allclose(budget[4:], [316.25, 32.5])
     np.testing.assert_array_equal(
         budget, regional_incision_budget(x, y, 600,
             prepare_regions((plateau, plain), 1000, 1000, land, 6000)),

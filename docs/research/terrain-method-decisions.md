@@ -1,7 +1,7 @@
 # Terrain method decisions and failed experiments
 
-Updated 2026-09-27 through the geological landform guidance batch against baseline
-`4b691d8`, following world-to-terrain integration. This is the living record of
+Updated 2026-09-27 through shared landform blending against baseline `d37a22e`,
+following geological guidance and world-to-terrain integration. This is the living record of
 material generation approaches that were rejected, constrained or retained only
 as references. A failed method does not remove its desired feature from the plan.
 The [strategy](../strategy/README.md) owns execution order; dated reports own the
@@ -400,10 +400,33 @@ reach the terrain and preserve nested overrides, but visible polygon-shaped rims
 remain. Every inward weight reaches zero at a shared recipe boundary, exposing
 the generic background; equal settings avoid this after dissolving.
 
-Retain the input/transfer feature. Do not accept broad terrain realism from this
-comparison. Test continuous shared-boundary blending next, with fixed coast,
-priorities, blank holes, hard heights and sampling checks. This is separate from
-calibrated geological forcing or physical aging.
+The [replacement comparison](2026-09-27-shared-landform-blending.md) now separates
+coverage fades from neighboring-recipe weights. Its flat plain/plateau seam changes
+from 4,000 m background to 1,225 m between 250/2,200 m recipes; the transect is
+monotone and remains inside their height envelope. Blank holes and established
+enclave interiors are retained. Accept this composition fix, not general realism.
+
+A normalized signed-distance-only probe gave 513.514 m in an established 250 m
+enclave, because the parent's wider support retained weight. Reject that variant;
+the implemented core term suppresses outside recipes in established interiors.
+Slope bounds, thin-region feedback and connected terrain structure remain open.
+Scientific cut-limit support changes the range/lowland fixture to @2; @1 physical
+bank results stay historical. Calibrated forcing and aging remain separate.
+
+The full-suite follow-up records a mixed drainage result on regional seed 42:
+mean cardinal excursion increases from 0.165912 to 0.237557 m with the changed
+river population, while the worst all-direction excursion falls from 55.721313
+to 48.008911 m. The old 70% relative floor-improvement check fails; the current
+empirical envelope requires a two-thirds reduction plus a 0.25 m absolute mean
+ceiling. This is an explicit threshold revision, not a repaired floor algorithm.
+A smooth-core-union trial still misses the original ratio and is not adopted.
+The isolated diagonal correction's aggregate ratio also misses its old target
+(0.402153 versus 0.4), but its affected diagonal population improves by 75.17%
+while cardinal channels are exactly unchanged. Apply that stage's existing 60%
+reduction gate to diagonals, with unchanged counts/cardinals and combined-mean
+improvement required. This scopes the empirical gate; it is not a runtime repair.
+Preserve all hard physical/canonical gates and the unresolved drainage-quality
+status; do not report a complete realism gain from smoother regional borders.
 
 Triangulation and implicit category/age conversion were rejected design shortcuts,
 not executed failed experiments. Triangulation would introduce artificial fade
