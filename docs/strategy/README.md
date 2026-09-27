@@ -237,15 +237,23 @@ bilinear nodes restores the old failures. This is a storage experiment, not a
 supported artifact or independent held-out landscape acceptance. See
 [T13](../research/terrain-method-decisions.md#t13---preserve-features-instead-of-reconstructing-them-from-nodes).
 
-**Next bounded batch (B1):** formalize a small prepared-feature artifact and
-height-query boundary in the existing benchmark. Retain numeric source, valley
-geometry, hard-input roles, coordinate frame, parent/model identity and integrity
-hashes. Add bounded shape/type/finite-value validation and independent network
-reopening. Test query order, batching, shared coordinates, adjacent tiles and
-halos against the same dense bank, guide, capture, no-sink and envelope gates.
-A local channel-aligned strip or constrained mesh is a fallback for measured
-patch limitations. Defer the full least-change bilinear bank solve behind local
-representability checks; the one-cell witness does not prove every fit impossible.
+**Guarded feature snapshot batch implemented (B1):** the
+[repeatable comparison](../research/2026-09-27-prepared-feature-snapshots.md) retains
+source, prepared geometry, complete graph, hard targets, metric frame and identities.
+Bounded current-format loading rejects malformed or inconsistent data. All 575
+banks, common heights and original quality metrics match after reopening in four
+matched cases. Queries agree across order, batches and overlapping tiles/halos.
+These tiles sample one frozen field; they are not independently generated detail.
+The raster control remains rejected and product DEM authority is unchanged.
+
+**Next bounded batch (B1):** add held-out bends, short tributaries, junctions,
+hard-target proximity and oblique layouts within explicit supported domains.
+Measure irregular-mouth support separately; current construction still needs a
+straight zero coast. Then compare parent/detail filtering, means, retained terrain
+and inherited flow. Do not mistake shared-point agreement for downsample or LOD
+acceptance. Keep the complete bank/guide/capture/no-sink and physical-bound gates.
+A channel-aligned strip or constrained mesh is a fallback for measured patch
+limitations. Defer the large bilinear solve behind local representability checks.
 A changed interpolator must establish its own interior safety. Do not loosen
 tolerances, raise cut budgets or uniformly refine the world. The
 [role contract](landscape-evolution.md#authored-intent-and-geographic-boundaries)
@@ -260,7 +268,8 @@ between unsupported input, finite search exhaustion, verified conflict and
 numerical failure. Composition differences are not geological erosion.
 Consult the user before tests expected to exceed roughly two minutes or with
 uncertain longer cost, including the full suite; give an estimate and stop rule.
-No long test was needed for this documentation-only research batch.
+Consultation is required before the full regression suite; short focused checks
+and evidence comparisons can proceed within the agreed time boundary.
 
 **Following decision (B2):** connect an accepted construction and delivery pair to
 the existing two-epoch reference so relief and the automatic network can evolve

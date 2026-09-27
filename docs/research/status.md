@@ -142,10 +142,13 @@ persists, while coarse delivery remains rejected. The
 now retain all 575 local profiles through a trusted-field save/reopen experiment.
 The same failures return after bilinear raster delivery. River-aligned analytic
 controls pass, while generic network splines lose outlets and violate bounds.
-Next formalize feature-preserving storage/query, guarded reopening and tile/LOD
-checks before B2, LE3 or WC2. This is a representation proposal, not a supported
-reader or a change to product DEM authority. Held-out/general-angle acceptance
-remains open. No time evolution was added, and the separate fresh envelope cannot
+The [guarded snapshot implementation](2026-09-27-prepared-feature-snapshots.md)
+now reopens the complete graph and prepared field, preserving all 575 profiles
+and original metrics exactly. Owned arrays, bounded decoding and same-field
+query-order/batch/tile/halo checks pass. It is an experimental reader, not an
+app build or a change to product DEM authority. Held-out/general-angle terrain,
+irregular coasts and real parent/detail consistency remain next before B2,
+LE3 or WC2. No time evolution was added, and the separate fresh envelope cannot
 accept the rejected native fixed control.
 Peak/pass structure and real basins/coasts remain open. Sediment, epoch editor
 controls and evolved local enrichment remain later dependent work. No

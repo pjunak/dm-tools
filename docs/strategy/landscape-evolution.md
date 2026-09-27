@@ -146,10 +146,12 @@ network capture and bounds. Saving/reopening the prepared local field preserves
 all 575 profiles and common Float32 samples; reducing it to a bilinear raster
 reintroduces the existing defects at every tested spacing.
 
-Next formalize the prepared-feature artifact and deterministic query boundary in
-the existing benchmark, including guarded reopening, complete network identity,
-query-order and adjacent-tile/halo checks. Keep bilinear feasibility as a small
-diagnostic before a larger solve. Test held-out/general-angle quality and
+The [prepared snapshot implementation](../research/2026-09-27-prepared-feature-snapshots.md)
+now provides guarded reopening, complete network identity and deterministic
+queries. All 575 dense banks and original metrics survive reopening; same-field
+query-order and adjacent-tile/halo checks pass. This does not establish newly
+generated detail or filtered parent means. Keep bilinear feasibility as a small
+diagnostic before a larger solve. Next test held-out/general-angle quality and
 parent/downsample behavior before proposing an ADR to change generated-surface
 authority and its consumers. The product Float32 DEM contract remains unchanged.
 Any changed interpolator needs its own interior protection. Complete accepted

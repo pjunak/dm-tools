@@ -1,7 +1,7 @@
 # Terrain method decisions and failed experiments
 
-Updated 2026-09-27 against baseline `8f1bb0a` and the short representation probes
-recorded in T13. This is the living record of
+Updated 2026-09-27 against baseline `72fc369` and the guarded snapshot
+implementation following T13. This is the living record of
 material generation approaches that were rejected, constrained or retained only
 as references. A failed method does not remove its desired feature from the plan.
 The [strategy](../strategy/README.md) owns execution order; dated reports own the
@@ -341,9 +341,14 @@ infeasibility. Roundtrip equality preserves an already passing local fixture;
 it is not unseen-landscape, safe-reader, tile/LOD or continuous-field acceptance.
 
 **Disposition / replacement:** reject the tested generic spline substitutions.
-Retain geometry and background parameters in a formal benchmark artifact, with
-complete network reopening, deterministic identity and bounded validation; test
-query order, seams and physical limits before adoption. Prefer local analytic
+The [guarded snapshot follow-up](2026-09-27-prepared-feature-snapshots.md) now
+retains geometry and background parameters in a formal benchmark artifact, with
+complete network reopening, deterministic identity and bounded validation. All
+575 dense profiles and original metrics remain exact; query order, batches and
+same-field tile/halo agreement pass. A returned-metadata ownership issue was
+fixed and covered by a regression. Keep held-out geometry, irregular mouths and
+real parent/detail filtering as the next gates. These overlap results do not
+certify newly generated detail or replace raster authority. Prefer local analytic
 patches, with channel-aligned strips or constrained triangles as measured
 fallbacks. Defer the full bilinear solve behind representability checks. Current
 Float32 DEM authority remains in force; any richer source requires an ADR and

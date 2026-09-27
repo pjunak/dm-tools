@@ -46,8 +46,12 @@ with much smaller 250 m bank artifacts. Raster banks still fail. The
 [feature-preservation probes](../research/2026-09-27-feature-preserving-terrain-delivery.md)
 retain the prepared local field through trusted-data saving/reopening, with exact
 profile and common-ground equality. Generic spline reconstruction instead loses
-outlets and bounds. Next formalize numeric feature storage and deterministic
-queries, independent reopening and tile/halo checks in the benchmark.
+outlets and bounds. The
+[guarded snapshot implementation](../research/2026-09-27-prepared-feature-snapshots.md)
+now owns numeric copies, verifies complete network/segment identity and bounds
+archive loading and metric queries. Original profiles and same-field tile/halo
+queries match exactly after reopening. This benchmark component does not yet
+provide a general terrain representation, regional generation or filtered LOD.
 
 A potential structural change is to publish an immutable numeric feature surface
 and derive declared-resolution rasters from it. That is a proposal: it requires

@@ -417,6 +417,31 @@ The later [representation probes](../../docs/research/2026-09-27-feature-preserv
 compare river-aligned analytic sampling, generic splines and trusted prepared-field
 storage/reopening. They prioritize preserving geometry through delivery before a
 larger bilinear bank solve. These are ignored one-off scripts, not an additional
-supported CLI or artifact reader. The next batch will formalize that experiment
-and its query/tiling checks here. Consult the user before longer tests (roughly
-two minutes or uncertain cost); the short probes took at most 20.625 seconds.
+supported CLI or artifact reader. The formal follow-up below now implements the
+snapshot/query experiment. Consult the user before longer tests (roughly two
+minutes or uncertain cost); the original short probes took at most 20.625 seconds.
+
+## Prepared feature snapshots
+
+Save and reopen the prepared valley field and complete network, then compare
+actual Float32 queries with the original local field and rejected raster control:
+
+```powershell
+.\.venv\Scripts\python.exe -m benchmarks.evolution.feature_comparison --output artifacts/my-feature-snapshots
+.\.venv\Scripts\python.exe -m pytest tests/test_feature_surface.py -q
+```
+
+The [implementation report](../../docs/research/2026-09-27-prepared-feature-snapshots.md)
+records guarded current-format decoding, immutable numeric ownership, source/model
+identity, exact query-order/batch/tile/halo checks, figures and failure cases.
+`--no-figures` omits only images. The measured four-case run took 26.273 seconds;
+all 575 reopened bank profiles and original quality metrics match. Bilinear
+raster controls still fail. Completed evidence remains `production_eligible: false`.
+
+Each new output directory contains per-case `surface/manifest.json`, `surface/fields.npz`,
+repeat snapshots, numeric checks and quality decisions, plus a top-level index.
+The experimental reader is `feature_archive.read_feature_surface`; it does not
+open app builds or import old one-off archives. Input geometry remains authoritative.
+Same-field overlaps do not establish independent regional detail, filtered parent
+means, irregular-coast support or general-angle landscape quality. Those gates
+remain ahead of a product authority decision and history integration.

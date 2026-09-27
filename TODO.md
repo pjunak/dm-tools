@@ -52,8 +52,11 @@ raster bank shape, coarse delivery and fixed/native quality remain open. The
 [short representation probes](docs/research/2026-09-27-feature-preserving-terrain-delivery.md)
 now preserve all 575 local bank profiles through trusted-data storage/reopening;
 world-grid bilinear delivery loses them again. Generic higher-order splines fail
-capture and bounds. Next formalize feature-preserving delivery/query experiments
-before a larger raster solve or co-evolution. Product DEM authority is unchanged.
+capture and bounds. The [guarded snapshot implementation](docs/research/2026-09-27-prepared-feature-snapshots.md)
+now reopens the field and complete network with exact profiles, query-order and
+same-surface tile/halo agreement. Next test held-out geometry and real parent/detail
+consistency before a product authority decision or co-evolution. Product DEM
+authority is unchanged; the current comparison passes this fixture only.
 Consult the user before tests expected to take more than roughly two minutes, or
 whose duration/cost is uncertain; report purpose, estimate and stop condition.
 
@@ -61,7 +64,7 @@ whose duration/cost is uncertain; report purpose, estimate and stop condition.
 |---|---|---|
 | **A — quality controls** | Quality fixtures, paired maps/profiles, process-scale warnings; convergent-flat comparison (R02/R25/R27/R41/R43) | Fixed comparison set and a measured accept/reject result; no new benchmark framework |
 | **W — bounded foundation delivered** | WC0 plus WC1 geography, geology inputs, bathymetry and water-piece incidence (R01/R49); return to B/C physical paths and landforms | Preserve source and unresolved support; context is provisional, not solved climate |
-| **B — next major generation decision** | Local banks survive feature roundtrip; next formalize retained geometry and query checks (R48/R32) | Preserve controls and hard targets; bank/capture acceptance across physical scales within declared envelopes before LE3 |
+| **B — next major generation decision** | Guarded feature reopening and queries pass; next held-out geometry and detail consistency (R48/R32) | Preserve controls and hard targets; bank/capture acceptance across physical scales within declared envelopes before LE3 |
 | **C** | Consolidate one coherent range/pass/tributary/lowland system from the selected comparison (R08/R09/R14/R40/R44) | Better structural/visual results across fixed seeds and physical scales |
 | **W — after B/C acceptance** | Rough world, seasonal climate/runoff feedback and reviewed parent (WC2-WC4; R33/R49) | Physical terrain acceptance, bounded coupling, shared world time and budgets |
 | **D / WC5** | Accepted parent-conditioned detail, same-present historical refinement and inherited fine hydrology, then zoom jobs (R15/R34/R49) | Exact overlap, coarse-scale, time-dependent boundary/flow and visual acceptance before real small rivers |
@@ -171,12 +174,16 @@ continent-history generation remain planned.
 - [x] **B1 short representation probes:** river-aligned analytic control and
   trusted-field roundtrip preserve banks; generic splines lose outlets and bounds.
   See the [report](docs/research/2026-09-27-feature-preserving-terrain-delivery.md).
-- [ ] **Next concrete batch — B1 feature-preserving delivery.** Formalize the
-  prepared-field artifact and height-query boundary in the existing benchmark.
-  Guard reopening, verify complete network/field identity, and test query order,
-  tile seams, hard inputs and dense/capture gates. Keep bilinear delivery as a
-  rejected control; require a separate ADR/contract decision before changing
-  product authority. Held-out acceptance still precedes history or LE3/WC2.
+- [x] **B1 guarded feature delivery:** bounded snapshots, complete network
+  reopening, owned numeric arrays and query-order/batch/overlap checks are
+  implemented. All 575 banks and original gates survive reopening in the matched
+  four cases; raster controls still fail. See the
+  [report](docs/research/2026-09-27-prepared-feature-snapshots.md).
+- [ ] **Next concrete batch — B1 held-out geometry and detail consistency.**
+  Test new bends, tributaries, junctions and oblique layouts, then irregular
+  mouths and actual parent/detail filtering. Same-field tile agreement does not
+  establish independently generated detail. A separate ADR/contract decision
+  remains required before product adoption, history or LE3/WC2.
 - [ ] **WC1 transport follow-up:** consume finite-face incidence only after support
   admission, conservative area/depth integration, explicit sill/capacity geometry
   and paired flux/storage budgets. Add a stable local-coordinate or exact-predicate
@@ -307,15 +314,20 @@ records execution and its remaining gates; the simulation is still research-only
   preserve all 575 profiles and common-grid heights exactly at three background
   spacings plus a quarter turn. These are ignored exploratory scripts, not a
   supported reader or accepted product representation.
-- [ ] **Next — B1 feature-preserving artifact and query boundary** (R48/R32/R02).
-  Formalize numeric geometry/source/settings/identity storage in the existing
-  benchmark, with bounded non-pickle loading, complete network reopening and
-  corruption/shape/type/finite-value checks. Verify arbitrary query order, batch
-  size, shared coordinates, adjacent tiles and halos. Retain all 575 bank pairs,
-  actual-ground capture and cap/hard-input gates; add held-out and general-angle
-  landscapes before adoption. Compare channel-aligned strips or constrained
-  triangles only where measured patch limitations justify them. The full
-  bilinear bank solve is deferred behind local representability checks.
+- [x] **B1 feature-preserving artifact and query boundary** (R48/R32/R02).
+  [Implemented and measured](docs/research/2026-09-27-prepared-feature-snapshots.md):
+  owned arrays, deterministic snapshots, bounded non-pickle loading, complete
+  graph/segment consistency and query-order/batch/tile/halo checks. All 575 dense
+  banks and original quality metrics match after reopening at three background
+  spacings plus a quarter turn. Current application generation is unchanged.
+- [ ] **Next — B1 held-out geometry and parent/detail checks** (R48/R32/R02/R15).
+  Add bounded new bends, short tributaries, junctions, hard-height proximity and
+  oblique layouts. Explicitly extend or reject irregular coasts; the reader still
+  supports only the fixture's straight zero coast. Check filtered/coarse means,
+  retained structure and inherited flow before independently generated zoom detail.
+  Keep all bank, capture and hard-input gates. Compare aligned strips or
+  constrained triangles only for measured patch limitations. The large bilinear
+  bank solve stays deferred behind local representability checks.
 - [ ] **B1 representation adoption decision:** if the richer surface passes,
   record an ADR and change authoritative numeric source, build/schema identities,
   export/cache roles and consumers together. Current Float32 DEM authority stays
@@ -1556,8 +1568,9 @@ Priorities remain conditional on the current strategy's prerequisites.
   Fresh 250 m raster capture is 4/4 with no sinks or uphill guide routes; hard
   inputs and all original vertices remain fixed. Bank shape and coarse delivery
   still fail. Local banks now pass; T13 preserves them through trusted-field
-  reopening and isolates loss when reduced to raster samples. Formalize retained
-  features and query/tiling contracts before B2 history coupling; changing product
+  reopening and isolates loss when reduced to raster samples. Guarded snapshots
+  and same-field query/tiling checks now pass; held-out geometry and real detail
+  consistency remain before B2 history coupling. Changing product
   authority needs an ADR and complete consumer changes. Preserve genuine authored
   requirements and distinguish composition from erosion. See the
   [failure register](docs/research/terrain-method-decisions.md) for revisit gates.

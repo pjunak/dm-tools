@@ -14,6 +14,12 @@ in the current status or a new dated report.
 
 ## Current reassessment
 
+- [Prepared terrain snapshots — 2026-09-27](2026-09-27-prepared-feature-snapshots.md)
+  implements bounded numeric storage/reopening, full graph/segment consistency
+  and owned queries. All 575 banks and original metrics survive reopening;
+  same-field query-order and overlapping-tile checks pass. Records format guards,
+  the rejected raster control, timings and remaining held-out/detail gates.
+
 - [Feature-preserving terrain delivery — 2026-09-27](2026-09-27-feature-preserving-terrain-delivery.md)
   tests river-aligned analytic sampling, rejects generic network splines and
   preserves all 575 local bank profiles through trusted-field saving/reopening.
