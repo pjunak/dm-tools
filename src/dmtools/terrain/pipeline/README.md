@@ -192,6 +192,14 @@ minor bounded differences away from the join can remain because distance to a
 segmented Shapely geometry is not numerically identical to distance to one
 line.
 
+Explicit absolute ridge profiles additionally preserve actual authored contacts
+while smoothing the spans between them. `ridge_crests.py` validates compatible
+contact heights and blends separate crest targets by distance so each centreline
+retains its own height during the ridge stage. Valley cuts and final height points
+keep later authority. Loops/self-crossings and shared spans are rejected for these
+profiles; near misses are not snapped. See
+[ADR-0083](../../../../docs/adr/0083-preserve-shared-ridge-crests.md).
+
 Stages must not depend on implicit process state such as the current directory,
 wall-clock time, ambient random generators, or undeclared environment settings.
 

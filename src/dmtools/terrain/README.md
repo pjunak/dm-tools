@@ -291,6 +291,14 @@ Profiles support explicit peaks, passes and descending spur/floor values without
 nearby-point attachment. See the [profile guide](../../../docs/terrain-structure-profiles.md)
 and its public range/lowland example.
 
+Explicit absolute ridge profiles retain each crest through ridge blending and
+preserve actual shared contacts while their other corners are rounded. Incompatible
+contact heights produce an error with the instruction numbers and profile positions.
+The [connected crest example](../../../examples/terrain/connected-crests.dmterrain.json)
+shows a descending spur attached at a protected range corner. Valleys and independent
+height points retain later ground authority; see
+[the measured limits](../../../docs/research/2026-09-27-shared-ridge-crests.md).
+
 Before raster generation, every valley samples the stable terrain surface
 entering the valley stage at resolution-independent metric positions. Relative
 depth is subtracted from that reference, then a downstream-only correction

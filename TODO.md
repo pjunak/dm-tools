@@ -60,8 +60,11 @@ performance tuning must not displace this product path unless they block it.
 - [x] **Line-owned peak/pass/floor profiles:** explicit metre values along a ridge
   or valley, dedicated curve editor, undo, current-format replay and bounded
   narrow-feature water sampling. See [evidence and limits](docs/research/2026-09-27-line-owned-terrain-profiles.md).
-- [ ] **Next connected-landform step:** map-visible profile handles and explicit
-  shared ridge junctions, followed by generated subordinate spurs and lowlands.
+- [x] **Shared absolute ridge crests:** preserve authored contacts through smoothing,
+  retain separate crest heights, report incompatible profiles and verify public
+  corner/branch examples. See [evidence](docs/research/2026-09-27-shared-ridge-crests.md).
+- [ ] **Next connected-landform step:** generated subordinate spurs, junction-aware
+  editing and controlled cross-sections; map-visible profile handles support review.
 - [ ] **Next landform-quality gain:** connected ranges, passes and lowlands, with
   physical slope/transition-support feedback for narrow or high-contrast regions.
   Continuous recipe blending alone does not establish realistic geological history.

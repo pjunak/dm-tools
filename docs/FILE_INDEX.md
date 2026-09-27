@@ -6,7 +6,7 @@ export-import correction, bounded preparation and geographic context documents. 
 documentation and private campaign files are excluded. The public JSON schemas and reference dependency
 lock are listed separately as supporting contracts, not counted as prose docs.
 
-**205 Markdown files + 1 legal notice = 206 documentation files.**
+**207 Markdown files + 1 legal notice = 208 documentation files.**
 Each file appears once below, including this inventory. Document titles describe
 their subject; the group description identifies their role and authority.
 
@@ -20,11 +20,11 @@ remains the entry point for normal use. All are individually linked in the list 
 | Active plans and indexes | 11 |
 | User guides and current contracts | 19 |
 | Developer and reference guides | 8 |
-| Architecture decision records | 82 |
-| Dated research reports | 79 |
+| Architecture decision records | 83 |
+| Dated research reports | 80 |
 | Maintenance reports | 2 |
 | Legal notice | 1 |
-| **Total** | **206** |
+| **Total** | **208** |
 
 ## Project entry and guidance (4)
 
@@ -96,7 +96,7 @@ Subsystem, fixture, schema, test and benchmark guidance.
 | [src/dmtools/terrain/pipeline/README.md](../src/dmtools/terrain/pipeline/README.md) | Numeric generation and inspection responsibilities. |
 | [tests/README.md](../tests/README.md) | Test organization, commands and verification expectations. |
 
-## Architecture decision records (82)
+## Architecture decision records (83)
 
 Accepted historical decisions. Preserve their original context; consult the current status and implementation for later changes. The ADR index is listed among active indexes.
 
@@ -184,14 +184,16 @@ Accepted historical decisions. Preserve their original context; consult the curr
 | [docs/adr/0080-transfer-geological-landform-guidance.md](adr/0080-transfer-geological-landform-guidance.md) | Explicit geological landforms, priority holes, portable provenance and current-format cutover. |
 | [docs/adr/0081-blend-adjoining-landform-regions.md](adr/0081-blend-adjoining-landform-regions.md) | Shared regional weighting, blank holes, established interiors and matching probe/cut support. |
 | [docs/adr/0082-own-structure-profiles.md](adr/0082-own-structure-profiles.md) | Explicit line profile ownership, sampling support, editor and current-format contracts. |
+| [docs/adr/0083-preserve-shared-ridge-crests.md](adr/0083-preserve-shared-ridge-crests.md) | Preserved ridge contacts, compatible heights, centreline ownership and remaining graph limits. |
 
-## Dated research reports (79)
+## Dated research reports (80)
 
 Primary-source reviews, experiments and implementation evidence at their recorded date/revision. A title or citation is not evidence that a tool was adopted. Current status is listed above.
 
 | File | Purpose or document title |
 |---|---|
 | [docs/research/2026-09-27-shared-landform-blending.md](research/2026-09-27-shared-landform-blending.md) | Replacement of background seams, rejected enclave-leaking kernel, paired evidence and remaining slope limits. |
+| [docs/research/2026-09-27-shared-ridge-crests.md](research/2026-09-27-shared-ridge-crests.md) | Paired crest-height and corner-gap improvements, failed assumptions and graph/process limits. |
 | [docs/research/2026-09-27-line-owned-terrain-profiles.md](research/2026-09-27-line-owned-terrain-profiles.md) | Connected-range authoring slice, owned profile evidence and unresolved multi-line composition. |
 | [docs/research/2026-09-27-geological-landform-guidance.md](research/2026-09-27-geological-landform-guidance.md) | Historical recipe-transfer evidence and polygon-boundary rims motivating ADR-0081. |
 | [docs/research/2026-09-27-world-to-terrain-workflow.md](research/2026-09-27-world-to-terrain-workflow.md) | Working world-to-terrain handoff, real-map roundoff failure/fix, feature priorities and exploratory bank failures. |

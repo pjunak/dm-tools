@@ -31,11 +31,22 @@ sampling through the existing bounded budget system; this is sampled evidence,
 not a continuous clearance certificate.
 
 An explicit profile belongs only to its line. Nearby height points do not attach
-to it, but retain their independent final authority on ground. Overlapping
-structures still combine through the existing influence rules, valleys still cut,
-and the coast remains at sea level. A profile is therefore not a new hard equality
-for every point in a multi-structure landscape. At branching junctions, use
-compatible profile heights. Conflicting junctions are not automatically solved.
+to it, but retain their independent final authority on ground.
+
+**Connected absolute ridges:** each profile owns its crest through ridge blending.
+Actual line intersections are preserved while the remaining corners are rounded.
+Profiles meeting there must agree within 0.001 m; a generation error identifies
+both instructions, the contact coordinates and positions along each profile.
+Match those values using **Profile...**. Near misses are not automatically snapped.
+Use one main crest with branches ending on it; closed/self-crossing profiled
+absolute ridges and overlapping line spans are rejected with guidance.
+
+Relative ridges keep their existing relief semantics. Valleys still cut after
+the ridge stage, independent height points retain later ground authority, and
+the coast remains at sea level. Exact ridge ownership does not override those
+rules or impose a global slope limit. A junction's height is not automatically
+propagated when you edit another branch. The
+[shared-crest report](research/2026-09-27-shared-ridge-crests.md) records these limits.
 
 ## Try the public example
 
@@ -43,6 +54,9 @@ Open [range-lowland.dmterrain.json](../examples/terrain/range-lowland.dmterrain.
 and generate. It contains a main ridge with two peaks and a pass, a descending
 spur and a valley leading into a lowland region on a synthetic 1,000 km square.
 It has no campaign geography. Select one of its lines and open **Profile...**.
+For an isolated ridge junction, open
+[connected-crests.dmterrain.json](../examples/terrain/connected-crests.dmterrain.json).
+Its branch meets a protected corner of the main range; profile heights agree there.
 
 ```powershell
 dmtools terrain gui --project examples/terrain/range-lowland.dmterrain.json

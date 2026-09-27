@@ -27,7 +27,8 @@ Current coverage includes:
   round trips, endpoint grids and portable named stage seeds;
 - absolute/relative anchors, brush strength, shape-preserving point-anchored
   and line-owned ridge/valley profiles, downstream floors, regional recipes and
-  incision caps; profile dialog validation, cancel/undo and saved-parent replay;
+  incision caps; preserved ridge contacts, distinct crest heights and actionable
+  junction conflicts; profile dialog validation, cancel/undo and saved-parent replay;
 - MFD accumulation, D8 topology, initiation, Strahler order, bounded corrections,
   basin labels/spill routes and overlapping final-channel conflict evidence;
 - authored lake/dry retention, captured-area conservation, eligible outlet

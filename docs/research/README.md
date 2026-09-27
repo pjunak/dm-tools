@@ -14,6 +14,10 @@ in the current status or a new dated report.
 
 ## Current reassessment
 
+- [Shared ridge crests — 2026-09-27](2026-09-27-shared-ridge-crests.md) preserves
+  authored ridge contacts and compatible crest heights, with paired seed/scale
+  evidence, a repaired corner gap and explicit remaining geometry/process limits.
+
 - [Line-owned terrain profiles — 2026-09-27](2026-09-27-line-owned-terrain-profiles.md)
   adds explicit crest/pass/floor ownership and a curve editor, preserving failed
   assumptions about proximity ownership and multi-line target composition.

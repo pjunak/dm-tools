@@ -56,6 +56,12 @@ from dmtools.terrain.pipeline.landforms import (
 )
 from dmtools.terrain.pipeline.noise import fractal_value_noise
 from dmtools.terrain.pipeline.profile import shape_preserving_profile
+from dmtools.terrain.pipeline.ridge_crests import (
+    CrestBlend,
+    ProfileRidge,
+    smooth_connected_ridges,
+    validate_ridge_contacts,
+)
 from dmtools.terrain.pipeline.routing_edges import sample_mountain_barriers
 from dmtools.terrain.pipeline.water import (
     MetricBasin,
@@ -67,7 +73,7 @@ from dmtools.terrain.pipeline.water import (
 from dmtools.terrain.pipeline.water_budget import WaterSamplingBudget, plan_water_sampling_budget
 from dmtools.terrain.pipeline.water_sampling import SamplingDensity, SamplingFeature, SamplingGuide
 
-GENERATOR_ALGORITHM_ID = "coastline-constraint-terrain@19"
+GENERATOR_ALGORITHM_ID = "coastline-constraint-terrain@20"
 AUTOMATIC_VALLEY_ALGORITHM_ID = "regional-budget-mfd-d8-valleys@14"
 NOISE_ALGORITHM_ID = "coordinate-value-noise-fixed-budget@2"
 
@@ -182,6 +188,7 @@ class _MetricConstraint:
     intensity: float = 1.0
     profile_anchors: tuple[tuple[float, float, float], ...] = ()
     explicit_profile: bool = False
+    source_instruction: int = 0
     attached_to_structure: bool = False
     taper_start: bool = True
     taper_end: bool = True
@@ -261,8 +268,14 @@ def _metric_constraints(
     maximum_elevation_m: float,
 ) -> tuple[_MetricConstraint, ...]:
     converted: list[_MetricConstraint] = []
+    connected_ridges = smooth_connected_ridges({
+        number: LineString([(x*width_km, y*height_km) for x, y in c.points])
+        for number, c in enumerate(constraints, start=1)
+        if isinstance(c, TerrainStructure) and c.kind == "ridge"
+        and c.elevation_mode == "absolute" and c.profile
+    }, _smooth_structure_points)
     absolute_points: dict[tuple[float, float], float] = {}
-    for constraint in constraints:
+    for instruction, constraint in enumerate(constraints, start=1):
         if isinstance(constraint, (TerrainRegion, TerrainBasin)):
             continue
         if (
@@ -299,7 +312,8 @@ def _metric_constraints(
             intensity = constraint.intensity
         else:
             metric_points = [(x * width_km, y * height_km) for x, y in constraint.points]
-            geometry = LineString(_smooth_structure_points(metric_points))
+            geometry = (connected_ridges[instruction] if instruction in connected_ridges
+                        else LineString(_smooth_structure_points(metric_points)))
             kind = constraint.kind
             intensity = 1.0
         if not polygon.covers(geometry):
@@ -328,6 +342,7 @@ def _metric_constraints(
                 elevation_mode=constraint.elevation_mode,
                 intensity=intensity,
                 profile_anchors=profile_anchors,
+                source_instruction=instruction,
                 explicit_profile=(isinstance(constraint, TerrainStructure)
                                   and bool(constraint.profile)),
             )
@@ -399,6 +414,13 @@ def _metric_constraints(
                 converted[structure_index],
                 profile_anchors=tuple(sorted(structure_anchors)),
             )
+    validate_ridge_contacts(tuple(
+        ProfileRidge(c.source_instruction, cast(LineString, c.geometry),
+                     tuple(a[0] for a in c.profile_anchors),
+                     tuple(a[1] for a in c.profile_anchors))
+        for c in converted
+        if c.kind == "ridge" and c.elevation_mode == "absolute" and c.explicit_profile
+    ))
     return tuple(converted)
 
 
@@ -701,7 +723,8 @@ def _apply_constraints(
     ridge_profile_weight = np.zeros_like(elevation)
     ridge_profile_targets = np.zeros_like(elevation)
     for constraint in constraints:
-        if constraint.kind != "ridge" or constraint.elevation_mode != "absolute":
+        if (constraint.kind != "ridge" or constraint.elevation_mode != "absolute"
+                or constraint.explicit_profile):
             continue
         weight, line_positions = _structure_response(
             constraint,
@@ -765,6 +788,26 @@ def _apply_constraints(
             weight * profiled_relief,
         )
     elevation += relative_ridge_raise
+
+    # Explicit absolute crests own their axis after other ridge guidance.
+    # Stable order also keeps Float32 results independent of instruction order.
+    profiled_ridges = sorted(
+        (c for c in constraints if c.kind == "ridge" and c.elevation_mode == "absolute"
+         and c.explicit_profile),
+        key=lambda c: (tuple(cast(LineString, c.geometry).coords), c.profile_anchors,
+                       c.influence_radius_km),
+    )
+    if profiled_ridges:
+        blend = CrestBlend(elevation)
+        for constraint in profiled_ridges:
+            weight, positions = _structure_response(
+                constraint, sample_points, distance_to_coast_km, largest_feature_km, detail_driver)
+            target, _control = _structure_profile(constraint, positions)
+            raw_distance = cast(Any, shapely.distance(sample_points, constraint.geometry))
+            distance = cast(NDArray[np.float64], np.asarray(raw_distance, dtype=np.float64))
+            blend.add(weight, target, distance)
+            detail_suppression = np.maximum(detail_suppression, weight)
+        elevation = blend.apply(elevation)
 
     valley_cut = np.zeros_like(elevation)
     for constraint in constraints:

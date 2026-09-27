@@ -1027,3 +1027,26 @@ def test_line_profile_action_uses_history_and_retains_the_generated_reference(
     assert app._constraints[1] == updated
     app._select_instruction(0)
     assert str(app.structure_profile_button["state"]) == "disabled"
+
+
+def test_ridge_junction_failure_reaches_editor_without_replacing_reference(
+    app: ui.TerrainApp, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from dmtools.terrain.domain import StructureProfileKnot as Knot
+    main = TerrainStructure("ridge", ((.2, .4), (.8, .4)), 2000., 40.,
+                            profile=(Knot(0., 2000.), Knot(1., 2000.)))
+    branch = TerrainStructure("ridge", ((.5, .4), (.5, .8)), 1800., 30.,
+                              profile=(Knot(0., 1800.), Knot(1., 600.)))
+    app._history.reset((main, branch))
+    app._instructions_changed("Test connected ridge conflict")
+    terrain, image = app._terrain, app._image
+    errors: list[str] = []
+    def show_error(*args: object, **_kwargs: object) -> None:
+        errors.extend(str(value) for value in args)
+    monkeypatch.setattr(ui.messagebox, "showerror", show_error)
+    app._generate()
+    _wait_for_operation(app)
+    assert any("Ridge junction conflict" in message and "profiles" in message for message in errors)
+    assert app._terrain is terrain and app._image is image
+    assert app._constraints == (main, branch)
+    assert not app._reference_is_current() and app._authoring_enabled

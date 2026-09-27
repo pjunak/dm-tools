@@ -80,7 +80,9 @@ For regional terrain authoring and its first four recipes, read the
 
 For explicit peaks, passes and descending spur/floor controls, read the
 [line profile guide](terrain-structure-profiles.md) and
-[implementation evidence](research/2026-09-27-line-owned-terrain-profiles.md).
+[profile implementation evidence](research/2026-09-27-line-owned-terrain-profiles.md).
+For connected ridge heights and preserved contacts, read the
+[shared-crest comparison](research/2026-09-27-shared-ridge-crests.md).
 
 For authored lake levels, dry-basin retention and their review, read the
 [water guide](terrain-water.md).

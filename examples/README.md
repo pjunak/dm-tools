@@ -115,3 +115,8 @@ the lake footprint. Feature-guided profiles expose a 131.44 m climb missed when
 only that point's refinement is omitted. The donor takes a clear neighbouring
 route and still contributes to the outlet. Both reviews use identical terrain
 and captured MFD area; the point itself remains authored ground.
+
+The [connected crest example](terrain/connected-crests.dmterrain.json) reuses the
+public range/lowland square and joins a descending spur at a main ridge corner.
+Its compatible absolute profiles retain the shared junction during smoothing;
+see the [profile guide](../docs/terrain-structure-profiles.md).

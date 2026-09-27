@@ -445,8 +445,23 @@ The public connected example exposes a remaining composition limit: its requeste
 2,800/1,400/2,400 m crest controls deliver about 2,482/1,429/2,173 m after other
 line influences combine, although isolated-line controls meet their targets.
 Do not treat ownership as exact network junction solving. Shared junction
-constraints and generated branching remain separate work; no acceptance threshold
-was relaxed and the river/history gates remain open.
+constraints and generated branching were left open at that checkpoint; no acceptance
+threshold was relaxed. T17 below implements the next absolute-ridge slice; the
+river/history gates remain open.
+
+## T17 - Blend ridge targets and round connected lines independently
+
+Gaussian ridge-target averaging shifted authored crests by up to 244.800 m in
+the bounded scale comparison. Independent smoothing moved a main ridge 75 km
+away from an attached branch at a corner. The
+[shared-crest follow-up](2026-09-27-shared-ridge-crests.md) replaces target averaging
+with stable distance-based crest ownership and preserves exact authored contacts
+through smoothing. Tested control errors and that contact gap fall to zero.
+
+Retain the limited scope: explicit absolute ridges only. Conflicting contact
+heights and ambiguous loops/shared spans are rejected; no snapping, automatic
+graph editing or branch generation is implied. Valleys and hard points keep
+later authority, and broad smooth shoulders/sharp junction turns remain visible.
 
 ## What the failures change
 

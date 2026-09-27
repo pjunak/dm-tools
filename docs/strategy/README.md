@@ -378,8 +378,10 @@ Keep surface ridges, drainage divides and active channels distinct. Add explicit
 pass/per-vertex controls where the fixture requires them; avoid a large new preset
 catalogue before one connected system works. [Line-owned profiles](../terrain-structure-profiles.md)
 now supply explicit ridge/pass/spur/floor guidance and a public connected example.
-Map-visible knot handles, shared-junction authority and automatic branching remain
-next steps; the example does not accept the full structural realism milestone.
+[Shared absolute crests](../research/2026-09-27-shared-ridge-crests.md) now preserve
+contacts through smoothing and reject incompatible junction heights. Generated
+branching, junction-aware editing, tangents and cross-sections are the next gains;
+the examples do not accept the full structural realism milestone.
 
 Use LE2/LE3's evolution comparison as the first process-informed shaping
 alternative; do not start a duplicate erosion experiment here. Sequential epochs

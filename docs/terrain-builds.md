@@ -248,6 +248,6 @@ all dry area while verified water can still drain. Read the
 water-head, witness, alternative-path and retained-suffix semantics. Current
 review identities are `authored-basin-water-review@10` and
 `captured-mfd-reviewed-d8-outlets@8`. Build v19 and input snapshot v3 record
-project v8 settings and line profiles, including automatic drainage density. Generator @19 and
+project v8 settings and line profiles, including automatic drainage density. Generator @20 and
 automatic valleys @14 identify the density-aware pipeline. Superseded formats
 are unsupported; numeric archive layouts are unchanged by the profile inputs.

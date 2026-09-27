@@ -168,12 +168,17 @@ def test_narrow_pass_informs_longitudinal_water_sampling() -> None:
     assert plan.feature_spacing_limit_km <= .100001
 
 
-def test_profile_build_reopens_as_a_verified_parent_with_identical_ground(tmp_path: Path) -> None:
+@pytest.mark.parametrize("example_name, middle_height", [
+    ("range-lowland", 1400.), ("connected-crests", 2400.),
+])
+def test_profile_build_reopens_as_a_verified_parent_with_identical_ground(
+    tmp_path: Path, example_name: str, middle_height: float,
+) -> None:
     from dmtools.terrain.adapters.build import runtime_identity
     from dmtools.terrain.adapters.parent import load_terrain_parent
     from dmtools.terrain.application.build import build_terrain_project
     from dmtools.terrain.pipeline.parent import prepare_verified_parent
-    example = Path(__file__).parents[1] / "examples/terrain/range-lowland.dmterrain.json"
+    example = Path(__file__).parents[1] / f"examples/terrain/{example_name}.dmterrain.json"
     loaded = load_terrain_project(example)
     project = replace(loaded.project, settings=replace(loaded.project.settings, resolution_px=65))
     source = tmp_path / "profile.dmterrain.json"
@@ -188,4 +193,5 @@ def test_profile_build_reopens_as_a_verified_parent_with_identical_ground(tmp_pa
     np.testing.assert_array_equal(field.sample_ground(x, y), replayed.sample_ground(x, y))
     document = json.loads((output / "inputs.json").read_text())
     assert document["schema_version"] == 3
-    assert document["constraints"][1]["profile"][2] == {"position": .5, "elevation_m": 1400.}
+    assert document["constraints"][1]["profile"][2] == {
+        "position": .5, "elevation_m": middle_height}
