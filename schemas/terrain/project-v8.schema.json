@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:dmtools:schema:terrain-project:7",
-  "title": "DM Tools terrain project version 7",
+  "$id": "urn:dmtools:schema:terrain-project:8",
+  "title": "DM Tools terrain project version 8",
   "description": "Current authored inputs including terrain region holes. Earlier project versions are unsupported.",
   "type": "object",
   "additionalProperties": false,
@@ -18,7 +18,7 @@
       "const": "dmtools.terrain-project"
     },
     "schema_version": {
-      "const": 7
+      "const": 8
     },
     "coastline": {
       "type": "object",
@@ -289,7 +289,8 @@
         "points",
         "elevation_mode",
         "elevation_m",
-        "influence_radius_km"
+        "influence_radius_km",
+        "profile"
       ],
       "properties": {
         "type": {
@@ -312,6 +313,9 @@
         "influence_radius_km": {
           "type": "number",
           "exclusiveMinimum": 0
+        },
+        "profile": {
+          "$ref": "#/$defs/structureProfile"
         }
       }
     },
@@ -323,7 +327,8 @@
         "points",
         "elevation_mode",
         "elevation_m",
-        "influence_radius_km"
+        "influence_radius_km",
+        "profile"
       ],
       "properties": {
         "type": {
@@ -348,6 +353,9 @@
         "influence_radius_km": {
           "type": "number",
           "exclusiveMinimum": 0
+        },
+        "profile": {
+          "$ref": "#/$defs/structureProfile"
         }
       }
     },
@@ -673,6 +681,38 @@
         },
         "outlet_at_first_vertex": {
           "type": "boolean"
+        }
+      }
+    },
+    "structureProfile": {
+      "description": "Empty for point-anchored defaults; otherwise 2-64 increasing knots from 0 to 1 along the smoothed metric centreline. Absolute valley heights cannot rise downstream. Runtime validates ordering and endpoints.",
+      "type": "array",
+      "maxItems": 64,
+      "anyOf": [
+        {
+          "maxItems": 0
+        },
+        {
+          "minItems": 2
+        }
+      ],
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "position",
+          "elevation_m"
+        ],
+        "properties": {
+          "position": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "elevation_m": {
+            "type": "number",
+            "minimum": 0
+          }
         }
       }
     }

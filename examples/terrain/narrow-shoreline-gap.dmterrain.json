@@ -195,7 +195,8 @@
           0.5033112582781457
         ]
       ],
-      "type": "valley"
+      "type": "valley",
+      "profile": []
     },
     {
       "elevation_m": 0.0,
@@ -209,7 +210,7 @@
     }
   ],
   "schema": "dmtools.terrain-project",
-  "schema_version": 7,
+  "schema_version": 8,
   "settings": {
     "coastal_rise_km": 180.0,
     "detail_levels": 6,

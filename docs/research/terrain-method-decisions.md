@@ -432,6 +432,22 @@ Triangulation and implicit category/age conversion were rejected design shortcut
 not executed failed experiments. Triangulation would introduce artificial fade
 edges under the current rule; age conversion would invent unreviewed coefficients.
 
+## T16 - Use proximity alone to own connected ridge profiles
+
+Point-derived profiles remain useful, but absolute points can affect multiple
+nearby lines and relative points detach on an ambiguous nearest match. This is
+an ownership limitation for deliberate peak/pass/spur control, not a failed
+physical model. [Line-owned profiles](2026-09-27-line-owned-terrain-profiles.md)
+now provide explicit ownership and reuse the existing shape-preserving curve.
+A replacement noise carrier was considered but not executed or adopted.
+
+The public connected example exposes a remaining composition limit: its requested
+2,800/1,400/2,400 m crest controls deliver about 2,482/1,429/2,173 m after other
+line influences combine, although isolated-line controls meet their targets.
+Do not treat ownership as exact network junction solving. Shared junction
+constraints and generated branching remain separate work; no acceptance threshold
+was relaxed and the river/history gates remain open.
+
 ## What the failures change
 
 Preserve the feature goals: believable rivers, geological aging, useful zoom detail

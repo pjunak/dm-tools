@@ -265,8 +265,9 @@ the arrow at the final vertex makes this direction visible.
 
 Polyline corners are gently rounded during generation, and their effective
 width varies with the deterministic terrain field instead of producing a
-perfect extrusion. Free ends taper. A height point close enough to a ridge or
-valley also becomes an elevation anchor along that structure, so peaks, passes,
+perfect extrusion. Free ends taper. On a line without an explicit profile, a
+height point close enough to a ridge or valley also becomes an elevation anchor
+along that structure, so peaks, passes,
 and floor heights bend its longitudinal profile rather than forming an
 independent circular stamp. Absolute points attach to nearby absolute
 structures. A relative point attaches only to the uniquely nearest relative
@@ -283,6 +284,12 @@ parent feature's kind. Two peaks surrounding a lower point can therefore create
 a geometric saddle while the terrain still falls away across the ridge.
 Conflicting targets at the same projected line position are rejected rather
 than silently averaged.
+
+For direct ownership, select a ridge or valley and choose **Profile...**. Add
+positions/heights along that line, preview the curve, apply and regenerate.
+Profiles support explicit peaks, passes and descending spur/floor values without
+nearby-point attachment. See the [profile guide](../../../docs/terrain-structure-profiles.md)
+and its public range/lowland example.
 
 Before raster generation, every valley samples the stable terrain surface
 entering the valley stage at resolution-independent metric positions. Relative
@@ -320,7 +327,7 @@ are not embedded. Saves use a temporary file followed by atomic replacement so
 an interrupted write does not leave a partially written project. The current format is
 strict: unknown fields or unsupported versions are rejected rather than
 guessed. The public contract is
-[`schemas/terrain/project-v7.schema.json`](../../../schemas/terrain/project-v7.schema.json)
+[`schemas/terrain/project-v8.schema.json`](../../../schemas/terrain/project-v8.schema.json)
 and its rationale is recorded in
 [ADR-0006](../../../docs/adr/0006-versioned-terrain-project.md).
 

@@ -14,6 +14,11 @@ in the current status or a new dated report.
 
 ## Current reassessment
 
+- [Line-owned terrain profiles — 2026-09-27](2026-09-27-line-owned-terrain-profiles.md)
+  adds explicit crest/pass/floor ownership and a curve editor, preserving failed
+  assumptions about proximity ownership and multi-line target composition.
+
+
 - [World-to-terrain workflow — 2026-09-27](2026-09-27-world-to-terrain-workflow.md)
   delivers continent-to-project creation through the editor and CLI, with connected
   land, fixed world scale and exact retained source geometry. Records the real-map

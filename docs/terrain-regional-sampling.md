@@ -71,7 +71,7 @@ contains only the core; its metadata identifies the numeric archive and field.
 Scientific ground omits lake colouring, avoiding classification of a cropped
 lake as a complete water body.
 
-[Regional samples v2](../schemas/terrain/regional-samples-v2.schema.json) is a
+[Regional samples v3](../schemas/terrain/regional-samples-v3.schema.json) is a
 separate artifact contract from [full builds](terrain-builds.md). Its source
 field ID hashes full inputs and numeric algorithm identities. The artifact ID
 also binds request, runtime, source-file hashes, seeds and output hashes. The

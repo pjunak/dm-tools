@@ -218,7 +218,7 @@ not a new engine or completed schema.
 | Authored geology (WC1 inputs) | Retained-world recipes, continent defaults, independent provinces, priorities, separate ages/duration and effective coverage/editor ([guide](../world-geology.md)) | Calibrated forcing/tapers, epoch consumption and world terrain; no age-derived erosion coefficients |
 | Bathymetry (WC1 hypothesis) | Explicit oceans, smooth shelf/slope/basin parameters, actual centre-water masks, conservative depth/error fields, support views and verified portable editor/CLI bundles ([guide](../world-bathymetry.md)) | Per-margin detail, model uncertainty, volume/flux integration, component-aware transport and downstream coupling |
 | Regional landforms | Plain/hill/plateau/mountain recipes, orientation, transitions and regional cut limits | Distribution targets, transition-gradient validation, related geological regions |
-| Structural authoring | Absolute/relative point-anchored profiles, directed valley floors and compatible junctions | Direct per-vertex controls, explicit passes, asymmetric sides and generated branching |
+| Structural authoring | Point-anchored and explicit line-owned peak/pass/floor profiles, directed valleys and compatible junction widths | Map-visible knot controls, exact shared junctions, asymmetric sides and generated branching |
 | Basin intent and flow | Lake/dry footprints retain terrain and captured MFD area; eligible outlets transfer collected area conservatively | Runoff/discharge, equilibrium water levels, controlling sills, lake chains and nested depressions |
 | Finer water review | Shoreline/contact/full-route profiles, regional transitions, procedural density, context shoulders, wet-link separation and dry-path checks | Residual blended/grazing extrema, continuous error bounds, complete-budget cost and off-grid/path alternatives |
 | Measurements (R41) | Elevation min/max/mean/deviation and masked X/Y differences/semivariances at physical lags | Detrending, arbitrary direction, terrain atlas, multiscale/topological descriptors |
@@ -359,7 +359,7 @@ evidence by topic, not a competing execution order.
   actual path geometry and final-surface agreement are the immediate priorities.
 
 - [Verified-parent detail](2026-09-23-verified-parent-detail.md) implements portable
-  build v18 snapshots, complete parent replay and separate sampling/enrichment
+  build v19 snapshots, complete parent replay and separate sampling/enrichment
   commands. Fixed support avoids output-density drift; original reference
   structure, parent nodes, water and authored/channel cores are retained.
   [Shared-edge support](2026-09-23-shared-edge-detail.md) now carries additions

@@ -1002,3 +1002,28 @@ def test_region_hole_selection_and_vertex_drag_preserve_the_cutout(app: ui.Terra
     assert updated.holes[0][0] == updated.holes[0][-1] == pytest.approx(expected)
     app._undo_constraint()
     assert app._constraints == (region,)
+
+
+def test_line_profile_action_uses_history_and_retains_the_generated_reference(
+    app: ui.TerrainApp, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from dmtools.terrain.domain import StructureProfileKnot as Knot
+    ridge = TerrainStructure("ridge", ((.2, .4), (.8, .4)), 1200., 40., "relative")
+    app._history.append(ridge)
+    app._select_instruction(1)
+    assert str(app.structure_profile_button["state"]) == "normal"
+    original, image = app._terrain, app._image
+    updated = replace(ridge, profile=(Knot(0., 600.), Knot(.5, 200.), Knot(1., 700.)))
+    def edit_profile(*_args: object) -> TerrainStructure:
+        return updated
+    monkeypatch.setattr(ui, "edit_structure_profile", edit_profile)
+    app._edit_structure_profile()
+    assert app._constraints[1] == updated
+    assert app._terrain is original and app._image is image
+    assert not app._reference_is_current()
+    app._undo_constraint()
+    assert app._constraints[1] == ridge
+    app._redo_constraint()
+    assert app._constraints[1] == updated
+    app._select_instruction(0)
+    assert str(app.structure_profile_button["state"]) == "disabled"

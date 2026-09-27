@@ -23,6 +23,7 @@ from dmtools.terrain.domain import (
     TerrainConstraint,
     TerrainRegion,
     TerrainSettings,
+    TerrainStructure,
 )
 from dmtools.terrain.domain.seeds import RELIEF_STAGE_ID, stage_seed
 from dmtools.terrain.pipeline.basin_flow import BasinOutflow, resolve_basin_outflow
@@ -66,7 +67,7 @@ from dmtools.terrain.pipeline.water import (
 from dmtools.terrain.pipeline.water_budget import WaterSamplingBudget, plan_water_sampling_budget
 from dmtools.terrain.pipeline.water_sampling import SamplingDensity, SamplingFeature, SamplingGuide
 
-GENERATOR_ALGORITHM_ID = "coastline-constraint-terrain@18"
+GENERATOR_ALGORITHM_ID = "coastline-constraint-terrain@19"
 AUTOMATIC_VALLEY_ALGORITHM_ID = "regional-budget-mfd-d8-valleys@14"
 NOISE_ALGORITHM_ID = "coordinate-value-noise-fixed-budget@2"
 
@@ -180,6 +181,7 @@ class _MetricConstraint:
     elevation_mode: ElevationMode
     intensity: float = 1.0
     profile_anchors: tuple[tuple[float, float, float], ...] = ()
+    explicit_profile: bool = False
     attached_to_structure: bool = False
     taper_start: bool = True
     taper_end: bool = True
@@ -308,6 +310,15 @@ def _metric_constraints(
             else:
                 label = kind.capitalize()
             raise ValueError(f"{label} constraint extends outside the coastline.")
+        profile_anchors: tuple[tuple[float, float, float], ...] = ()
+        if isinstance(constraint, TerrainStructure) and constraint.profile:
+            if (constraint.elevation_mode == "absolute"
+                    and any(k.elevation_m > maximum_elevation_m for k in constraint.profile)):
+                raise ValueError("A structure profile height exceeds the elevation ceiling.")
+            profile_anchors = tuple(
+                (k.position * geometry.length, k.elevation_m, constraint.influence_radius_km)
+                for k in constraint.profile
+            )
         converted.append(
             _MetricConstraint(
                 kind=kind,
@@ -316,6 +327,9 @@ def _metric_constraints(
                 influence_radius_km=constraint.influence_radius_km,
                 elevation_mode=constraint.elevation_mode,
                 intensity=intensity,
+                profile_anchors=profile_anchors,
+                explicit_profile=(isinstance(constraint, TerrainStructure)
+                                  and bool(constraint.profile)),
             )
         )
     _preserve_structure_junction_widths(converted)
@@ -333,7 +347,10 @@ def _metric_constraints(
         compatible: list[tuple[float, int]] = []
         for structure_index in structure_indices:
             structure = converted[structure_index]
-            if structure.elevation_mode != point_constraint.elevation_mode:
+            # An explicit profile owns this line. Nearby points remain independent
+            # hard controls; they cannot silently acquire or reshape its crest/floor.
+            if (structure.explicit_profile
+                    or structure.elevation_mode != point_constraint.elevation_mode):
                 continue
             attachment_distance = max(
                 point_constraint.influence_radius_km,
@@ -1268,6 +1285,12 @@ def _water_sampling_guides(
             is_structure=structure, is_brush=constraint.kind == "brush", attached_point=attached)
         context = max(radius_factor * maximum, feature_factor * settings.largest_feature_km)
         features.append(SamplingFeature(constraint.geometry, radius, minimum, context))
+        if constraint.explicit_profile:
+            # A narrow pass can be much shorter than the line's crosswise width.
+            # Keep its longitudinal scale visible to bounded water-review sampling.
+            spacing = min(b[0]-a[0] for a, b in pairwise(constraint.profile_anchors)) / 4.
+            features.append(SamplingDensity(
+                spacing, constraint.geometry.buffer(2*max(radius, context))))
     return tuple(features)
 
 

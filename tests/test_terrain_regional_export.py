@@ -59,7 +59,7 @@ def test_regional_cli_publishes_repeatable_hashed_products(
         Draft202012Validator.check_schema(item)
     registry = Registry[Any]().with_resources(
         (s["$id"], Resource.from_contents(s)) for s in schemas)
-    schema = next(s for s in schemas if s["$id"] == "urn:dmtools:schema:terrain-regional-samples:2")
+    schema = next(s for s in schemas if s["$id"] == "urn:dmtools:schema:terrain-regional-samples:3")
     validate(document, schema, cls=Draft202012Validator, registry=registry)
     for key in ("adds_detail_bands", "conditions_on_parent_dem", "refines_hydrology"):
         assert document["capabilities"][key] is False

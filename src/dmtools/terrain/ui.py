@@ -64,6 +64,7 @@ from dmtools.terrain.domain import (
 )
 from dmtools.terrain.pipeline import GeneratedTerrain, generate_terrain
 from dmtools.terrain.pipeline.control import CancellationToken, GenerationCancelled
+from dmtools.terrain.structure_profile_ui import edit_structure_profile
 from dmtools.terrain.viewport import MapViewport
 from dmtools.terrain.workbench import (
     GenerationInputs,
@@ -877,8 +878,10 @@ class TerrainApp:
         self.undo_constraint_button: tk.Button
         self.redo_constraint_button: tk.Button
         self.clear_constraints_button: tk.Button
+        self.structure_profile_button: tk.Button
         for column, (name, label, command) in enumerate((
             ("apply_instruction_button", "Apply edit", self._apply_instruction),
+            ("structure_profile_button", "Profile...", self._edit_structure_profile),
             ("delete_instruction_button", "Delete", self._delete_instruction),
             ("undo_constraint_button", "Undo", self._undo_constraint),
             ("redo_constraint_button", "Redo", self._redo_constraint),
@@ -901,6 +904,8 @@ class TerrainApp:
                     "Brush" if isinstance(constraint, TerrainBrushStroke)
                     else constraint.kind.title())
             description = f"{kind} {constraint.elevation_m:,.0f} m {constraint.elevation_mode}"
+        if isinstance(constraint, TerrainStructure) and constraint.profile:
+            description += f" · {len(constraint.profile)} profile knots"
         return f"{index + 1}. {description}"
 
     def _refresh_instruction_controls(self) -> None:
@@ -917,6 +922,10 @@ class TerrainApp:
         self.apply_instruction_button.configure(
             state="normal" if selected and not dry_basin else "disabled")
         self.delete_instruction_button.configure(state="normal" if selected else "disabled")
+        self.structure_profile_button.configure(
+            state="normal" if selected and index is not None
+            and isinstance(self._constraints[index], TerrainStructure)
+            else "disabled")
         self.redo_constraint_button.configure(
             state="normal" if self._authoring_enabled and self._history.can_redo
             and not self._draft_points else "disabled")
@@ -1138,6 +1147,9 @@ class TerrainApp:
         elevation = float(self._tool_elevations[tool].get())
         radius = float(self._tool_sizes[tool].get()) / (2 if tool == "brush" else 1)
         mode = self._selected_elevation_mode(tool)
+        if (isinstance(constraint, TerrainStructure) and constraint.profile
+                and mode != constraint.elevation_mode):
+            raise ValueError("Clear the line profile before changing its elevation mode.")
         if isinstance(constraint, TerrainBrushStroke):
             return replace(constraint, elevation_m=elevation, influence_radius_km=radius,
                            elevation_mode=mode, intensity=self._brush_intensity_percent.get() / 100)
@@ -1164,6 +1176,25 @@ class TerrainApp:
             return
         self._history.replace(self._selected_instruction, updated)
         self._instructions_changed("Instruction updated. Regenerate to see its effect.")
+
+    def _edit_structure_profile(self) -> None:
+        index = self._selected_instruction
+        if not self._authoring_enabled or index is None:
+            return
+        try:
+            candidate = self._edited_instruction()
+            if not isinstance(candidate, TerrainStructure):
+                return
+            updated = edit_structure_profile(
+                self.root, candidate, float(self._variables["maximum_elevation_m"].get()))
+        except (ValueError, tk.TclError) as error:
+            messagebox.showerror("Invalid profile", str(error), parent=self.root)
+            return
+        if updated is not None:
+            self._history.replace(index, updated)
+            self._select_instruction(index)
+            self._instructions_changed(
+                "Line profile updated. Regenerate to see peaks, passes or floors.")
 
     def _delete_instruction(self) -> None:
         if not self._authoring_enabled or self._selected_instruction is None:

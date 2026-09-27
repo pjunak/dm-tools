@@ -25,6 +25,7 @@ from dmtools.terrain.domain import (
     FeatureToolSettings,
     LakeToolSettings,
     LandComponent,
+    StructureProfileKnot,
     TerrainAuthoringState,
     TerrainBasin,
     TerrainBrushStroke,
@@ -36,7 +37,7 @@ from dmtools.terrain.domain import (
 )
 
 PROJECT_SCHEMA = "dmtools.terrain-project"
-PROJECT_SCHEMA_VERSION = 7
+PROJECT_SCHEMA_VERSION = 8
 PROJECT_EXTENSION = ".dmterrain.json"
 _MAX_PROJECT_BYTES = 16 * 1024 * 1024
 
@@ -255,13 +256,22 @@ def _constraint_from_json(value: object, index: int) -> TerrainConstraint:
                 elevation_mode=elevation_mode,
             )
         if kind in ("ridge", "valley"):
-            _require_keys(data, common | {"points"}, context)
+            _require_keys(data, common | {"points", "profile"}, context)
+            profile: list[StructureProfileKnot] = []
+            for item in _sequence(data["profile"], f"{context}.profile"):
+                knot = _mapping(item, f"{context}.profile knot")
+                _require_keys(knot, {"position", "elevation_m"}, f"{context}.profile knot")
+                profile.append(StructureProfileKnot(
+                    _number(knot["position"], f"{context}.profile position"),
+                    _number(knot["elevation_m"], f"{context}.profile elevation"),
+                ))
             return TerrainStructure(
                 kind=kind,
                 points=_points(data["points"], f"{context}.points"),
                 elevation_m=elevation_m,
                 influence_radius_km=radius_km,
                 elevation_mode=elevation_mode,
+                profile=tuple(profile),
             )
     except ValueError as error:
         raise TerrainProjectInputError(f"Invalid {context}: {error}") from error
@@ -333,7 +343,8 @@ def _constraint_to_json(constraint: TerrainConstraint) -> dict[str, object]:
             intensity=constraint.intensity,
         )
     else:
-        data.update(type=constraint.kind, points=[list(point) for point in constraint.points])
+        data.update(type=constraint.kind, points=[list(point) for point in constraint.points],
+                    profile=[asdict(k) for k in constraint.profile])
     return data
 
 
@@ -459,7 +470,7 @@ def load_terrain_project(source: Path) -> LoadedTerrainProject:
 
 
 INPUT_SNAPSHOT_SCHEMA = "dmtools.terrain-input-snapshot"
-INPUT_SNAPSHOT_VERSION = 2
+INPUT_SNAPSHOT_VERSION = 3
 
 
 def project_snapshot_to_json(project: TerrainProject) -> dict[str, object]:

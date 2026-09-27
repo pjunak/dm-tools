@@ -57,6 +57,11 @@ performance tuning must not displace this product path unless they block it.
   connected-coverage blending; retain blank holes, established enclave interiors,
   hard heights and coast/mask. Water/crest probes and cut bounds follow the same
   support. See [evidence and rejected kernel](docs/research/2026-09-27-shared-landform-blending.md).
+- [x] **Line-owned peak/pass/floor profiles:** explicit metre values along a ridge
+  or valley, dedicated curve editor, undo, current-format replay and bounded
+  narrow-feature water sampling. See [evidence and limits](docs/research/2026-09-27-line-owned-terrain-profiles.md).
+- [ ] **Next connected-landform step:** map-visible profile handles and explicit
+  shared ridge junctions, followed by generated subordinate spurs and lowlands.
 - [ ] **Next landform-quality gain:** connected ranges, passes and lowlands, with
   physical slope/transition-support feedback for narrow or high-contrast regions.
   Continuous recipe blending alone does not establish realistic geological history.
@@ -1691,7 +1696,8 @@ geometry movement and project-saving behavior.
   local/normalized coordinates.
 - [ ] **P1 — Add explicit peak and pass handles along ridge profiles.** Show
   their along-line order, elevation mode, influence length, and saddle or peak
-  role.
+  role. The line-owned profile dialog now edits positions and heights; direct
+  handles on the map remain to implement.
 - [ ] **P1 — Extend the instruction list into a layers panel.** Selection and
   deletion are implemented. Add names, reorder where order is meaningful,
   per-instruction hide/show, lock and duplication. A global Instructions toggle

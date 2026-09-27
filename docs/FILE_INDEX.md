@@ -6,7 +6,7 @@ export-import correction, bounded preparation and geographic context documents. 
 documentation and private campaign files are excluded. The public JSON schemas and reference dependency
 lock are listed separately as supporting contracts, not counted as prose docs.
 
-**202 Markdown files + 1 legal notice = 203 documentation files.**
+**205 Markdown files + 1 legal notice = 206 documentation files.**
 Each file appears once below, including this inventory. Document titles describe
 their subject; the group description identifies their role and authority.
 
@@ -18,13 +18,13 @@ remains the entry point for normal use. All are individually linked in the list 
 |---|---:|
 | Project entry and guidance | 4 |
 | Active plans and indexes | 11 |
-| User guides and current contracts | 18 |
+| User guides and current contracts | 19 |
 | Developer and reference guides | 8 |
-| Architecture decision records | 81 |
-| Dated research reports | 78 |
+| Architecture decision records | 82 |
+| Dated research reports | 79 |
 | Maintenance reports | 2 |
 | Legal notice | 1 |
-| **Total** | **203** |
+| **Total** | **206** |
 
 ## Project entry and guidance (4)
 
@@ -55,7 +55,7 @@ Current direction and navigation. Plans mark unimplemented features explicitly; 
 | [docs/strategy/landscape-evolution.md](strategy/landscape-evolution.md) | LE0-LE6 evolution, authoring, conservation and regional-history gates. |
 | [docs/strategy/world-context.md](strategy/world-context.md) | WC0-WC6 full-world import, shared context, climate and regional-history plan. |
 
-## User guides and current contracts (18)
+## User guides and current contracts (19)
 
 Current user workflows and numeric/file semantics, with future limits labelled in each guide.
 
@@ -71,6 +71,7 @@ Current user workflows and numeric/file semantics, with future limits labelled i
 | [docs/terrain-regional-memory.md](terrain-regional-memory.md) | Regional memory admission |
 | [docs/terrain-regional-sampling.md](terrain-regional-sampling.md) | Sample a finer regional window |
 | [docs/terrain-regions.md](terrain-regions.md) | Shape terrain with landform regions |
+| [docs/terrain-structure-profiles.md](terrain-structure-profiles.md) | Edit line-owned crest, pass, spur and valley-floor controls before generation. |
 | [docs/terrain-seeds.md](terrain-seeds.md) | Reproducible terrain seeds |
 | [docs/terrain-water-budget.md](terrain-water-budget.md) | Forecast water-sampling demand |
 | [docs/terrain-water.md](terrain-water.md) | Authored lakes and dry basins |
@@ -95,7 +96,7 @@ Subsystem, fixture, schema, test and benchmark guidance.
 | [src/dmtools/terrain/pipeline/README.md](../src/dmtools/terrain/pipeline/README.md) | Numeric generation and inspection responsibilities. |
 | [tests/README.md](../tests/README.md) | Test organization, commands and verification expectations. |
 
-## Architecture decision records (81)
+## Architecture decision records (82)
 
 Accepted historical decisions. Preserve their original context; consult the current status and implementation for later changes. The ADR index is listed among active indexes.
 
@@ -182,14 +183,16 @@ Accepted historical decisions. Preserve their original context; consult the curr
 | [docs/adr/0079-project-world-land-into-terrain.md](adr/0079-project-world-land-into-terrain.md) | Connected world land, metric projection, portable source and guarded terrain handoff. |
 | [docs/adr/0080-transfer-geological-landform-guidance.md](adr/0080-transfer-geological-landform-guidance.md) | Explicit geological landforms, priority holes, portable provenance and current-format cutover. |
 | [docs/adr/0081-blend-adjoining-landform-regions.md](adr/0081-blend-adjoining-landform-regions.md) | Shared regional weighting, blank holes, established interiors and matching probe/cut support. |
+| [docs/adr/0082-own-structure-profiles.md](adr/0082-own-structure-profiles.md) | Explicit line profile ownership, sampling support, editor and current-format contracts. |
 
-## Dated research reports (78)
+## Dated research reports (79)
 
 Primary-source reviews, experiments and implementation evidence at their recorded date/revision. A title or citation is not evidence that a tool was adopted. Current status is listed above.
 
 | File | Purpose or document title |
 |---|---|
 | [docs/research/2026-09-27-shared-landform-blending.md](research/2026-09-27-shared-landform-blending.md) | Replacement of background seams, rejected enclave-leaking kernel, paired evidence and remaining slope limits. |
+| [docs/research/2026-09-27-line-owned-terrain-profiles.md](research/2026-09-27-line-owned-terrain-profiles.md) | Connected-range authoring slice, owned profile evidence and unresolved multi-line composition. |
 | [docs/research/2026-09-27-geological-landform-guidance.md](research/2026-09-27-geological-landform-guidance.md) | Historical recipe-transfer evidence and polygon-boundary rims motivating ADR-0081. |
 | [docs/research/2026-09-27-world-to-terrain-workflow.md](research/2026-09-27-world-to-terrain-workflow.md) | Working world-to-terrain handoff, real-map roundoff failure/fix, feature priorities and exploratory bank failures. |
 | [docs/research/2026-09-27-prepared-feature-snapshots.md](research/2026-09-27-prepared-feature-snapshots.md) | Bounded feature snapshots, exact reopening/query/halo checks, failed raster control and remaining adoption gates. |
@@ -292,11 +295,11 @@ are included for a complete route from plans to the current usable formats.
 
 | File | Purpose |
 |---|---|
-| [schemas/terrain/build-v18.schema.json](../schemas/terrain/build-v18.schema.json) | Current numeric build manifest, product identities and runtime provenance. |
-| [schemas/terrain/input-snapshot-v2.schema.json](../schemas/terrain/input-snapshot-v2.schema.json) | Portable effective input snapshot for verified parent replay. |
+| [schemas/terrain/build-v19.schema.json](../schemas/terrain/build-v19.schema.json) | Current numeric build manifest, product identities and runtime provenance. |
+| [schemas/terrain/input-snapshot-v3.schema.json](../schemas/terrain/input-snapshot-v3.schema.json) | Portable effective input snapshot for verified parent replay. |
 | [schemas/terrain/parent-region-v1.schema.json](../schemas/terrain/parent-region-v1.schema.json) | Current parent sampling/experimental detail artifact contract. |
-| [schemas/terrain/project-v7.schema.json](../schemas/terrain/project-v7.schema.json) | Current authored local terrain project format; no world context fields. |
-| [schemas/terrain/regional-samples-v2.schema.json](../schemas/terrain/regional-samples-v2.schema.json) | Current bounded unchanged-field sampling artifact contract. |
+| [schemas/terrain/project-v8.schema.json](../schemas/terrain/project-v8.schema.json) | Current authored local terrain project format; no world context fields. |
+| [schemas/terrain/regional-samples-v3.schema.json](../schemas/terrain/regional-samples-v3.schema.json) | Current bounded unchanged-field sampling artifact contract. |
 | [schemas/world/bathymetry-inputs-v1.schema.json](../schemas/world/bathymetry-inputs-v1.schema.json) | Retained-world ocean selection and explicit physical shelf/slope/basin assumptions. |
 | [schemas/world/bathymetry-v1.schema.json](../schemas/world/bathymetry-v1.schema.json) | Completed depth/error arrays, verified geography dependency and source/runtime/product identity. |
 | [schemas/world/context-v4.schema.json](../schemas/world/context-v4.schema.json) | Spherical context products, source/runtime identity, coverage/topology/support, shared-edge widths, water-piece incidence/unresolved support, shore distance, exposure and hashes. |

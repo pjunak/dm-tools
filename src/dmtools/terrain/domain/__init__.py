@@ -24,6 +24,7 @@ from dmtools.terrain.domain.project import (
     TerrainAuthoringState,
     TerrainProject,
 )
+from dmtools.terrain.domain.structure_profiles import StructureProfileKnot
 
 __all__ = [
     "AuthoringTool",
@@ -38,6 +39,7 @@ __all__ = [
     "LandformKind",
     "LandformSettings",
     "LocalMetricFrame",
+    "StructureProfileKnot",
     "TerrainAuthoringState",
     "TerrainBasin",
     "TerrainBrushStroke",

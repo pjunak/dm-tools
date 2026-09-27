@@ -61,6 +61,11 @@ soft polygon recipes to the public terrain coastline. See the
 [region guide](../docs/terrain-regions.md) for controls and limitations.
 
 
+The [range/lowland example](terrain/range-lowland.dmterrain.json) adds line-owned
+profiles for two peaks, a pass, a descending spur and a valley. Open it in the
+Terrain workspace, generate, select a line and choose **Profile...**. The
+[profile guide](../docs/terrain-structure-profiles.md) explains controls and limits.
+
 The [local-detail example](terrain/local-detail.dmterrain.json) uses the public
 landform inputs at 65 longest-side parent nodes and two detail bands. Follow the
 [verified-parent guide](../docs/terrain-parent-regions.md) to sample the completed

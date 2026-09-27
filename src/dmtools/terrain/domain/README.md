@@ -16,9 +16,11 @@ Local frames, endpoint grids, named stage seeds and bounded regional sampling
 requests live here. Requests bind an input-defined full field and reference grid
 to nested fine addresses and a halo, with sample and precision limits. `world.py`
 adds retained source/assignment types and a full-sphere frame with explicit radius,
-source conversions and great-circle distances. World-linked terrain projection,
-direct per-vertex structure profiles and finished-parent restriction
-contracts for added local detail remain future work. Application/adapters own
+source conversions and great-circle distances. `structure_profiles.py` owns
+line-bound crest/floor knots and their order, endpoint and height validation.
+Profile positions follow smoothed metric arc length; they are independent of the
+line's geometry vertices. World-linked terrain and verified-parent sampling keep
+source identity separate from authored constraints. Application/adapters own
 manifest publication.
 
 Domain code must not read files, call external tools, render images, or depend on

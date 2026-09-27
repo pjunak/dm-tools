@@ -8,7 +8,7 @@ Only the current formats are supported:
 
 - [World terrain source v2](world/terrain-source-v2.schema.json): metadata embedded
   in a canonical prepared SVG, retaining the world, selected/connected ownership,
-  metric polygons, custom-sphere projection and optional original geology recipe. Project v7 references this SVG
+  metric polygons, custom-sphere projection and optional original geology recipe. Project v8 references this SVG
   normally; runtime loading also checks its canonical visible paths and fixed scale.
 
 - [World context v4](world/context-v4.schema.json): generated spherical coverage, separate water-piece connectivity/support,
@@ -27,14 +27,14 @@ Only the current formats are supported:
   samples, numerical error/support, a retained verified geographic dependency and
   result hashes. Neither a land DEM nor physical transport/heat capacity.
 
-- [Project v7](terrain/project-v7.schema.json): authored `.dmterrain.json` inputs,
-  including hole rings in terrain regions.
-- [Build v18](terrain/build-v18.schema.json): numeric products, coordinates,
+- [Project v8](terrain/project-v8.schema.json): authored `.dmterrain.json` inputs,
+  including hole rings in terrain regions and line-owned ridge/valley profiles.
+- [Build v19](terrain/build-v19.schema.json): numeric products, coordinates,
   algorithm identities, named stage seeds and output hashes.
-- [Regional samples v2](terrain/regional-samples-v2.schema.json): bounded
+- [Regional samples v3](terrain/regional-samples-v3.schema.json): bounded
   unchanged-field windows, source/runtime identity, halo/crop coordinates and
   explicit capability limits.
-- [Input snapshot v2](terrain/input-snapshot-v2.schema.json): portable effective
+- [Input snapshot v3](terrain/input-snapshot-v3.schema.json): portable effective
   geometry, typed constraints, settings and authoring state for current builds.
 - [Parent region v1](terrain/parent-region-v1.schema.json): verified-parent samples
   or explicit experimental detail, fixed cell moments and hydrology limits.

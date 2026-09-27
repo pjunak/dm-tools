@@ -5,6 +5,10 @@ from math import isfinite
 from typing import Literal
 
 from dmtools.terrain.domain.seeds import validate_master_seed
+from dmtools.terrain.domain.structure_profiles import (
+    StructureProfileKnot,
+    validate_structure_profile,
+)
 
 type Point2D = tuple[float, float]
 type StructureKind = Literal["ridge", "valley"]
@@ -132,8 +136,13 @@ class TerrainStructure:
     elevation_m: float
     influence_radius_km: float
     elevation_mode: ElevationMode = "absolute"
+    profile: tuple[StructureProfileKnot, ...] = ()
 
     def __post_init__(self) -> None:
+        validate_structure_profile(
+            self.profile,
+            absolute_valley=self.kind == "valley" and self.elevation_mode == "absolute",
+        )
         if self.kind not in ("ridge", "valley"):
             raise ValueError("Terrain structure kind must be 'ridge' or 'valley'.")
         if len(self.points) < 2:

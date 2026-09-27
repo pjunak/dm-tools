@@ -62,7 +62,7 @@ def test_portable_snapshot_round_trip(case: str) -> None:
     project = TerrainProject(coast, settings, tuple(constraints))
     document = json.loads(canonical_json(project_snapshot_to_json(project)))
     assert project_snapshot_from_json(document) == project
-    validate_schema(document, "urn:dmtools:schema:terrain-input-snapshot:2")
+    validate_schema(document, "urn:dmtools:schema:terrain-input-snapshot:3")
     document["constraints"].append({"type": "mystery"})
     with pytest.raises(ValueError):
         project_snapshot_from_json(document)

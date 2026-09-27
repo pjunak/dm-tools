@@ -195,11 +195,12 @@
           0.5033112582781457
         ]
       ],
-      "type": "valley"
+      "type": "valley",
+      "profile": []
     }
   ],
   "schema": "dmtools.terrain-project",
-  "schema_version": 7,
+  "schema_version": 8,
   "settings": {
     "coastal_rise_km": 20.0,
     "detail_levels": 5,

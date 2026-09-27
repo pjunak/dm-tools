@@ -110,3 +110,4 @@ supersedes their legacy compatibility commitments during early development.
 - [ADR-0079: Project connected world land into terrain projects](0079-project-world-land-into-terrain.md)
 - [ADR-0080: Transfer explicit geological landform guidance](0080-transfer-geological-landform-guidance.md)
 - [ADR-0081: Blend adjoining landform regions without background seams](0081-blend-adjoining-landform-regions.md)
+- [ADR-0082: Own ridge and valley profiles on their source lines](0082-own-structure-profiles.md)

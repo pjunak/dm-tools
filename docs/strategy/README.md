@@ -376,7 +376,10 @@ Build on R08/R09/R14/R32/R40/R43: peaks and saddles, subordinate spurs, tributar
 confined upper valleys and broader lower valleys should describe one landscape.
 Keep surface ridges, drainage divides and active channels distinct. Add explicit
 pass/per-vertex controls where the fixture requires them; avoid a large new preset
-catalogue before one connected system works.
+catalogue before one connected system works. [Line-owned profiles](../terrain-structure-profiles.md)
+now supply explicit ridge/pass/spur/floor guidance and a public connected example.
+Map-visible knot handles, shared-junction authority and automatic branching remain
+next steps; the example does not accept the full structural realism milestone.
 
 Use LE2/LE3's evolution comparison as the first process-informed shaping
 alternative; do not start a duplicate erosion experiment here. Sequential epochs

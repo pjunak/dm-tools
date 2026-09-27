@@ -140,6 +140,6 @@ authoring path for cutouts. Invalid ring intersections are rejected by the geome
 Equal landform controls are dissolved before transfer, including across continent
 labels and different geological ages. Different adjoining recipes use the shared
 blend described above. Blank cutouts remain background; explicit enclaves blend
-at their edges and keep their established interiors. Project v7 serializes holes;
+at their edges and keep their established interiors. Project v8 serializes holes;
 regional-landforms@4 records the new composition and support rules. See the
 [paired comparison](research/2026-09-27-shared-landform-blending.md).
