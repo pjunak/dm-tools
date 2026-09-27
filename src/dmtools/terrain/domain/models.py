@@ -223,13 +223,15 @@ class TerrainRegion:
 
     points: tuple[Point2D, ...]
     settings: LandformSettings = LandformSettings()
+    holes: tuple[tuple[Point2D, ...], ...] = ()
 
     def __post_init__(self) -> None:
-        _validate_ring(self.points, "Terrain region")
-        for point in self.points:
-            _validate_normalized_point(point)
-        if len(set(self.points[:-1])) < 3:
-            raise ValueError("Terrain region needs three distinct vertices.")
+        for ring in (self.points, *self.holes):
+            _validate_ring(ring, "Terrain region")
+            for point in ring:
+                _validate_normalized_point(point)
+            if len(set(ring[:-1])) < 3:
+                raise ValueError("Terrain region rings need three distinct vertices.")
 
 
 @dataclass(frozen=True, slots=True)

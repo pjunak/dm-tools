@@ -12,12 +12,14 @@ from xml.etree import ElementTree as ET
 
 from shapely.geometry import MultiPolygon, Polygon
 
+from dmtools.terrain.adapters.world_geology import geology_document, geology_from_bytes
 from dmtools.terrain.adapters.world_project import (
     world_project_document,
     world_project_from_bytes,
 )
 from dmtools.terrain.domain.models import Coastline, LandComponent
 from dmtools.terrain.domain.world_terrain import (
+    GEOLOGY_LANDFORM_MODEL,
     MAX_PROJECTED_POINTS,
     WORLD_TERRAIN_MODEL,
     WorldTerrainProjection,
@@ -25,7 +27,7 @@ from dmtools.terrain.domain.world_terrain import (
 )
 
 SOURCE_SCHEMA = "dmtools.world-terrain-source"
-SOURCE_VERSION = 1
+SOURCE_VERSION = 2
 MAX_SOURCE_BYTES = 64 * 1024 * 1024
 _MARKER = b"data-dmtools-world-terrain"
 
@@ -48,6 +50,10 @@ def source_document(source: WorldTerrainSource) -> dict[str, object]:
         "projection": asdict(source.projection),
         "axes": "projected-east-south-metres",
         "coastline": asdict(source.coastline),
+        "geology": None if source.geology is None else {
+            "model": GEOLOGY_LANDFORM_MODEL,
+            "recipe": geology_document(source.geology),
+        },
     }
 
 
@@ -165,6 +171,7 @@ def read_world_terrain_svg(path: Path) -> WorldTerrainSource | None:
                 "projection",
                 "axes",
                 "coastline",
+                "geology",
             },
         )
         if (
@@ -211,6 +218,14 @@ def read_world_terrain_svg(path: Path) -> WorldTerrainSource | None:
             <= {a.feature_id for a in world.assignments if a.continent_id in included}
         ):
             raise ValueError("World-derived coastline ownership is inconsistent.")
+        geology = None
+        if doc["geology"] is not None:
+            transfer = _record(doc["geology"], {"model", "recipe"})
+            if transfer["model"] != GEOLOGY_LANDFORM_MODEL:
+                raise ValueError("Unsupported geological landform transfer.")
+            geology = geology_from_bytes(_json(transfer["recipe"]))
+            if geology.world != world:
+                raise ValueError("Geology and terrain must retain the same world.")
         result = WorldTerrainSource(
             world,
             doc["requested_continent_id"],
@@ -218,6 +233,7 @@ def read_world_terrain_svg(path: Path) -> WorldTerrainSource | None:
             tuple(features),
             _coastline(doc["coastline"]),
             projection,
+            geology,
         )
         # Do not accept metadata describing one coast while the visible SVG draws
         # another. Regenerate from world inputs instead of editing this artifact.

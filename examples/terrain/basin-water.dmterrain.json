@@ -97,7 +97,8 @@
         "relief_m": 350.0,
         "transition_km": 180.0
       },
-      "type": "terrain_region"
+      "type": "terrain_region",
+      "holes": []
     },
     {
       "elevation_m": 400.0,
@@ -195,7 +196,7 @@
     }
   ],
   "schema": "dmtools.terrain-project",
-  "schema_version": 6,
+  "schema_version": 7,
   "settings": {
     "coastal_rise_km": 180.0,
     "detail_levels": 6,

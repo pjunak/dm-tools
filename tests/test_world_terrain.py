@@ -207,7 +207,7 @@ def test_metadata_matches_public_schema(tmp_path: Path) -> None:
     world = compact_world()
     result = create_world_terrain_project(world, continent(world), tmp_path / "terrain")
     schemas = [json.loads((ROOT / "schemas" / path).read_text()) for path in (
-        "world/project-v1.schema.json", "world/terrain-source-v1.schema.json",
+        "world/project-v1.schema.json", "world/terrain-source-v2.schema.json",
         "terrain/input-snapshot-v2.schema.json",
     )]
     registry = Registry[Any]().with_resources(

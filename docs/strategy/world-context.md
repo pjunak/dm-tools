@@ -73,11 +73,16 @@ first usable source-to-terrain path. It preserves islands, holes, physical
 neighbours and planetary scale; uses a bounded metric projection; and opens an
 ordinary terrain project through the existing editor's document guards.
 
-This is an explicit early product slice, not completion of WC2 or WC4. Context,
-bathymetry, geology and aging do not yet drive the generated ground. Wide
-connected land needs regional domains with shared boundary conditions. Result
-georeferencing/overlay and geological landform guidance are feature follow-ups;
-none requires pretending the current river/history research passed its gates.
+This is an explicit early product slice, not completion of WC2 or WC4. Explicit
+geological landform controls now compile to ordinary editable regions, retaining
+the recipe and priority holes; identical controls dissolve across labels and ages.
+[ADR-0080](../adr/0080-transfer-geological-landform-guidance.md) defines the handoff.
+Geographic context, bathymetry, geological ages and climate still do not drive ground.
+The paired example exposes background bands at different guidance boundaries.
+Continuous shared-edge blending is the next landform-quality task, ahead of smaller
+efficiency work. Wide connected land still needs regional domains with shared
+boundary conditions. Result georeferencing/overlay remains a feature follow-up.
+These features do not imply that the river/history research passed its gates.
 
 ## What is authoritative
 

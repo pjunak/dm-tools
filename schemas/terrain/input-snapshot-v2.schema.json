@@ -103,13 +103,13 @@
       }
     },
     "settings": {
-      "$ref": "urn:dmtools:schema:terrain-project:6#/$defs/generatorSettings"
+      "$ref": "urn:dmtools:schema:terrain-project:7#/$defs/generatorSettings"
     },
     "constraints": {
-      "$ref": "urn:dmtools:schema:terrain-project:6#/properties/constraints"
+      "$ref": "urn:dmtools:schema:terrain-project:7#/properties/constraints"
     },
     "authoring": {
-      "$ref": "urn:dmtools:schema:terrain-project:6#/$defs/authoringState"
+      "$ref": "urn:dmtools:schema:terrain-project:7#/$defs/authoringState"
     }
   }
 }

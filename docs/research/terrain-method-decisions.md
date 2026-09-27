@@ -1,7 +1,7 @@
 # Terrain method decisions and failed experiments
 
-Updated 2026-09-27 through the world-to-terrain batch against baseline
-`0c3edc8`, following the guarded snapshot implementation. This is the living record of
+Updated 2026-09-27 through the geological landform guidance batch against baseline
+`4b691d8`, following world-to-terrain integration. This is the living record of
 material generation approaches that were rejected, constrained or retained only
 as references. A failed method does not remove its desired feature from the plan.
 The [strategy](../strategy/README.md) owns execution order; dated reports own the
@@ -391,6 +391,23 @@ The same batch replaced a false continental-area subtraction check with direct
 MultiPolygon topology validation; its 0.05078125 m² roundoff was not overlap.
 Retain these workflow fixes while keeping regional projection support and
 physical generation acceptance as separate next gates.
+
+## T15 - Use inward region fades as a complete geological partition
+
+The [landform transfer report](2026-09-27-geological-landform-guidance.md) records
+a 5.088 s public paired build with the same world, coast and mask. Explicit controls
+reach the terrain and preserve nested overrides, but visible polygon-shaped rims
+remain. Every inward weight reaches zero at a shared recipe boundary, exposing
+the generic background; equal settings avoid this after dissolving.
+
+Retain the input/transfer feature. Do not accept broad terrain realism from this
+comparison. Test continuous shared-boundary blending next, with fixed coast,
+priorities, blank holes, hard heights and sampling checks. This is separate from
+calibrated geological forcing or physical aging.
+
+Triangulation and implicit category/age conversion were rejected design shortcuts,
+not executed failed experiments. Triangulation would introduce artificial fade
+edges under the current rule; age conversion would invent unreviewed coefficients.
 
 ## What the failures change
 

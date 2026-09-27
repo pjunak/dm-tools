@@ -134,3 +134,37 @@ def test_open_prepared_reloads_latest_saved_instructions(
     view.terrain_panel.open_button.invoke()
     wait(app)
     assert app._read_settings().seed == 784
+
+
+def test_selected_geology_is_reloaded_at_creation(
+    app: ui.TerrainApp, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from dmtools.terrain.adapters.world_geology import write_geology
+    from dmtools.terrain.domain import TerrainRegion, landform_preset
+    from dmtools.terrain.domain.world_geology import GeologyProfile, blank_geology
+
+    view = app.world_workspace
+    panel = view.terrain_panel
+    value = blank_geology(view.project())
+    path = tmp_path / "recipe.dmgeology.json"
+    digest = write_geology(value, path, None)
+    monkeypatch.setattr(world_terrain_ui.filedialog, "askopenfilename", reply(str(path)))
+    panel.geology_button.invoke()
+    assert panel.geology_path == path
+    # Edits made after choosing the file must be included.
+    value = replace(value, defaults=tuple(replace(
+        d, profile=GeologyProfile(landform=landform_preset("plateau")),
+    ) for d in value.defaults))
+    write_geology(value, path, digest)
+    panel.continent.set("Southmere")
+    monkeypatch.setattr(world_terrain_ui.filedialog, "asksaveasfilename",
+                        reply(str(tmp_path / "terrain")))
+    panel.create_button.invoke()
+    wait(app)
+    assert panel.created is not None
+    assert app._constraints
+    assert all(isinstance(c, TerrainRegion) and c.settings.character == "plateau"
+               for c in app._constraints)
+    panel.clear_geology_button.invoke()
+    assert panel.geology_path is None
+    assert panel.created.source.geology is not None

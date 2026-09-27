@@ -65,7 +65,12 @@ from dmtools.terrain.domain import (
 from dmtools.terrain.pipeline import GeneratedTerrain, generate_terrain
 from dmtools.terrain.pipeline.control import CancellationToken, GenerationCancelled
 from dmtools.terrain.viewport import MapViewport
-from dmtools.terrain.workbench import GenerationInputs, InstructionHistory, move_instruction
+from dmtools.terrain.workbench import (
+    GenerationInputs,
+    InstructionHistory,
+    instruction_vertices,
+    move_instruction,
+)
 from dmtools.terrain.world_ui import WorldWorkspace
 
 _INK = "#172225"
@@ -973,7 +978,10 @@ class TerrainApp:
             else:
                 points = [self._normalized_to_canvas(p) for p in constraint.points]
                 if isinstance(constraint, (TerrainRegion, TerrainBasin)):
-                    geometry = Polygon(points)
+                    holes = ([
+                        [self._normalized_to_canvas(p) for p in ring] for ring in constraint.holes
+                    ] if isinstance(constraint, TerrainRegion) else [])
+                    geometry = Polygon(points, holes)
                     distance = point.distance(geometry.boundary)
                     if geometry.covers(point):
                         distance = min(distance, 8.)
@@ -1012,10 +1020,7 @@ class TerrainApp:
         index = self._selected_instruction
         if index is not None:
             instruction = self._constraints[index]
-            points = ((instruction.position,) if isinstance(instruction, ElevationPoint)
-                      else instruction.points[:-1]
-                      if isinstance(instruction, (TerrainRegion, TerrainBasin))
-                      else instruction.points)
+            points = instruction_vertices(instruction)
             for i, point in enumerate(points):
                 x, y = self._normalized_to_canvas(point)
                 if hypot(x - event.x, y - event.y) <= 8:
@@ -1083,7 +1088,10 @@ class TerrainApp:
         else:
             points = [self._normalized_to_source(point) for point in instruction.points]
             if isinstance(instruction, (TerrainRegion, TerrainBasin)):
-                geometry = Polygon(points)
+                holes = ([
+                    [self._normalized_to_source(p) for p in ring] for ring in instruction.holes
+                ] if isinstance(instruction, TerrainRegion) else [])
+                geometry = Polygon(points, holes)
                 if not geometry.is_valid or geometry.area <= 0:
                     raise ValueError("Use a simple polygon without crossing edges.")
                 if isinstance(instruction, TerrainRegion):
@@ -2892,10 +2900,7 @@ class TerrainApp:
                               and self._drag_candidate is not None else original)
                 self._draw_constraint(constraint)
                 if index == self._selected_instruction:
-                    points = ((constraint.position,) if isinstance(constraint, ElevationPoint)
-                              else constraint.points[:-1]
-                              if isinstance(constraint, (TerrainRegion, TerrainBasin))
-                              else constraint.points)
+                    points = instruction_vertices(constraint)
                     for point in points:
                         x, y = self._normalized_to_canvas(point)
                         self.preview.create_rectangle(x - 5, y - 5, x + 5, y + 5,
@@ -2970,8 +2975,10 @@ class TerrainApp:
         if isinstance(constraint, TerrainRegion):
             coordinates = [value for point in constraint.points
                            for value in self._normalized_to_canvas(point)]
-            self.preview.create_polygon(coordinates, fill="", outline=_REGION_COLOUR,
-                                        width=2, dash=(6, 3))
+            for ring in (constraint.points, *constraint.holes):
+                outline = [v for p in ring for v in self._normalized_to_canvas(p)]
+                self.preview.create_polygon(outline, fill="", outline=_REGION_COLOUR,
+                                            width=2, dash=(6, 3))
             self.preview.create_text(coordinates[0] + 6, coordinates[1] - 6,
                                      text=constraint.settings.character, anchor="sw",
                                      fill=_REGION_COLOUR)

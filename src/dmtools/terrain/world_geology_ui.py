@@ -41,6 +41,7 @@ from dmtools.terrain.pipeline.control import CancellationToken, GenerationCancel
 from dmtools.terrain.pipeline.world import WorldMap
 from dmtools.terrain.pipeline.world_geology import GeologyCoverage, resolve_geology
 from dmtools.terrain.viewport import MapViewport
+from dmtools.terrain.world_landform_ui import WorldLandformForm
 
 
 @dataclass(frozen=True)
@@ -188,8 +189,12 @@ class GeologyEditor(tk.Toplevel):
             ("Delete", self.delete),
         ):
             self._button(tools, text, action).pack(side="left", padx=(0, 4))
-        form = ttk.Frame(side)
-        form.grid(row=3, column=0, sticky="ew")
+        self.form_tabs = ttk.Notebook(side)
+        self.form_tabs.grid(row=3, column=0, sticky="ew")
+        form = ttk.Frame(self.form_tabs, padding=6)
+        self.form_tabs.add(form, text="Geological history")
+        self.landform_form = WorldLandformForm(self.form_tabs)
+        self.form_tabs.add(self.landform_form, text="Landform guidance")
         form.columnconfigure(1, weight=1)
         for row, (key, label) in enumerate(
             (
@@ -280,8 +285,9 @@ class GeologyEditor(tk.Toplevel):
         foot.columnconfigure(0, weight=1)
         ttk.Label(
             foot,
-            text="Working hypotheses for future generation; "
-            "these settings do not yet produce relief, climate or erosion.",
+            text="Save this recipe, then choose it in World → Terrain to apply landform guidance. "
+            "Geological ages remain hypotheses; climate and aging are not applied.",
+            wraplength=930,
         ).grid(row=0, column=0, sticky="w")
         self.status_label = ttk.Label(foot, textvariable=self.status, wraplength=1080)
         self.status_label.grid(row=1, column=0, sticky="ew", pady=4)
@@ -294,7 +300,7 @@ class GeologyEditor(tk.Toplevel):
         self.cancel_button.grid(row=1, column=1, padx=6)
 
     def _form(self) -> tuple[str, ...]:
-        return tuple(v.get() for v in self.values.values())
+        return (*tuple(v.get() for v in self.values.values()), *self.landform_form.snapshot())
 
     def _populate(self) -> None:
         self.tree.delete(*self.tree.get_children())
@@ -332,6 +338,7 @@ class GeologyEditor(tk.Toplevel):
             strict=True,
         ):
             self.values[key].set(value)
+        self.landform_form.load(profile.landform)
         self._loaded_form = self._form()
         self._lock_identity_fields()
         region = (
@@ -375,6 +382,7 @@ class GeologyEditor(tk.Toplevel):
         return GeologyProfile(
             cast(GeologicalSetting, self.values["setting"].get()),
             *(float(value) if value else None for value in values),
+            landform=self.landform_form.read(),
         )
 
     def _candidate(self) -> WorldGeologyRecipe:
@@ -521,6 +529,7 @@ class GeologyEditor(tk.Toplevel):
         if self.busy:
             return
         self.busy = True
+        self.landform_form.set_busy(True)
         self._callback = after
         self._cancellation = CancellationToken() if cancellable else None
         for widget, _ in self._controls:
@@ -543,6 +552,7 @@ class GeologyEditor(tk.Toplevel):
         if not self._events.empty():
             event = self._events.get_nowait()
             self.busy = False
+            self.landform_form.set_busy(False)
             self._cancellation = None
             for widget, state in self._controls:
                 widget["state"] = state

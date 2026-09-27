@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:dmtools:schema:terrain-project:6",
-  "title": "DM Tools terrain project version 6",
-  "description": "Current authored inputs including automatic drainage density. Earlier project versions are unsupported.",
+  "$id": "urn:dmtools:schema:terrain-project:7",
+  "title": "DM Tools terrain project version 7",
+  "description": "Current authored inputs including terrain region holes. Earlier project versions are unsupported.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -18,7 +18,7 @@
       "const": "dmtools.terrain-project"
     },
     "schema_version": {
-      "const": 6
+      "const": 7
     },
     "coastline": {
       "type": "object",
@@ -566,7 +566,8 @@
       "required": [
         "type",
         "points",
-        "settings"
+        "settings",
+        "holes"
       ],
       "properties": {
         "type": {
@@ -581,6 +582,16 @@
         },
         "settings": {
           "$ref": "#/$defs/landformSettings"
+        },
+        "holes": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "minItems": 4,
+            "items": {
+              "$ref": "#/$defs/normalizedPoint"
+            }
+          }
         }
       }
     },

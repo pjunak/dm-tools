@@ -48,9 +48,16 @@ performance tuning must not displace this product path unless they block it.
 - [x] **Shared-land independence:** dissolve ownership before projection and verify
   exact mask/Float32 equality for the same land with different continent splits;
   retain actual narrow straits. Correct confirmed private drawing offsets at source.
-- [ ] **Next major feature:** consume explicit geological provinces/defaults as
-  broad landform guidance with visible range/plateau/lowland differences in this
-  working workflow. Keep authored hypotheses separate from physical aging.
+- [x] **Geological landform transfer:** explicit controls in the geology editor,
+  optional recipe selection in World/CLI, identical-guidance dissolving across
+  labels/ages, priority holes and portable provenance. Public numeric/GUI checks
+  and a paired build demonstrate visible range/plateau/lowland differences.
+  See the [report](docs/research/2026-09-27-geological-landform-guidance.md).
+- [ ] **Next landform-quality gain:** replace fallback-to-background bands between
+  adjoining guidance regions with continuous shared-edge blending. The paired
+  preview exposes polygon-shaped rims; preserve priorities, blank overrides,
+  hard heights and unchanged coast/mask while testing a replacement. This is not
+  physical uplift/aging and must not be labelled as accepted realism.
 - [ ] **Shared world terrain:** generate coherent rough relief across connected
   land, then transfer accepted context and upstream conditions into regional jobs.
 - [ ] **Wide-domain support:** explicit regional selection with shared boundaries;
@@ -153,8 +160,9 @@ continent-history generation remain planned.
   cross-continent/seam provinces, explicit priorities and unknowns, independent
   ages/duration at one common present, effective coverage preview, guarded
   undo/save/reopen and cancellation. See the [guide](docs/world-geology.md) and
-  [evidence](docs/research/2026-09-25-authored-world-geology.md). These hypotheses
-  do not yet drive terrain, erosion or climate.
+  [evidence](docs/research/2026-09-25-authored-world-geology.md). Explicit landform
+  controls now drive ordinary terrain through the new handoff; categories and
+  ages still do not imply erosion, uplift or climate.
 - [x] **WC1 bathymetric hypotheses:** explicit ocean selection, shelf/slope/basin
   inputs, conservative spherical coast-distance profile and numerical depth bound.
   Actual water-centre membership excludes land/unselected lakes; unresolved support

@@ -14,7 +14,7 @@ from dmtools.terrain.domain import LandformSettings, TerrainRegion, TerrainSetti
 from dmtools.terrain.domain.seeds import LANDFORM_STAGE_ID, stage_seed
 from dmtools.terrain.pipeline.noise import fractal_value_noise
 
-LANDFORM_ALGORITHM_ID = "regional-landforms@2"
+LANDFORM_ALGORITHM_ID = "regional-landforms@3"
 
 
 @dataclass(frozen=True, slots=True)
@@ -29,8 +29,13 @@ def prepare_regions(
 ) -> tuple[MetricRegion, ...]:
     prepared: list[MetricRegion] = []
     # Stable ordering makes overlap blending independent of authoring order.
-    for region in sorted(regions, key=lambda item: (astuple(item.settings), item.points)):
-        geometry = Polygon([(x * width_km, y * height_km) for x, y in region.points])
+    for region in sorted(
+        regions, key=lambda item: (astuple(item.settings), item.points, item.holes),
+    ):
+        geometry = Polygon(
+            [(x * width_km, y * height_km) for x, y in region.points],
+            [[(x * width_km, y * height_km) for x, y in ring] for ring in region.holes],
+        )
         if not geometry.is_valid or geometry.area <= 0:
             raise ValueError("Terrain region must be a simple polygon with positive area.")
         if not geometry.intersects(land) or geometry.intersection(land).area <= 0:

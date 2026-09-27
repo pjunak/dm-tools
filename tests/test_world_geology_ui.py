@@ -250,6 +250,8 @@ def test_external_file_change_blocks_save_including_save_as_same_path(
 def test_canvas_drawing_unwraps_the_seam_and_preserves_zoom(app: ui.TerrainApp) -> None:
     app.root.deiconify()
     editor = edit(app)
+    app.root.deiconify()
+    editor.deiconify()
     editor.geometry("1050x740")
     editor.update()
     editor.start_drawing()
@@ -292,3 +294,62 @@ def test_save_on_parent_close_applies_form_then_saves_before_closing(
         time.sleep(0.01)
     assert continued == [True] and editor._closed
     assert open_geology(target).coverage.recipe.defaults[0].profile.rejuvenation_age_ma == 0.125
+
+
+def test_explicit_landforms_are_guarded_saved_and_exposed_to_terrain(
+    app: ui.TerrainApp, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    editor = edit(app)
+    panel = editor.landform_form
+    assert panel.read() is None
+    editor.form_tabs.select(panel)
+    panel.character.set("mountains")
+    panel.set_busy(False)
+    panel.preset_button.invoke()
+    panel.values["orientation_deg"].set("37")
+    assert editor.form_dirty
+    editor.apply()
+    wait(editor)
+    accepted = panel.read()
+    assert accepted is not None and accepted.orientation_deg == 37
+    assert editor.recipe.defaults[0].profile.landform == accepted
+    editor.undo()
+    assert panel.read() is None
+    editor.redo()
+    assert panel.read() == accepted
+    path = tmp_path / "landforms.dmgeology.json"
+    monkeypatch.setattr(world_geology_ui.filedialog, "asksaveasfilename", reply(str(path)))
+    editor.save()
+    wait(editor)
+    assert not editor.dirty
+    assert open_geology(path).coverage.recipe.defaults[0].profile.landform == accepted
+    # Inspect the actual laid-out minimum window: all controls and actions fit.
+    app.root.deiconify()
+    editor.deiconify()
+    editor.geometry("1050x740")
+    editor.update()
+    assert panel.preset_button.winfo_ismapped()
+    assert panel.preset_button.winfo_rooty() + panel.preset_button.winfo_height() < (
+        editor.winfo_rooty() + editor.winfo_height()
+    )
+    editor.close()
+    assert app.world_workspace.terrain_panel.geology_path == path
+    assert "landforms.dmgeology.json" in app.world_workspace.terrain_panel.geology_label.get()
+
+
+def test_invalid_landform_keeps_pending_form_and_busy_controls_lock(app: ui.TerrainApp) -> None:
+    editor = edit(app)
+    panel = editor.landform_form
+    panel.character.set("plateau")
+    panel.set_busy(False)
+    panel.preset()
+    panel.values["transition_km"].set("0")
+    before = editor.recipe
+    editor.apply()
+    assert editor.recipe == before and editor.form_dirty
+    assert "positive" in editor.status.get()
+    panel.set_busy(True)
+    assert str(panel.selection["state"]) == "disabled"
+    assert all(str(e["state"]) == "disabled" for e in panel.entries)
+    editor.revert()
+    assert panel.read() is None

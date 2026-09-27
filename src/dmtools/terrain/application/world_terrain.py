@@ -8,8 +8,10 @@ from dmtools.terrain.adapters.project import (
     save_terrain_project,
 )
 from dmtools.terrain.adapters.svg import load_svg_coastline_source
+from dmtools.terrain.adapters.world_landforms import compile_landforms
 from dmtools.terrain.adapters.world_projection import project_landmass
 from dmtools.terrain.adapters.world_terrain_source import MAX_SOURCE_BYTES, source_svg
+from dmtools.terrain.application.world_geology import open_geology
 from dmtools.terrain.domain import TerrainProject, TerrainSettings
 from dmtools.terrain.domain.world import WorldProject
 from dmtools.terrain.domain.world_terrain import WorldTerrainSource
@@ -30,6 +32,7 @@ def create_world_terrain_project(
     output: Path,
     *,
     settings: TerrainSettings | None = None,
+    geology_path: Path | None = None,
     cancellation: CancellationToken | None = None,
     progress: ProgressCallback | None = None,
 ) -> WorldTerrainCreated:
@@ -50,13 +53,22 @@ def create_world_terrain_project(
     land = select_landmass(prepared, continent_id, cancellation=cancellation)
     report(0.4, "Projecting coastlines into metres…")
     source = project_landmass(prepared, land, cancellation=cancellation)
+    settings = replace(
+        settings or TerrainSettings(resolution_px=257), object_scale_km=source.object_scale_km
+    )
+    constraints = ()
+    if geology_path is not None:
+        report(0.65, "Transferring geological landform guidance…")
+        coverage = open_geology(geology_path, prepared, cancellation).coverage
+        constraints = compile_landforms(
+            coverage, land, source, maximum_elevation_m=settings.maximum_elevation_m,
+            cancellation=cancellation,
+        )
+        source = replace(source, geology=coverage.recipe)
     report(0.8, "Preparing the terrain project…")
     encoded = source_svg(source)
     if len(encoded) > MAX_SOURCE_BYTES:
         raise ValueError("World-derived terrain source exceeds 64 MiB.")
-    settings = replace(
-        settings or TerrainSettings(resolution_px=257), object_scale_km=source.object_scale_km
-    )
     check_cancelled(cancellation)
     target.mkdir(parents=True, exist_ok=False)
     coastline_path = target / "coastline.svg"
@@ -66,7 +78,7 @@ def create_world_terrain_project(
     if verified.coastline != source.coastline:
         raise RuntimeError("World-to-terrain transfer changed projected coastlines.")
     report(0.95, "Saving the terrain project…")
-    project = TerrainProject(verified.coastline, settings)
+    project = TerrainProject(verified.coastline, settings, constraints)
     path = target / "terrain.dmterrain.json"
     # Completion is the current project file. Failed or cancelled preparation
     # leaves only source material in this new directory, never a usable project.

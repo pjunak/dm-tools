@@ -81,7 +81,8 @@
         "relief_m": 200.0,
         "transition_km": 180.0
       },
-      "type": "terrain_region"
+      "type": "terrain_region",
+      "holes": []
     },
     {
       "points": [
@@ -126,7 +127,8 @@
         "relief_m": 3500.0,
         "transition_km": 220.0
       },
-      "type": "terrain_region"
+      "type": "terrain_region",
+      "holes": []
     },
     {
       "points": [
@@ -167,7 +169,8 @@
         "relief_m": 100.0,
         "transition_km": 220.0
       },
-      "type": "terrain_region"
+      "type": "terrain_region",
+      "holes": []
     },
     {
       "points": [
@@ -208,11 +211,12 @@
         "relief_m": 900.0,
         "transition_km": 170.0
       },
-      "type": "terrain_region"
+      "type": "terrain_region",
+      "holes": []
     }
   ],
   "schema": "dmtools.terrain-project",
-  "schema_version": 6,
+  "schema_version": 7,
   "settings": {
     "coastal_rise_km": 180.0,
     "detail_levels": 2,

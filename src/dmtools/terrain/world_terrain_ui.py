@@ -11,7 +11,7 @@ from dmtools.terrain.domain.world import WorldContinent
 
 class WorldTerrainPanel(ttk.Frame):
     def __init__(
-        self, parent: tk.Misc, create: Callable[[str, Path], None],
+        self, parent: tk.Misc, create: Callable[[str, Path, Path | None], None],
         open_project: Callable[[WorldTerrainCreated], None], cancel: Callable[[], None],
     ) -> None:
         super().__init__(parent, style="Panel.TFrame", padding=12)
@@ -20,6 +20,8 @@ class WorldTerrainPanel(ttk.Frame):
         self._continents: tuple[WorldContinent, ...] = ()
         self.created: WorldTerrainCreated | None = None
         self.continent = tk.StringVar(self)
+        self.geology_path: Path | None = None
+        self.geology_label = tk.StringVar(self, value="Background terrain · no geology recipe")
         self.detail = tk.StringVar(self, value="Choose a continent from the imported world.")
         ttk.Label(self, text="Generate terrain from your world", style="Value.TLabel",
                   wraplength=340).pack(anchor="w", pady=(0, 12))
@@ -35,9 +37,21 @@ class WorldTerrainPanel(ttk.Frame):
         ttk.Label(
             self, text="Start at 257 pixels, then adjust terrain settings and generate in "
             "the Terrain workspace. This uses the current terrain generator; world "
-            "climate, geology and aging are not applied yet.",
+            "climate and aging are not applied yet.",
             style="Muted.TLabel", wraplength=340,
         ).pack(anchor="w", pady=(0, 16))
+        ttk.Label(self, textvariable=self.geology_label, wraplength=340,
+                  style="Body.TLabel").pack(anchor="w", pady=(0, 4))
+        geology_buttons = ttk.Frame(self, style="Panel.TFrame")
+        geology_buttons.pack(fill="x", pady=(0, 12))
+        self.geology_button = ttk.Button(
+            geology_buttons, text="Choose geology recipe…", command=self.choose_geology,
+        )
+        self.geology_button.pack(side="left")
+        self.clear_geology_button = ttk.Button(
+            geology_buttons, text="Clear", command=lambda: self.set_geology(None),
+        )
+        self.clear_geology_button.pack(side="left", padx=6)
         self.create_button = ttk.Button(self, text="Create terrain project…",
                                        style="Accent.TButton", command=self.choose_folder)
         self.create_button.pack(fill="x")
@@ -63,10 +77,30 @@ class WorldTerrainPanel(ttk.Frame):
 
     def set_busy(self, busy: bool, cancellable: bool = False) -> None:
         self.selection.configure(state="disabled" if busy else "readonly")
+        self.geology_button.configure(state="disabled" if busy else "normal")
+        self.clear_geology_button.configure(
+            state="normal" if self.geology_path is not None and not busy else "disabled",
+        )
         self.create_button.configure(state="normal" if self._continents and not busy
                                      else "disabled")
         self.cancel_button.configure(state="normal" if busy and cancellable else "disabled")
         self.open_button.configure(state="normal" if self.created and not busy else "disabled")
+
+    def set_geology(self, path: Path | None) -> None:
+        self.geology_path = path
+        self.geology_label.set(
+            f"Landform guidance: {path.name}\n{path.parent}" if path else
+            "Background terrain · no geology recipe"
+        )
+        self.set_busy(False)
+
+    def choose_geology(self) -> None:
+        selected = filedialog.askopenfilename(
+            parent=self, title="Choose saved landform guidance for this world",
+            filetypes=[("World geology recipe", "*.dmgeology.json")],
+        )
+        if selected:
+            self.set_geology(Path(selected))
 
     def choose_folder(self) -> None:
         selected = next((c for c in self._continents if c.name == self.continent.get()), None)
@@ -78,7 +112,7 @@ class WorldTerrainPanel(ttk.Frame):
             initialfile="terrain-" + slug,
         )
         if folder:
-            self._create(selected.id, Path(folder))
+            self._create(selected.id, Path(folder), self.geology_path)
 
     def show_created(self, created: WorldTerrainCreated) -> None:
         self.created = created
@@ -90,6 +124,7 @@ class WorldTerrainPanel(ttk.Frame):
             f"Prepared land: {names}\n"
             f"Longest projected extent: {source.object_scale_km:,.1f} km\n"
             f"Maximum sampled projection stretch: {stretch:.1%}\n\n"
+            f"Landform regions: {len(created.loaded.project.constraints)}\n"
             f"Saved in: {created.loaded.path.parent}\n"
             "Keep coastline.svg with terrain.dmterrain.json when moving the project."
         )

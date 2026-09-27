@@ -60,12 +60,12 @@
           "$ref": "#/$defs/hash"
         },
         "project_schema_version": {
-          "const": 6
+          "const": 7
         }
       }
     },
     "settings": {
-      "$ref": "urn:dmtools:schema:terrain-project:6#/$defs/generatorSettings"
+      "$ref": "urn:dmtools:schema:terrain-project:7#/$defs/generatorSettings"
     },
     "runtime": {
       "$ref": "urn:dmtools:schema:terrain-build:18#/properties/runtime"

@@ -305,7 +305,7 @@ def test_schema_example_and_cli(capsys: pytest.CaptureFixture[str]) -> None:
         json.loads(path.read_text(encoding="utf-8"))
         for path in (
             ROOT / "schemas/world/project-v1.schema.json",
-            ROOT / "schemas/world/geology-v1.schema.json",
+            ROOT / "schemas/world/geology-v2.schema.json",
         )
     ]
     registry = Registry[Any]().with_resources(
@@ -317,7 +317,7 @@ def test_schema_example_and_cli(capsys: pytest.CaptureFixture[str]) -> None:
     )
     assert main(["world", "inspect-geology", str(EXAMPLE)]) == 0
     text = capsys.readouterr().out
-    assert "Cross-border belt" in text and "Hypotheses only" in text
+    assert "Cross-border belt" in text and "Hypotheses and explicit guidance" in text
     assert main(["world", "inspect-geology", str(ROOT / "absent.dmgeology.json")]) == 1
 
 

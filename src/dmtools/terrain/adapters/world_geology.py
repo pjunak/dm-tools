@@ -3,11 +3,13 @@
 import json
 import os
 import tempfile
+from dataclasses import asdict
 from hashlib import sha256
 from pathlib import Path
 from typing import cast
 
 from dmtools.terrain.adapters.build import canonical_json
+from dmtools.terrain.adapters.landform_inputs import landform_from_json
 from dmtools.terrain.adapters.world_project import world_project_document, world_project_from_bytes
 from dmtools.terrain.domain.world import WorldProject
 from dmtools.terrain.domain.world_geology import (
@@ -19,7 +21,7 @@ from dmtools.terrain.domain.world_geology import (
 )
 
 GEOLOGY_SCHEMA = "dmtools.world-geology"
-GEOLOGY_VERSION = 1
+GEOLOGY_VERSION = 2
 GEOLOGY_EXTENSION = ".dmgeology.json"
 MAX_GEOLOGY_BYTES = 40 * 1024 * 1024
 TIME_REFERENCE = "Ma-before-common-present"
@@ -33,6 +35,10 @@ def geology_document(recipe: WorldGeologyRecipe) -> dict[str, object]:
     def profile(value: GeologyProfile) -> dict[str, object]:
         return {
             "setting": value.setting,
+            "landform": None if value.landform is None else {
+                key: number if isinstance(number, str) else float(number)
+                for key, number in asdict(value.landform).items()
+            },
             "crust_age_ma": None if value.crust_age_ma is None else float(value.crust_age_ma),
             "rejuvenation_age_ma": None
             if value.rejuvenation_age_ma is None
@@ -91,12 +97,13 @@ def _number(value: object) -> float:
 
 def _profile(value: object) -> GeologyProfile:
     fields = ("crust_age_ma", "rejuvenation_age_ma", "evolution_duration_ma")
-    record = _record(value, {"setting", *fields})
+    record = _record(value, {"setting", "landform", *fields})
     setting = record["setting"]
     if not isinstance(setting, str) or setting not in GEOLOGICAL_SETTINGS:
         raise ValueError("Unknown geological setting.")
     return GeologyProfile(
-        setting, *(None if record[key] is None else _number(record[key]) for key in fields)
+        setting, *(None if record[key] is None else _number(record[key]) for key in fields),
+        landform=None if record["landform"] is None else landform_from_json(record["landform"]),
     )
 
 

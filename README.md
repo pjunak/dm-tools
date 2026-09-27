@@ -64,7 +64,10 @@ Separate water-piece connections and explicit unresolved support are now retaine
 **World → Terrain…** now creates a usable terrain project for a selected continent
 and its connected neighbours at the world's physical scale. It opens in Terrain
 for input authoring and generation; `dmtools world terrain` provides the same
-handoff from the CLI. See the [world guide](docs/terrain-worlds.md).
+handoff from the CLI. Saved geology recipes can now supply explicit plains, hills,
+plateaus and mountain belts; the resulting terrain regions remain editable inputs.
+See the [world guide](docs/terrain-worlds.md) and
+[landform example](docs/world-geology.md#try-a-complete-landform-example).
 Coupled rough-world relief, climate and regional history replay remain planned;
 this standalone handoff does not make a reviewed world parent.
 See the [research review](docs/research/2026-09-24-world-context-enrichment.md).

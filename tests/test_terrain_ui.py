@@ -977,3 +977,28 @@ def test_depressions_can_be_inspected_separately_from_channels(
     app._show_depressions.set(False)
     app._draw_preview()
     assert app._review_image is None
+
+
+def test_region_hole_selection_and_vertex_drag_preserve_the_cutout(app: ui.TerrainApp) -> None:
+    _show_canvas(app)
+    outer = ((.1, .1), (.9, .1), (.9, .9), (.1, .9), (.1, .1))
+    hole = ((.4, .4), (.6, .4), (.6, .6), (.4, .6), (.4, .4))
+    region = TerrainRegion(outer, holes=(hole,))
+    app._history.reset((region,))
+    app._select_instruction(0)
+    assert app._instruction_at(*app._normalized_to_canvas((.5, .5))) is None
+    assert app._instruction_at(*app._normalized_to_canvas((.2, .5))) == 0
+    start, end = _map_event(app, hole[0]), _map_event(app, (.35, .35))
+    a = app._canvas_to_normalized(float(start.x), float(start.y))
+    b = app._canvas_to_normalized(float(end.x), float(end.y))
+    assert a is not None and b is not None
+    expected = (hole[0][0] + b[0] - a[0], hole[0][1] + b[1] - a[1])
+    app._on_map_press(start)
+    app._on_map_drag(end)
+    app._on_map_release(end)
+    updated = app._constraints[0]
+    assert isinstance(updated, TerrainRegion)
+    assert updated.points == outer
+    assert updated.holes[0][0] == updated.holes[0][-1] == pytest.approx(expected)
+    app._undo_constraint()
+    assert app._constraints == (region,)

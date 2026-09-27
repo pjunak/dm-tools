@@ -118,7 +118,10 @@ now provides bounded reopening and exact same-field query/tiling checks. Held-ou
 geometry and real parent/detail consistency remain research gates; product DEM
 authority is unchanged. The [world-to-terrain batch](research/2026-09-27-world-to-terrain-workflow.md)
 records the user-selected feature priority, the working handoff, and four short
-held-out layouts that still fail small inward-bank checks.
+held-out layouts that still fail small inward-bank checks. The
+[geological landform batch](research/2026-09-27-geological-landform-guidance.md)
+connects explicit recipes to that workflow; visible transition rims remain the
+next landform-quality problem.
 The [reference guide](../benchmarks/evolution/README.md) owns setup and runnable commands.
 The [2026-09-13 audit](maintenance/2026-09-13-documentation-and-research-status.md)
 and [2026-09-10 checkpoint](maintenance/2026-09-10-sanity-and-performance.md)

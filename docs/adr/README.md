@@ -108,3 +108,4 @@ supersedes their legacy compatibility commitments during early development.
 
 - [ADR-0078: Retain water-piece connectivity](0078-retain-water-piece-connectivity.md)
 - [ADR-0079: Project connected world land into terrain projects](0079-project-world-land-into-terrain.md)
+- [ADR-0080: Transfer explicit geological landform guidance](0080-transfer-geological-landform-guidance.md)

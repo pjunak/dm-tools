@@ -116,7 +116,7 @@ def test_region_project_round_trip_and_invalid_geometry(tmp_path: Path) -> None:
     path = tmp_path / "regions.dmterrain.json"
     save_terrain_project(project, source, path)
     assert load_terrain_project(path).project == project
-    schema = Path(__file__).parents[1] / "schemas/terrain/project-v6.schema.json"
+    schema = Path(__file__).parents[1] / "schemas/terrain/project-v7.schema.json"
     validate(json.loads(path.read_text()), json.loads(schema.read_text()))
     crossed = TerrainRegion(((0, 0), (1, 1), (0, 1), (1, 0), (0, 0)))
     with pytest.raises(ValueError, match="simple polygon"):
@@ -172,3 +172,22 @@ def test_zero_relief_region_disables_automatic_cutting_but_preserves_anchor() ->
     np.testing.assert_array_equal(terrain.routing.incision_m[64:193, 64:193], 0)
     np.testing.assert_array_equal(terrain.routing.incision_limit_m[64:193, 64:193], 0)
     assert terrain.elevation_m[32, 32] == 1800
+
+
+def test_region_holes_exclude_guidance_and_remain_continuous_at_the_inner_edge() -> None:
+    hole = ((.4, .4), (.6, .4), (.6, .6), (.4, .6), (.4, .4))
+    region = TerrainRegion(RING, landform_preset("plateau"), (hole,))
+    land = Polygon(((0, 0), (1000, 0), (1000, 1000), (0, 1000)))
+    prepared = prepare_regions((region,), 1000, 1000, land, 6000)
+    x = np.array([300., 399.999999, 400., 500., 600., 600.000001, 700.])
+    y = np.full_like(x, 500.)
+    background = np.full_like(x, 700.)
+    full, _ = regional_elevation_fields(
+        x, y, np.full_like(x, 500.), background, background, SETTINGS, prepared,
+    )
+    np.testing.assert_array_equal(full[2:5], background[2:5])
+    assert abs(full[1] - 700.) < 1e-8 and abs(full[5] - 700.) < 1e-8
+    assert min(full[0], full[-1]) > 2000.
+    invalid = replace(region, holes=(RING,))
+    with pytest.raises(ValueError, match="simple polygon"):
+        prepare_regions((invalid,), 1000, 1000, land, 6000)

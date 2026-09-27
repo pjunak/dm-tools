@@ -118,3 +118,20 @@ river reconciliation remains incomplete. Use Drainage review to inspect remainin
 
 Only current project/build formats are supported; see the [schema index](../schemas/README.md).
 [ADR-0030](adr/0030-author-regional-landforms.md) records the implementation.
+
+
+## World-derived regions and nested cutouts
+
+World → Terrain can transfer a saved geology recipe into these same instructions.
+See [world geology](world-geology.md). A region can now have hole rings; an enclave
+assigned to a higher-priority province or to background terrain remains excluded
+from the surrounding recipe. Outlines, hit-testing, whole-region moves and vertex
+dragging include those holes. Property edits and Undo/Redo retain them. Polygon
+drawing still creates one outer ring; nested world provinces are the current
+authoring path for cutouts. Invalid ring intersections are rejected by the geometry checks.
+
+Equal landform controls are dissolved before transfer, including across continent
+labels and different geological ages. Different adjoining recipes retain the
+existing inward fades: the generic background can appear along their common edge.
+That is a known procedural transition limitation, not a geological escarpment.
+Project v7 serializes holes; regional-landforms@3 records their numeric support.

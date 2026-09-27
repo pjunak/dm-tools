@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://dmtools.local/schemas/world/terrain-source-v1.schema.json",
-  "title": "Retained world terrain SVG metadata v1",
+  "$id": "https://dmtools.local/schemas/world/terrain-source-v2.schema.json",
+  "title": "DM Tools world terrain source v2",
   "description": "Canonical metadata in a prepared SVG. Runtime also verifies visible paths, retained world identity, geometry, ownership, and physical scale.",
   "type": "object",
   "additionalProperties": false,
@@ -10,10 +10,10 @@
       "const": "dmtools.world-terrain-source"
     },
     "version": {
-      "const": 1
+      "const": 2
     },
     "model": {
-      "const": "world-landmass-aeqd@1"
+      "const": "world-landmass-aeqd@2"
     },
     "world": {
       "$ref": "https://dmtools.local/schemas/world/project-v1.schema.json"
@@ -94,6 +94,29 @@
     },
     "coastline": {
       "$ref": "urn:dmtools:schema:terrain-input-snapshot:2#/properties/coastline"
+    },
+    "geology": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "model",
+            "recipe"
+          ],
+          "properties": {
+            "model": {
+              "const": "explicit-geology-landforms@1"
+            },
+            "recipe": {
+              "$ref": "https://dmtools.local/schemas/world/geology-v2.schema.json"
+            }
+          }
+        }
+      ]
     }
   },
   "required": [
@@ -107,6 +130,7 @@
     "feature_ids",
     "axes",
     "projection",
-    "coastline"
+    "coastline",
+    "geology"
   ]
 }

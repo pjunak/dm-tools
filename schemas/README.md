@@ -6,9 +6,9 @@ Only the current formats are supported:
   snapshot, full-sphere frame/radius and explicit continent/island assignments.
   This is a validated source, not a climate/terrain build or generated parent.
 
-- [World terrain source v1](world/terrain-source-v1.schema.json): metadata embedded
+- [World terrain source v2](world/terrain-source-v2.schema.json): metadata embedded
   in a canonical prepared SVG, retaining the world, selected/connected ownership,
-  metric polygons and custom-sphere projection. Project v6 references this SVG
+  metric polygons, custom-sphere projection and optional original geology recipe. Project v7 references this SVG
   normally; runtime loading also checks its canonical visible paths and fixed scale.
 
 - [World context v4](world/context-v4.schema.json): generated spherical coverage, separate water-piece connectivity/support,
@@ -16,9 +16,10 @@ Only the current formats are supported:
   water exposure, resolution support and hashes of the numeric
   arrays, previews and original world snapshot. This is not a terrain parent.
 
-- [World geology v1](world/geology-v1.schema.json): separate `.dmgeology.json`
+- [World geology v2](world/geology-v2.schema.json): separate `.dmgeology.json`
   input recipe with retained world identity, continent defaults, priority provinces
-  and independent ages/duration. This does not modify geography or generate terrain.
+  and independent ages/duration, plus optional explicit landform controls. Terrain
+  creation consumes those controls; categories/ages do not imply physical forcing.
 
 - [Bathymetry inputs v1](world/bathymetry-inputs-v1.schema.json): portable
   `.dmbathy.json` world snapshot, explicit water IDs and shelf/slope/basin assumptions.
@@ -26,7 +27,8 @@ Only the current formats are supported:
   samples, numerical error/support, a retained verified geographic dependency and
   result hashes. Neither a land DEM nor physical transport/heat capacity.
 
-- [Project v6](terrain/project-v6.schema.json): authored `.dmterrain.json` inputs.
+- [Project v7](terrain/project-v7.schema.json): authored `.dmterrain.json` inputs,
+  including hole rings in terrain regions.
 - [Build v18](terrain/build-v18.schema.json): numeric products, coordinates,
   algorithm identities, named stage seeds and output hashes.
 - [Regional samples v2](terrain/regional-samples-v2.schema.json): bounded

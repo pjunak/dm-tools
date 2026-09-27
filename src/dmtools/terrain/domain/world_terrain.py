@@ -5,8 +5,10 @@ from math import isfinite
 
 from dmtools.terrain.domain.models import Coastline
 from dmtools.terrain.domain.world import WorldProject
+from dmtools.terrain.domain.world_geology import WorldGeologyRecipe
 
-WORLD_TERRAIN_MODEL = "world-landmass-aeqd@1"
+WORLD_TERRAIN_MODEL = "world-landmass-aeqd@2"
+GEOLOGY_LANDFORM_MODEL = "explicit-geology-landforms@1"
 MAX_PROJECTION_ANGLE_DEG = 80.0
 MAX_PROJECTED_POINTS = 500_000
 
@@ -67,6 +69,7 @@ class WorldTerrainSource:
     feature_ids: tuple[str, ...]
     coastline: Coastline
     projection: WorldTerrainProjection
+    geology: WorldGeologyRecipe | None = None
 
     @property
     def object_scale_km(self) -> float:

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://dmtools.local/schemas/world/geology-v1.schema.json",
-  "title": "DM Tools authored world geology v1",
+  "$id": "https://dmtools.local/schemas/world/geology-v2.schema.json",
+  "title": "DM Tools authored world geology v2",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -18,7 +18,7 @@
       "const": "dmtools.world-geology"
     },
     "version": {
-      "const": 1,
+      "const": 2,
       "type": "integer"
     },
     "time_reference": {
@@ -113,7 +113,8 @@
         "setting",
         "crust_age_ma",
         "rejuvenation_age_ma",
-        "evolution_duration_ma"
+        "evolution_duration_ma",
+        "landform"
       ],
       "properties": {
         "setting": {
@@ -149,6 +150,16 @@
           ],
           "minimum": 0,
           "maximum": 1000000
+        },
+        "landform": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "urn:dmtools:schema:terrain-project:7#/$defs/landformSettings"
+            }
+          ]
         }
       }
     }

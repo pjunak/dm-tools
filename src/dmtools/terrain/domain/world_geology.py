@@ -5,7 +5,7 @@ from math import isfinite
 from re import fullmatch
 from typing import Literal
 
-from dmtools.terrain.domain.models import Point2D
+from dmtools.terrain.domain.models import LandformSettings, Point2D
 from dmtools.terrain.domain.world import WorldProject
 
 type GeologicalSetting = Literal[
@@ -41,6 +41,7 @@ class GeologyProfile:
     crust_age_ma: float | None = None
     rejuvenation_age_ma: float | None = None
     evolution_duration_ma: float | None = None
+    landform: LandformSettings | None = None
 
     def __post_init__(self) -> None:
         if self.setting not in GEOLOGICAL_SETTINGS:

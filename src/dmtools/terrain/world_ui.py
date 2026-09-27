@@ -798,7 +798,9 @@ class WorldWorkspace(ttk.Frame):
         if self.on_terrain_ready is not None:
             self.on_terrain_ready(created)
 
-    def create_terrain(self, continent_id: str, output: Path) -> None:
+    def create_terrain(
+        self, continent_id: str, output: Path, geology_path: Path | None = None,
+    ) -> None:
         if self.busy:
             return
         try:
@@ -818,6 +820,7 @@ class WorldWorkspace(ttk.Frame):
             lambda: _TerrainReady(
                 create_world_terrain_project(
                     project, continent_id, output, progress=progress, cancellation=cancellation,
+                    geology_path=geology_path,
                 ),
                 signature,
             ),
@@ -1205,6 +1208,8 @@ class WorldWorkspace(ttk.Frame):
 
         def closed(file: GeologyFile | None) -> None:
             self._geology_file = file
+            if file is not None:
+                self.terrain_panel.set_geology(file.path)
             self.geology_editor = None
 
         self.geology_editor = GeologyEditor(

@@ -104,6 +104,8 @@ def create_parser() -> argparse.ArgumentParser:
     world_terrain.add_argument("--seed", type=int, default=20260902)
     world_terrain.add_argument("--resolution", type=int, default=257,
                                help="Initial pixels; 64-4096.")
+    world_terrain.add_argument("--geology", type=Path,
+                               help="Saved .dmgeology.json with explicit landform guidance.")
     world_terrain.set_defaults(_handler=_run_world_terrain)
     context = world_commands.add_parser("context", help="Generate spherical geographic context.")
     context.add_argument("project", type=Path, help="Portable .dmworld.json project.")
@@ -149,6 +151,7 @@ def _run_world_terrain(arguments: argparse.Namespace) -> int:
         created = create_world_terrain_project(
             world, matching[0].id, arguments.output,
             settings=TerrainSettings(seed=arguments.seed, resolution_px=arguments.resolution),
+            geology_path=arguments.geology,
         )
     except (OSError, ValueError, RuntimeError) as error:
         print(f"World terrain preparation failed: {error}", file=sys.stderr)
@@ -158,7 +161,8 @@ def _run_world_terrain(arguments: argparse.Namespace) -> int:
     print(f"Terrain project ready: {created.loaded.path}")
     print(f"Included land: {names}; projected extent {created.source.object_scale_km:,.1f} km.")
     print("Open in the Terrain workspace or use dmtools terrain build.")
-    print("Uses current terrain generation; world climate, geology and aging are not applied yet.")
+    print(f"Landform regions: {len(created.loaded.project.constraints)}. "
+          "World climate and aging are not applied yet.")
     return 0
 
 
@@ -204,8 +208,13 @@ def _run_world_geology_inspect(arguments: argparse.Namespace) -> int:
                         for label, value in (("crust", p.crust_age_ma),
                                              ("rejuvenation", p.rejuvenation_age_ma),
                                              ("simulation span", p.evolution_duration_ma)))
-        print(f"  {region.name}: {region.area_km2:,.0f} km²; {p.setting}; {ages}")
-    print("Hypotheses only; no relief, erosion or climate generated.")
+        landform = (
+            f"{p.landform.character}; base {p.landform.elevation_m:g} m; "
+            f"relief {p.landform.relief_m:g} m" if p.landform else "background terrain"
+        )
+        print(f"  {region.name}: {region.area_km2:,.0f} km²; {p.setting}; {ages}; {landform}")
+    print("Hypotheses and explicit guidance; inspection generates no relief, erosion or climate.")
+    print("Use world terrain --geology RECIPE to transfer the landform controls.")
     return 0
 
 

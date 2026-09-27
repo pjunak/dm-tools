@@ -34,7 +34,9 @@ remain available in the same window, with separate documents and dirty states.
 ## Create terrain from the world
 
 1. Open or import your world and confirm its frame, radius and assignments.
-2. Click **Terrain…** in the World header, then choose a continent.
+2. Optionally author and save [Geology inputs](world-geology.md), including explicit
+   **Landform guidance**. Click **Terrain…** in the World header and choose a continent.
+   The panel displays the saved geology recipe; choose another or clear it as needed.
 3. Click **Create terrain project…** and choose a **new folder name**. The current
    world inputs are validated and retained; saving the world separately first is
    optional. The source drawing and any existing terrain work remain protected.
@@ -54,6 +56,11 @@ The equivalent command is:
 ```
 
 `--seed` and `--resolution` set the new project's initial generation settings.
+Add `--geology PATH.dmgeology.json` to transfer explicit landforms. This file must
+match the current world; it is reread at creation. Continent defaults and priority
+provinces become editable terrain regions, with nested cutouts preserved as holes.
+The chosen recipe is retained inside the prepared source, so it is not another
+external dependency when moving a created project.
 A continent ID may replace its name. Keep **coastline.svg** beside
 **terrain.dmterrain.json** when moving the folder. The SVG contains visible
 projected paths plus the original world snapshot, membership and projection;
@@ -80,8 +87,8 @@ neighbouring terrain boundary conditions is future work. Do not shrink the plane
 or exclude connected land to disguise that limitation. **Southmere** works in the
 public example; its much wider Westreach/Eastreach union needs that future support.
 
-This is a standalone generation handoff. Geographic context, bathymetry, geology
-ages and climate are retained elsewhere but do not yet drive this terrain.
+This is a standalone generation handoff. Explicit landform guidance is applied;
+geographic context, bathymetry, geological ages and climate do not yet drive it.
 Recreating a project starts from the current world inputs; existing terrain
 instructions are not automatically rebased onto changed geography. The produced
 GeoTIFF remains in the existing local coordinate system; its world projection is
@@ -260,7 +267,7 @@ recipe. **Bathymetry…** opens the separate [ocean-depth workflow](world-bathym
 from matching geographic context: select oceans, author a margin profile, generate
 and inspect depth/error/support, then export or reopen a verified result.
 The [WC1](strategy/world-context.md) graph now retains separate water pieces and
-finite shared intervals. Physical transport and geology forcing remain planned
+finite shared intervals. Physical transport and geological process forcing remain planned
 while preserving this source contract.
 World terrain, climate, shared history, world-linked regional generation and
 local river enrichment require their own stage gates. Existing local terrain

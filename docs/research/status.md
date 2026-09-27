@@ -70,8 +70,9 @@ selection, shelf/slope/basin depths, numerical bounds and independent editor/res
 The [water-piece batch](2026-09-25-water-piece-connectivity.md) adds individual
 pieces, shared intervals, source-verified graphs, bounded work and visible support
 for precision-limited source regions. A usable world-to-terrain handoff now
-connects imported geography to current local generation; broad landform features
-lead the next product batch.
+connects imported geography to current local generation. Explicit landform controls
+now transfer from geology recipes, with priority holes and identical-guidance
+dissolving across ownership labels; physical histories remain separate.
 World climate, physical province histories and same-present regional geological
 replay are not implemented. Existing local detail is not history replay. Source
 and license checks for Climlab/GPlates/ExoPlaSim are not local execution evidence.
@@ -103,6 +104,12 @@ confirmed native border offsets were corrected separately in the source.
 Geological forcing, climate, aging and a reviewed global terrain parent are not
 implemented by it. Product feature work now leads; existing research gates remain
 required before changing the generation authority or promoting a new solver.
+
+The [landform transfer batch](2026-09-27-geological-landform-guidance.md) adds
+editable controls and portable recipe provenance. Public paired builds preserve
+coast/mask and change broad relief. Their polygon-shaped transition rims expose
+the next quality blocker: inward fallback to the generic background. This validates
+the workflow, not convincing natural terrain or a new physical model.
 
 A short four-layout river probe retained capture and bounds but failed 1–4 dense
 bank sections per layout (worst 0.106–0.606 m). The mechanism behind those remaining

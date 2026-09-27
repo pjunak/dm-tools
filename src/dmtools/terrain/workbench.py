@@ -76,6 +76,15 @@ class InstructionHistory:
             self.constraints = self._redo.pop()
 
 
+
+def instruction_vertices(instruction: TerrainConstraint) -> tuple[tuple[float, float], ...]:
+    if isinstance(instruction, ElevationPoint):
+        return (instruction.position,)
+    if isinstance(instruction, TerrainRegion):
+        return tuple(p for ring in (instruction.points, *instruction.holes) for p in ring[:-1])
+    return instruction.points[:-1] if isinstance(instruction, TerrainBasin) else instruction.points
+
+
 def move_instruction(
     instruction: TerrainConstraint, delta: tuple[float, float], vertex: int | None = None,
 ) -> TerrainConstraint:
@@ -85,6 +94,17 @@ def move_instruction(
 
     if isinstance(instruction, ElevationPoint):
         return replace(instruction, position=moved(instruction.position))
+    if isinstance(instruction, TerrainRegion):
+        if vertex is not None and not 0 <= vertex < len(instruction_vertices(instruction)):
+            raise IndexError("No vertex at this index.")
+        rings: list[tuple[tuple[float, float], ...]] = []
+        offset = 0
+        for ring in (instruction.points, *instruction.holes):
+            values = tuple(moved(p) if vertex is None or offset + i == vertex else p
+                           for i, p in enumerate(ring[:-1]))
+            rings.append((*values, values[0]))
+            offset += len(ring) - 1
+        return replace(instruction, points=rings[0], holes=tuple(rings[1:]))
     original = instruction.points
     closed = isinstance(instruction, (TerrainRegion, TerrainBasin))
     count = len(original) - int(closed)

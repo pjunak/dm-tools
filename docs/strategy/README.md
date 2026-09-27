@@ -148,7 +148,8 @@ continent/island assignment, portable saves and a source preview. The
 validation and limits. The new World → Terrain action additionally creates a
 prepared projected SVG and ordinary terrain project without generic SVG repair.
 Connected neighbours prevent false internal coasts. The source retains the full
-world and fixed metric scale; climate/geology forcing is not applied yet.
+world and fixed metric scale. Explicit landform guidance now transfers from
+geology recipes; climate and physical geological forcing are not applied yet.
 **WC1 geography delivered:** spherical coverage and vector-derived periodic water,
 with narrow-strait/island controls, support previews, hashed exports, verified
 reopening, shared-edge measurements, shoreline distance with an error bound and
@@ -159,8 +160,11 @@ explicit overlap/priority and independent ages/duration at one common present.
 inputs, conservative depth/error fields and independent editor/result contracts.
 **WC1 water-piece incidence also delivered:** separate pieces and finite shared
 intervals, source-verified context v4 and unresolved-connectivity support.
-The standalone handoff is delivered; next make authored geological hypotheses
-produce visible broad landform differences. B/C physical-path acceptance still
+The standalone handoff and explicit geological landform guidance are delivered.
+Next improve the shared transitions exposed by the paired landform preview:
+adjacent recipes currently fade inward to the generic background and can produce
+polygon-shaped rims. Compare continuous cross-boundary guidance while preserving
+priority holes, blank overrides, hard heights and the physical coast. B/C physical-path acceptance still
 gates adoption of the new coupled rough-terrain model. Later transport
 must admit that support and establish conservative capacity/flux contracts.
 Do not infer ocean depth from width or introduce climate fields without budgets. These bounded

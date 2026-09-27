@@ -320,7 +320,7 @@ are not embedded. Saves use a temporary file followed by atomic replacement so
 an interrupted write does not leave a partially written project. The current format is
 strict: unknown fields or unsupported versions are rejected rather than
 guessed. The public contract is
-[`schemas/terrain/project-v6.schema.json`](../../../schemas/terrain/project-v6.schema.json)
+[`schemas/terrain/project-v7.schema.json`](../../../schemas/terrain/project-v7.schema.json)
 and its rationale is recorded in
 [ADR-0006](../../../docs/adr/0006-versioned-terrain-project.md).
 

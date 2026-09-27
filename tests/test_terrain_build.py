@@ -59,7 +59,7 @@ def test_headless_build_preserves_dem_and_has_repeatable_verified_products(
     document: dict[str, Any] = json.loads((first / "manifest.json").read_text())
     schema_dir = EXAMPLES.parents[1] / "schemas" / "terrain"
     assert document["schema_version"] == 18
-    assert document["inputs"]["project_schema_version"] == 6
+    assert document["inputs"]["project_schema_version"] == 7
     assert document["algorithms"]["seed_policy"] == SEED_POLICY_ID
     resolved_seed = stage_seed(loaded.project.settings.seed, RELIEF_STAGE_ID)
     assert document["algorithms"]["stage_seeds"] == {

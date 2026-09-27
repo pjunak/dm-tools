@@ -119,3 +119,20 @@ def test_moving_outside_normalized_bounds_cannot_create_an_instruction() -> None
         move_instruction(POINT, (1., 0.))
     with pytest.raises(IndexError):
         move_instruction(TerrainRegion(RING), (0.1, 0.), vertex=4)
+
+
+def test_region_holes_move_with_the_region_and_have_editable_vertices() -> None:
+    outer = ((.1, .1), (.8, .1), (.8, .8), (.1, .8), (.1, .1))
+    hole = ((.3, .3), (.6, .3), (.6, .6), (.3, .6), (.3, .3))
+    region = TerrainRegion(outer, holes=(hole,))
+    moved = move_instruction(region, (.1, .05))
+    assert isinstance(moved, TerrainRegion)
+    assert moved.points[0] == pytest.approx((.2, .15))
+    assert moved.holes[0][0] == pytest.approx((.4, .35))
+    changed = move_instruction(region, (.05, .05), vertex=4)
+    assert isinstance(changed, TerrainRegion)
+    assert changed.points == outer
+    assert changed.holes[0][0] == changed.holes[0][-1] == pytest.approx((.35, .35))
+    assert changed.holes[0][1:4] == hole[1:4]
+    with pytest.raises(IndexError):
+        move_instruction(region, (.01, .01), vertex=8)
