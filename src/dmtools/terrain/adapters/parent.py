@@ -37,6 +37,7 @@ from dmtools.terrain.pipeline.generate import (
 )
 from dmtools.terrain.pipeline.landforms import LANDFORM_ALGORITHM_ID
 from dmtools.terrain.pipeline.parent import ParentRouting, ParentTerrainData
+from dmtools.terrain.pipeline.terrain_context import context_report
 
 PRODUCT_ROLES = {
     **dict.fromkeys(
@@ -149,6 +150,7 @@ def load_terrain_parent(
         "outputs",
         "warnings",
         "geotiff",
+        "world_context",
     }
     if (
         set(document) != required
@@ -206,6 +208,10 @@ def load_terrain_parent(
     if admit is not None:
         admit(ParentLoadPlan(input_bytes))
     project = project_snapshot_from_json(json.loads(read_product("inputs.json", 16 * 1024 * 1024)))
+    if canonical_json(document["world_context"]) != canonical_json(
+        context_report(project.world_context)
+    ):
+        raise ValueError("Parent context report disagrees with its retained input samples.")
     settings = project.settings
     frame = LocalMetricFrame(project.coastline.bounds, settings.object_scale_km)
     grid = EndpointGrid.for_extent(frame.extent_km, settings.resolution_px)

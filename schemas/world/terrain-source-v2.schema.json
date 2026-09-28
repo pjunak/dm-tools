@@ -93,7 +93,7 @@
       ]
     },
     "coastline": {
-      "$ref": "urn:dmtools:schema:terrain-input-snapshot:3#/properties/coastline"
+      "$ref": "urn:dmtools:schema:terrain-input-snapshot:4#/properties/coastline"
     },
     "geology": {
       "anyOf": [

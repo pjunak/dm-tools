@@ -60,15 +60,15 @@
           "$ref": "#/$defs/hash"
         },
         "project_schema_version": {
-          "const": 8
+          "const": 9
         }
       }
     },
     "settings": {
-      "$ref": "urn:dmtools:schema:terrain-project:8#/$defs/generatorSettings"
+      "$ref": "urn:dmtools:schema:terrain-project:9#/$defs/generatorSettings"
     },
     "runtime": {
-      "$ref": "urn:dmtools:schema:terrain-build:19#/properties/runtime"
+      "$ref": "urn:dmtools:schema:terrain-build:20#/properties/runtime"
     },
     "algorithms": {
       "type": "object",
@@ -103,10 +103,10 @@
           "const": "regional-unchanged-field-sampling@1"
         },
         "seed_policy": {
-          "$ref": "urn:dmtools:schema:terrain-build:19#/properties/algorithms/properties/seed_policy"
+          "$ref": "urn:dmtools:schema:terrain-build:20#/properties/algorithms/properties/seed_policy"
         },
         "stage_seeds": {
-          "$ref": "urn:dmtools:schema:terrain-build:19#/properties/algorithms/properties/stage_seeds"
+          "$ref": "urn:dmtools:schema:terrain-build:20#/properties/algorithms/properties/stage_seeds"
         }
       }
     },
@@ -294,7 +294,7 @@
         "samples.npz": {
           "allOf": [
             {
-              "$ref": "urn:dmtools:schema:terrain-build:19#/$defs/product"
+              "$ref": "urn:dmtools:schema:terrain-build:20#/$defs/product"
             },
             {
               "properties": {
@@ -308,7 +308,7 @@
         "inputs.json": {
           "allOf": [
             {
-              "$ref": "urn:dmtools:schema:terrain-build:19#/$defs/product"
+              "$ref": "urn:dmtools:schema:terrain-build:20#/$defs/product"
             },
             {
               "properties": {
@@ -322,7 +322,7 @@
         "scientific.png": {
           "allOf": [
             {
-              "$ref": "urn:dmtools:schema:terrain-build:19#/$defs/product"
+              "$ref": "urn:dmtools:schema:terrain-build:20#/$defs/product"
             },
             {
               "properties": {

@@ -157,7 +157,7 @@
               "type": "null"
             },
             {
-              "$ref": "urn:dmtools:schema:terrain-project:8#/$defs/landformSettings"
+              "$ref": "urn:dmtools:schema:terrain-project:9#/$defs/landformSettings"
             }
           ]
         }

@@ -809,6 +809,7 @@ class WorldWorkspace(ttk.Frame):
             messagebox.showerror("Terrain needs a valid world", str(error), parent=self)
             return
         signature = self._signature()
+        context = self.context_run
         cancellation = CancellationToken()
         self._context_cancellation = cancellation
 
@@ -820,7 +821,7 @@ class WorldWorkspace(ttk.Frame):
             lambda: _TerrainReady(
                 create_world_terrain_project(
                     project, continent_id, output, progress=progress, cancellation=cancellation,
-                    geology_path=geology_path,
+                    geology_path=geology_path, context=context,
                 ),
                 signature,
             ),

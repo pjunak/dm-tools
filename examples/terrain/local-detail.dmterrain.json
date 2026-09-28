@@ -216,7 +216,8 @@
     }
   ],
   "schema": "dmtools.terrain-project",
-  "schema_version": 8,
+  "schema_version": 9,
+  "world_context": null,
   "settings": {
     "coastal_rise_km": 180.0,
     "detail_levels": 2,

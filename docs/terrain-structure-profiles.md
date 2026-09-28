@@ -67,7 +67,7 @@ physical erosion and accepted river realism remain planned. The
 [comparison report](research/2026-09-27-line-owned-terrain-profiles.md) records
 what the current example demonstrates and where combined ground differs.
 
-Current formats are project v8, input snapshot v3, build v19 and regional samples
+Current formats are project v9, input snapshot v4, build v20 and regional samples
 v3. Ridge/valley inputs require a `profile` array, empty when no explicit profile
 is authored. Old formats are unsupported; recreate terrain inputs through the
 current world handoff or current examples and rebuild parents. There is no legacy

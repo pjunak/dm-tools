@@ -11,6 +11,7 @@ from dmtools.terrain.domain import (
     TerrainRegion,
     TerrainSettings,
 )
+from dmtools.terrain.domain.terrain_context import TerrainWorldContext
 
 
 @dataclass(frozen=True, slots=True)
@@ -20,6 +21,7 @@ class GenerationInputs:
     coastline: Coastline
     settings: TerrainSettings
     constraints: tuple[TerrainConstraint, ...]
+    world_context: TerrainWorldContext | None = None
 
 
 @dataclass(slots=True)

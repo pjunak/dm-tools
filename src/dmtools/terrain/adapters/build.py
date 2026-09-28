@@ -45,8 +45,9 @@ from dmtools.terrain.pipeline.generate import (
 )
 from dmtools.terrain.pipeline.landforms import LANDFORM_ALGORITHM_ID
 from dmtools.terrain.pipeline.quality import TerrainQuality
+from dmtools.terrain.pipeline.terrain_context import context_report
 
-BUILD_SCHEMA_VERSION = 19
+BUILD_SCHEMA_VERSION = 20
 
 
 def file_sha256(path: Path) -> str:
@@ -182,6 +183,7 @@ def write_build_products(
         destination / "diagnostics.json",
         {
             "delivered_surface_quality": asdict(quality),
+            "world_context": context_report(project.world_context),
             "canonical_drainage": asdict(terrain.drainage.summary),
             "routing_agreement": asdict(terrain.routing_agreement),
             "channel_conflicts": asdict(terrain.routing_conflicts.summary),
@@ -249,6 +251,7 @@ def publish_build_manifest(
             "snapshot_schema_version": INPUT_SNAPSHOT_VERSION,
         },
         "settings": settings_to_json(settings),
+        "world_context": context_report(project.world_context),
         "runtime": runtime,
         "algorithms": algorithms,
         "coordinates": {

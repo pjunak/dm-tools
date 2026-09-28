@@ -1,8 +1,8 @@
 # Current terrain research status
 
-Reconciled on 2026-09-28 through the world handoff, geological landform transfer,
-shared blending and ridge profiles/crests (`78c9db5`). This update changes planning
-and navigation only; it does not add context consumption, climate or application aging.
+Reconciled on 2026-09-28 through experimental M1 context-bound rough terrain.
+Geographic context now has one bounded numerical terrain consumer; climate, runoff,
+bathymetry coupling and application aging remain unimplemented.
 
 The [M1-M8 plan](../strategy/README.md) owns execution order. The
 [decision catalog](decision-catalog.md) owns technology/method conclusions and
@@ -10,10 +10,10 @@ revisit triggers; [TODO](../../TODO.md) owns the grouped scope. The
 [method register](terrain-method-decisions.md) preserves failed trials, while dated
 reports retain their original measurements, source/runtime identity and limitations.
 
-**Next: M1 context-bound rough terrain, then M2 runoff and M3-M4 aging/coupling.**
-Generated geographic context and bathymetry remain separate products; only source
-geometry/scale and explicit geological landform controls currently reach local
-terrain. The evolution engine remains an isolated reference. M1-M4 will expose an
+**Next: M2 climate/runoff, then M3-M4 aging/coupling.** Matching generated or
+reopened geographic context now reaches rough terrain through conservative coastal
+distance support. Bathymetry remains a separate unconsumed product. The evolution
+engine remains an isolated reference. M2-M4 will extend the
 experimental application path; M5 requires quality acceptance before default use
 or a reviewed world parent. See [stage connections](../strategy/world-context.md#first-integrated-application-slice).
 
@@ -209,9 +209,9 @@ not a new engine or completed schema.
 
 | Area | Implemented behavior | Remaining boundary |
 |---|---|---|
-| World source (WC0) | Retained embedded SVG, full-sphere frame/radius, seam/polar/area controls, continent/island mapping, bounded preparation with selectable adjustments, independent World tab, portable atomic saves and CLI inspect ([guide](../terrain-worlds.md)) | Partial-draft save, cancel/checkpoint imports, other projections and world-linked terrain |
+| World source (WC0) | Retained embedded SVG, full-sphere frame/radius, seam/polar/area controls, continent/island mapping, bounded preparation with selectable adjustments, independent World tab, portable atomic saves and CLI inspect ([guide](../terrain-worlds.md)) | Partial-draft save, cancel/checkpoint imports, other projections and wider world terrain with shared boundaries |
 | Input editor | Retained reference with freshness, geographic pan/zoom, property/geometry edits, undo/redo, guarded Save/Save As, resolution presets, ground inspection and cooperative Cancel/Esc with elapsed stage progress ([ADR-0064](../adr/0064-cancel-generation-at-safe-checkpoints.md)) | Automatic draft preview, comparison views, vertex insertion/removal, climate-region inputs; individual native steps have no stop-latency bound |
-| Geographic context (WC1 subset) | Spherical coverage, vector water topology, shared-edge widths, water-piece incidence/unresolved support, shore distance, directional water/support, Context previews/cancellation and verified portable exports/reopening ([guide](../world-context.md)) | Component-aware transport/capacity; bathymetry is a separate hypothesis product, not climate or land terrain |
+| Geographic context and M1 binding | Spherical coverage, vector water topology, shared-edge widths, water-piece incidence/unresolved support, shore distance, directional water/support, verified portable exports/reopening, and immutable bounded metric samples consumed by experimental coastal rough relief ([guide](../world-context.md), [M1 evidence](2026-09-28-context-bound-rough-terrain.md)) | Bounded non-polar AEQD only; component-aware transport/capacity, climate/runoff, aging and bathymetry coupling remain unsupported; context labels/fractions do not define the terrain mask |
 | Local numeric builds | Saved-project CLI, Float32 NPY/GeoTIFF, review NPZ, previews, diagnostics and completion hashes | World placement, vector products, external desktop GIS acceptance |
 | Scale-aware water display | Cached sampled-pool screen areas, fading small lakes, fixed-size viewport rendering, native PNG policy and actual ground-spacing readout ([ADR-0057](../adr/0057-display-water-at-the-appropriate-scale.md)) | Physical river size/width model and resolution-gated local hydrology; connected scale selection and complete diagnostic review are implemented ([ADR-0069](../adr/0069-connect-and-scale-drainage-review.md)) |
 | Zoom-driven local detail | Unchanged-field sampling, verified saved-parent replay and explicit experimental residual CLI/API; exact shared samples, terrain-weighted shared edges, protected authored/water/channel context, bounded cell support and serial parent/result sessions with freshness checks and shared admission estimates ([ADR-0061](../adr/0061-verify-parents-and-isolate-local-detail.md), [ADR-0062](../adr/0062-reuse-bounded-detail-cell-support.md), [ADR-0063](../adr/0063-reuse-verified-parent-region-sessions.md)) | Remaining grid direction, visual/coarse-power acceptance, parent-view transitions, broader slope/bound checks, finer inherited hydrology, small-river readiness, zoom jobs and broader native/application-memory calibration |
@@ -343,9 +343,9 @@ measured benefit and packaging/workflow evidence; it is not the next prerequisit
 
 ## Evidence and next experiments
 
-The first history comparison, WC0/WC1 foundations and standalone world handoff are
-implemented. [M1-M4](../strategy/README.md#next-implementation-order) now prioritize
-connecting context, relief, runoff and aging in an experimental application path. M5 uses the
+The first history comparison, WC0/WC1 foundations and M1 context-bound rough terrain
+are implemented. [M2-M4](../strategy/README.md#next-implementation-order) now prioritize
+connecting runoff and aging to that experimental application path. M5 uses the
 retained A/B/C and LE evidence to accept or replace the integrated candidate; M6
 then handles world-linked regional enrichment. The [WC contract](../strategy/world-context.md)
 and [LE contract](../strategy/landscape-evolution.md) provide model detail. The

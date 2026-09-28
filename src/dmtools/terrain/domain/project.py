@@ -11,6 +11,7 @@ from dmtools.terrain.domain.models import (
     TerrainConstraint,
     TerrainSettings,
 )
+from dmtools.terrain.domain.terrain_context import TerrainWorldContext
 
 type AuthoringTool = Literal["brush", "height", "ridge", "valley", "region", "lake", "dry_basin"]
 
@@ -112,3 +113,8 @@ class TerrainProject:
     settings: TerrainSettings
     constraints: tuple[TerrainConstraint, ...] = ()
     authoring: TerrainAuthoringState = field(default_factory=TerrainAuthoringState)
+    world_context: TerrainWorldContext | None = None
+
+    def __post_init__(self) -> None:
+        if self.world_context is not None:
+            self.world_context.validate_frame(self.coastline.bounds, self.settings.object_scale_km)

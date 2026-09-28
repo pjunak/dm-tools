@@ -39,8 +39,9 @@ adds a separate province/default recipe and editor. [Bathymetry](world-bathymetr
 now generates an explicit ocean-depth hypothesis with its own inputs, previews and
 verified result. [World → Terrain](terrain-worlds.md#create-terrain-from-the-world)
 now creates a usable local project from connected world land, with retained
-projection and physical scale. Physical geology forcing, climate and coupled
-world land terrain remain planned.
+projection and physical scale. M1 can embed matching context and consume conservative
+coastal support in experimental rough terrain. Climate/runoff, geology epochs,
+bathymetry coupling and aging remain planned.
 
 The [complete documentation file inventory](FILE_INDEX.md) lists every tracked
 Markdown document and legal notice individually, with purpose and current versus

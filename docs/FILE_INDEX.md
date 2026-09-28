@@ -6,7 +6,7 @@ export-import correction, bounded preparation and geographic context documents. 
 documentation and private campaign files are excluded. The public JSON schemas and reference dependency
 lock are listed separately as supporting contracts, not counted as prose docs.
 
-**209 Markdown files + 1 legal notice = 210 documentation files.**
+**211 Markdown files + 1 legal notice = 212 documentation files.**
 Each file appears once below, including this inventory. Document titles describe
 their subject; the group description identifies their role and authority.
 
@@ -21,11 +21,11 @@ remains the entry point for normal use. Every document is linked below.
 | Active plans and indexes | 13 |
 | User guides and current contracts | 19 |
 | Developer and reference guides | 8 |
-| Architecture decision records | 83 |
-| Dated research reports | 80 |
+| Architecture decision records | 84 |
+| Dated research reports | 81 |
 | Maintenance reports | 2 |
 | Legal notice | 1 |
-| **Total** | **210** |
+| **Total** | **212** |
 
 ## Project entry and guidance (4)
 
@@ -99,7 +99,7 @@ Subsystem, fixture, schema, test and benchmark guidance.
 | [src/dmtools/terrain/pipeline/README.md](../src/dmtools/terrain/pipeline/README.md) | Numeric generation and inspection responsibilities. |
 | [tests/README.md](../tests/README.md) | Test organization, commands and verification expectations. |
 
-## Architecture decision records (83)
+## Architecture decision records (84)
 
 Accepted historical decisions. Preserve their original context; consult the current status and implementation for later changes. The ADR index is listed among active indexes.
 
@@ -188,13 +188,15 @@ Accepted historical decisions. Preserve their original context; consult the curr
 | [docs/adr/0081-blend-adjoining-landform-regions.md](adr/0081-blend-adjoining-landform-regions.md) | Shared regional weighting, blank holes, established interiors and matching probe/cut support. |
 | [docs/adr/0082-own-structure-profiles.md](adr/0082-own-structure-profiles.md) | Explicit line profile ownership, sampling support, editor and current-format contracts. |
 | [docs/adr/0083-preserve-shared-ridge-crests.md](adr/0083-preserve-shared-ridge-crests.md) | Preserved ridge contacts, compatible heights, centreline ownership and remaining graph limits. |
+| [docs/adr/0084-bind-geographic-context-to-rough-terrain.md](adr/0084-bind-geographic-context-to-rough-terrain.md) | Bounded immutable geographic context, conservative coastal-distance consumption and explicit unsupported M1 fields. |
 
-## Dated research reports (80)
+## Dated research reports (81)
 
 Primary-source reviews, experiments and implementation evidence at their recorded date/revision. A title or citation is not evidence that a tool was adopted. Current status is listed above.
 
 | File | Purpose or document title |
 |---|---|
+| [docs/research/2026-09-28-context-bound-rough-terrain.md](research/2026-09-28-context-bound-rough-terrain.md) | M1 context binding, continuous conservative shoreline support, paired public control and validation limits. |
 | [docs/research/2026-09-27-shared-landform-blending.md](research/2026-09-27-shared-landform-blending.md) | Replacement of background seams, rejected enclave-leaking kernel, paired evidence and remaining slope limits. |
 | [docs/research/2026-09-27-shared-ridge-crests.md](research/2026-09-27-shared-ridge-crests.md) | Paired crest-height and corner-gap improvements, failed assumptions and graph/process limits. |
 | [docs/research/2026-09-27-line-owned-terrain-profiles.md](research/2026-09-27-line-owned-terrain-profiles.md) | Connected-range authoring slice, owned profile evidence and unresolved multi-line composition. |
@@ -293,17 +295,18 @@ Attribution/license documentation for a vendored asset.
 |---|---|
 | [docs/licenses/SCIENTIFIC_COLOUR_MAPS_LICENSE.txt](licenses/SCIENTIFIC_COLOUR_MAPS_LICENSE.txt) | Scientific Colour Maps attribution and redistribution license text. |
 
-## Supporting machine-readable contracts (12)
+## Supporting machine-readable contracts (13)
 
 These are operational specifications rather than prose documentation. They
 are included for a complete route from plans to the current usable formats.
 
 | File | Purpose |
 |---|---|
-| [schemas/terrain/build-v19.schema.json](../schemas/terrain/build-v19.schema.json) | Current numeric build manifest, product identities and runtime provenance. |
-| [schemas/terrain/input-snapshot-v3.schema.json](../schemas/terrain/input-snapshot-v3.schema.json) | Portable effective input snapshot for verified parent replay. |
+| [schemas/terrain/build-v20.schema.json](../schemas/terrain/build-v20.schema.json) | Current numeric build manifest, optional experimental world-context report and runtime provenance. |
+| [schemas/terrain/context-v1.schema.json](../schemas/terrain/context-v1.schema.json) | Immutable geographic sample binding, numeric identity and explicit consumed/retained/unsupported-field report. |
+| [schemas/terrain/input-snapshot-v4.schema.json](../schemas/terrain/input-snapshot-v4.schema.json) | Portable effective input snapshot with optional immutable context for verified parent replay. |
 | [schemas/terrain/parent-region-v1.schema.json](../schemas/terrain/parent-region-v1.schema.json) | Current parent sampling/experimental detail artifact contract. |
-| [schemas/terrain/project-v8.schema.json](../schemas/terrain/project-v8.schema.json) | Current authored local terrain project format; no world context fields. |
+| [schemas/terrain/project-v9.schema.json](../schemas/terrain/project-v9.schema.json) | Current authored local terrain project format with optional bounded world context. |
 | [schemas/terrain/regional-samples-v3.schema.json](../schemas/terrain/regional-samples-v3.schema.json) | Current bounded unchanged-field sampling artifact contract. |
 | [schemas/world/bathymetry-inputs-v1.schema.json](../schemas/world/bathymetry-inputs-v1.schema.json) | Retained-world ocean selection and explicit physical shelf/slope/basin assumptions. |
 | [schemas/world/bathymetry-v1.schema.json](../schemas/world/bathymetry-v1.schema.json) | Completed depth/error arrays, verified geography dependency and source/runtime/product identity. |

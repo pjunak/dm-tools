@@ -168,3 +168,37 @@ def test_selected_geology_is_reloaded_at_creation(
     panel.clear_geology_button.invoke()
     assert panel.geology_path is None
     assert panel.created.source.geology is not None
+
+
+def test_context_survives_handoff_save_and_generation(app: ui.TerrainApp, tmp_path: Path) -> None:
+    view = app.world_workspace
+    view.context_rows.set("18")
+    view.generate_context()
+    wait(app)
+    assert view.context_run is not None
+    selected = next(c.id for c in view.continents if c.name == "Southmere")
+    view.create_terrain(selected, tmp_path / "terrain")
+    wait(app)
+    assert app._world_context is not None
+    assert "context is connected" in str(app.status_label["text"])
+    settings = replace(app._read_settings(), resolution_px=65)
+    app._apply_settings(settings)
+    app._generate()
+    wait(app)
+    assert app._terrain is not None
+    assert app._terrain.world_context == app._world_context
+    assert app._generated_inputs is not None
+    assert app._generated_inputs.world_context == app._world_context
+    app._save_project()
+    wait(app)
+    saved = view.terrain_panel.created
+    assert saved is not None
+    from dmtools.terrain.adapters.project import load_terrain_project
+
+    reopened = load_terrain_project(saved.loaded.path)
+    assert reopened.project.world_context == app._world_context
+    app._accept_project(reopened)
+    assert not app._document_is_dirty()
+    source = load_svg_coastline_source(ROOT / "tests/fixtures/terrain/closed-coast.svg")
+    app._accept_coastline(source.coastline, source)
+    assert app._world_context is None

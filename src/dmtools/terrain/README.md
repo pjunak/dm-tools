@@ -19,14 +19,17 @@ support, shared-edge openings, separate water-piece links, shore distance and ex
 with verified saved-context inspection; see
 [geographic context](../../../docs/world-context.md). **Geology…** opens the
 [province/default input editor](../../../docs/world-geology.md), with its own
-recipe saves and source/context backgrounds. These hypotheses do not yet affect
-terrain. **Bathymetry…** opens a separate
+recipe saves and source/context backgrounds. Explicit landform controls and matching
+geographic context can affect experimental rough terrain; geology ages do not.
+**Bathymetry…** opens a separate
 [ocean-floor workflow](../../../docs/world-bathymetry.md) from matching context,
 with explicit ocean selection, shelf/slope/basin inputs, numerical error/support
 views and independent saves/results. **Terrain…** now selects a continent and
 creates a local terrain project with connected neighbours, retained world identity
-and fixed projected scale. It opens in Terrain ready for the workflow below.
-Coupled climate, geological forcing and world-parent generation remain planned;
+and fixed projected scale. When context is currently generated or opened, Terrain
+embeds bounded immutable samples and labels the coastal consumer experimental. It
+opens in Terrain ready for the workflow below. Climate, runoff, aging, bathymetry
+coupling and accepted world-parent generation remain planned.
 
 `--project` opens a local terrain file directly in that tab.
 
@@ -330,12 +333,13 @@ the project records a SHA-256 fingerprint of the exact SVG bytes. Opening fails
 clearly if the SVG is missing or changed. Saving also fails if the SVG changed
 on disk after import; re-importing makes that geographic change deliberate.
 
-Project files contain authored inputs only. Generated arrays and PNG previews
-are not embedded. Saves use a temporary file followed by atomic replacement so
+Project files contain authored inputs plus optional immutable bounded world-context
+samples. Generated terrain arrays and PNG previews are not embedded. Saves use a
+temporary file followed by atomic replacement so
 an interrupted write does not leave a partially written project. The current format is
 strict: unknown fields or unsupported versions are rejected rather than
 guessed. The public contract is
-[`schemas/terrain/project-v8.schema.json`](../../../schemas/terrain/project-v8.schema.json)
+[`schemas/terrain/project-v9.schema.json`](../../../schemas/terrain/project-v9.schema.json)
 and its rationale is recorded in
 [ADR-0006](../../../docs/adr/0006-versioned-terrain-project.md).
 

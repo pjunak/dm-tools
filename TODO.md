@@ -35,12 +35,13 @@ experiment; do not mark a desired feature complete merely because its trial ende
 
 ## Current execution focus — 2026-09-28
 
-**M1 is next: connect generated context to rough terrain.** Follow the single
+**M2 is next: connect rough relief to declared climate and runoff.** Follow the single
 [M1-M8 implementation order](docs/strategy/README.md#next-implementation-order).
-M1-M4 must produce one testable context → relief → runoff → aging workflow before
+M1 now supplies the experimental context → rough-relief edge. M2-M4 must complete
+the runoff → aging workflow before
 further isolated ridge/bank refinements. M5 governs quality/default adoption and
 an accepted world parent; existing hard correctness checks apply throughout.
-This is a plan change, not an implemented context/history connection.
+Climate, runoff, aging and bathymetry coupling remain unimplemented.
 
 The [research decision catalog](docs/research/decision-catalog.md) is the first
 lookup for evaluated tools/math, conclusions and revisit triggers. The
@@ -74,9 +75,11 @@ Update them with the affected milestone and evidence in every substantive batch.
 
 ### Integration and later work
 
-- [ ] **M1 / WC1-WC2:** verified world/context binding, supported physical domain,
-  context-consuming rough relief and portable application/CLI result.
-- [ ] **M2 / WC3:** declared ocean/wind/temperature/moisture model and budgeted runoff
+- [x] **M1 / WC1-WC2:** verified world/context binding, bounded non-polar AEQD
+  domain, immutable context support, context-consuming coastal relief and portable
+  application/CLI/build provenance. Experimental; see
+  [evidence](docs/research/2026-09-28-context-bound-rough-terrain.md).
+- [ ] **M2 / WC3 — ACTIVE:** declared ocean/wind/temperature/moisture model and budgeted runoff
   consuming the same geography and rough relief; retain diagnostic support limits.
 - [ ] **M3 / LE3/basic LE5:** explicit epoch uplift/resistance/runoff driving bounded
   aging from M1 initial ground; one evolved ground/drainage result, no double carving.
@@ -92,7 +95,7 @@ Update them with the affected milestone and evidence in every substantive batch.
 ### Generation-quality evidence retained
 
 The [quality reference](docs/strategy/terrain-quality.md) retains A-F comparisons
-and scientific adoption controls. T01-T17 in the method register link the actual
+and scientific adoption controls. T01-T18 in the method register link the actual
 failed and successful trials, including raster-bank limits and prepared-field
 checks. Those results are not accepted drainage/history. They guide M5 and any
 specific M1-M4 blocker; they no longer form a blanket ban on experimental coupling.
@@ -105,8 +108,8 @@ long duration; report purpose, estimate and a stop condition.
 The [new source/tool review](docs/research/2026-09-24-world-context-enrichment.md)
 and [WC0-WC6 plan](docs/strategy/world-context.md) refine the full-world workflow.
 This advances world placement and forcing from the former final climate phase;
-WC0 source import and the World workspace are now implemented. Climate and
-continent-history generation remain planned.
+WC0 source import, the World workspace and M1's bounded context-to-relief binding
+are implemented. Climate and continent-history generation remain planned.
 
 - [x] **Research and plan:** compare geographic/tectonic/climate models and existing
   tools; define fixed-coast import → provisional context → rough relief → bounded
@@ -228,15 +231,17 @@ continent-history generation remain planned.
   when downstream scenarios need them; distinguish connected-ocean fetch from
   the current all-water geographic score. Retain coarse-cell and quadrature
   aliasing limits, including features missed without a mixed-support flag.
-- [ ] **WC1 — Generate provisional context** (R07/R10/R11/R49): ocean topology and
+- [x] **WC1 — Generate provisional context** (R07/R10/R11/R49): ocean topology and
   exposure, bathymetric hypotheses, geological provinces and inspectable defaults.
   Spherical coverage and periodic connected-water inspection are delivered.
   Shore distance, directional geographic exposure, authored geology and a separate
-  bathymetry hypothesis product are delivered. Physical forcing, transport and
-  downstream coupling acceptance remain.
-- [ ] **WC2 — Produce a rough physical world** (R02/R48/R49): process/domain scale,
-  related macro relief and ocean hypotheses in M1-M3. B/C and LE quality acceptance
-  govern default adoption and WC4 in M5, not the first integrated experiment.
+  bathymetry hypothesis product are delivered. M1 now consumes matching geographic
+  coastal support; physical transport and bathymetry/climate coupling remain follow-ups.
+- [x] **WC2 / M1 slice — Produce bounded rough physical terrain** (R02/R48/R49):
+  one supported connected landmass, fixed metric scale, authored macro relief and
+  conservative context-bound coastal distance are reproducible and portable.
+  Wider/polar domains, physical forcing and evolution remain M2-M5 work; B/C and LE
+  quality acceptance govern default adoption and WC4 in M5.
 - [ ] **WC3 — Couple climate/runoff and coarse history** (R33/R49): seasonal budgets,
   explicit epoch forcing, bounded feedback and visible nonconvergence.
 - [ ] **WC4 — Select a verified world parent** (R49/LE3/LE5): staged editor workflow,
@@ -1628,8 +1633,10 @@ Priorities remain conditional on the current strategy's prerequisites.
   [schema](schemas/world/context-v4.schema.json) now include shore distance,
   directional water/support and separate water-piece incidence using SciPy.
   Separate province inputs and
-  [authored bathymetry](docs/world-bathymetry.md) are implemented. Physical forcing,
-  component-aware transport and WC2-WC6 products/acceptance remain open.
+  [authored bathymetry](docs/world-bathymetry.md) are implemented. M1 binds matching
+  geographic context to bounded rough terrain with explicit unsupported fields.
+  Climate/runoff, physical forcing, component-aware transport, wider domains and
+  WC3-WC6 products/acceptance remain open.
 
 ## UI / UX improvements
 

@@ -721,5 +721,5 @@ The history, reconstruction and later physical-path comparisons are recorded
 above. When M5 resumes physical-quality work, choose the valley/channel approach
 from failures observed in the integrated M3-M4 candidate, using the existing
 comparisons to test authoring, path/ground agreement and grid/capture sensitivity.
-The next implementation remains M1; isolated quality work leads only when it
+The next implementation is M2 climate/runoff; isolated quality work leads only when it
 blocks a hard integration contract. Default adoption still requires acceptance.

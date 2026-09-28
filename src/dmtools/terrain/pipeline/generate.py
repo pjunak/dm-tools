@@ -26,6 +26,7 @@ from dmtools.terrain.domain import (
     TerrainStructure,
 )
 from dmtools.terrain.domain.seeds import RELIEF_STAGE_ID, stage_seed
+from dmtools.terrain.domain.terrain_context import TerrainWorldContext
 from dmtools.terrain.pipeline.basin_flow import BasinOutflow, resolve_basin_outflow
 from dmtools.terrain.pipeline.channel_floor import ChannelFloorReconstruction
 from dmtools.terrain.pipeline.channel_reconstruction import ChannelReconstruction
@@ -63,6 +64,7 @@ from dmtools.terrain.pipeline.ridge_crests import (
     validate_ridge_contacts,
 )
 from dmtools.terrain.pipeline.routing_edges import sample_mountain_barriers
+from dmtools.terrain.pipeline.terrain_context import PreparedWorldContext
 from dmtools.terrain.pipeline.water import (
     MetricBasin,
     WaterProducts,
@@ -73,8 +75,8 @@ from dmtools.terrain.pipeline.water import (
 from dmtools.terrain.pipeline.water_budget import WaterSamplingBudget, plan_water_sampling_budget
 from dmtools.terrain.pipeline.water_sampling import SamplingDensity, SamplingFeature, SamplingGuide
 
-GENERATOR_ALGORITHM_ID = "coastline-constraint-terrain@20"
-AUTOMATIC_VALLEY_ALGORITHM_ID = "regional-budget-mfd-d8-valleys@14"
+GENERATOR_ALGORITHM_ID = "coastline-constraint-terrain@21"
+AUTOMATIC_VALLEY_ALGORITHM_ID = "regional-budget-mfd-d8-valleys@15"
 NOISE_ALGORITHM_ID = "coordinate-value-noise-fixed-budget@2"
 
 
@@ -98,6 +100,7 @@ class GeneratedTerrain:
     routing_conflicts: ChannelConflicts
     water: WaterProducts
     basin_outflow: BasinOutflow
+    world_context: TerrainWorldContext | None = None
 
     @property
     def grid(self) -> EndpointGrid:
@@ -607,6 +610,7 @@ def _base_elevation_fields(
     distance_to_coast_km: NDArray[np.float64],
     settings: TerrainSettings,
     regions: tuple[MetricRegion, ...] = (),
+    world_context: PreparedWorldContext | None = None,
 ) -> tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]]:
     """Return full detail, stable macro elevation, and the shared detail driver."""
 
@@ -620,6 +624,10 @@ def _base_elevation_fields(
         detail_levels=settings.detail_levels,
         roughness=settings.roughness,
     )
+    if world_context is not None:
+        distance_to_coast_km = world_context.coastal_distance(
+            x_km, y_km, distance_to_coast_km,
+        )
     coastal_envelope = 1.0 - np.exp(-distance_to_coast_km / settings.coastal_rise_km)
     shaped_noise = np.power(np.clip(0.5 + 0.5 * relief_noise, 0.0, 1.0), 1.35)
     relief = (1.0 - settings.variability) * 0.72 + settings.variability * shaped_noise
@@ -936,6 +944,7 @@ def _prepare_automatic_valley_field(
     settings: TerrainSettings,
     constraints: tuple[_MetricConstraint, ...],
     regions: tuple[MetricRegion, ...] = (),
+    world_context: PreparedWorldContext | None = None,
     basins: tuple[MetricBasin, ...] = (),
     progress: ProgressCallback | None = None,
 ) -> _AutomaticValleyField:
@@ -959,7 +968,7 @@ def _prepare_automatic_valley_field(
         y_grid,
         distance_to_coast_km,
         settings,
-        regions=regions,
+        regions=regions, world_context=world_context,
     )
     conditioned_macro, constraint_influence = _apply_constraints(
         macro_elevation, sample_points, distance_to_coast_km, constraints,
@@ -978,7 +987,9 @@ def _prepare_automatic_valley_field(
         _report(progress, 0.062, "Reviewing mountain passes")
         points = shapely.points(x, y)
         coast_distance = np.asarray(shapely.distance(points, boundary), dtype=np.float64)
-        _full, macro, driver = _base_elevation_fields(x, y, coast_distance, settings, regions)
+        _full, macro, driver = _base_elevation_fields(
+            x, y, coast_distance, settings, regions, world_context,
+        )
         conditioned, _influence = _apply_constraints(
             macro, points, coast_distance, constraints, settings.largest_feature_km,
             settings.maximum_elevation_m, driver,
@@ -1019,7 +1030,9 @@ def _prepare_automatic_valley_field(
         _report(progress, 0.076, "Preparing channel floor profiles")
         points = shapely.points(x, y)
         coast_distance = np.asarray(shapely.distance(points, boundary), dtype=np.float64)
-        full, macro, _driver = _base_elevation_fields(x, y, coast_distance, settings, regions)
+        full, macro, _driver = _base_elevation_fields(
+            x, y, coast_distance, settings, regions, world_context,
+        )
         _incision, suppression = reconstruction.sample(x, y)
         available = np.asarray(shapely.intersects_xy(polygon, x, y), dtype=np.bool_)
         if basins:
@@ -1106,6 +1119,7 @@ def _prepare_downstream_valley_profiles(
     boundary: Any,
     settings: TerrainSettings,
     regions: tuple[MetricRegion, ...] = (),
+    world_context: PreparedWorldContext | None = None,
     progress: ProgressCallback | None = None,
 ) -> tuple[_MetricConstraint, ...]:
     """Prepare resolution-independent non-rising floors for authored valleys."""
@@ -1166,7 +1180,7 @@ def _prepare_downstream_valley_profiles(
                 y_km,
                 distance_to_coast_km,
                 settings,
-                regions=regions,
+                regions=regions, world_context=world_context,
             )
             conditioned_macro, reference_influence = _apply_constraints(
                 macro_elevation,
@@ -1209,6 +1223,7 @@ def _evaluate_elevation_samples(
     constraints: tuple[_MetricConstraint, ...],
     automatic_valleys: _AutomaticValleyField,
     regions: tuple[MetricRegion, ...] = (),
+    world_context: PreparedWorldContext | None = None,
 ) -> tuple[NDArray[np.float64], NDArray[np.bool_]]:
     """Evaluate the complete terrain pipeline at arbitrary metric coordinates."""
 
@@ -1219,14 +1234,14 @@ def _evaluate_elevation_samples(
     if np.all(land_mask):
         return _evaluate_land_samples(
             x_grid, y_grid, boundary, settings, constraints, automatic_valleys,
-            regions=regions,
+            regions=regions, world_context=world_context,
         ), land_mask
     elevation = np.zeros(land_mask.shape, dtype=np.float64)
     if np.any(land_mask):
         elevation[land_mask] = _evaluate_land_samples(
             x_grid[land_mask], y_grid[land_mask], boundary, settings, constraints,
             automatic_valleys,
-            regions=regions,
+            regions=regions, world_context=world_context,
         )
     return elevation, land_mask
 
@@ -1239,6 +1254,7 @@ def _evaluate_land_samples(
     constraints: tuple[_MetricConstraint, ...],
     automatic_valleys: _AutomaticValleyField,
     regions: tuple[MetricRegion, ...] = (),
+    world_context: PreparedWorldContext | None = None,
 ) -> NDArray[np.float64]:
     """Evaluate independent points after canonical routing and profiles are prepared.
 
@@ -1258,7 +1274,7 @@ def _evaluate_land_samples(
         y_grid,
         distance_to_coast,
         settings,
-        regions=regions,
+        regions=regions, world_context=world_context,
     )
     automatic_incision, automatic_detail_suppression = automatic_valleys.sample_shaping(
         x_grid, y_grid,
@@ -1350,13 +1366,14 @@ class PreparedTerrainField:
     regions: tuple[MetricRegion, ...]
     basins: tuple[MetricBasin, ...]
     automatic_valleys: _AutomaticValleyField
+    world_context: PreparedWorldContext | None = None
 
     def evaluate(
         self, x: NDArray[np.float64], y: NDArray[np.float64],
     ) -> tuple[NDArray[np.float64], NDArray[np.bool_]]:
         return _evaluate_elevation_samples(
             x, y, self.polygon, self.boundary, self.settings, self.constraints,
-            self.automatic_valleys, regions=self.regions,
+            self.automatic_valleys, regions=self.regions, world_context=self.world_context,
         )
 
     def sample_ground(
@@ -1368,10 +1385,13 @@ class PreparedTerrainField:
 
 def prepare_terrain_field(
     coastline: Coastline, settings: TerrainSettings, constraints: Sequence[TerrainConstraint],
-    progress: ProgressCallback | None,
+    progress: ProgressCallback | None, *, world_context: TerrainWorldContext | None = None,
 ) -> PreparedTerrainField:
     _report(progress, 0.02, "Preparing metric grid")
     polygon, width_km, height_km = _metric_polygon(coastline, settings.object_scale_km)
+    if world_context is not None:
+        world_context.validate_frame(coastline.bounds, settings.object_scale_km)
+    context = None if world_context is None else PreparedWorldContext(world_context)
     authored_constraints = tuple(constraints)
     basins = prepare_basins(
         authored_constraints, width_km, height_km, polygon, settings.maximum_elevation_m,
@@ -1391,25 +1411,28 @@ def prepare_terrain_field(
     _report(progress, 0.04, "Preparing authored valley profiles")
     metric_constraints = _prepare_downstream_valley_profiles(
         metric_constraints, boundary, settings,
-        regions=regions, progress=progress,
+        regions=regions, world_context=context, progress=progress,
     )
     _report(progress, 0.06, "Routing drainage over authored terrain")
     automatic_valleys = _prepare_automatic_valley_field(
         polygon, boundary, width_km, height_km, settings, metric_constraints,
-        regions=regions, basins=basins, progress=progress,
+        regions=regions, world_context=context, basins=basins, progress=progress,
     )
     _report(progress, 0.08, "Terrain field prepared")
 
     return PreparedTerrainField(polygon, boundary, width_km, height_km, settings,
-                                 metric_constraints, regions, basins, automatic_valleys)
+                                 metric_constraints, regions, basins, automatic_valleys, context)
 
 
 def forecast_water_sampling(
     coastline: Coastline, settings: TerrainSettings, *,
     constraints: Sequence[TerrainConstraint] = (),
+    world_context: TerrainWorldContext | None = None,
 ) -> WaterSamplingBudget:
     """Plan shoreline and potential internal-network demand without fine water evaluation."""
-    field = prepare_terrain_field(coastline, settings, constraints, None)
+    field = prepare_terrain_field(
+        coastline, settings, constraints, None, world_context=world_context,
+    )
     automatic = field.automatic_valleys
     x, y = np.meshgrid(automatic.x_km, automatic.y_km)
     ground, _mask = field.evaluate(x, y)
@@ -1426,6 +1449,7 @@ def generate_terrain(
     progress: ProgressCallback | None = None,
     *,
     constraints: Sequence[TerrainConstraint] = (),
+    world_context: TerrainWorldContext | None = None,
     cancellation: CancellationToken | None = None,
 ) -> GeneratedTerrain:
     """Generate a deterministic Float32 elevation grid inside a coastline."""
@@ -1433,7 +1457,9 @@ def generate_terrain(
     check_cancelled(cancellation)
     progress = cancellable_progress(progress, cancellation)
     authored_constraints = tuple(constraints)
-    field = prepare_terrain_field(coastline, settings, authored_constraints, progress)
+    field = prepare_terrain_field(
+        coastline, settings, authored_constraints, progress, world_context=world_context,
+    )
     polygon, width_km, height_km = field.polygon, field.width_km, field.height_km
     metric_constraints, regions, basins = field.constraints, field.regions, field.basins
     automatic_valleys = field.automatic_valleys
@@ -1521,4 +1547,5 @@ def generate_terrain(
         routing_conflicts=review.conflicts,
         water=water,
         basin_outflow=basin_outflow,
+        world_context=world_context,
     )

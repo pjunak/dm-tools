@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:dmtools:schema:terrain-project:8",
-  "title": "DM Tools terrain project version 8",
-  "description": "Current authored inputs including terrain region holes. Earlier project versions are unsupported.",
+  "$id": "urn:dmtools:schema:terrain-project:9",
+  "title": "DM Tools terrain project version 9",
+  "description": "Current authored inputs including an optional frozen world-context binding. Earlier project versions are unsupported.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -11,14 +11,15 @@
     "coastline",
     "settings",
     "constraints",
-    "authoring"
+    "authoring",
+    "world_context"
   ],
   "properties": {
     "schema": {
       "const": "dmtools.terrain-project"
     },
     "schema_version": {
-      "const": 8
+      "const": 9
     },
     "coastline": {
       "type": "object",
@@ -73,6 +74,13 @@
     },
     "authoring": {
       "$ref": "#/$defs/authoringState"
+    },
+    "world_context": {
+      "description": "Frozen geographic support bound to this local terrain frame, or null when the project has no world context.",
+      "anyOf": [
+        { "type": "null" },
+        { "$ref": "urn:dmtools:schema:terrain-context:1#/$defs/binding" }
+      ]
     }
   },
   "$defs": {

@@ -86,7 +86,8 @@ def prepare_verified_parent(
     """Check every delivered node, water sample and reused canonical routing field."""
     project, grid = data.project, data.grid
     field = prepare_terrain_field(
-        project.coastline, project.settings, project.constraints, progress
+        project.coastline, project.settings, project.constraints, progress,
+        world_context=project.world_context,
     )
     _equal(data.x_km, np.linspace(grid.extent_km[0], grid.extent_km[2], grid.width), "x axis")
     _equal(data.y_km, np.linspace(grid.extent_km[1], grid.extent_km[3], grid.height), "y axis")

@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:dmtools:schema:terrain-build:19",
-  "title": "DM Tools terrain build version 19",
-  "description": "Completed local terrain and water evidence with a typed, portable effective-input snapshot.",
+  "$id": "urn:dmtools:schema:terrain-build:20",
+  "title": "DM Tools terrain build version 20",
+  "description": "Completed local terrain, water and optional bound-world-context evidence with a typed, portable effective-input snapshot.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -12,6 +12,7 @@
     "build_id",
     "inputs",
     "settings",
+    "world_context",
     "runtime",
     "algorithms",
     "coordinates",
@@ -25,7 +26,7 @@
       "const": "dmtools.terrain-build"
     },
     "schema_version": {
-      "const": 19
+      "const": 20
     },
     "status": {
       "const": "complete"
@@ -50,15 +51,22 @@
           "$ref": "#/$defs/hash"
         },
         "project_schema_version": {
-          "const": 8
+          "const": 9
         },
         "snapshot_schema_version": {
-          "const": 3
+          "const": 4
         }
       }
     },
     "settings": {
-      "$ref": "urn:dmtools:schema:terrain-project:8#/$defs/generatorSettings"
+      "$ref": "urn:dmtools:schema:terrain-project:9#/$defs/generatorSettings"
+    },
+    "world_context": {
+      "description": "How the optional frozen geographic context was retained and consumed by this terrain build.",
+      "anyOf": [
+        { "type": "null" },
+        { "$ref": "urn:dmtools:schema:terrain-context:1#/$defs/report" }
+      ]
     },
     "runtime": {
       "type": "object",
@@ -163,16 +171,13 @@
       ],
       "properties": {
         "generator": {
-          "type": "string",
-          "minLength": 1
+          "const": "coastline-constraint-terrain@21"
         },
         "automatic_valleys": {
-          "type": "string",
-          "minLength": 1
+          "const": "regional-budget-mfd-d8-valleys@15"
         },
         "noise": {
-          "type": "string",
-          "minLength": 1
+          "const": "coordinate-value-noise-fixed-budget@2"
         },
         "drainage_diagnostics": {
           "type": "string",

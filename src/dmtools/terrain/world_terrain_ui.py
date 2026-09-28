@@ -36,8 +36,8 @@ class WorldTerrainPanel(ttk.Frame):
         ).pack(anchor="w", pady=(0, 12))
         ttk.Label(
             self, text="Start at 257 pixels, then adjust terrain settings and generate in "
-            "the Terrain workspace. This uses the current terrain generator; world "
-            "climate and aging are not applied yet.",
+            "the Terrain workspace. Generate or open context first to include "
+            "spherical coastal support. Climate and aging are not applied yet.",
             style="Muted.TLabel", wraplength=340,
         ).pack(anchor="w", pady=(0, 16))
         ttk.Label(self, textvariable=self.geology_label, wraplength=340,
@@ -125,7 +125,9 @@ class WorldTerrainPanel(ttk.Frame):
             f"Longest projected extent: {source.object_scale_km:,.1f} km\n"
             f"Maximum sampled projection stretch: {stretch:.1%}\n\n"
             f"Landform regions: {len(created.loaded.project.constraints)}\n"
-            f"Saved in: {created.loaded.path.parent}\n"
+            + ("Context: coastal relief connected (experimental)\n"
+               if created.loaded.project.world_context else "Context: not supplied\n")
+            + f"Saved in: {created.loaded.path.parent}\n"
             "Keep coastline.svg with terrain.dmterrain.json when moving the project."
         )
         self.set_busy(False)

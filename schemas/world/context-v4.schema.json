@@ -32,7 +32,7 @@
       "const": 4
     },
     "algorithm": {
-      "const": "spherical-geography-v4"
+      "const": "spherical-geography-v5"
     },
     "importer": {
       "const": "retained-svg-v2"

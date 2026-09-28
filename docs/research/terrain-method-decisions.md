@@ -1,6 +1,6 @@
 # Terrain method decisions and failed experiments
 
-Updated 2026-09-28 through T17 shared ridge crests (`78c9db5`).
+Updated 2026-09-28 through T18 continuous context-distance bounds.
 This is the living record of
 material generation approaches that were rejected, constrained or retained only
 as references. A failed method does not remove its desired feature from the plan.
@@ -467,6 +467,33 @@ Retain the limited scope: explicit absolute ridges only. Conflicting contact
 heights and ambiguous loops/shared spans are rejected; no snapping, automatic
 graph editing or branch generation is implied. Valleys and hard points keep
 later authority, and broad smooth shoulders/sharp junction turns remain visible.
+
+## T18 - Take extrema from the nearest four context-distance cones
+
+The first M1 transfer bounded a query by taking the maximum lower cone and minimum
+upper cone from the four active support vertices. Each interval was conservative,
+but changing the bilinear stencil could abruptly replace the winning vertex. A
+public vertical-edge probe only `0.000002 km` wide produced a
+`16.078688316394533 km` upper-bound jump. The bound was valid and unsuitable as a
+continuous terrain input.
+
+The accepted replacement convex-combines the four valid per-vertex intervals with
+the same nonnegative bilinear weights used for continuous context fields. At the
+geographic-to-support step each source node contributes lower
+`shore - source_error - distance` and upper `shore + distance`; at metric queries
+the retained node's lower/upper interval replaces that source form. Clamp the
+weighted lower bound to zero. A departing vertex's weight reaches zero at a cell
+edge, so adjacent stencils meet continuously while the convex combination retains
+conservative validity. The corrected edge probe differs by only
+`0.000002333701814904998 km`.
+
+The intervals can be slightly wider than pointwise extrema. Keep exact projected
+vector distance and use `min(vector distance, context upper bound)` for the coastal
+terrain consumer. Do not use the lower bound as a height driver: that would create
+a false zero-height strip near coarse support. Revisit only if tighter continuous
+bounds have a measured terrain benefit and preserve the same proof, edge continuity
+and source-coast zero behavior. See the
+[M1 report](2026-09-28-context-bound-rough-terrain.md).
 
 ## What the failures change
 

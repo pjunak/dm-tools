@@ -6,6 +6,7 @@ from collections.abc import Iterator
 from math import pi
 
 import numpy as np
+import shapely
 from numpy.typing import NDArray
 from scipy.spatial import KDTree
 from shapely.affinity import affine_transform
@@ -54,6 +55,9 @@ def _shore_samples(
 ) -> tuple[NDArray[np.float64], ShoreSampling]:
     if land.is_empty:
         return np.empty((0, 3), dtype=np.float64), ShoreSampling(0, 0.0)
+    # Ownership splits can add collinear vertices without changing physical land.
+    # Canonicalize those zero-area edits before placing distance samples.
+    land = shapely.normalize(land.simplify(0, preserve_topology=True))
     frame = grid.frame
     x0, y0, x1, y1 = frame.bounds
     # Artificial map cuts and collapsed polar edges are not shores. A mismatch

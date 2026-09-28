@@ -136,7 +136,7 @@ def test_profile_roundtrip_snapshot_schema_and_history(tmp_path: Path) -> None:
     snapshot = json.loads(json.dumps(project_snapshot_to_json(project)))
     assert project_snapshot_from_json(snapshot) == project
     document = json.loads(path.read_text())
-    schema_path = Path(__file__).parents[1] / "schemas/terrain/project-v8.schema.json"
+    schema_path = Path(__file__).parents[1] / "schemas/terrain/project-v9.schema.json"
     schema = json.loads(schema_path.read_text())
     validate(document, schema)
     assert document["constraints"][0]["profile"][2] == {"position": .5, "elevation_m": 1400.}
@@ -192,6 +192,6 @@ def test_profile_build_reopens_as_a_verified_parent_with_identical_ground(
     replayed = parent.sampler.prepared_field
     np.testing.assert_array_equal(field.sample_ground(x, y), replayed.sample_ground(x, y))
     document = json.loads((output / "inputs.json").read_text())
-    assert document["schema_version"] == 3
+    assert document["schema_version"] == 4
     assert document["constraints"][1]["profile"][2] == {
         "position": .5, "elevation_m": middle_height}

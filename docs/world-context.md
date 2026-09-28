@@ -6,9 +6,9 @@ eight directional water-exposure fields and resolution support
 on a custom spherical planet. Completed context bundles can be reopened for inspection.
 It consumes the validated source and its reported preparation adjustments.
 Separate [geology inputs](world-geology.md) and [ocean-depth hypotheses](world-bathymetry.md)
-are implemented. Climate, rough world terrain and world-linked regional generation
-remain later stages. This result is geographic context,
-not a generated terrain parent.
+are implemented. M1 can bind this result to experimental rough terrain. Climate,
+runoff, aging and world-linked regional generation remain later stages. A context
+bundle is geographic input, not a generated terrain parent.
 
 ## In the editor
 
@@ -57,6 +57,39 @@ The CLI accepts 4–360 latitude rows for bounded controls and generation. The U
 exposes the three useful overview choices. Source/runtime changes during a build
 prevent completion. Exporting an in-memory result after software changes requires
 regeneration. No stochastic stage or seed is involved in this geographic analysis.
+
+## Bind context to rough terrain
+
+In the World workspace, generate or open context before choosing **Terrain…**; the
+current matching context is passed automatically. The CLI accepts a completed
+manifest or its directory:
+
+```powershell
+.\.venv\Scripts\dmtools.exe world terrain examples/world/four-shores.dmworld.json --continent Southmere --context artifacts/four-shores-context --output artifacts/southmere-terrain
+```
+
+Preparation requires the exact retained world, projection and optional geology
+recipe. It transforms a fixed support grid over the bounded AEQD terrain domain and
+stores the immutable samples in terrain project v9. Each axis is capped at 129
+samples; unsupported polar stencils fail instead of extrapolating beyond the source
+latitude-cell centres. Selecting a continent may include physically connected
+neighbours; domains beyond local projection/support limits are rejected, and M1
+does not produce an accepted world parent.
+
+Land fraction and the eight exposure/support fractions use bilinear interpolation.
+Water IDs and flags use nearest source support for display/provenance only. No water
+graph or raster land mask is interpolated: the projected source vectors remain the
+terrain land/coast authority. Shore distance retains a continuous conservative
+interval. Rough relief consumes only
+`min(projected-vector distance, spherical upper bound)`, which can reduce projection
+overestimates resolved by context and often has little or no effect on compact
+worlds. The lower bound is retained for review and never drives height.
+
+The saved binding separates three identities: `context_numeric_sha256` covers
+geographic metadata and actual arrays, independent of previews/container bytes;
+`producer_runtime_sha256` records the geographic producer runtime; and
+`binding_sha256` covers the transferred metadata and sampled fields. Climate,
+runoff, aging, bathymetry coupling and water transport are explicitly unsupported.
 
 Verify an existing result from a manifest or directory:
 
@@ -222,7 +255,7 @@ latitude. This context does not reuse the local terrain endpoint-node grid.
 ## Export contract
 
 [Context v4](../schemas/world/context-v4.schema.json) owns the manifest. It records
-`spherical-geography-v4`, importer/preparation identities, the canonical complete
+`spherical-geography-v5`, importer/preparation identities, the canonical complete
 input hash, software/runtime identity, frame, grid, settings, area checks, water
 regions, support counts, gateway semantics/counts, shoreline error bound, exposure
 range/quadrature semantics, graph counts/registration/fragmentation support and SHA-256/byte counts for every
@@ -283,10 +316,14 @@ Verification establishes internal consistency, not authenticity or an independen
 rerun of every geometric measurement. Preview layers are rebuilt from verified
 arrays when displayed. Loaded arrays are read-only.
 
-Generated results do not alter the world source. They are not yet accepted parents
-for terrain/climate solvers. [Geology inputs](world-geology.md) can now be drawn
+Generated results do not alter the world source. A matching result may be embedded
+as bounded support for experimental M1 rough terrain, but it is not an accepted
+world parent or a climate solver result. [Geology inputs](world-geology.md) can be drawn
 over this read-only context in a separate editor/recipe.
 [Bathymetry](world-bathymetry.md) consumes matching geography to build explicit
 ocean-floor hypotheses, refreshing the geographic producer when necessary.
-Water-piece incidence is implemented; physical transport/capacity and geology forcing remain WC1 work. See [the staged plan](strategy/world-context.md)
-and [current implementation evidence](research/2026-09-25-water-piece-connectivity.md).
+Full context bundles retain water-piece incidence; M1 does not transfer or solve
+that graph. Physical transport/capacity and geology forcing remain later work. See
+[the staged plan](strategy/world-context.md),
+[water-piece evidence](research/2026-09-25-water-piece-connectivity.md) and the
+[M1 binding report](research/2026-09-28-context-bound-rough-terrain.md).

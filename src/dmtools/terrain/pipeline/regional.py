@@ -12,6 +12,7 @@ from dmtools.terrain.domain import Coastline, EndpointGrid, LocalMetricFrame, Te
 from dmtools.terrain.domain.models import TerrainConstraint
 from dmtools.terrain.domain.regional import RegionalSamplingRequest
 from dmtools.terrain.domain.seeds import SEED_POLICY_ID
+from dmtools.terrain.domain.terrain_context import TerrainWorldContext
 from dmtools.terrain.pipeline.generate import (
     AUTOMATIC_VALLEY_ALGORITHM_ID,
     GENERATOR_ALGORITHM_ID,
@@ -21,6 +22,7 @@ from dmtools.terrain.pipeline.generate import (
     prepare_terrain_field,
 )
 from dmtools.terrain.pipeline.landforms import LANDFORM_ALGORITHM_ID
+from dmtools.terrain.pipeline.terrain_context import context_identity
 from dmtools.terrain.pipeline.water import sampled_basin_water
 
 REGIONAL_SAMPLING_ALGORITHM_ID = "regional-unchanged-field-sampling@1"
@@ -29,10 +31,12 @@ REGIONAL_CHUNK_SAMPLES = 65_536
 
 def sampling_source_id(
     coastline: Coastline, settings: TerrainSettings, constraints: Sequence[TerrainConstraint] = (),
+    *, world_context: TerrainWorldContext | None = None,
 ) -> str:
     """Bind input geometry/settings and algorithms; applications also bind the runtime."""
     payload = {
         "coastline": asdict(coastline), "settings": asdict(settings),
+        "world_context": None if world_context is None else context_identity(world_context),
         "constraints": [{"type": type(c).__name__, **asdict(c)} for c in constraints],
         "algorithms": [GENERATOR_ALGORITHM_ID, AUTOMATIC_VALLEY_ALGORITHM_ID,
                        NOISE_ALGORITHM_ID, LANDFORM_ALGORITHM_ID, SEED_POLICY_ID],
@@ -136,10 +140,13 @@ class TerrainRegionSampler:
 def prepare_regional_sampler(
     coastline: Coastline, settings: TerrainSettings, *,
     constraints: Sequence[TerrainConstraint] = (), progress: ProgressCallback | None = None,
+    world_context: TerrainWorldContext | None = None,
 ) -> TerrainRegionSampler:
     authored = tuple(constraints)
     frame = LocalMetricFrame(coastline.bounds, settings.object_scale_km)
     grid = EndpointGrid.for_extent(frame.extent_km, settings.resolution_px)
-    identity = sampling_source_id(coastline, settings, authored)
-    prepared = prepare_terrain_field(coastline, settings, authored, progress)
+    identity = sampling_source_id(coastline, settings, authored, world_context=world_context)
+    prepared = prepare_terrain_field(
+        coastline, settings, authored, progress, world_context=world_context,
+    )
     return TerrainRegionSampler(identity, grid, prepared)

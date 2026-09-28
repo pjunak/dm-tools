@@ -3,8 +3,9 @@
 The **World** workspace implements WC0: retain an authored world, confirm its
 geographic frame, assign continents and islands, inspect it and save a portable
 source project. [Geographic context](world-context.md) now generates spherical
-coverage, connected water and resolution support. Climate, rough world terrain
-and regional history generation remain planned. **Terrain…** now transfers a
+coverage, connected water and resolution support. Matching context can be bound to
+experimental rough terrain; climate, runoff, aging and regional history remain
+planned. **Terrain…** now transfers a
 selected continent and connected land into a local metric terrain project,
 ready to use in the **Terrain** workspace.
 
@@ -34,9 +35,11 @@ remain available in the same window, with separate documents and dirty states.
 ## Create terrain from the world
 
 1. Open or import your world and confirm its frame, radius and assignments.
-2. Optionally author and save [Geology inputs](world-geology.md), including explicit
-   **Landform guidance**. Click **Terrain…** in the World header and choose a continent.
-   The panel displays the saved geology recipe; choose another or clear it as needed.
+2. Generate context or open a completed matching context bundle. Optionally author
+   and save [Geology inputs](world-geology.md), including explicit **Landform guidance**.
+   Click **Terrain…** in the World header and choose a continent. The panel displays
+   the saved geology recipe; choose another or clear it as needed. The currently
+   generated/opened context is passed automatically.
 3. Click **Create terrain project…** and choose a **new folder name**. The current
    world inputs are validated and retained; saving the world separately first is
    optional. The source drawing and any existing terrain work remain protected.
@@ -50,7 +53,7 @@ remain available in the same window, with separate documents and dirty states.
 The equivalent command is:
 
 ```powershell
-.\.venv\Scripts\dmtools.exe world terrain examples/world/four-shores.dmworld.json --continent Southmere --output artifacts/southmere-terrain
+.\.venv\Scripts\dmtools.exe world terrain examples/world/four-shores.dmworld.json --continent Southmere --context artifacts/four-shores-context --output artifacts/southmere-terrain
 .\.venv\Scripts\dmtools.exe terrain gui --project artifacts/southmere-terrain/terrain.dmterrain.json
 .\.venv\Scripts\dmtools.exe terrain build artifacts/southmere-terrain/terrain.dmterrain.json --output artifacts/southmere-build
 ```
@@ -61,6 +64,10 @@ match the current world; it is reread at creation. Continent defaults and priori
 provinces become editable terrain regions, with nested cutouts preserved as holes.
 The chosen recipe is retained inside the prepared source, so it is not another
 external dependency when moving a created project.
+Add `--context PATH` to bind a verified `context.json` or its containing folder.
+The world, projection and optional geology recipe must match exactly. Preparation
+resamples immutable context support into the saved terrain project, so the external
+context bundle is not needed to reopen, build or replay it.
 A continent ID may replace its name. Keep **coastline.svg** beside
 **terrain.dmterrain.json** when moving the folder. The SVG contains visible
 projected paths plus the original world snapshot, membership and projection;
@@ -87,8 +94,11 @@ neighbouring terrain boundary conditions is future work. Do not shrink the plane
 or exclude connected land to disguise that limitation. **Southmere** works in the
 public example; its much wider Westreach/Eastreach union needs that future support.
 
-This is a standalone generation handoff. Explicit landform guidance is applied;
-geographic context, bathymetry, geological ages and climate do not yet drive it.
+This is an experimental generation handoff. Explicit landform guidance is applied.
+When supplied, geographic context can reduce the broad coastal-distance envelope
+through a continuous conservative upper bound; the exact projected coastline and
+land mask stay authoritative. Bathymetry, geological ages, climate, runoff and
+aging do not drive terrain.
 Recreating a project starts from the current world inputs; existing terrain
 instructions are not automatically rebased onto changed geography. The produced
 GeoTIFF remains in the existing local coordinate system; its world projection is
@@ -267,9 +277,10 @@ recipe. **Bathymetry…** opens the separate [ocean-depth workflow](world-bathym
 from matching geographic context: select oceans, author a margin profile, generate
 and inspect depth/error/support, then export or reopen a verified result.
 The [WC1](strategy/world-context.md) graph now retains separate water pieces and
-finite shared intervals. Physical transport and geological process forcing remain planned
-while preserving this source contract.
-World terrain, climate, shared history, world-linked regional generation and
+finite shared intervals in full context bundles. M1 retains sampled water labels
+and support flags, but does not transfer or solve that graph. Physical transport and geological
+process forcing remain planned while preserving this source contract.
+Accepted/wider world terrain, climate, shared history, world-linked regional generation and
 local river enrichment require their own stage gates. Existing local terrain
 builds remain in local metric coordinates; saving a world does not georeference
 their DEMs or add climate fields to them. See [coordinates](terrain-coordinates.md),

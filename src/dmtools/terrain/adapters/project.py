@@ -17,6 +17,11 @@ from dmtools.terrain.adapters.svg import (
     coastline_sha256,
     load_svg_coastline_source,
 )
+from dmtools.terrain.adapters.terrain_context import (
+    context_from_json,
+    context_to_json,
+    validate_context_source,
+)
 from dmtools.terrain.domain import (
     BrushToolSettings,
     Coastline,
@@ -37,7 +42,7 @@ from dmtools.terrain.domain import (
 )
 
 PROJECT_SCHEMA = "dmtools.terrain-project"
-PROJECT_SCHEMA_VERSION = 8
+PROJECT_SCHEMA_VERSION = 9
 PROJECT_EXTENSION = ".dmterrain.json"
 _MAX_PROJECT_BYTES = 16 * 1024 * 1024
 
@@ -366,6 +371,7 @@ def save_terrain_project(
     if project.coastline != coastline_source.coastline:
         raise TerrainProjectInputError("The project coastline does not match its source record.")
     coastline_source.validate_scale(project.settings.object_scale_km)
+    validate_context_source(project.world_context, coastline_source.world_terrain)
     current_sha256 = coastline_sha256(coastline_source.path)
     if current_sha256 != coastline_source.sha256:
         raise TerrainProjectInputError(
@@ -383,6 +389,7 @@ def save_terrain_project(
         "settings": settings_to_json(project.settings),
         "constraints": [_constraint_to_json(constraint) for constraint in project.constraints],
         "authoring": _authoring_to_json(project.authoring),
+        "world_context": context_to_json(project.world_context),
     }
     target.parent.mkdir(parents=True, exist_ok=True)
     descriptor, temporary_name = tempfile.mkstemp(
@@ -417,7 +424,8 @@ def load_terrain_project(source: Path) -> LoadedTerrainProject:
     data = _mapping(raw, "project")
     _require_keys(
         data,
-        {"schema", "schema_version", "coastline", "settings", "constraints", "authoring"},
+        {"schema", "schema_version", "coastline", "settings", "constraints", "authoring",
+         "world_context"},
         "project",
     )
     if data["schema"] != PROJECT_SCHEMA:
@@ -460,17 +468,20 @@ def load_terrain_project(source: Path) -> LoadedTerrainProject:
         coastline_source.validate_scale(settings.object_scale_km)
     except ValueError as error:
         raise TerrainProjectInputError(str(error)) from error
+    context = context_from_json(data["world_context"])
+    validate_context_source(context, coastline_source.world_terrain)
     project = TerrainProject(
         coastline=coastline_source.coastline,
         settings=settings,
         constraints=constraints,
         authoring=authoring,
+        world_context=context,
     )
     return LoadedTerrainProject(project=project, coastline_source=coastline_source, path=resolved)
 
 
 INPUT_SNAPSHOT_SCHEMA = "dmtools.terrain-input-snapshot"
-INPUT_SNAPSHOT_VERSION = 3
+INPUT_SNAPSHOT_VERSION = 4
 
 
 def project_snapshot_to_json(project: TerrainProject) -> dict[str, object]:
@@ -480,6 +491,7 @@ def project_snapshot_to_json(project: TerrainProject) -> dict[str, object]:
         "coastline": asdict(project.coastline), "settings": settings_to_json(project.settings),
         "constraints": [_constraint_to_json(c) for c in project.constraints],
         "authoring": _authoring_to_json(project.authoring),
+        "world_context": context_to_json(project.world_context),
     }
 
 
@@ -487,7 +499,7 @@ def project_snapshot_from_json(value: object) -> TerrainProject:
     """Read only the current effective-input contract without reopening authored files."""
     data = _mapping(value, "input snapshot")
     _require_keys(data, {"schema", "schema_version", "coastline", "settings", "constraints",
-                         "authoring"}, "input snapshot")
+                         "authoring", "world_context"}, "input snapshot")
     if (data["schema"] != INPUT_SNAPSHOT_SCHEMA
             or _integer(data["schema_version"], "snapshot version") != INPUT_SNAPSHOT_VERSION):
         raise TerrainProjectInputError("Unsupported terrain input snapshot; rebuild the parent.")
@@ -512,4 +524,5 @@ def project_snapshot_from_json(value: object) -> TerrainProject:
         tuple(_constraint_from_json(c, i)
               for i, c in enumerate(_sequence(data["constraints"], "constraints"))),
         _authoring_from_json(data["authoring"]),
+        context_from_json(data["world_context"]),
     )

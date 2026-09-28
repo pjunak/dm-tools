@@ -10,11 +10,12 @@ interface should call the same engine rather than replacing it.
 
 ## Status
 
-The [ordered implementation plan](docs/strategy/README.md) now prioritizes
-connecting world context, rough relief, runoff and aging into one testable workflow.
+The [ordered implementation plan](docs/strategy/README.md) now prioritizes M2
+climate/runoff after completing the experimental M1 context-bound rough-terrain slice.
 The [research decision catalog](docs/research/decision-catalog.md) records what was
-evaluated, why it was used or deferred, and when to revisit it. Integration remains
-planned; the capabilities below describe what actually runs today.
+evaluated, why it was used or deferred, and when to revisit it. The capabilities
+below describe what actually runs today; M1 is experimental rather than accepted
+as the default world-parent workflow.
 
 The desktop workbench now has **World** and **Terrain** workspaces.
 [World import](docs/terrain-worlds.md) retains the original SVG, continent/island
@@ -24,7 +25,8 @@ inspection. [Geographic context](docs/world-context.md) now adds spherical land
 coverage, connected water, separate water-piece links, resolution support, preview layers and portable
 exports. Separate [geology](docs/world-geology.md) and
 [bathymetry](docs/world-bathymetry.md) workflows now author hypotheses and generate
-bounded ocean-floor previews. Shared climate and world land terrain remain planned.
+bounded ocean-floor previews. Geographic context can now influence world-derived
+rough terrain; shared climate, runoff, aging and accepted world parents remain planned.
 
 The Terrain workspace imports and dissolves closed SVG land shapes; authors
 absolute/relative brush, point, ridge and valley constraints; draws plain, hill,
@@ -50,8 +52,9 @@ builds and generate separate regional samples or explicitly experimental added
 detail. Python sessions reuse verified parents and bounded numeric results with
 freshness checks and [shared memory admission estimates](docs/terrain-regional-memory.md).
 Visual/spectral acceptance, finer hydrology, workbench zoom jobs and broader
-native/application-memory calibration remain open. World-linked terrain builds
-and validated river vectors also remain future work. See the
+native/application-memory calibration remain open. World-linked terrain builds are
+available experimentally when prepared with matching context; validated river
+vectors remain future work. See the
 [current research status](docs/research/status.md).
 
 An [experimental landscape-evolution command](benchmarks/evolution/README.md)
@@ -71,11 +74,14 @@ Separate water-piece connections and explicit unresolved support are now retaine
 and its connected neighbours at the world's physical scale. It opens in Terrain
 for input authoring and generation; `dmtools world terrain` provides the same
 handoff from the CLI. Saved geology recipes can now supply explicit plains, hills,
-plateaus and mountain belts; the resulting terrain regions remain editable inputs.
+plateaus and mountain belts; `--context` binds a matching context bundle, and the
+desktop automatically uses its currently generated or opened context. The resulting
+terrain regions remain editable inputs.
 See the [world guide](docs/terrain-worlds.md) and
 [landform example](docs/world-geology.md#try-a-complete-landform-example).
-Coupled rough-world relief, climate and regional history replay remain planned;
-this standalone handoff does not make a reviewed world parent.
+Context-bound coastal relief is experimental. Climate/runoff, bathymetry coupling,
+aging and regional history replay remain planned; this does not make a reviewed
+world parent.
 See the [research review](docs/research/2026-09-24-world-context-enrichment.md).
 
 ## Requirements

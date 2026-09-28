@@ -8,9 +8,11 @@ from dmtools.terrain.adapters.project import (
     save_terrain_project,
 )
 from dmtools.terrain.adapters.svg import load_svg_coastline_source
+from dmtools.terrain.adapters.world_context_sampling import bind_world_context
 from dmtools.terrain.adapters.world_landforms import compile_landforms
 from dmtools.terrain.adapters.world_projection import project_landmass
 from dmtools.terrain.adapters.world_terrain_source import MAX_SOURCE_BYTES, source_svg
+from dmtools.terrain.application.world_context import WorldContextRun
 from dmtools.terrain.application.world_geology import open_geology
 from dmtools.terrain.domain import TerrainProject, TerrainSettings
 from dmtools.terrain.domain.world import WorldProject
@@ -33,10 +35,11 @@ def create_world_terrain_project(
     *,
     settings: TerrainSettings | None = None,
     geology_path: Path | None = None,
+    context: WorldContextRun | None = None,
     cancellation: CancellationToken | None = None,
     progress: ProgressCallback | None = None,
 ) -> WorldTerrainCreated:
-    """Publish a new standalone project; this is not a coupled world terrain solve."""
+    """Publish initial terrain inputs with optional context; climate and aging follow later."""
 
     def report(fraction: float, text: str) -> None:
         check_cancelled(cancellation)
@@ -65,6 +68,10 @@ def create_world_terrain_project(
             cancellation=cancellation,
         )
         source = replace(source, geology=coverage.recipe)
+    report(0.75, "Binding geographic context to metric terrain…")
+    bound_context = None if context is None else bind_world_context(
+        source, context.context, context.runtime, cancellation=cancellation,
+    )
     report(0.8, "Preparing the terrain project…")
     encoded = source_svg(source)
     if len(encoded) > MAX_SOURCE_BYTES:
@@ -78,7 +85,8 @@ def create_world_terrain_project(
     if verified.coastline != source.coastline:
         raise RuntimeError("World-to-terrain transfer changed projected coastlines.")
     report(0.95, "Saving the terrain project…")
-    project = TerrainProject(verified.coastline, settings, constraints)
+    project = TerrainProject(verified.coastline, settings, constraints,
+                             world_context=bound_context)
     path = target / "terrain.dmterrain.json"
     # Completion is the current project file. Failed or cancelled preparation
     # leaves only source material in this new directory, never a usable project.

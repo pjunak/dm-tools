@@ -33,7 +33,8 @@ def forecast_project_water_budget(source: Path) -> ProjectWaterBudget:
     verify_inputs()
     project = loaded.project
     budget = forecast_water_sampling(
-        project.coastline, project.settings, constraints=project.constraints)
+        project.coastline, project.settings, constraints=project.constraints,
+        world_context=project.world_context)
     verify_inputs()
     if runtime_identity() != runtime:
         raise ValueError("Generator source or runtime changed during the forecast; run it again.")

@@ -34,7 +34,8 @@ def sample_terrain_region(
     frame = LocalMetricFrame(project.coastline.bounds, project.settings.object_scale_km)
     grid = EndpointGrid.for_extent(frame.extent_km, project.settings.resolution_px)
     request = RegionalSamplingRequest.for_bounds(
-        sampling_source_id(project.coastline, project.settings, project.constraints),
+        sampling_source_id(project.coastline, project.settings, project.constraints,
+                           world_context=project.world_context),
         grid, bounds_km, refinement,
     )
     runtime = runtime_identity()
@@ -49,7 +50,8 @@ def sample_terrain_region(
     target.parent.mkdir(parents=True, exist_ok=True)
     target.mkdir()
     sampler = prepare_regional_sampler(project.coastline, project.settings,
-                                       constraints=project.constraints, progress=progress)
+                                       constraints=project.constraints, progress=progress,
+                                       world_context=project.world_context)
     samples = sampler.sample(request, progress)
     check_cancelled(cancellation)
     outputs = write_regional_products(samples, project, target)

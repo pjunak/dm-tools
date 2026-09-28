@@ -62,6 +62,7 @@ from dmtools.terrain.domain import (
     TerrainStructure,
     landform_preset,
 )
+from dmtools.terrain.domain.terrain_context import TerrainWorldContext
 from dmtools.terrain.pipeline import GeneratedTerrain, generate_terrain
 from dmtools.terrain.pipeline.control import CancellationToken, GenerationCancelled
 from dmtools.terrain.structure_profile_ui import edit_structure_profile
@@ -190,6 +191,7 @@ class TerrainApp:
 
         self._coastline: Coastline | None = None
         self._coastline_source: CoastlineSource | None = None
+        self._world_context: TerrainWorldContext | None = None
         self._project_path: Path | None = None
         self._terrain: GeneratedTerrain | None = None
         self._image: Image.Image | None = None
@@ -1206,7 +1208,8 @@ class TerrainApp:
     def _generation_inputs(self) -> GenerationInputs:
         if self._coastline is None:
             raise ValueError("No coastline is loaded.")
-        return GenerationInputs(self._coastline, self._read_settings(), self._constraints)
+        return GenerationInputs(self._coastline, self._read_settings(), self._constraints,
+                                self._world_context)
 
     def _reference_is_current(self) -> bool:
         if self._terrain is None or self._generated_inputs is None:
@@ -2221,6 +2224,7 @@ class TerrainApp:
                 settings=self._read_settings(),
                 constraints=tuple(self._constraints),
                 authoring=self._read_authoring_state(),
+                world_context=self._world_context,
             )
         except (ValueError, tk.TclError) as error:
             messagebox.showerror("Invalid project settings", str(error), parent=self.root)
@@ -2240,7 +2244,8 @@ class TerrainApp:
                 return
             destination = Path(selected)
         coastline_source = self._coastline_source
-        inputs = GenerationInputs(project.coastline, project.settings, project.constraints)
+        inputs = GenerationInputs(project.coastline, project.settings, project.constraints,
+                                  project.world_context)
         self._after_save = after_save
         self._set_busy(True)
         self.status_label.configure(text="Saving authored terrain project…")
@@ -2278,6 +2283,7 @@ class TerrainApp:
         self.workspaces.select(self.terrain_page)
         self._coastline = coastline
         self._coastline_source = source
+        self._world_context = None
         if source is not None and source.world_terrain is not None:
             self._variables["object_scale_km"].set(source.world_terrain.object_scale_km)
         self._project_path = None
@@ -2397,11 +2403,12 @@ class TerrainApp:
         project = loaded.project
         self._accept_coastline(project.coastline, loaded.coastline_source)
         self._project_path = loaded.path
+        self._world_context = project.world_context
         self._apply_settings(project.settings)
         self._history.reset(project.constraints)
         self._apply_authoring_state(project.authoring)
         self._saved_inputs = GenerationInputs(
-            project.coastline, project.settings, project.constraints)
+            project.coastline, project.settings, project.constraints, project.world_context)
         count = len(self._constraints)
         suffix = "s" if count != 1 else ""
         self.status_label.configure(
@@ -2411,6 +2418,8 @@ class TerrainApp:
             self.status_label.configure(
                 text="World terrain project ready. Scale is fixed by the world projection. "
                 "Add instructions or click Generate terrain."
+                + (" Geographic context is connected to coastal relief (experimental)."
+                   if project.world_context else "")
             )
         self.preview_meta.configure(text=f"{count} authored feature{suffix}")
         self._refresh_reference_state()
@@ -2511,6 +2520,7 @@ class TerrainApp:
                     lambda fraction, message: self._events.put(
                         _ProgressEvent(0.94 * fraction, message, cancellation)),
                     constraints=inputs.constraints,
+                    world_context=inputs.world_context,
                     cancellation=cancellation,
                 )
                 cancellation.checkpoint()

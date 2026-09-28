@@ -215,7 +215,9 @@ add physical forcing and epoch histories;
 application operations will own staged jobs, parent/dependency verification and
 publication. Numerical stages consume arrays and explicit boundary/forcing data,
 not UI state or implicit world globals. Exact public formats arrive with their
-implementations; current terrain project/build schemas contain no world context.
+implementations. Terrain project v9, input snapshot v4 and build v20 can contain
+bounded immutable world-context support for experimental M1 rough terrain; this is
+not a climate, water-transport or accepted world-parent contract.
 The independent world-source schema contains geography and assignments only.
 
 Continent identity is not a closed solver boundary. Shared climate, catchments and

@@ -1,0 +1,171 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:dmtools:schema:terrain-context:1",
+  "title": "DM Tools terrain world-context binding version 1",
+  "description": "Bounded, immutable geographic support transferred into local terrain generation. The binding owns portable numeric samples; the report records how a build used them.",
+  "$ref": "#/$defs/binding",
+  "$defs": {
+    "hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "bounds": {
+      "type": "array", "items": { "type": "number" }, "minItems": 4, "maxItems": 4
+    },
+    "projection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "radius_km", "longitude_deg", "latitude_deg", "maximum_angle_deg",
+        "maximum_transverse_scale", "curve_tolerance_m", "source_step_deg"
+      ],
+      "properties": {
+        "radius_km": { "type": "number", "exclusiveMinimum": 0 },
+        "longitude_deg": { "type": "number", "minimum": -180, "exclusiveMaximum": 180 },
+        "latitude_deg": { "type": "number", "minimum": -90, "maximum": 90 },
+        "maximum_angle_deg": { "type": "number", "minimum": 0, "maximum": 80 },
+        "maximum_transverse_scale": { "type": "number", "minimum": 1, "maximum": 1.5 },
+        "curve_tolerance_m": { "const": 25.0 },
+        "source_step_deg": { "const": 0.25 }
+      }
+    },
+    "grid": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["extent_km", "width", "height"],
+      "properties": {
+        "extent_km": { "$ref": "#/$defs/bounds" },
+        "width": { "type": "integer", "minimum": 2, "maximum": 129 },
+        "height": { "type": "integer", "minimum": 2, "maximum": 129 }
+      }
+    },
+    "waterBody": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "area_km2", "crosses_seam", "displayed_cells"],
+      "properties": {
+        "id": { "type": "integer", "minimum": 1 },
+        "area_km2": { "type": "number", "exclusiveMinimum": 0 },
+        "crosses_seam": { "type": "boolean" },
+        "displayed_cells": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "required": [
+        "model", "world_sha256", "context_input_sha256", "context_numeric_sha256",
+        "producer_runtime_sha256", "context_latitude_cells", "source_bounds",
+        "projection", "grid", "water_bodies", "fragmented_water_bodies",
+        "source_shore_error_km", "geology_sha256"
+      ],
+      "properties": {
+        "model": { "const": "spherical-context-coastal-support@1" },
+        "world_sha256": { "$ref": "#/$defs/hash" },
+        "context_input_sha256": { "$ref": "#/$defs/hash" },
+        "context_numeric_sha256": { "$ref": "#/$defs/hash" },
+        "producer_runtime_sha256": { "$ref": "#/$defs/hash" },
+        "context_latitude_cells": { "type": "integer", "minimum": 4, "maximum": 360 },
+        "source_bounds": { "$ref": "#/$defs/bounds" },
+        "projection": { "$ref": "#/$defs/projection" },
+        "grid": { "$ref": "#/$defs/grid" },
+        "water_bodies": {
+          "type": "array", "items": { "$ref": "#/$defs/waterBody" }, "uniqueItems": true
+        },
+        "fragmented_water_bodies": {
+          "type": "array", "items": { "type": "integer", "minimum": 1 }, "uniqueItems": true
+        },
+        "source_shore_error_km": { "type": "number", "minimum": 0 },
+        "geology_sha256": {
+          "anyOf": [{ "$ref": "#/$defs/hash" }, { "type": "null" }]
+        }
+      }
+    },
+    "binding": {
+      "allOf": [
+        { "$ref": "#/$defs/metadata" },
+        {
+          "type": "object",
+          "required": ["binding_sha256", "samples_npz_base64"],
+          "properties": {
+            "binding_sha256": { "$ref": "#/$defs/hash" },
+            "samples_npz_base64": {
+              "type": "string",
+              "minLength": 4,
+              "maxLength": 5592408,
+              "pattern": "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$",
+              "description": "Validated base64 of a compressed NPZ archive no larger than 4 MiB before encoding. Arrays and dtypes are verified by the reader."
+            }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "report": {
+      "allOf": [
+        { "$ref": "#/$defs/metadata" },
+        {
+          "type": "object",
+          "required": [
+            "binding_sha256", "status", "consumed", "retained", "unsupported",
+            "coastal_operation", "land_mask", "water_labels", "exposure", "support"
+          ],
+          "properties": {
+            "binding_sha256": { "$ref": "#/$defs/hash" },
+            "status": { "const": "experimental-rough-terrain" },
+            "consumed": {
+              "type": "array",
+              "prefixItems": [
+                { "const": "shore_upper_km" },
+                { "const": "metric_projection" },
+                { "const": "source_identity" }
+              ],
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "retained": {
+              "type": "array",
+              "prefixItems": [
+                { "const": "shore_lower_km" },
+                { "const": "latitude_deg" },
+                { "const": "longitude_deg" },
+                { "const": "land_fraction" },
+                { "const": "water_body" },
+                { "const": "support_flags" },
+                { "const": "water_exposure" },
+                { "const": "exposure_mixed_support" },
+                { "const": "water_bodies" },
+                { "const": "fragmented_water_bodies" },
+                { "const": "geology_sha256" }
+              ],
+              "minItems": 11,
+              "maxItems": 11
+            },
+            "unsupported": {
+              "type": "array",
+              "prefixItems": [
+                { "const": "climate" },
+                { "const": "runoff" },
+                { "const": "aging" },
+                { "const": "bathymetry-coupling" },
+                { "const": "water-transport-graph" }
+              ],
+              "minItems": 5,
+              "maxItems": 5
+            },
+            "coastal_operation": {
+              "const": "min(local-vector-distance, conservative-geographic-upper-bound)"
+            },
+            "land_mask": { "const": "projected-vector-coastline-only" },
+            "water_labels": {
+              "const": "nearest-source-cell-display-id; not point membership"
+            },
+            "exposure": {
+              "const": "all-water geographic exposure; not rainfall or ocean fetch"
+            },
+            "support": {
+              "const": "mixed-exposure fraction is quadrature support, not an error bound"
+            }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    }
+  }
+}

@@ -1,8 +1,9 @@
 # Ordered terrain implementation plan
 
-Updated 2026-09-28. **Active milestone: M1, next to implement.** This update
-reorders work; it does not implement context consumption or application aging.
-Last implementation: shared ridge crests, commit `78c9db5`.
+Updated 2026-09-28. **Active milestone: M2.** M1 context-bound rough terrain is
+implemented as an experimental application slice; climate, runoff and aging remain
+unsupported. Final repository validation for this batch is recorded in the
+[implementation report](../research/2026-09-28-context-bound-rough-terrain.md).
 
 Build one testable path from an imported world through context, rough terrain,
 runoff and geological aging before further isolated landform refinement. Keep
@@ -13,7 +14,8 @@ not competing queues. [TODO](../../TODO.md) retains the complete feature backlog
 ## What works now
 
 - World import, geographic context, geology recipes and bathymetry have their own
-  usable workflows. Context and bathymetry are not consumed by land generation.
+  usable workflows. M1 binds matching geographic context into rough terrain;
+  bathymetry remains a separate, unconsumed hypothesis product for M2.
 - World-to-terrain transfers coastlines, continuous physical land, scale and
   optional authored landform controls. Continent borders are not coasts.
 - The local generator/editor/build system works, including profiles and saved-parent
@@ -25,8 +27,8 @@ not competing queues. [TODO](../../TODO.md) retains the complete feature backlog
 
 | Order / state | Deliverable and required connections | Completion evidence | Existing owners |
 |---|---|---|---|
-| **M1 — NEXT** | **Context-bound rough terrain.** Match world, geographic context and optional geology/bathymetry inputs; project one supported connected landmass into a bounded physical domain. Generate broad relief with explicit controls and retain sampled context/support for the following stages. | A saved, reopenable rough build identifies consumed versus retained fields; coastal context reaches a numerical terrain operation, input mismatch is rejected, and continent-label changes leave physical land unchanged. | WC1/WC2, R01/R02/R49 |
-| **M2 — queued after M1** | **Initial climate and runoff.** Connect world latitude, explicit planetary/wind assumptions, selected oceans and rough relief to a small moisture/temperature/runoff model. Preserve water-source identity and budgets. | Fixed-relief coastal/interior and windward/leeward controls respond for declared reasons; water accounting and units pass. Geographic exposure alone is never labelled rainfall. | WC3, R07/R10/R33/R49 |
+| **M1 — implemented, experimental** | **Context-bound rough terrain.** Match world and geographic context, project one supported connected landmass into a bounded metric domain, and retain immutable sampled support for every terrain consumer. Geology remains optional authored macro-relief guidance; bathymetry is explicitly unconsumed. | Saved projects, snapshots and builds identify consumed, retained and unsupported fields. Exact source/projection/geology mismatches fail; coastal context changes rough relief while source masks and hard constraints remain authoritative; ownership splits do not change sampled ground. | WC1/WC2, R01/R02/R49; [evidence](../research/2026-09-28-context-bound-rough-terrain.md) |
+| **M2 — ACTIVE** | **Initial climate and runoff.** Connect world latitude, explicit planetary/wind assumptions, selected oceans and rough relief to a small moisture/temperature/runoff model. Preserve water-source identity and budgets. | Fixed-relief coastal/interior and windward/leeward controls respond for declared reasons; water accounting and units pass. Geographic exposure alone is never labelled rainfall. | WC3, R07/R10/R33/R49 |
 | **M3 — queued after M2** | **Application aging.** Feed M1 relief, M2 runoff and explicit uplift/resistance/epoch inputs into the existing evolution reference through a narrow adapter. Publish evolved ground and derive drainage from that same result. | One end-to-end experimental build with aging off/on and changed history; bounded execution, immutable inputs, reproducible state and visible quality failures. No duplicate automatic carving or second application of the full history. | LE1/LE3/basic LE5, WC2/WC3, R11/R14/R48 |
 | **M4 — queued after M3** | **Coupled, inspectable workflow.** Recompute climate/runoff against changing relief at a declared cadence; bound feedback. Connect stage previews, comparison, history controls, cancellation, stale results, world placement and exports. | A user can run, inspect, change an input and regenerate the complete path. Restarts resume a declared state or replay from initial conditions; nonconvergence is visible. No settings without a consuming backend. | WC3/WC4 candidate, LE5, R27/R32/R49 |
 | **M5 — queued after M4** | **Quality, wider world and accepted parent.** Fix the dominant integrated failures, extend unsupported wide/seam/polar domains with shared boundaries, and compare the coupled candidate with the local baseline before default adoption. Freeze an accepted coarse world parent. | Matched terrain/river/history gallery, authoring and physical-budget controls, cross-label flow, projection/overlap checks and packaged dependency audit pass. Record an adoption ADR; remove superseded generation paths. | LE2/LE3, WC2-WC4, A/B/C, R25/R40-R43/R48 |
@@ -56,35 +58,45 @@ flowchart LR
     P --> D[Regional enrichment to the same present]
 ```
 
-This is the target, not the current code path. Bathymetry supplies explicit ocean
-hypotheses only where a model consumes them; ocean depth does not automatically
-set mountains or climate. Continental age, rejuvenation and simulation duration
-remain independent. [World connections](world-context.md#first-integrated-application-slice)
+The retained-context to rough-relief edge and explicit geology landform controls
+are implemented; geology epochs and the remaining arrows are the target path.
+Bathymetry supplies explicit ocean hypotheses only
+where a later model consumes them; ocean depth does not automatically set mountains
+or climate. Continental age, rejuvenation and simulation duration remain independent.
+[World connections](world-context.md#first-integrated-application-slice)
 and [history integration](landscape-evolution.md#experimental-application-integration)
 own stage inputs, units, feedback and boundary details.
 
-## Concrete next batch: M1
+## Completed M1 boundary
 
-1. Bind matching source/context/recipe identities and support flags in one current
-   generation specification. Reuse existing adapters and validation; do not build
-   a generic simulation framework or legacy migration layer.
-2. Transfer context to one supported metric connected-land domain, with explicit
-   sampling, coast-distance error and unresolved-cell policy. Preserve world
-   coordinates, islands, holes and true straits. Reject unsupported projection
-   extents rather than shrinking the world or cutting at a continent label.
-3. Reuse geological landform controls for initial macro relief. Connect valid
-   geographic shoreline information to physical coastal support under explicit
-   settings, without converting water exposure or age into arbitrary heights.
-   Carry ocean/directional data to M2 with their actual semantics.
-4. Publish initial ground plus the context consumed/retained/unsupported record,
-   usable through the existing application, CLI and preview. No hidden aging.
-5. Compare a small public context-enabled/disabled pair with identical source,
-   scale, seed and authored controls; test mismatches, supported coastal response,
-   context queries and ownership-border independence. A copied context bundle
-   with no numerical consumer does not complete M1.
+The World workspace passes its current generated or opened context into
+**World → Terrain**; the CLI uses `world terrain --context`. Preparation verifies
+the exact world, projection and optional geology recipe, then freezes at most
+129 × 129 metric support samples into project v9. Continuous fractions and
+exposure use bilinear interpolation; categorical IDs/flags use nearest support.
+The coastal consumer uses the smaller of exact projected-vector distance and a
+continuous conservative spherical upper bound. It never replaces the vector land
+mask, invents water links or consumes bathymetry. Project/snapshot/build provenance
+records numeric-context, producer-runtime and sampled-binding identities separately.
 
-Choose a supported public domain first. Private maps are later manual checks,
-not required fixtures. Link evidence before moving the active milestone to M2.
+Supported M1 domains are bounded AEQD projections whose complete support stencil
+has source latitude-cell centres. Polar domains reject explicitly. Selecting a
+continent may include physically connected neighbours; M1 still rejects domains
+beyond local projection/support limits and does not produce an accepted world
+parent. Climate, runoff, aging, bathymetry coupling and water transport remain
+marked unsupported. See [ADR-0084](../adr/0084-bind-geographic-context-to-rough-terrain.md)
+and the [measured report](../research/2026-09-28-context-bound-rough-terrain.md).
+
+## Concrete next batch: M2
+
+1. Define a small inspectable temperature/moisture/runoff model with explicit
+   planet, wind, season, units, validity and conservation assumptions.
+2. Consume M1 latitude, retained water/source identity, directional diagnostics
+   and rough relief without relabelling all-water exposure as rainfall or fetch.
+3. Decide whether the separate bathymetry product has a real numerical consumer;
+   if not, keep it retained and explicitly unconsumed.
+4. Publish fixed-relief coastal/interior and windward/leeward controls, runoff
+   budgets and provenance through the existing experimental workflow.
 
 ## Integration checks and adoption checks
 

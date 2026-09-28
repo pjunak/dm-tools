@@ -106,6 +106,8 @@ def create_parser() -> argparse.ArgumentParser:
                                help="Initial pixels; 64-4096.")
     world_terrain.add_argument("--geology", type=Path,
                                help="Saved .dmgeology.json with explicit landform guidance.")
+    world_terrain.add_argument("--context", type=Path,
+                               help="Verified context.json or context folder for coastal support.")
     world_terrain.set_defaults(_handler=_run_world_terrain)
     context = world_commands.add_parser("context", help="Generate spherical geographic context.")
     context.add_argument("project", type=Path, help="Portable .dmworld.json project.")
@@ -137,6 +139,7 @@ def create_parser() -> argparse.ArgumentParser:
 
 def _run_world_terrain(arguments: argparse.Namespace) -> int:
     from dmtools.terrain.adapters.world_project import read_world_project
+    from dmtools.terrain.application.world_context import open_context
     from dmtools.terrain.application.world_terrain import create_world_terrain_project
     from dmtools.terrain.domain import TerrainSettings
 
@@ -152,6 +155,7 @@ def _run_world_terrain(arguments: argparse.Namespace) -> int:
             world, matching[0].id, arguments.output,
             settings=TerrainSettings(seed=arguments.seed, resolution_px=arguments.resolution),
             geology_path=arguments.geology,
+            context=None if arguments.context is None else open_context(arguments.context),
         )
     except (OSError, ValueError, RuntimeError) as error:
         print(f"World terrain preparation failed: {error}", file=sys.stderr)
@@ -161,6 +165,8 @@ def _run_world_terrain(arguments: argparse.Namespace) -> int:
     print(f"Terrain project ready: {created.loaded.path}")
     print(f"Included land: {names}; projected extent {created.source.object_scale_km:,.1f} km.")
     print("Open in the Terrain workspace or use dmtools terrain build.")
+    print("Geographic context: " + ("connected to coastal relief (experimental)."
+          if created.loaded.project.world_context else "not supplied; local coastal distance."))
     print(f"Landform regions: {len(created.loaded.project.constraints)}. "
           "World climate and aging are not applied yet.")
     return 0

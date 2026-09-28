@@ -1,11 +1,13 @@
 # World-context and staged terrain implementation plan
 
-Updated 2026-09-28. **WC0 implemented; WC1 geography/reopening/edge/exposure, authored geology and bathymetry slices delivered; remaining WC1-WC6 work planned.** The
+Updated 2026-09-28. **WC0 and provisional WC1 implemented; M1's bounded
+context-to-rough-terrain slice is experimental; M2 climate/runoff is next.** The
 [World workspace](../terrain-worlds.md) imports retained SVG sources, validates
 explicit spherical placement and ownership, and saves portable world projects.
 World → Terrain now transfers a selected continent and connected land into a
 usable local generation project with retained world/projection identity. This
-standalone handoff is implemented; climate and continent-history coupling are not.
+handoff can bind matching geographic context into coastal relief. Climate, runoff,
+bathymetry coupling and continent-history coupling are not implemented.
 The [research review](../research/2026-09-24-world-context-enrichment.md) records
 primary sources, existing solutions, licenses and the limits of the recommendation.
 The [main strategy](README.md) owns execution order; [TODO R49](../../TODO.md)
@@ -73,11 +75,14 @@ first usable source-to-terrain path. It preserves islands, holes, physical
 neighbours and planetary scale; uses a bounded metric projection; and opens an
 ordinary terrain project through the existing editor's document guards.
 
-This is an explicit early product slice, not completion of WC2 or WC4. Explicit
+This is an explicit early product slice, not completion of WC4 or acceptance of a
+world parent. Explicit
 geological landform controls now compile to ordinary editable regions, retaining
 the recipe and priority holes; identical controls dissolve across labels and ages.
-[ADR-0080](../adr/0080-transfer-geological-landform-guidance.md) defines the handoff.
-Geographic context, bathymetry, geological ages and climate still do not drive ground.
+[ADR-0080](../adr/0080-transfer-geological-landform-guidance.md) defines the geology
+handoff. M1 optionally binds exact matching geographic context and consumes its
+conservative shoreline-distance upper bound in every rough-terrain path. Bathymetry,
+geological ages, climate, runoff and aging still do not drive ground.
 [Shared recipe blending](../research/2026-09-27-shared-landform-blending.md) now
 removes the paired example's internal background rims without filling blank holes.
 Connected range/pass/lowland structure and physical transition-support feedback
@@ -87,8 +92,9 @@ These features do not imply that the river/history research passed its gates.
 
 ## First integrated application slice
 
-**Planned, M1-M4.** Use the already delivered source/context products and one
-supported connected landmass to make an end-to-end experimental build. Retain
+**M1 implemented experimentally; M2-M4 planned.** M1 uses the delivered
+source/context products and one supported connected landmass for reproducible rough
+terrain. Retain
 whole-world surroundings when selecting a local process domain. A continent label
 must not create a coastline, no-flow wall or independent climate boundary. Wide
 landmasses need a declared supported domain or shared-boundary design; reject
@@ -96,13 +102,19 @@ unsupported extents until then. Do not run a flat solver on longitude/latitude.
 
 | Producer → consumer | Data and meaning | First use / required check |
 |---|---|---|
-| Retained source + context → rough-domain preparation | World/frame/radius, physical land, periodic water pieces, shore distance/error and sampling support; exact source/revision match | M1: metric queries and coastal support; coast/mask and ownership-split controls. Unresolved topology is not silently repaired. |
+| Retained source + context → rough-domain preparation | World/frame/radius, physical land, periodic water pieces, shore distance/error and sampling support; exact source/projection/geology match | **M1 implemented:** immutable metric samples and continuous conservative coastal support; coast/mask and ownership-split controls. Full water topology stays in the source context bundle; it is not transferred or silently repaired. |
 | Geology recipe → initial relief / history compiler | Existing explicit landform controls; later explicit uplift, resistance and epoch schedules | M1 uses landforms; M3 consumes physical forcing. Ages/categories alone never imply coefficients or a simulation duration. |
 | Oceans/context + rough relief → climate/runoff | Latitude, selected marine moisture sources, directional diagnostics, explicit winds/planet assumptions, terrain height and fractional coast treatment | M2: meaningful coastal/interior and rain-shadow controls, validity masks and water/heat ledgers. Current all-water exposure includes inland water and cannot substitute for connected-ocean fetch. |
 | Bathymetry hypothesis → optional ocean thermal/transport consumer | Depth/error/support and selected ocean identity | Load only when a selected M2/M4 approximation uses it; otherwise mark retained/unconsumed. Column depth is not mixed-layer depth, heat storage, sill capacity or circulation. |
 | Runoff + epochs + initial ground → evolution adapter | Effective runoff depth and discharge, metric areas/lengths, uplift and transport/resistance fields, one declared geological clock | M3: explicit time/unit conversion, zero-forcing and changed-history controls, correction/export ledger, reproducible evolved ground. |
 | Evolved relief → climate/runoff → history | Declared update cadence or bounded replay from the same initial state; inherited boundary conditions | M4: residuals and stop budgets, no double aging; failures remain provisional and cannot freeze a WC4 parent. |
 | Evolved ground → inspection/export / accepted parent | Final ground, drainage derived from that ground, stage identities and supported capabilities | M3-M4 allow candidate review; M5 accepts the coarse parent. M6 regional history requires time-dependent parent forcing, not merely a final DEM. |
+
+M1 supports bounded non-polar AEQD domains only. It samples at most 129 × 129
+support nodes and rejects a domain when any bilinear source stencil would require a
+polar latitude outside the context's cell centres. Selection includes connected
+neighbours, but oversized domains reject. Global solves and shared-domain boundaries
+remain M5.
 
 Application orchestration owns source verification and publication; pure numeric
 stages receive typed arrays/units. Keep context resampling, climate/runoff,

@@ -19,6 +19,11 @@ in the current status or a new dated report.
 
 ## Current reassessment
 
+- [Context-bound rough terrain — 2026-09-28](2026-09-28-context-bound-rough-terrain.md)
+  records the experimental M1 world/context binding, conservative continuous
+  coastal-distance consumer, public paired control, failed discontinuous bound and
+  explicit unsupported climate/runoff/aging/bathymetry boundaries.
+
 - [Shared ridge crests — 2026-09-27](2026-09-27-shared-ridge-crests.md) preserves
   authored ridge contacts and compatible crest heights, with paired seed/scale
   evidence, a repaired corner gap and explicit remaining geometry/process limits.

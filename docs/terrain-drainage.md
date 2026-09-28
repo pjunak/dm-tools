@@ -37,11 +37,12 @@ shaping can change, including shoulder widths and the finished-ground agreement.
 This parameter is not a runoff, climate, erosion-time or river-width model.
 At density 1.0, the pre-change numeric behavior is preserved.
 
-The current project format requires `settings.drainage_density`. Build v19, input snapshot v3 and
+The current project format requires `settings.drainage_density`. Build v20, input snapshot v4 and
 regional samples v3 record the new effective settings. Current examples are
 updated; earlier formats are unsupported. Parent-region v1 retains its layout
-and requires a current verified parent. Generator `coastline-constraint-terrain@18`
-and valleys `regional-budget-mfd-d8-valleys@14` identify the new input semantics.
+and requires a current verified parent. The current generator is `coastline-constraint-terrain@21`,
+with valleys `regional-budget-mfd-d8-valleys@15`; these also consume optional
+[bound geographic context](world-context.md#bind-context-to-rough-terrain).
 
 ## Connected display
 

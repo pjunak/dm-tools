@@ -13,6 +13,7 @@ from shapely.geometry import Polygon
 from benchmarks.terrain import fixture
 from dmtools.terrain.domain import Coastline, TerrainRegion, TerrainSettings, TerrainStructure
 from dmtools.terrain.pipeline import generate as generation
+from dmtools.terrain.pipeline.terrain_context import PreparedWorldContext
 
 
 def _dense_samples(
@@ -24,10 +25,11 @@ def _dense_samples(
     constraints: Any,
     valleys: Any,
     regions: Any = (),
+    world_context: PreparedWorldContext | None = None,
 ) -> tuple[NDArray[np.float64], NDArray[np.bool_]]:
     mask = np.asarray(shapely.intersects_xy(polygon, x, y), dtype=np.bool_)
     elevation = generation._evaluate_land_samples(
-        x, y, boundary, settings, constraints, valleys, regions,
+        x, y, boundary, settings, constraints, valleys, regions, world_context,
     )
     return np.where(mask, elevation, 0.0), mask
 

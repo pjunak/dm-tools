@@ -47,7 +47,7 @@ def build_terrain_project(
     project = loaded.project
     terrain = generate_terrain(
         project.coastline, project.settings, progress, constraints=project.constraints,
-        cancellation=cancellation,
+        cancellation=cancellation, world_context=project.world_context,
     )
     check_cancelled(cancellation)
     quality = measure_terrain_quality(

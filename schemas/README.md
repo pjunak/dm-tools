@@ -8,10 +8,11 @@ Only the current formats are supported:
 
 - [World terrain source v2](world/terrain-source-v2.schema.json): metadata embedded
   in a canonical prepared SVG, retaining the world, selected/connected ownership,
-  metric polygons, custom-sphere projection and optional original geology recipe. Project v8 references this SVG
+  metric polygons, custom-sphere projection and optional original geology recipe. Project v9 references this SVG
   normally; runtime loading also checks its canonical visible paths and fixed scale.
 
-- [World context v4](world/context-v4.schema.json): generated spherical coverage, separate water-piece connectivity/support,
+- [World context v4](world/context-v4.schema.json): generated spherical coverage using
+  `spherical-geography-v5`, separate water-piece connectivity/support,
   vector-derived water regions, shared-edge widths, shore distance, eight-direction
   water exposure, resolution support and hashes of the numeric
   arrays, previews and original world snapshot. This is not a terrain parent.
@@ -27,26 +28,33 @@ Only the current formats are supported:
   samples, numerical error/support, a retained verified geographic dependency and
   result hashes. Neither a land DEM nor physical transport/heat capacity.
 
-- [Project v8](terrain/project-v8.schema.json): authored `.dmterrain.json` inputs,
-  including hole rings in terrain regions and line-owned ridge/valley profiles.
-- [Build v19](terrain/build-v19.schema.json): numeric products, coordinates,
-  algorithm identities, named stage seeds and output hashes.
+- [Terrain context v1](terrain/context-v1.schema.json): bounded geographic support
+  serialized as a verified compressed sample binding, plus the metadata report
+  retained by a completed terrain build. It does not redefine the terrain land mask.
+- [Project v9](terrain/project-v9.schema.json): authored `.dmterrain.json` inputs,
+  including hole rings, line-owned ridge/valley profiles and an optional nullable
+  frozen world-context binding.
+- [Build v20](terrain/build-v20.schema.json): numeric products, coordinates,
+  algorithm identities, named stage seeds, output hashes and the nullable context
+  consumption/retention report.
 - [Regional samples v3](terrain/regional-samples-v3.schema.json): bounded
   unchanged-field windows, source/runtime identity, halo/crop coordinates and
   explicit capability limits.
-- [Input snapshot v3](terrain/input-snapshot-v3.schema.json): portable effective
-  geometry, typed constraints, settings and authoring state for current builds.
+- [Input snapshot v4](terrain/input-snapshot-v4.schema.json): portable effective
+  geometry, typed constraints, settings, authoring state and the nullable frozen
+  world-context binding for current builds.
 - [Parent region v1](terrain/parent-region-v1.schema.json): verified-parent samples
   or explicit experimental detail, fixed cell moments and hydrology limits.
 
-Register all current schemas locally by `$id` for validation. The build
+Register all current schemas locally by `$id` for validation. The project,
+input snapshot and build reference the shared terrain-context definitions. The build
 references project settings; regional samples reuse current project settings
 and the build's runtime, seed and file-identity definitions. None depends on
 obsolete formats.
 Terrain numeric arrays use an endpoint-node SVG-local plane. GeoTIFF records the
 same samples in local metres with an upward y axis; neither raster format has
-a world CRS. A prepared world-derived SVG additionally retains source projection
-and planetary scale; this is not yet encoded in build/GeoTIFF georeferencing.
+a world CRS. A prepared world-derived SVG and an optional bound world context retain
+source projection and planetary scale; this is not encoded as build/GeoTIFF georeferencing.
 See the [build guide](../docs/terrain-builds.md) and
 [seed contract](../docs/terrain-seeds.md).
 

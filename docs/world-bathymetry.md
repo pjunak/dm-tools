@@ -124,8 +124,8 @@ requested resolution differs. See [ADR-0077](adr/0077-generate-authored-ocean-de
 [the remaining WC plan](strategy/world-context.md).
 
 
-Current geographic dependency: context v4 / `spherical-geography-v4`, including
-water-piece incidence and unresolved-region support. Recreate older v3-linked
-bathymetry recipes/results from the retained world; no migration is provided.
+Current geographic dependency: context v4 / `spherical-geography-v5`, including
+water-piece incidence and unresolved-region support. Recreate bathymetry recipes/results linked to earlier context algorithms
+from the retained world; no migration is provided.
 Depth generation remains a centre-sample hypothesis and does not consume graph
 links as volume, sill or transport coefficients.
